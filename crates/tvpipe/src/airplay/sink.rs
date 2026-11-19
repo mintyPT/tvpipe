@@ -89,6 +89,13 @@ const MAX_QUEUED_BYTES: usize = 8 << 20;
 const CLOCK_SHIFT_TOLERANCE: Duration = Duration::from_millis(1);
 /// Consecutive stale audio frames at start-up before giving up (§8.8).
 const MAX_STALE_AT_START: u32 = 128;
+/// Silence an audio-only receiver plays before the first frame. Its NTP
+/// clock is still settling when playback starts, and a Devialet Phantom
+/// II played the first moment choppy without it.
+const SPEAKER_LEAD_IN: Duration = Duration::from_millis(1500);
+/// What stays of the audio lead after the lead-in, so the silence is not
+/// late itself.
+const LEAD_IN_MARGIN: Duration = Duration::from_millis(250);
 /// Burst pacing: packets per window (§8.4).
 const BURST_PACKETS: u32 = 12;
 const BURST_WINDOW: Duration = Duration::from_millis(5);
@@ -481,6 +488,8 @@ struct AudioState {
     first_sync: bool,
     window: (Instant, u32),
     frames: u64,
+    /// Frames of silence sent before the first frame (audio-only receivers).
+    prime: u32,
 }
 
 fn lock_pk(p: &Mutex<Packetizer>) -> MutexGuard<'_, Packetizer> {
@@ -526,6 +535,34 @@ impl AudioState {
         self.last_sync = Some(Instant::now());
     }
 
+    /// `prime` frames of silence that play right before the frame
+    /// captured at `capture`, from RTP time 352 on.
+    fn send_lead_in(&mut self, timeline: &Timeline, capture: Instant) -> Result<()> {
+        if self.prime == 0 {
+            return Ok(());
+        }
+        let pcm = vec![0u8; ALAC_FRAME_SAMPLES as usize * 2 * self.channels as usize];
+        let silence = alac_verbatim(&pcm, self.channels)?;
+        for k in 0..self.prime {
+            let rtp = ALAC_FRAME_SAMPLES.wrapping_add(k * ALAC_FRAME_SAMPLES);
+            if k == 0 {
+                let ahead =
+                    ticks_to_duration(u64::from(self.prime * ALAC_FRAME_SAMPLES), SAMPLE_RATE);
+                let t = capture.checked_sub(ahead).unwrap_or(capture);
+                self.send_sync(timeline, rtp, t);
+            }
+            let packets = lock_pk(&self.packetizer).frame(rtp, &silence)?;
+            for p in packets {
+                self.pace();
+                if let Err(e) = self.data.send(&p) {
+                    debug!("airplay: audio send: {e}");
+                }
+            }
+        }
+        debug!("airplay: {} frames of silence before the audio", self.prime);
+        Ok(())
+    }
+
     fn push(
         &mut self,
         frame: &EncodedFrame,
@@ -546,7 +583,10 @@ impl AudioState {
                 return Ok(SinkStatus::Dropped);
             }
             self.started = true;
-            self.offset = ALAC_FRAME_SAMPLES.wrapping_sub(frame.pts as u32);
+            self.offset = ALAC_FRAME_SAMPLES
+                .wrapping_add(self.prime * ALAC_FRAME_SAMPLES)
+                .wrapping_sub(frame.pts as u32);
+            self.send_lead_in(timeline, capture)?;
         }
         let samples = (frame.data.len() / (2 * self.channels as usize)) as u32;
         if let (Some(last), Some(last_capture)) = (self.last_pts, self.last_capture) {
@@ -812,6 +852,13 @@ impl<S: ControlStream> MirrorSink<S> {
             first_sync: true,
             window: (Instant::now(), 0),
             frames: 0,
+            prime: if self.session.audio_only() {
+                let lead = Duration::from_millis(self.session.leads.audio_ms as u64);
+                let lead_in = SPEAKER_LEAD_IN.min(lead.saturating_sub(LEAD_IN_MARGIN));
+                (lead_in.as_secs_f64() * SAMPLE_RATE as f64) as u32 / ALAC_FRAME_SAMPLES
+            } else {
+                0
+            },
         }))
     }
 
@@ -1567,7 +1614,9 @@ mod tests {
             );
             sink.push(&audio(i)).unwrap();
         }
-        wait_for("audio", || fake.rec().audio.len() >= 5);
+        let prime = sink.media.as_ref().unwrap().audio.as_ref().unwrap().prime as usize;
+        assert_eq!(prime, 187, "1.5 s of 352-sample frames");
+        wait_for("audio", || fake.rec().audio.len() >= prime + 5);
         sink.stop().unwrap();
         let r = fake.rec();
         assert!(r.video.is_empty());
@@ -1578,7 +1627,10 @@ mod tests {
             })
         });
         assert!(!video_setup, "a speaker gets no video SETUP");
-        assert_eq!(r.audio[0].2, alac_verbatim(&pcm(0), 2).unwrap());
+        let silence = alac_verbatim(&[0u8; 352 * 4], 2).unwrap();
+        assert!(r.audio[..prime].iter().all(|a| a.2 == silence));
+        assert_eq!(r.audio[prime].2, alac_verbatim(&pcm(0), 2).unwrap());
+        assert_eq!(r.audio[prime].1, r.audio[0].1 + prime as u32 * 352);
     }
 
     #[test]
