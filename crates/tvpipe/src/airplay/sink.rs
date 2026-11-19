@@ -1735,6 +1735,7 @@ mod tests {
             ..Behaviour::default()
         });
         let mut sink = connect(&fake, &MirrorOptions::default());
+        assert_eq!(sink.session().leads, Leads::SPEAKER);
         sink.start(&video_info(), Some(&audio_info())).unwrap();
         let (_, sps, pps) = avcc();
         for i in 0..20u64 {

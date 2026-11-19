@@ -208,6 +208,13 @@ impl Leads {
         video_ms: 100,
         audio_ms: 170,
     };
+    /// A receiver that cannot mirror. A Devialet Phantom II played
+    /// choppy, crackling audio at the wireless profile's 170 ms and clean
+    /// audio at 2000 ms (the `--latency` maximum).
+    pub const SPEAKER: Leads = Leads {
+        video_ms: 2000,
+        audio_ms: 2000,
+    };
 
     /// An explicit user latency (clamped to 5–2000 ms), else the wireless
     /// profile. §2.7 allows either profile without a route query; the
@@ -233,10 +240,12 @@ impl Leads {
         audio_ms: 300,
     };
 
-    /// [`Leads::new`], but [`Leads::LG`] for an LG TV with audio and no
-    /// explicit latency.
+    /// [`Leads::new`], but without an explicit latency [`Leads::SPEAKER`]
+    /// for a receiver that cannot mirror and [`Leads::LG`] for an LG TV
+    /// with audio.
     pub fn for_receiver(explicit_ms: Option<u32>, info: &Info, audio: bool) -> Leads {
         match explicit_ms {
+            None if !has(info.features, bit::SCREEN_MIRRORING) => Leads::SPEAKER,
             None if audio && lg(info) => Leads::LG,
             e => Leads::new(e),
         }
@@ -530,7 +539,9 @@ mod tests {
         assert_eq!(Leads::new(Some(5000)).audio_ms, 2000);
 
         // LG: 300 ms with audio, latencyMin = latencyMax; else as before.
-        let tv_bits = 1 << bit::THIRD_PARTY_B | 1 << bit::THIRD_PARTY_TV;
+        // A TV mirrors (feature 7); without it the receiver is a speaker.
+        let tv_bits =
+            1 << bit::SCREEN_MIRRORING | 1 << bit::THIRD_PARTY_B | 1 << bit::THIRD_PARTY_TV;
         let lg = info_with(
             "OLED65C5ELB.DEUQDJP",
             tv_bits,
