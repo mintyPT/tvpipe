@@ -790,9 +790,14 @@ impl<S: ControlStream> Session<S> {
         }
     }
 
-    /// SETUP #3, the data connection, the initial volume and a pending
-    /// RECORD (§4.7–§4.11). Returns the connected data socket.
-    pub fn start_video(&mut self) -> Result<TcpStream> {
+    /// The receiver cannot mirror (no feature bit 7: a speaker such as a
+    /// HomePod or a Devialet Phantom), so it gets audio only.
+    pub fn audio_only(&self) -> bool {
+        !policy::has(self.info.features, bit::SCREEN_MIRRORING)
+    }
+
+    /// SETUP #3 and the data connection (§4.7, §4.8).
+    fn connect_video(&mut self) -> Result<TcpStream> {
         let (shk, shiv) = match &self.fairplay {
             Some(fp) => (fp.master, fp.eiv),
             // §5.3: placeholders without FairPlay.
@@ -841,6 +846,20 @@ impl<S: ControlStream> Session<S> {
             .map_err(|e| Error::io(format!("airplay: connect video data {addr}"), e))?;
         let _ = data.set_nodelay(true);
         debug!("airplay: video data connection to {addr}");
+        Ok(data)
+    }
+
+    /// SETUP #3 and the data connection unless the receiver is
+    /// [`audio_only`](Self::audio_only), then the initial volume and a
+    /// pending RECORD (§4.7–§4.11). Returns the connected data socket of a
+    /// mirroring receiver.
+    pub fn start_video(&mut self) -> Result<Option<TcpStream>> {
+        let data = if self.audio_only() {
+            debug!("airplay: receiver cannot mirror; audio only");
+            None
+        } else {
+            Some(self.connect_video()?)
+        };
         if let (Some(seed), Some(port)) = (
             self.mdc_seed,
             self.audio.ports.and_then(|p| p.media_data_control),
