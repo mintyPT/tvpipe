@@ -1330,8 +1330,10 @@ impl<S: ControlStream> Sink for MirrorSink<S> {
         self.shared.cond.notify_all();
         let mut threads = Vec::new();
         if let Some(m) = self.media.as_mut() {
-            // The writer drains and exits on `closed`.
-            if let Some(w) = (!m.threads.is_empty()).then(|| m.threads.remove(0)) {
+            // The writer (the first thread, only with video) drains and
+            // exits on `closed`.
+            let writer = m.data_sock.is_some() && !m.threads.is_empty();
+            if let Some(w) = writer.then(|| m.threads.remove(0)) {
                 let _ = w.join();
             }
             threads = std::mem::take(&mut m.threads);
@@ -2462,6 +2464,25 @@ mod tests {
     #[test]
     fn stop_is_bounded_when_the_receiver_hangs() {
         let fake = FakeMirror::start(Behaviour {
+            hang_feedback: true,
+            nack_after: None,
+            ..Behaviour::default()
+        });
+        let mut sink = connect(&fake, &MirrorOptions::default());
+        sink.start(&video_info(), Some(&audio_info())).unwrap();
+        stream(&mut sink, 5);
+        wait_for("feedback", || {
+            fake.rec().requests.iter().any(|r| r == "POST /feedback")
+        });
+        let t = Instant::now();
+        let _ = sink.stop();
+        assert!(t.elapsed() < Duration::from_secs(6), "{:?}", t.elapsed());
+    }
+
+    #[test]
+    fn stop_is_bounded_when_a_speaker_hangs() {
+        let fake = FakeMirror::start(Behaviour {
+            speaker: true,
             hang_feedback: true,
             nack_after: None,
             ..Behaviour::default()
