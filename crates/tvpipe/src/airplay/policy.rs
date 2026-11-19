@@ -198,6 +198,13 @@ impl Leads {
         video_ms: 100,
         audio_ms: 170,
     };
+    /// A receiver that cannot mirror. A Devialet Phantom II played
+    /// choppy, crackling audio at the wireless profile's 170 ms and clean
+    /// audio at 2000 ms (the `--latency` maximum).
+    pub const SPEAKER: Leads = Leads {
+        video_ms: 2000,
+        audio_ms: 2000,
+    };
 
     /// An explicit user latency (clamped to 5–2000 ms), else the wireless
     /// profile. §2.7 allows either profile without a route query; the

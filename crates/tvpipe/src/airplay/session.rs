@@ -451,7 +451,10 @@ impl<S: ControlStream> Session<S> {
                 .map_err(|e| Error::io("airplay: clone timing socket", e))?;
             Some(NtpResponder::start(sock, peer.ip())?)
         };
-        let leads = Leads::new(opts.latency_ms);
+        let leads = match opts.latency_ms {
+            None if !policy::has(features, bit::SCREEN_MIRRORING) => Leads::SPEAKER,
+            l => Leads::new(l),
+        };
         let mut session = Session {
             control_sock: control.socket().try_clone().ok(),
             control: Arc::new(Mutex::new(control)),
