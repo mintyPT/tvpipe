@@ -245,7 +245,7 @@ impl Leads {
     /// with audio.
     pub fn for_receiver(explicit_ms: Option<u32>, info: &Info, audio: bool) -> Leads {
         match explicit_ms {
-            None if !has(info.features, bit::SCREEN_MIRRORING) => Leads::SPEAKER,
+            None if audio_only(info.features) => Leads::SPEAKER,
             None if audio && lg(info) => Leads::LG,
             e => Leads::new(e),
         }
@@ -273,6 +273,29 @@ pub fn lg(info: &Info) -> bool {
 
 pub fn ms_to_samples(ms: u32) -> u32 {
     (ms as u64 * 44_100 / 1000) as u32
+}
+
+/// A receiver that cannot mirror (a speaker): `/info` has features, but
+/// not screen mirroring (feature 7). A missing `features` reads as 0 and
+/// does not make a receiver a speaker.
+pub fn audio_only(features: u64) -> bool {
+    features != 0 && !has(features, bit::SCREEN_MIRRORING)
+}
+
+/// Silence an audio-only receiver plays before the first frame. Its NTP
+/// clock is still settling when playback starts, and a Devialet Phantom
+/// II played the first moment choppy without it.
+pub const SPEAKER_LEAD_IN_MS: u32 = 1500;
+/// What stays of the audio lead after the lead-in, so the silence is not
+/// late itself.
+pub const LEAD_IN_MARGIN_MS: u32 = 250;
+
+/// Frames of lead-in silence (352 samples each) for an audio lead of
+/// `audio_ms`: up to [`SPEAKER_LEAD_IN_MS`], leaving
+/// [`LEAD_IN_MARGIN_MS`] of the lead free.
+pub fn lead_in_frames(audio_ms: u32) -> u32 {
+    let ms = SPEAKER_LEAD_IN_MS.min(audio_ms.saturating_sub(LEAD_IN_MARGIN_MS));
+    ms_to_samples(ms) / super::options::ALAC_FRAME_SAMPLES
 }
 
 // ---------------------------------------------------------------------------
@@ -398,6 +421,17 @@ pub fn volume_body(v: f64) -> Vec<u8> {
 mod tests {
     use super::*;
     use crate::util::vectors;
+
+    #[test]
+    fn speakers_and_lead_in() {
+        assert!(audio_only(1 << 9));
+        assert!(!audio_only(1 << bit::SCREEN_MIRRORING | 1 << 9));
+        assert!(!audio_only(0), "no features is not a speaker");
+        assert_eq!(lead_in_frames(Leads::SPEAKER.audio_ms), 187);
+        assert_eq!(lead_in_frames(300), 6);
+        assert_eq!(lead_in_frames(LEAD_IN_MARGIN_MS), 0);
+        assert_eq!(lead_in_frames(5), 0);
+    }
 
     fn session_infos() -> Vec<Info> {
         vectors::load("airplay-mirror/appletv-session.txt")

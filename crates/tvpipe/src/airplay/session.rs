@@ -6,8 +6,8 @@
 //!
 //! [`Session::establish`] runs everything up to the audio SETUP (so the
 //! canvas and audio format are known before the encoder starts);
-//! [`Session::start_video`] runs the video SETUP and the rest when the
-//! encoder's stream info is ready.
+//! [`Session::start_video`] runs the video SETUP (none for an audio-only
+//! receiver) and the rest when the encoder's stream info is ready.
 //!
 //! Sources: docs/airplay-mirroring.md §2, §3, §4, §5.3, §7.2, §7.3,
 //! §8.9; vectors tests/vectors/airplay-mirror/setup.txt,
@@ -357,6 +357,8 @@ pub struct Session<S: ControlStream> {
     pub info: Info,
     pub version: Option<String>,
     pub leads: Leads,
+    /// [`policy::audio_only`] of the first `/info`, decided once.
+    audio_only: bool,
     pub canvas: Canvas,
     pub audio: AudioStream,
     pub signals: Arc<Signals>,
@@ -461,7 +463,10 @@ impl<S: ControlStream> Session<S> {
             info.model.as_deref().unwrap_or("?"),
             version
         );
-        if !policy::has(features, bit::SCREEN_MIRRORING) {
+        let audio_only = policy::audio_only(features);
+        if audio_only {
+            info!("airplay: receiver cannot mirror (no feature 7); streaming audio only");
+        } else if !policy::has(features, bit::SCREEN_MIRRORING) {
             warn!("airplay: receiver does not advertise screen mirroring (feature 7)");
         }
 
@@ -524,6 +529,7 @@ impl<S: ControlStream> Session<S> {
             info,
             version,
             leads,
+            audio_only,
             canvas: Canvas {
                 width: 0,
                 height: 0,
@@ -868,7 +874,7 @@ impl<S: ControlStream> Session<S> {
     /// The receiver cannot mirror (no feature bit 7: a speaker such as a
     /// HomePod or a Devialet Phantom), so it gets audio only.
     pub fn audio_only(&self) -> bool {
-        !policy::has(self.info.features, bit::SCREEN_MIRRORING)
+        self.audio_only
     }
 
     /// SETUP #3 and the data connection (§4.7, §4.8).
@@ -930,7 +936,6 @@ impl<S: ControlStream> Session<S> {
     /// mirroring receiver.
     pub fn start_video(&mut self) -> Result<Option<TcpStream>> {
         let data = if self.audio_only() {
-            debug!("airplay: receiver cannot mirror; audio only");
             None
         } else {
             Some(self.connect_video()?)

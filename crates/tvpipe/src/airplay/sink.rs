@@ -90,13 +90,6 @@ const MAX_QUEUED_BYTES: usize = 8 << 20;
 const CLOCK_SHIFT_TOLERANCE: Duration = Duration::from_millis(1);
 /// Consecutive stale audio frames at start-up before giving up (§8.8).
 const MAX_STALE_AT_START: u32 = 128;
-/// Silence an audio-only receiver plays before the first frame. Its NTP
-/// clock is still settling when playback starts, and a Devialet Phantom
-/// II played the first moment choppy without it.
-const SPEAKER_LEAD_IN: Duration = Duration::from_millis(1500);
-/// What stays of the audio lead after the lead-in, so the silence is not
-/// late itself.
-const LEAD_IN_MARGIN: Duration = Duration::from_millis(250);
 /// Burst pacing: packets per window (§8.4).
 const BURST_PACKETS: u32 = 12;
 const BURST_WINDOW: Duration = Duration::from_millis(5);
@@ -817,6 +810,8 @@ struct Media {
     audio: Option<AudioState>,
     /// `None` for an audio-only receiver.
     data_sock: Option<TcpStream>,
+    /// The video writer, joined first at stop so it drains its queue.
+    writer: Option<JoinHandle<()>>,
     threads: Vec<JoinHandle<()>>,
 }
 
@@ -971,9 +966,7 @@ impl<S: ControlStream> MirrorSink<S> {
             window: (Instant::now(), 0),
             frames: 0,
             prime: if self.session.audio_only() {
-                let lead = Duration::from_millis(self.session.leads.audio_ms as u64);
-                let lead_in = SPEAKER_LEAD_IN.min(lead.saturating_sub(LEAD_IN_MARGIN));
-                (lead_in.as_secs_f64() * SAMPLE_RATE as f64) as u32 / ALAC_FRAME_SAMPLES
+                policy::lead_in_frames(self.session.leads.audio_ms)
             } else {
                 0
             },
@@ -997,8 +990,14 @@ impl<S: ControlStream> MirrorSink<S> {
     fn start_inner(&mut self, video: &VideoInfo, audio: Option<&AudioInfo>) -> Result<()> {
         let vstate = VideoState::new(video, self.session.leads.video_ms)?;
         let astate = self.audio_state(audio)?;
+        if self.session.audio_only() && astate.is_none() {
+            return Err(Error::unsupported(
+                "airplay: the receiver plays audio only, and there is no audio to send",
+            ));
+        }
         let data = self.session.start_video()?;
         let mut threads = Vec::new();
+        let mut writer = None;
         let clone = |s: &TcpStream| {
             s.try_clone()
                 .map_err(|e| Error::io("airplay: clone socket", e))
@@ -1033,9 +1032,11 @@ impl<S: ControlStream> MirrorSink<S> {
                 let shared = self.shared.clone();
                 let sock = clone(data)?;
                 let timeline = self.session.timeline.clone();
-                Self::spawn(&mut threads, "airplay-video", move || {
+                let mut spawned = Vec::new();
+                Self::spawn(&mut spawned, "airplay-video", move || {
                     writer_loop(&shared, sock, cipher, timeline)
                 })?;
+                writer = spawned.pop();
             }
             // Data connection reader: the receiver closing it (EOF, or a
             // reset when our frames were still unread) means it ended
@@ -1099,17 +1100,16 @@ impl<S: ControlStream> MirrorSink<S> {
                 rtcp_loop(&shared, &sock, &pk, ip)
             })?;
         }
-        debug!(
-            "airplay: {}: streaming {}x{} video{}",
-            self.name,
-            vstate.width,
-            vstate.height,
-            if astate.is_some() {
-                " and ALAC audio"
-            } else {
-                ""
-            }
-        );
+        match (&data, astate.is_some()) {
+            (None, _) => debug!("airplay: {}: streaming ALAC audio only", self.name),
+            (Some(_), audio) => debug!(
+                "airplay: {}: streaming {}x{} video{}",
+                self.name,
+                vstate.width,
+                vstate.height,
+                if audio { " and ALAC audio" } else { "" }
+            ),
+        }
         self.media = Some(Media {
             diag: Diag::default(),
             clock: self
@@ -1119,6 +1119,7 @@ impl<S: ControlStream> MirrorSink<S> {
             video: vstate,
             audio: astate,
             data_sock: data,
+            writer,
             threads,
         });
         Ok(())
@@ -1377,10 +1378,8 @@ impl<S: ControlStream> Sink for MirrorSink<S> {
         self.shared.cond.notify_all();
         let mut threads = Vec::new();
         if let Some(m) = self.media.as_mut() {
-            // The writer (the first thread, only with video) drains and
-            // exits on `closed`.
-            let writer = m.data_sock.is_some() && !m.threads.is_empty();
-            if let Some(w) = writer.then(|| m.threads.remove(0)) {
+            // The writer drains and exits on `closed`.
+            if let Some(w) = m.writer.take() {
                 let _ = w.join();
             }
             threads = std::mem::take(&mut m.threads);
@@ -1792,8 +1791,7 @@ mod tests {
             );
             sink.push(&audio(i)).unwrap();
         }
-        let prime = sink.media.as_ref().unwrap().audio.as_ref().unwrap().prime as usize;
-        assert_eq!(prime, 187, "1.5 s of 352-sample frames");
+        let prime = policy::lead_in_frames(Leads::SPEAKER.audio_ms) as usize;
         wait_for("audio", || fake.rec().audio.len() >= prime + 5);
         sink.stop().unwrap();
         let r = fake.rec();
@@ -2530,6 +2528,18 @@ mod tests {
         let t = Instant::now();
         let _ = sink.stop();
         assert!(t.elapsed() < Duration::from_secs(6), "{:?}", t.elapsed());
+    }
+
+    #[test]
+    fn speaker_without_audio_fails_to_start() {
+        let fake = FakeMirror::start(Behaviour {
+            speaker: true,
+            nack_after: None,
+            ..Behaviour::default()
+        });
+        let mut sink = connect(&fake, &MirrorOptions::default());
+        let e = sink.start(&video_info(), None).unwrap_err();
+        assert!(e.to_string().contains("audio only"), "{e}");
     }
 
     #[test]
