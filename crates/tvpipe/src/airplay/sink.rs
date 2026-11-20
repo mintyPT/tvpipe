@@ -89,6 +89,13 @@ const MAX_QUEUED_BYTES: usize = 8 << 20;
 const CLOCK_SHIFT_TOLERANCE: Duration = Duration::from_millis(1);
 /// Consecutive stale audio frames at start-up before giving up (§8.8).
 const MAX_STALE_AT_START: u32 = 128;
+/// Silence an audio-only receiver plays before the first frame. Its NTP
+/// clock is still settling when playback starts, and a Devialet Phantom
+/// II played the first moment choppy without it.
+const SPEAKER_LEAD_IN: Duration = Duration::from_millis(1500);
+/// What stays of the audio lead after the lead-in, so the silence is not
+/// late itself.
+const LEAD_IN_MARGIN: Duration = Duration::from_millis(250);
 /// Burst pacing: packets per window (§8.4).
 const BURST_PACKETS: u32 = 12;
 const BURST_WINDOW: Duration = Duration::from_millis(5);
@@ -481,6 +488,8 @@ struct AudioState {
     first_sync: bool,
     window: (Instant, u32),
     frames: u64,
+    /// Frames of silence sent before the first frame (audio-only receivers).
+    prime: u32,
 }
 
 fn lock_pk(p: &Mutex<Packetizer>) -> MutexGuard<'_, Packetizer> {
@@ -526,6 +535,34 @@ impl AudioState {
         self.last_sync = Some(Instant::now());
     }
 
+    /// `prime` frames of silence that play right before the frame
+    /// captured at `capture`, from RTP time 352 on.
+    fn send_lead_in(&mut self, timeline: &Timeline, capture: Instant) -> Result<()> {
+        if self.prime == 0 {
+            return Ok(());
+        }
+        let pcm = vec![0u8; ALAC_FRAME_SAMPLES as usize * 2 * self.channels as usize];
+        let silence = alac_verbatim(&pcm, self.channels)?;
+        for k in 0..self.prime {
+            let rtp = ALAC_FRAME_SAMPLES.wrapping_add(k * ALAC_FRAME_SAMPLES);
+            if k == 0 {
+                let ahead =
+                    ticks_to_duration(u64::from(self.prime * ALAC_FRAME_SAMPLES), SAMPLE_RATE);
+                let t = capture.checked_sub(ahead).unwrap_or(capture);
+                self.send_sync(timeline, rtp, t);
+            }
+            let packets = lock_pk(&self.packetizer).frame(rtp, &silence)?;
+            for p in packets {
+                self.pace();
+                if let Err(e) = self.data.send(&p) {
+                    debug!("airplay: audio send: {e}");
+                }
+            }
+        }
+        debug!("airplay: {} frames of silence before the audio", self.prime);
+        Ok(())
+    }
+
     fn push(
         &mut self,
         frame: &EncodedFrame,
@@ -546,7 +583,10 @@ impl AudioState {
                 return Ok(SinkStatus::Dropped);
             }
             self.started = true;
-            self.offset = ALAC_FRAME_SAMPLES.wrapping_sub(frame.pts as u32);
+            self.offset = ALAC_FRAME_SAMPLES
+                .wrapping_add(self.prime * ALAC_FRAME_SAMPLES)
+                .wrapping_sub(frame.pts as u32);
+            self.send_lead_in(timeline, capture)?;
         }
         let samples = (frame.data.len() / (2 * self.channels as usize)) as u32;
         if let (Some(last), Some(last_capture)) = (self.last_pts, self.last_capture) {
@@ -673,7 +713,8 @@ struct Media {
     clock: SinkClock,
     video: VideoState,
     audio: Option<AudioState>,
-    data_sock: TcpStream,
+    /// `None` for an audio-only receiver.
+    data_sock: Option<TcpStream>,
     threads: Vec<JoinHandle<()>>,
 }
 
@@ -811,6 +852,13 @@ impl<S: ControlStream> MirrorSink<S> {
             first_sync: true,
             window: (Instant::now(), 0),
             frames: 0,
+            prime: if self.session.audio_only() {
+                let lead = Duration::from_millis(self.session.leads.audio_ms as u64);
+                let lead_in = SPEAKER_LEAD_IN.min(lead.saturating_sub(LEAD_IN_MARGIN));
+                (lead_in.as_secs_f64() * SAMPLE_RATE as f64) as u32 / ALAC_FRAME_SAMPLES
+            } else {
+                0
+            },
         }))
     }
 
@@ -832,25 +880,6 @@ impl<S: ControlStream> MirrorSink<S> {
         let vstate = VideoState::new(video, self.session.leads.video_ms)?;
         let astate = self.audio_state(audio)?;
         let data = self.session.start_video()?;
-        let cipher = if self.session.hap {
-            VideoCipher::chacha(&keys::video_key(
-                &self.session.secret.0,
-                self.session.video_id,
-            )?)
-        } else {
-            // §5.2: K with FairPlay; without it the random `shk` we sent
-            // (audio then goes in the clear). Untested on hardware.
-            let shk = match (&self.session.fairplay, self.session.video_shk) {
-                (Some(fp), _) => fp.master,
-                (None, Some(shk)) => {
-                    warn!("airplay: legacy profile without FairPlay (untested on any receiver)");
-                    shk
-                }
-                (None, None) => return Err(Error::protocol("airplay: no video key")),
-            };
-            let (k, iv) = keys::legacy_video_key_iv(&shk, self.session.video_id);
-            VideoCipher::aes_ctr(&k, &iv)?
-        };
         let mut threads = Vec::new();
         let clone = |s: &TcpStream| {
             s.try_clone()
@@ -858,51 +887,77 @@ impl<S: ControlStream> MirrorSink<S> {
         };
         self.shared.answered();
 
-        // Writer.
-        {
-            let shared = self.shared.clone();
-            let sock = clone(&data)?;
-            let timeline = self.session.timeline.clone();
-            Self::spawn(&mut threads, "airplay-video", move || {
-                writer_loop(&shared, sock, cipher, timeline)
-            })?;
-        }
-        // Data connection reader: the receiver closing it (EOF, or a
-        // reset when our frames were still unread) means it ended
-        // mirroring (§4.14); a receiver that is gone (another address,
-        // off the network) cannot close anything. Other errors (the
-        // kernel giving up on retransmissions) mean it is lost.
-        {
-            let shared = self.shared.clone();
-            let mut sock = clone(&data)?;
-            Self::spawn(&mut threads, "airplay-data", move || {
-                let mut buf = [0u8; 1024];
-                let error = loop {
-                    match sock.read(&mut buf) {
-                        Ok(0) => break None,
-                        Err(e) if e.kind() == std::io::ErrorKind::ConnectionReset => break None,
-                        Ok(n) => trace!("airplay: {n} bytes on the video data connection"),
-                        Err(e)
-                            if matches!(
-                                e.kind(),
-                                std::io::ErrorKind::WouldBlock
-                                    | std::io::ErrorKind::TimedOut
-                                    | std::io::ErrorKind::Interrupted
-                            ) => {}
-                        Err(e) => break Some(e),
+        if let Some(data) = &data {
+            let cipher = if self.session.hap {
+                VideoCipher::chacha(&keys::video_key(
+                    &self.session.secret.0,
+                    self.session.video_id,
+                )?)
+            } else {
+                // §5.2: K with FairPlay; without it the random `shk` we sent
+                // (audio then goes in the clear). Untested on hardware.
+                let shk = match (&self.session.fairplay, self.session.video_shk) {
+                    (Some(fp), _) => fp.master,
+                    (None, Some(shk)) => {
+                        warn!(
+                            "airplay: legacy profile without FairPlay (untested on any receiver)"
+                        );
+                        shk
                     }
+                    (None, None) => return Err(Error::protocol("airplay: no video key")),
                 };
-                if shared.stopping.load(Ordering::Acquire) {
-                    return;
-                }
-                match error {
-                    None => {
-                        info!("airplay: receiver closed the video connection");
-                        shared.finished.store(true, Ordering::Release);
+                let (k, iv) = keys::legacy_video_key_iv(&shk, self.session.video_id);
+                VideoCipher::aes_ctr(&k, &iv)?
+            };
+
+            // Writer.
+            {
+                let shared = self.shared.clone();
+                let sock = clone(data)?;
+                let timeline = self.session.timeline.clone();
+                Self::spawn(&mut threads, "airplay-video", move || {
+                    writer_loop(&shared, sock, cipher, timeline)
+                })?;
+            }
+            // Data connection reader: the receiver closing it (EOF, or a
+            // reset when our frames were still unread) means it ended
+            // mirroring (§4.14); a receiver that is gone (another address,
+            // off the network) cannot close anything. Other errors (the
+            // kernel giving up on retransmissions) mean it is lost.
+            {
+                let shared = self.shared.clone();
+                let mut sock = clone(data)?;
+                Self::spawn(&mut threads, "airplay-data", move || {
+                    let mut buf = [0u8; 1024];
+                    let error = loop {
+                        match sock.read(&mut buf) {
+                            Ok(0) => break None,
+                            Err(e) if e.kind() == std::io::ErrorKind::ConnectionReset => {
+                                break None
+                            }
+                            Ok(n) => trace!("airplay: {n} bytes on the video data connection"),
+                            Err(e)
+                                if matches!(
+                                    e.kind(),
+                                    std::io::ErrorKind::WouldBlock
+                                        | std::io::ErrorKind::TimedOut
+                                        | std::io::ErrorKind::Interrupted
+                                ) => {}
+                            Err(e) => break Some(e),
+                        }
+                    };
+                    if shared.stopping.load(Ordering::Acquire) {
+                        return;
                     }
-                    Some(e) => shared.fail(Error::io("airplay: video data connection", e)),
-                }
-            })?;
+                    match error {
+                        None => {
+                            info!("airplay: receiver closed the video connection");
+                            shared.finished.store(true, Ordering::Release);
+                        }
+                        Some(e) => shared.fail(Error::io("airplay: video data connection", e)),
+                    }
+                })?;
+            }
         }
         // Feedback (§4.13), first one immediately.
         {
@@ -977,6 +1032,9 @@ impl<S: ControlStream> MirrorSink<S> {
         let Some(m) = self.media.as_mut() else {
             return Err(Error::protocol("airplay: push before start"));
         };
+        if m.data_sock.is_none() {
+            return Ok(SinkStatus::Dropped);
+        }
         let now = Instant::now();
         let p = frame_payload(&frame.data, m.video.length_size)?;
         if p.idr {
@@ -1040,7 +1098,7 @@ impl<S: ControlStream> MirrorSink<S> {
         let Some(a) = m.audio.as_mut() else {
             return Ok(SinkStatus::Dropped);
         };
-        if !self.shared.first_frame_sent.load(Ordering::Acquire) {
+        if m.data_sock.is_some() && !self.shared.first_frame_sent.load(Ordering::Acquire) {
             return Ok(SinkStatus::Dropped);
         }
         let now = Instant::now();
@@ -1201,8 +1259,10 @@ impl<S: ControlStream> Sink for MirrorSink<S> {
         self.shared.cond.notify_all();
         let mut threads = Vec::new();
         if let Some(m) = self.media.as_mut() {
-            // The writer drains and exits on `closed`.
-            if let Some(w) = (!m.threads.is_empty()).then(|| m.threads.remove(0)) {
+            // The writer (the first thread, only with video) drains and
+            // exits on `closed`.
+            let writer = m.data_sock.is_some() && !m.threads.is_empty();
+            if let Some(w) = writer.then(|| m.threads.remove(0)) {
                 let _ = w.join();
             }
             threads = std::mem::take(&mut m.threads);
@@ -1211,7 +1271,9 @@ impl<S: ControlStream> Sink for MirrorSink<S> {
         self.shared.cond.notify_all();
         let r = self.session.teardown(STOP_TEARDOWN_TIMEOUT);
         if let Some(m) = self.media.take() {
-            let _ = m.data_sock.shutdown(std::net::Shutdown::Both);
+            if let Some(s) = &m.data_sock {
+                let _ = s.shutdown(std::net::Shutdown::Both);
+            }
             if let Some(a) = &m.audio {
                 debug!("airplay: sent {} audio frames", a.frames);
             }
@@ -1532,6 +1594,43 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn speaker_gets_audio_without_video() {
+        let fake = FakeMirror::start(Behaviour {
+            speaker: true,
+            nack_after: None,
+            ..Behaviour::default()
+        });
+        let mut sink = connect(&fake, &MirrorOptions::default());
+        assert_eq!(sink.session().leads, Leads::SPEAKER);
+        sink.start(&video_info(), Some(&audio_info())).unwrap();
+        let (_, sps, pps) = avcc();
+        for i in 0..20u64 {
+            assert_eq!(
+                sink.push(&video(i, &sps, &pps)).unwrap(),
+                SinkStatus::Dropped
+            );
+            sink.push(&audio(i)).unwrap();
+        }
+        let prime = sink.media.as_ref().unwrap().audio.as_ref().unwrap().prime as usize;
+        assert_eq!(prime, 187, "1.5 s of 352-sample frames");
+        wait_for("audio", || fake.rec().audio.len() >= prime + 5);
+        sink.stop().unwrap();
+        let r = fake.rec();
+        assert!(r.video.is_empty());
+        let video_setup = r.setup_bodies.iter().any(|b| {
+            b.get("streams").and_then(Plist::as_array).is_some_and(|s| {
+                s.iter()
+                    .any(|s| s.get("type").and_then(Plist::as_i128) == Some(110))
+            })
+        });
+        assert!(!video_setup, "a speaker gets no video SETUP");
+        let silence = alac_verbatim(&[0u8; 352 * 4], 2).unwrap();
+        assert!(r.audio[..prime].iter().all(|a| a.2 == silence));
+        assert_eq!(r.audio[prime].2, alac_verbatim(&pcm(0), 2).unwrap());
+        assert_eq!(r.audio[prime].1, r.audio[0].1 + prime as u32 * 352);
     }
 
     #[test]
@@ -2043,6 +2142,25 @@ mod tests {
     #[test]
     fn stop_is_bounded_when_the_receiver_hangs() {
         let fake = FakeMirror::start(Behaviour {
+            hang_feedback: true,
+            nack_after: None,
+            ..Behaviour::default()
+        });
+        let mut sink = connect(&fake, &MirrorOptions::default());
+        sink.start(&video_info(), Some(&audio_info())).unwrap();
+        stream(&mut sink, 5);
+        wait_for("feedback", || {
+            fake.rec().requests.iter().any(|r| r == "POST /feedback")
+        });
+        let t = Instant::now();
+        let _ = sink.stop();
+        assert!(t.elapsed() < Duration::from_secs(6), "{:?}", t.elapsed());
+    }
+
+    #[test]
+    fn stop_is_bounded_when_a_speaker_hangs() {
+        let fake = FakeMirror::start(Behaviour {
+            speaker: true,
             hang_feedback: true,
             nack_after: None,
             ..Behaviour::default()

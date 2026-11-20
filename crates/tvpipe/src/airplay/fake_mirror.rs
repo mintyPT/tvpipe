@@ -90,6 +90,9 @@ pub struct Behaviour {
     /// Advertise FairPlay (feature 14). The fake cannot do it, so both
     /// `/fp-setup` requests get 404 (a FairPlay build goes on without).
     pub fairplay_bit: bool,
+    /// An audio-only speaker (like a Devialet Phantom): no screen
+    /// mirroring bit, and a video SETUP answered without `dataPort`.
+    pub speaker: bool,
 }
 
 impl Default for Behaviour {
@@ -107,6 +110,7 @@ impl Default for Behaviour {
             legacy_no_fairplay: false,
             hang_feedback: false,
             fairplay_bit: false,
+            speaker: false,
         }
     }
 }
@@ -213,11 +217,16 @@ fn reply(req: &Request, status: u16, body: Option<Plist>) -> Response {
     r
 }
 
-fn info(with_displays: bool, fairplay: bool) -> Plist {
+fn info(with_displays: bool, fairplay: bool, speaker: bool) -> Plist {
     let features = if fairplay {
         FEATURES | 1 << 14
     } else {
         FEATURES
+    };
+    let features = if speaker {
+        features & !(1 << 7)
+    } else {
+        features
     };
     let mut p = Plist::dict()
         .with("model", "AppleTV6,2")
@@ -284,6 +293,7 @@ fn handle(req: &Request, ctx: &Arc<Ctx>) -> Response {
             Some(info(
                 ctx.session.load(Ordering::Acquire),
                 ctx.behaviour.fairplay_bit,
+                ctx.behaviour.speaker,
             )),
         ),
         "RECORD" => {
@@ -375,6 +385,12 @@ fn handle(req: &Request, ctx: &Arc<Ctx>) -> Response {
                             )]),
                     );
                 }
+                Some(110) if ctx.behaviour.speaker => {
+                    out = out.with(
+                        "streams",
+                        Plist::array([Plist::dict().with("type", 110i64)]),
+                    );
+                }
                 Some(110) => {
                     let s = stream.unwrap();
                     let id = s
@@ -422,7 +438,10 @@ fn run_events<S: Read + std::io::Write>(conn: &mut Conn<S>, ctx: &Ctx) {
     {
         let body = Plist::dict()
             .with("type", "updateInfo")
-            .with("value", info(true, ctx.behaviour.fairplay_bit))
+            .with(
+                "value",
+                info(true, ctx.behaviour.fairplay_bit, ctx.behaviour.speaker),
+            )
             .to_bytes();
         let req = Request::new("POST", "/command", crate::net::http::Version::Rtsp10)
             .header("CSeq", "1")
