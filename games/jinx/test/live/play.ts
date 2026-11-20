@@ -480,6 +480,34 @@ try {
     log(`phone: guessed "${guess}" (${right ? "right" : "wrong"}) after ${turn} card(s)`);
   };
 
+  /**
+   * Dropping out (not with --shots): at the first write a bot's phone
+   * goes for 9 s and comes back by name (its token lost, as on another
+   * phone): the TV shows the rejoin badge, the host page a Rejoin button
+   * (Phil's phone stays: the timing check watches it).
+   */
+  const dropped = new Set<string>();
+  const rejoin = de ? "Rückkehrcode" : "Rejoin code";
+  const rejoinChecks = async (phase: string, at: string) => {
+    if (args.shots) return;
+    if (phase === "write" && !dropped.has("bot")) {
+      dropped.add("bot");
+      const name = await win.eval<string>(`(() => { const b = jinx.robots[0]; b.client.drop({ away: 9000, forget: true }); return b.name; })()`);
+      log(`${name}'s phone dropped out (back by name in 9 s)`);
+      await sleep(6000);
+      await Promise.all([tv.screenshot(`${out}/tv-${at}-rejoin.png`), screen.screenshot(`${out}/screen-${at}-rejoin.png`)]);
+      const badge = await screen.eval<string>(`document.querySelector("tvpipe-rejoin")?.shadowRoot.querySelector(".card.on")?.innerText ?? ""`);
+      const button = await win.eval<boolean>(`[...document.querySelectorAll("button")].some((b) => b.textContent === ${JSON.stringify(rejoin)})`);
+      log(`the TV's rejoin badge: ${JSON.stringify(badge.replace(/\n/g, " / "))}; the host's Rejoin button: ${button}`);
+      if (!badge.includes(name) || !button) throw new Error("no rejoin badge on the TV, or no Rejoin button");
+      await win.eval(`[...document.querySelectorAll("button")].find((b) => b.textContent === ${JSON.stringify(rejoin)}).click(); true`);
+      await win.until(`!!document.querySelector("dialog.tvpipe-rejoin")`);
+      await win.screenshot(`${out}/host-${at}-rejoin.png`);
+      await win.until(`!document.querySelector("dialog.tvpipe-rejoin") && jinx.party.players.find((p) => p.name === ${JSON.stringify(name)}).connected`, 15_000);
+      log(`${name} is back by name; the host's dialog closed by itself`);
+    }
+  };
+
   const seen = new Set<string>();
   let n = 0;
   let again = false;
@@ -497,6 +525,7 @@ try {
     seen.add(k);
     const at = `${games}-${String(++n).padStart(2, "0")}`;
     const mine = s.guesser === s.phil;
+    if (games === 1) await rejoinChecks(s.phase, at);
     if (games === 2 && s.phase !== "lobby") {
       // The second game started: one look, then the End button.
       await shot(`${at}-again-${s.phase}`);

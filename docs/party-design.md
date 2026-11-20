@@ -260,6 +260,12 @@ shows*. Each client has one **view**: `{ roster, room | screen, me }`.
 - `hello` with a known `resume` is the same player: `connected` again,
   the full view, pending actions replayed. A second socket with the same
   token replaces the first (`bye replaced`): the newest tab wins.
+- Without the token (another browser, another phone) the player comes
+  back by typing the same name while they are away (a new token; the old
+  one stops working; `reclaim: false` turns it off), or with a rejoin
+  link the host page shows them (`party.showRejoin`). TV pages show the
+  join code while someone is missing (the client's rejoin badge).
+  Details: party-protocol.md §4.1.
 - A lost socket makes the player `connected: false` (`away` event); the
   game decides what that means (skip their vote at the deadline). Players
   are removed only by `leave`, `party.kick()` or the game.

@@ -17,7 +17,7 @@ const en = (f) => ({
   /** The other language, for the switch. */
   otherLang: "Deutsch",
   // Joining and leaving.
-  nameTaken: "Someone already has that name.",
+  nameTaken: "Someone already has that name. If that is you on another phone, close the game there first.",
   pickAnother: "Pick another name.",
   full: "The game is full.",
   closed: "A game is running and it's closed to newcomers. Ask the VIP to let you in at the next game.",
@@ -150,7 +150,7 @@ const de = (f) => ({
   yourName: "Dein Name",
   join: "Mitspielen",
   otherLang: "English",
-  nameTaken: "Den Namen hat schon jemand.",
+  nameTaken: "Den Namen hat schon jemand. Bist du das auf einem anderen Handy? Dann schließ das Spiel dort zuerst.",
   pickAnother: "Nimm einen anderen Namen.",
   full: "Das Spiel ist voll.",
   closed: "Hier läuft gerade ein Spiel, und Neue kommen nicht mehr rein. Frag den VIP, ob du beim nächsten Spiel mitmachen kannst.",

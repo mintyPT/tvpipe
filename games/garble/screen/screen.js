@@ -272,6 +272,8 @@ function render(view) {
   const text = joinText(view.join);
   // The short link on a line of its own, never wrapped.
   /** @type {HTMLElement} */ (document.getElementById("corner-text")).replaceChildren(t.joinCorner, ...(text ? [h("b", {}, text)] : []));
+  // Elsewhere tvpipe's rejoin badge shows the code while a phone is away.
+  client.joinVisible = !corner.hidden || s.phase === "lobby";
 }
 
 function frame() {

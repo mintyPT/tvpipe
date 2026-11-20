@@ -499,6 +499,8 @@ function render(view) {
     /** @type {HTMLElement} */ (document.getElementById("corner-qr")).innerHTML = qrSvg(view.join.qr, { quiet: 2 });
   }
   if (!corner.hidden) /** @type {HTMLElement} */ (document.getElementById("corner-text")).textContent = t.corner[late] ?? "";
+  // Elsewhere tvpipe's rejoin badge shows the code while a phone is away.
+  client.joinVisible = !corner.hidden || s.phase === "lobby";
   // This round's newcomers, discreetly.
   const names = /** @type {string[]} */ (s.phase !== "lobby" && Array.isArray(s.joined) ? s.joined : []);
   const more = typeof s.joinedMore === "number" ? s.joinedMore : 0;

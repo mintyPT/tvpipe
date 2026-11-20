@@ -11,6 +11,10 @@
  *   party.input({ x: 0.3, y: -1 });          // continuous input, latest wins
  */
 
+import { RejoinBadge, type Corner, type RejoinBadgeOptions } from "./rejoin.ts";
+
+export type { Corner, RejoinBadgeOptions } from "./rejoin.ts";
+
 export const PROTOCOL = 1;
 
 /** `bye` reasons after which the client does not reconnect. */
@@ -210,6 +214,11 @@ export interface PartyClientOptions {
   storage?: StorageLike | null | undefined;
   /** Default the global one. */
   WebSocket?: WebSocketFactory | undefined;
+  /**
+   * Screens in a page: the rejoin badge ({@link PartyClient.rejoinBadge}),
+   * on by default; `false` turns it off (a game that draws its own).
+   */
+  rejoinBadge?: RejoinBadgeOptions | false | undefined;
 }
 
 export type Status = "idle" | "connecting" | "open" | "reconnecting" | "closed";
@@ -245,7 +254,19 @@ export class PartyClient {
     const url = opts.url ?? `${loc.protocol === "https:" ? "wss:" : "ws:"}//${loc.host}${SOCKET_PATH}`;
     const r = opts.role ?? h.get("role") ?? "player";
     const role: Role = r === "screen" || r === "watch" ? r : "player";
-    return new PartyClient({ ...opts, url, room, key, role });
+    const client = new PartyClient({ ...opts, url, room, key, role });
+    // A rejoin link (`#…&p=TOKEN`, Party.rejoinLink): this phone is that
+    // player now. The token goes to storage and out of the address bar.
+    const resume = h.get("p");
+    if (role === "player" && resume) {
+      client.#save({ resume });
+      h.delete("p");
+      try {
+        const rest = h.toString();
+        globalThis.history?.replaceState(globalThis.history.state, "", `${loc.pathname}${loc.search}${rest ? `#${rest}` : ""}`);
+      } catch {}
+    }
+    return client;
   }
 
   readonly url: string;
@@ -260,6 +281,16 @@ export class PartyClient {
   status: Status = "idle";
   /** The reason of the last `bye`, if any. */
   byeReason: string | null = null;
+  /**
+   * A screen's rejoin badge (TV and watch pages in a browser; `null`
+   * elsewhere or when turned off): while a game runs and a player's
+   * phone has been away for a few seconds, a card in a corner with the
+   * join QR code, the short link and who is missing. Set
+   * `rejoinBadge.corner` to keep it clear of the game's picture.
+   */
+  readonly rejoinBadge: RejoinBadge | null = null;
+  /** Not before this (`Date.now()`): reconnects after a test's {@link drop}. */
+  #holdUntil = 0;
 
   readonly #WS: WebSocketFactory;
   readonly #listeners = new Map<string, Set<(...args: any[]) => void>>();
@@ -299,6 +330,25 @@ export class PartyClient {
     this.role = opts.role ?? "player";
     this.storage = opts.storage !== undefined ? opts.storage : safeStorage();
     this.#WS = opts.WebSocket ?? (globalThis.WebSocket as unknown as WebSocketFactory);
+    const doc = (globalThis as any).document as Document | undefined;
+    if (this.role !== "player" && opts.rejoinBadge !== false && doc?.createElement) {
+      const badge = new RejoinBadge(doc, { qrSvg, joinText, now: () => Date.now() }, opts.rejoinBadge || {});
+      this.rejoinBadge = badge;
+      this.on("view", (view) => badge.update(view));
+    }
+  }
+
+  /**
+   * Whether the game shows the join code itself right now (a corner of
+   * its own for latecomers, the lobby): the rejoin badge steps aside
+   * meanwhile. Set it whenever that changes.
+   */
+  get joinVisible(): boolean {
+    return this.rejoinBadge?.suppressed ?? false;
+  }
+
+  set joinVisible(on: boolean) {
+    if (this.rejoinBadge) this.rejoinBadge.suppressed = on;
   }
 
   get #storageKey(): string {
@@ -318,6 +368,12 @@ export class PartyClient {
     } catch {
       return null;
     }
+  }
+
+  #save(identity: { resume: string; name?: string }): void {
+    try {
+      this.storage?.setItem(this.#storageKey, JSON.stringify(identity));
+    } catch {}
   }
 
   /** Whether `connect()` can come back as an earlier player. */
@@ -423,7 +479,7 @@ export class PartyClient {
       if (this.status === "closed") return;
       this.#setStatus(this.you ? "reconnecting" : "connecting");
       const delay = Math.min(5000, 250 * 2 ** this.#attempt++) * (0.75 + Math.random() * 0.5);
-      this.#retry = setTimeout(() => this.#open(), delay);
+      this.#retry = setTimeout(() => this.#open(), Math.max(delay, this.#holdUntil - Date.now()));
     };
   }
 
@@ -502,11 +558,7 @@ export class PartyClient {
         this.#rev = msg["rev"] ?? 0;
         this.#attempt = 0;
         this.#sample(0, msg["now"]);
-        if (this.role === "player" && msg["you"]?.resume) {
-          try {
-            this.storage?.setItem(this.#storageKey, JSON.stringify({ resume: msg["you"].resume, name: msg["you"].name }));
-          } catch {}
-        }
+        if (this.role === "player" && msg["you"]?.resume) this.#save({ resume: msg["you"].resume, name: msg["you"].name });
         this.#setStatus("open");
         // Continue after what the host has seen; resend what it has not acked.
         const last = Number(msg["you"]?.lastAct ?? 0);
@@ -716,8 +768,15 @@ export class PartyClient {
     (globalThis as any).document?.removeEventListener?.("visibilitychange", this.#onVisible);
   }
 
-  /** For tests: drop the socket as a network loss would (the client reconnects). */
-  drop(): void {
+  /**
+   * For tests: drop the socket as a network loss would; the client
+   * reconnects by itself, after `away` ms at the earliest. `forget`:
+   * as if the page came back on another phone (the saved token is gone;
+   * the player comes back by name).
+   */
+  drop(opts: { away?: number; forget?: boolean } = {}): void {
+    if (opts.forget) this.#forget();
+    this.#holdUntil = Date.now() + (opts.away ?? 0);
     try {
       this.#ws?.close(4999, "dropped");
     } catch {}

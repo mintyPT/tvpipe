@@ -41,7 +41,7 @@ const en = (f) => ({
   // What the party or the host refused (PartyError codes).
   /** @type {Record<string, string>} */
   errors: {
-    "name-taken": "Someone here already has that name. Pick another.",
+    "name-taken": "Someone here already has that name. Pick another, or if that is you on another phone, close the game there first.",
     "name-invalid": "Pick another name.",
     full: "The table is full.",
     locked: "This game is closed to new players right now.",
@@ -304,7 +304,7 @@ const de = (f) => ({
     "room-closed": "Das Spiel ist vorbei. Danke fürs Mitspielen!",
   },
   errors: {
-    "name-taken": "Den Namen hat schon jemand. Nimm einen anderen.",
+    "name-taken": "Den Namen hat schon jemand. Nimm einen anderen, oder schließ das Spiel auf deinem anderen Handy, wenn du das bist.",
     "name-invalid": "Nimm einen anderen Namen.",
     full: "Der Tisch ist voll.",
     locked: "Gerade kommt hier niemand Neues rein.",

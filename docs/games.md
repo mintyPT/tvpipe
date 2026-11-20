@@ -246,6 +246,31 @@ the phone's word kept within the second before it arrived; ordering by
 it is fairer than by arrival (tunnels differ by tens of ms). A phone can
 time its own sounds to the TV with `client.hostNow() + client.tvDelay`.
 
+**Players drop out, and every game must take them back.** At a party
+phones lose the signal, lock, reload, or open the link in another
+browser or on another phone. The library does the returning: the same
+phone resumes with its token; another phone gets the player's seat back
+by typing the same name (even when the room is locked or closed to
+newcomers); the TV page draws a rejoin badge (the join QR code, the
+short link and who is missing) while a game is in progress and someone
+has been away for a few seconds; the host page can show a player their
+own code (`party.showRejoin(player)`). What a game must do:
+
+- Keep going without them: deadlines on every phase that waits for
+  players (`collect` with `until`), and never a turn that only an away
+  player can end.
+- Keep their place: an away player stays in the game (`player.connected`
+  is false meanwhile), with their score and their part of the round;
+  their phone gets the whole view back (`me` included) and carries on.
+- Keep the badge clear: `client.joinVisible = true` while the TV shows
+  its own join code (the lobby, a corner for latecomers);
+  `client.rejoinBadge.corner` when bottom-right covers something.
+- A "Rejoin code" button beside away players on the host page
+  (`party.showRejoin(p)`, feature-detected for older tvpipes).
+- Test it: a whole game played through `dropOuts()` from
+  `@tvpipe/party/testing` (phones dropping out and coming back, by token
+  and by name, all game long) ends with everyone in it.
+
 **TypeScript and bundlers.** Install the package for its types
 (`npm install --save-dev @tvpipe/party`), then make the built files
 import tvpipe's copy: rewrite `"@tvpipe/party"` to
@@ -567,8 +592,11 @@ browser; nothing is installed.
 
 The link carries the room code and a key in its fragment; only people
 who see the QR code can join. A phone that locks or loses the network
-reconnects by itself and gets everything it missed. Whether latecomers
-can join a running game is the game's choice.
+reconnects by itself and gets everything it missed; a player on another
+phone (or browser) types the same name to get their seat back, and the
+TV shows the code while someone is missing. Whether latecomers can join
+a running game is the game's choice; players who were in it can always
+come back.
 
 ## The window and the browser
 

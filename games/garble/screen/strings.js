@@ -63,7 +63,7 @@ const EN = {
   reactions: ["haha!", "what?!", "nooo", "genius"],
   reconnecting: "Reconnecting…",
   over: "The game has ended",
-  joinCorner: "Join for the next round",
+  joinCorner: "Join for the next round, or rejoin",
 };
 
 /** @type {Strings} */
@@ -119,7 +119,7 @@ const DE = {
   reactions: ["haha!", "was?!", "neiin", "genial"],
   reconnecting: "Verbindung wird wiederhergestellt…",
   over: "Das Spiel ist zu Ende",
-  joinCorner: "Ab der nächsten Runde dabei",
+  joinCorner: "Ab der nächsten Runde dabei, oder wieder rein",
 };
 
 /** @param {string} lang */

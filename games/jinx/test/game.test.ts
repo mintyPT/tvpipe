@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import { Party } from "@tvpipe/party";
-import { MemoryRelay } from "@tvpipe/party/testing";
+import { dropOuts, MemoryRelay } from "@tvpipe/party/testing";
 
 import { Bot, CATEGORY_DE, FALLBACK, type BotOptions } from "../game/bots.ts";
 import { Jinx, type Timings } from "../game/game.ts";
@@ -216,6 +216,26 @@ test("a whole game with 4 bots: every player guesses twice, the room's bank adds
   }
 });
 
+
+test("phones drop out and come back all game long (a lost signal, another phone): the game ends with everyone in it", async () => {
+  const { party, g, players, phases, close } = await setup(5);
+  try {
+    const chaos = dropOuts(
+      players.map((b) => b.client),
+      { rng: seeded(5), every: 100, away: [0, 800], maxAway: 2 },
+    );
+    const end = new Promise((r) => g.once("end", r));
+    await players[0]!.client.act("start");
+    await end;
+    await chaos.stop();
+    assert.ok(chaos.counts.network > 0 && chaos.counts.device > 0, JSON.stringify(chaos.counts));
+    assert.equal(phases.at(-1), "end");
+    assert.equal(party.players.length, 5, "nobody came back as somebody new");
+    await until(() => players.every((b) => b.client.view["me"]?.task === "final"));
+  } finally {
+    close();
+  }
+});
 test("3 players write two clues each; 6 rounds", async () => {
   const { g, players, phases, screens, close } = await setup(3);
   try {

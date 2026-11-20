@@ -323,6 +323,27 @@ export const SCENARIOS: Scenario[] = [
     steps: ["c1 open", `c1 > {"t":"hello","v":1,"room":"$ROOM","role":"player","key":"$JOIN","resume":"nope","name":"Ann"}`],
   },
   {
+    name: "an away player's name takes the seat back with a new token; the old token is gone",
+    steps: [
+      "c1 open",
+      `c1 > ${hello("Ann")}`,
+      "c2 open",
+      `c2 > ${hello("Bob")}`,
+      "c3 open",
+      `c3 > ${hello("BOB")}`,
+      "c2 close",
+      "c4 open",
+      `c4 > ${hello("bob")}`,
+      "c5 open",
+      `c5 > {"t":"hello","v":1,"room":"$ROOM","role":"player","key":"$JOIN","resume":"$R2"}`,
+    ],
+  },
+  {
+    name: "reclaim off: an away player's name stays taken",
+    options: { reclaim: false },
+    steps: ["c1 open", `c1 > ${hello("Ann")}`, "c1 close", "c2 open", `c2 > ${hello("Ann")}`],
+  },
+  {
     name: "wrong key",
     steps: ["c1 open", `c1 > {"t":"hello","v":1,"room":"$ROOM","role":"player","key":"nope","name":"Ann"}`],
   },
@@ -682,6 +703,7 @@ function partyOptions(o: JsonObject | undefined): Record<string, unknown> {
   if (typeof o["maxPlayers"] === "number") out["maxPlayers"] = o["maxPlayers"];
   if (isObject(o["limits"])) out["limits"] = o["limits"];
   if (typeof o["lateJoin"] === "string") out["lateJoin"] = o["lateJoin"];
+  if (typeof o["reclaim"] === "boolean") out["reclaim"] = o["reclaim"];
   return out;
 }
 

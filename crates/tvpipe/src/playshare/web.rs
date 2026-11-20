@@ -30,6 +30,8 @@ pub static FILES: &[Asset] = web![
     "lib/limits.js",
     "lib/names.js",
     "lib/party.js",
+    "lib/rejoin-dialog.js",
+    "lib/rejoin.js",
     "lib/relay.js",
     "lib/surface.js",
     "lib/sync.js",

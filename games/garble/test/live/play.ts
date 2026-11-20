@@ -186,6 +186,45 @@ try {
     await phone.drag(Array.from({ length: 14 }, (_, i) => pt(0.38 + (0.24 * i) / 13, 0.62 + 0.06 * Math.sin((i / 13) * Math.PI))));
   };
 
+  /**
+   * Dropping out (not with --shots): at the first reveal a bot's phone
+   * goes for 9 s and comes back by name (its token lost, as on another
+   * phone): the TV shows the rejoin badge, the host page a Rejoin button;
+   * at the first scores Phil's phone forgets everything, reloads and
+   * joins with the same name: his seat again.
+   */
+  const dropped = new Set<string>();
+  const rejoin = lang === "de" ? "Rückkehrcode" : "Rejoin code";
+  const rejoinChecks = async (phase: string) => {
+    if (shots) return;
+    if (phase === "reveal" && !dropped.has("bot")) {
+      dropped.add("bot");
+      const name = await win.eval<string>(`(() => { const b = garble.robots[0]; b.client.drop({ away: 9000, forget: true }); return b.name; })()`);
+      log(`${name}'s phone dropped out (back by name in 9 s)`);
+      await sleep(5500);
+      await tv.screenshot(`${out}/tv-${String(++n).padStart(2, "0")}-rejoin.png`);
+      const badge = await tv.eval<string>(`document.querySelector("tvpipe-rejoin")?.shadowRoot.querySelector(".card.on")?.innerText ?? ""`);
+      const button = await win.eval<boolean>(`[...document.querySelectorAll("button")].some((b) => b.textContent === ${JSON.stringify(rejoin)})`);
+      log(`the TV's rejoin badge: ${JSON.stringify(badge.replace(/\n/g, " / "))}; the host's Rejoin button: ${button}`);
+      if (!badge.includes(name) || !button) throw new Error("no rejoin badge on the TV, or no Rejoin button");
+      await win.eval(`[...document.querySelectorAll("button")].find((b) => b.textContent === ${JSON.stringify(rejoin)}).click(); true`);
+      await win.until(`!!document.querySelector("dialog.tvpipe-rejoin")`);
+      await win.screenshot(`${out}/host-rejoin.png`);
+      await win.until(`!document.querySelector("dialog.tvpipe-rejoin") && garble.party.players.find((p) => p.name === ${JSON.stringify(name)}).connected`, 15_000);
+      log(`${name} is back by name; the host's dialog closed by itself`);
+    }
+    if (phase === "scores" && !dropped.has("phone")) {
+      dropped.add("phone");
+      await phone.eval(`localStorage.clear(); location.reload(); true`);
+      await phone.until(`!!document.getElementById("name")`);
+      await phone.eval(`document.getElementById("name").value = "Phil"; document.querySelector("form button").click(); true`);
+      await phone.until(`!document.getElementById("name")`);
+      const back = await win.eval<boolean>(`garble.party.players.filter((p) => p.name === "Phil").length === 1 && garble.party.players.find((p) => p.name === "Phil").connected`);
+      log(`phone: forgot everything, reloaded, joined as Phil again: ${back ? "his seat" : "NOT his seat"}`);
+      if (!back) throw new Error("Phil did not get his seat back");
+    }
+  };
+
   const seen = new Set<string>();
   const deadline = Date.now() + 25 * 60_000;
   let step = 0;
@@ -205,6 +244,7 @@ try {
     seen.add(key);
     const tag = `r${round}-${phase}${phase === "play" ? `-s${stepNo}-${ph}` : ""}${phase === "reveal" ? `-p${index}-${stg}${stg === "layers" ? cursor : ""}` : ""}`;
     log(tag);
+    await rejoinChecks(phase!);
     const k = step - 1;
     if (phase === "play" && ph === "pick") {
       await sleep(800);

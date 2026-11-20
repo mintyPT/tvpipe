@@ -44,7 +44,7 @@ import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
-import { bots } from "../../game/bots.ts";
+import { bots, type Bot } from "../../game/bots.ts";
 import { actors, NAMES } from "./actors.ts";
 import { Browser, type Tab } from "./browser.ts";
 import { dealt, LAST_TOUCHES, lieFor, promptsFile, scene, SEED } from "./scenario.ts";
@@ -168,7 +168,8 @@ try {
     key: new URLSearchParams(u.hash.slice(1)).get("k")!,
     think: () => 1200 + Math.random() * 2000,
   };
-  const robots: { errors?: string[]; close(): void }[] = args.shots ? await actors(joinAs) : await bots(nBots, joinAs);
+  const botList: Bot[] = args.shots ? [] : await bots(nBots, joinAs);
+  const robots: { errors?: string[]; close(): void }[] = args.shots ? await actors(joinAs) : botList;
   log(`${robots.length} ${args.shots ? "players" : "bots"} joined through the phones' listener`);
 
   const shots: string[] = [];
@@ -311,6 +312,43 @@ try {
       log(`phone: voted (${t.vote} options)`);
     }
   };
+  /**
+   * Dropping out (not with --shots): at the first vote a bot's phone goes
+   * for 9 s and comes back by name (its token lost, as on another phone):
+   * the TV shows the rejoin badge, the host page a Rejoin button; at the
+   * first scores Phil's phone forgets everything, reloads and joins with
+   * the same name: his seat again.
+   */
+  const dropped = new Set<string>();
+  const rejoinChecks = async (p: string, at: string) => {
+    const bot = botList[0];
+    if (p === "vote" && bot && !dropped.has("bot")) {
+      dropped.add("bot");
+      bot.client.drop({ away: 9000, forget: true });
+      log(`${bot.name}'s phone dropped out (back by name in 9 s)`);
+      await new Promise((r) => setTimeout(r, 6500)); // 4 s away, then the TV's lag
+      await tv.screenshot(`${out}/tv-${at}-rejoin.png`);
+      const badge = await win.eval<string>(`document.getElementById("preview").contentDocument.querySelector("tvpipe-rejoin")?.shadowRoot.querySelector(".card.on")?.innerText ?? ""`);
+      const button = await win.eval<boolean>(`[...document.querySelectorAll("#players button")].some((b) => b.textContent === ${JSON.stringify(lang === "de" ? "Rückkehrcode" : "Rejoin code")})`);
+      log(`the TV's rejoin badge: ${JSON.stringify(badge.replace(/\n/g, " / "))}; the host's Rejoin button: ${button}`);
+      if (!badge.includes(bot.name) || !button) throw new Error("no rejoin badge on the TV, or no Rejoin button");
+      await win.eval(`[...document.querySelectorAll("#players button")].find((b) => b.textContent === ${JSON.stringify(lang === "de" ? "Rückkehrcode" : "Rejoin code")}).click(); true`);
+      await win.until(`!!document.querySelector("dialog.tvpipe-rejoin")`);
+      await win.screenshot(`${out}/host-${at}-rejoin.png`);
+      await win.until(`!document.querySelector("dialog.tvpipe-rejoin") && drawbluff.party.players.find((p) => p.name === ${JSON.stringify(bot.name)}).connected`, 15_000);
+      log(`${bot.name} is back by name; the host's dialog closed by itself`);
+    }
+    if (p === "scores" && !dropped.has("phone")) {
+      dropped.add("phone");
+      await phone.eval(`localStorage.clear(); location.reload(); true`);
+      await phone.until(`!!document.getElementById("name")`);
+      await phone.eval(`document.getElementById("name").value = "Phil"; document.querySelector("#join-form button").click(); true`);
+      await phone.until(`!document.getElementById("name") && !!document.querySelector("main .card")`);
+      const back = await win.eval<boolean>(`drawbluff.party.players.filter((p) => p.name === "Phil").length === 1 && drawbluff.party.players.find((p) => p.name === "Phil").connected`);
+      log(`phone: forgot everything, reloaded, joined as Phil again: ${back ? "his seat" : "NOT his seat"}`);
+      if (!back) throw new Error("Phil did not get his seat back");
+    }
+  };
   const seen = new Set<string>();
   let n = 0;
   const deadline = Date.now() + 10 * 60_000;
@@ -325,6 +363,7 @@ try {
     seen.add(k);
     const p = k.split(":")[0]!;
     const at = String(++n).padStart(2, "0");
+    if (!args.shots) await rejoinChecks(p, at);
     if (p === "draw") {
       await draw(phone, async () => {
         await shot(`${at}-draw`);

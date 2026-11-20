@@ -29,13 +29,14 @@ it: `docs/party-design.md` §5; how the messages travel:
 
 | Role | Joins with | Sees (`view`) | May send |
 |---|---|---|---|
-| `player` | the join key and a name, or a resume token | `roster`, `room` (shared by players), `me` (own) | actions, input |
+| `player` | the join key and a name (a new player, or one who is away: §4.1), or a resume token | `roster`, `room` (shared by players), `me` (own) | actions, input |
 | `screen` | the screen key | `roster`, `screen`, `join` (`code`, `url`, `qr`, `mode`, `lateJoin`, `inProgress`) | actions |
 | `watch` | the watch key | like `screen` | nothing (actions are refused `read-only`) |
 
 Links: join `ORIGIN/?r=CODE#k=JOINKEY` (in the QR code), screen
 `http://127.0.0.1:PORT/screen/#r=CODE&k=SCREENKEY&role=screen`, watch
-`ORIGIN/screen/#r=CODE&k=WATCHKEY&role=watch`. Keys sit in the fragment
+`ORIGIN/screen/#r=CODE&k=WATCHKEY&role=watch`, a player's rejoin link
+`ORIGIN/?r=CODE#k=JOINKEY&p=RESUMETOKEN` (§4.1). Keys sit in the fragment
 so they never reach request lines or logs. Keys and resume tokens are
 128 random bits, base64url, compared in constant time.
 
@@ -77,7 +78,7 @@ of the Rust host; hosts ignore both, as any unknown field and type.)
 | `bad-key` | 4003 | no (the identity is forgotten) |
 | `no-room` | 4004 | no |
 | `no-player` (a resume token nobody has, and no name) | 4005 | no (forgotten) |
-| `name-taken`, `name-invalid` | 4006, 4007 | no |
+| `name-taken` (a connected player has the name), `name-invalid` | 4006, 4007 | no |
 | `rate-limited` | 4008 | no |
 | `replaced` (a newer socket with the same token) | 4009 | no |
 | `kicked` | 4010 | no (forgotten) |
@@ -91,6 +92,31 @@ On anything else (network loss, 1001, 1006, 1012) the client reconnects
 with backoff (0.25 s doubling to 5 s, ±25 % jitter), at once when the
 page becomes visible, and resumes: `hello` with `resume` gets the same
 player, the full view and `lastAct`.
+
+### 4.1 Rejoining without the token
+
+A phone that lost its token (the link opened in another browser, a new
+phone, cleared storage) has two ways back to the same player, its seat,
+score and turn:
+
+- **By name.** A `hello` with the join key and the name of a player who
+  is away (no socket; the same uniqueness key as for taken names, so
+  case and accents do not matter) is that player: the host makes a new
+  resume token, sends `welcome` and tells the game (`reconnect`), as for
+  a resume. It comes before the checks for newcomers, so a locked or
+  full room, or a game closed to newcomers, takes its players back. The
+  old token is gone (`no-player` for it); while the player is connected
+  the name stays `name-taken`. A host may turn this off (`reclaim:
+  false`): whoever has the join key could take an away player's seat.
+- **By a rejoin link.** The join link with the player's resume token in
+  the fragment (`&p=TOKEN`), which the host page shows only to that
+  player (a QR code). The client keeps the token as its own, takes it
+  out of the address bar, and resumes.
+
+Screens show the way back: the client library draws a rejoin badge on
+TV and watch pages (the join QR code, the short link, the names of
+players away for 4 s or more) while `join.inProgress` is set, unless the
+page says its own join code is showing.
 
 ## 5. Views and diffs
 
@@ -123,7 +149,7 @@ TV can say "join anytime" under the QR code.
 - In the lobby (no game in progress) every new name joins as before.
 - During a game, with `closed`, a new name gets `bye in-progress`
   (4030, the message "A game is in progress"); resume tokens keep
-  working (a player who was in the room comes back as always).
+  working, and so do the names of players who are away (§4.1).
 - With `wait` or `open` the newcomer joins the roster as a waiting
   player (`waiting: true` in the roster, `player.waiting`). The host
   does nothing else with it: the game deals them in when it wants

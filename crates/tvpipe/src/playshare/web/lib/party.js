@@ -204,6 +204,7 @@ export class Party extends Emitter {
     #handlers = new Map();
     #locked = false;
     #lateJoin;
+    #reclaim;
     #inProgress = false;
     #closed = false;
     #seq = 0;
@@ -231,6 +232,7 @@ export class Party extends Emitter {
         this.#limits = { rate: 20, burst: 50, screens: 16, ...options.limits };
         this.#log = options.log ?? (() => { });
         this.#lateJoin = options.lateJoin ?? "wait";
+        this.#reclaim = options.reclaim ?? true;
         if (!LATE_JOIN.includes(this.#lateJoin))
             throw new TypeError(`lateJoin: ${String(options.lateJoin)}`);
         this.room = new StateBox(() => this.#changed());
@@ -339,6 +341,18 @@ export class Party extends Emitter {
     set joinInfo(info) {
         this.#join = info;
         this.#joinChanged();
+    }
+    /**
+     * A link that brings `player` back on any phone: the join link with
+     * the player's resume token (`#k=JOINKEY&p=TOKEN`). Show it only to
+     * that player (the host page: {@link HostedParty.showRejoin}); it is
+     * as good as their phone. `null` before the party has a join link.
+     */
+    rejoinLink(player) {
+        const url = this.#join.url;
+        if (!url || !this.#players.includes(player))
+            return null;
+        return `${url}${url.includes("#") ? "&" : "#"}p=${player.resume}`;
     }
     /** Who may join while a game is in progress (screens see it as `join.lateJoin`). */
     get lateJoin() {
@@ -615,23 +629,8 @@ export class Party extends Emitter {
         // A known player coming back.
         if (typeof hello.resume === "string") {
             const p = this.#players.find((x) => sameToken(hello.resume, x.resume));
-            if (p) {
-                const old = p.client;
-                const c = new Client(ws, "player", p.id, address, this.#limits.rate, this.#limits.burst);
-                c.player = p;
-                p.client = c;
-                if (old) {
-                    old.player = undefined;
-                    old.bye("replaced");
-                    this.#clients.delete(old);
-                }
-                this.#adopt(c);
-                this.#welcome(c);
-                this.#log("info", `party ${this.code}: ${p.name} is back`);
-                this.emit("reconnect", p);
-                this.#changed();
-                return;
-            }
+            if (p)
+                return this.#takeBack(ws, p, address, "is back");
         }
         if (!sameToken(hello.key, this.joinKey)) {
             this.#log("warn", `party ${this.code}: a join with a wrong key from ${address}`);
@@ -640,6 +639,17 @@ export class Party extends Emitter {
         }
         if (hello.name === undefined || hello.name === null)
             return bye(ws, "no-player");
+        // The name of a player who is away: that player, on a new phone (the
+        // old one's token stops working). Before the checks for newcomers:
+        // a locked or full room takes its own players back.
+        if (this.#reclaim) {
+            const typed = cleanText(hello.name, MAX_NAME);
+            const p = typed ? this.#players.find((x) => !x.connected && nameKey(x.name) === nameKey(typed)) : undefined;
+            if (p) {
+                p.resume = token();
+                return this.#takeBack(ws, p, address, "is back on another phone");
+            }
+        }
         if (this.#locked)
             return bye(ws, "locked");
         if (this.#inProgress && this.#lateJoin === "closed")
@@ -673,6 +683,23 @@ export class Party extends Emitter {
         this.emit("join", p);
         if (p.vip)
             this.emit("vip", p);
+        this.#changed();
+    }
+    /** A known player's new socket: replaces the old one (`bye replaced`). */
+    #takeBack(ws, p, address, how) {
+        const old = p.client;
+        const c = new Client(ws, "player", p.id, address, this.#limits.rate, this.#limits.burst);
+        c.player = p;
+        p.client = c;
+        if (old) {
+            old.player = undefined;
+            old.bye("replaced");
+            this.#clients.delete(old);
+        }
+        this.#adopt(c);
+        this.#welcome(c);
+        this.#log("info", `party ${this.code}: ${p.name} ${how}`);
+        this.emit("reconnect", p);
         this.#changed();
     }
     #adopt(c) {

@@ -197,3 +197,104 @@ export class MemoryRelay implements Relay {
 export function memoryRelay(publicUrl?: string): MemoryRelay {
   return new MemoryRelay(publicUrl);
 }
+
+// ---------------------------------------------------------------------------
+// Drop-outs
+
+/** How a phone drops out: `network` (back with its token: a lost signal, a locked phone, a reload), `device` (back by name: the token is gone, as on another phone). */
+export type DropKind = "network" | "device";
+
+export interface DropOutOptions {
+  /** Random numbers (default `Math.random`); seed it for repeatable runs. */
+  rng?: (() => number) | undefined;
+  /** A phone drops every this many ms on average (default 300). */
+  every?: number | undefined;
+  /** How long a phone stays away, ms, `[min, max]` (default `[0, 1200]`). */
+  away?: [number, number] | undefined;
+  /** The kinds of drop-outs, picked at random (default both). */
+  kinds?: DropKind[] | undefined;
+  /** Phones away at once at most (default a third of them, at least one). */
+  maxAway?: number | undefined;
+}
+
+/** A drop-out run ({@link dropOuts}). */
+export interface DropOuts {
+  /** Drop-outs so far, by kind. */
+  readonly counts: Record<DropKind, number>;
+  /**
+   * Stops dropping and waits until every phone is back (`open`, the same
+   * player as before); rejects naming the ones that are not, after
+   * `timeout` ms (default 5000).
+   */
+  stop(timeout?: number): Promise<void>;
+}
+
+/** What `dropOuts` needs of a phone: a `PartyClient`. */
+interface Droppable {
+  readonly status: string;
+  readonly byeReason: string | null;
+  readonly you: Record<string, any> | null;
+  drop(opts?: { away?: number; forget?: boolean }): void;
+}
+
+/**
+ * Drops phones while a game runs and lets them come back, the way phones
+ * do at a party: the signal goes, a screen locks, a page is reloaded or
+ * opened on another phone. Every game's tests should play whole games
+ * through it (with bots on `PartyClient`s) and check that the game ends
+ * and everyone is back in it:
+ *
+ *   const chaos = dropOuts(bots.map((b) => b.client), { rng: seeded(1) });
+ *   await players[0].client.act("start");
+ *   await gameOver;
+ *   await chaos.stop();      // throws if a phone could not come back
+ *
+ * Only phones that are in (`open`, with a `you`) drop.
+ */
+export function dropOuts(phones: readonly Droppable[] | (() => readonly Droppable[]), options: DropOutOptions = {}): DropOuts {
+  const list = typeof phones === "function" ? phones : () => phones;
+  const rng = options.rng ?? Math.random;
+  const every = options.every ?? 300;
+  const [lo, hi] = options.away ?? [0, 1200];
+  const kinds = options.kinds ?? ["network", "device"];
+  const counts: Record<DropKind, number> = { network: 0, device: 0 };
+  const ids = new Map<Droppable, string>();
+  const back = new Map<Droppable, number>();
+  let stopped = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const tick = () => {
+    if (stopped) return;
+    const all = list();
+    const now = Date.now();
+    for (const [p, t] of back) if (t <= now && p.status === "open") back.delete(p);
+    const max = options.maxAway ?? Math.max(1, Math.floor(all.length / 3));
+    const ready = all.filter((p) => p.status === "open" && p.you && !back.has(p));
+    if (back.size < max && ready.length > 0) {
+      const p = ready[Math.floor(rng() * ready.length)]!;
+      const kind = kinds[Math.floor(rng() * kinds.length)]!;
+      const away = lo + rng() * (hi - lo);
+      if (!ids.has(p)) ids.set(p, String(p.you!["id"]));
+      counts[kind]++;
+      back.set(p, now + away);
+      p.drop({ away, forget: kind === "device" });
+    }
+    timer = setTimeout(tick, every * (0.5 + rng()));
+  };
+  timer = setTimeout(tick, every * rng());
+  return {
+    counts,
+    async stop(timeout = 5000) {
+      stopped = true;
+      if (timer) clearTimeout(timer);
+      const end = Date.now() + timeout;
+      const missing = () => [...ids].filter(([p, id]) => p.status !== "open" || String(p.you?.["id"]) !== id);
+      while (missing().length > 0) {
+        if (Date.now() > end) {
+          const who = missing().map(([p, id]) => `${id} (${p.status}${p.byeReason ? `, ${p.byeReason}` : ""}, now ${String(p.you?.["id"])})`);
+          throw new Error(`phones did not come back: ${who.join("; ")}`);
+        }
+        await new Promise((r) => setTimeout(r, 10));
+      }
+    },
+  };
+}

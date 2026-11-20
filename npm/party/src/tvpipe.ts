@@ -11,7 +11,8 @@
  */
 
 import { Emitter } from "./emitter.ts";
-import { Party, type PartyOptions } from "./party.ts";
+import { Party, type PartyOptions, type Player } from "./party.ts";
+import { showRejoinDialog } from "./rejoin-dialog.ts";
 import { TvpipeRelay } from "./relay.ts";
 import { captureAudio, SurfaceEncoder, type CanvasSource, type EncoderOptions, type SurfaceInfo } from "./surface.ts";
 
@@ -563,6 +564,23 @@ export class HostedParty extends Party {
       },
       () => {},
     );
+  }
+
+  /**
+   * Shows `player`'s rejoin code over the host page (a dialog): the QR
+   * code of {@link Party.rejoinLink} and a link to copy, for a phone
+   * that lost its way back (another browser, a new phone). It closes
+   * when the player is back (resolving `true`), when they leave, or by
+   * hand (`false`). Put it beside away players (`!player.connected`).
+   */
+  async showRejoin(player: Player): Promise<boolean> {
+    const link = this.rejoinLink(player);
+    if (!link || !globalThis.document) throw new TvpipeError("unavailable", "no join link or no page");
+    let qr: { size: number; rows: string[] } | null = null;
+    try {
+      qr = await this.tvpipe.qr(link);
+    } catch {}
+    return showRejoinDialog(this, player, link, qr);
   }
 
   /** Casts the TV page to `to` (default: what the launcher chose). */

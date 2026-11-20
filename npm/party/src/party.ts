@@ -305,6 +305,16 @@ export interface PartyOptions {
   /** Who may join while a game is in progress (default `wait`; {@link LateJoin}). */
   lateJoin?: LateJoin | undefined;
   /**
+   * Whether a `hello` with the name of a player who is away takes that
+   * player back (default true): a phone that lost its resume token (the
+   * page opened in another browser, another phone, cleared storage)
+   * gets its seat, score and turn again by typing the same name. The
+   * player's resume token changes, so the old phone cannot come back
+   * too. Whoever has the join key could take an away player's seat this
+   * way; `false` leaves only the token and {@link Party.rejoinLink}.
+   */
+  reclaim?: boolean | undefined;
+  /**
    * How far the TV picture is behind, ms ({@link Party.tvDelay}): fixed
    * to this. Without it a party in a host page follows its casts and
    * surfaces; elsewhere it is 0 until set.
@@ -397,6 +407,7 @@ export class Party extends Emitter<PartyEvents> {
   #handlers = new Map<string, ActionHandler>();
   #locked = false;
   #lateJoin: LateJoin;
+  readonly #reclaim: boolean;
   #inProgress = false;
   #closed = false;
   #seq = 0;
@@ -425,6 +436,7 @@ export class Party extends Emitter<PartyEvents> {
     this.#limits = { rate: 20, burst: 50, screens: 16, ...options.limits };
     this.#log = options.log ?? (() => {});
     this.#lateJoin = options.lateJoin ?? "wait";
+    this.#reclaim = options.reclaim ?? true;
     if (!LATE_JOIN.includes(this.#lateJoin)) throw new TypeError(`lateJoin: ${String(options.lateJoin)}`);
     this.room = new StateBox(() => this.#changed());
     this.screen = new StateBox(() => this.#changed());
@@ -541,6 +553,18 @@ export class Party extends Emitter<PartyEvents> {
   set joinInfo(info: JoinInfo) {
     this.#join = info;
     this.#joinChanged();
+  }
+
+  /**
+   * A link that brings `player` back on any phone: the join link with
+   * the player's resume token (`#k=JOINKEY&p=TOKEN`). Show it only to
+   * that player (the host page: {@link HostedParty.showRejoin}); it is
+   * as good as their phone. `null` before the party has a join link.
+   */
+  rejoinLink(player: Player): string | null {
+    const url = this.#join.url;
+    if (!url || !this.#players.includes(player)) return null;
+    return `${url}${url.includes("#") ? "&" : "#"}p=${player.resume}`;
   }
 
   /** Who may join while a game is in progress (screens see it as `join.lateJoin`). */
@@ -818,23 +842,7 @@ export class Party extends Emitter<PartyEvents> {
     // A known player coming back.
     if (typeof hello.resume === "string") {
       const p = this.#players.find((x) => sameToken(hello.resume, x.resume));
-      if (p) {
-        const old = p.client;
-        const c = new Client(ws, "player", p.id, address, this.#limits.rate, this.#limits.burst);
-        c.player = p;
-        p.client = c;
-        if (old) {
-          old.player = undefined;
-          old.bye("replaced");
-          this.#clients.delete(old);
-        }
-        this.#adopt(c);
-        this.#welcome(c);
-        this.#log("info", `party ${this.code}: ${p.name} is back`);
-        this.emit("reconnect", p);
-        this.#changed();
-        return;
-      }
+      if (p) return this.#takeBack(ws, p, address, "is back");
     }
     if (!sameToken(hello.key, this.joinKey)) {
       this.#log("warn", `party ${this.code}: a join with a wrong key from ${address}`);
@@ -842,6 +850,17 @@ export class Party extends Emitter<PartyEvents> {
       return bye(ws, "bad-key");
     }
     if (hello.name === undefined || hello.name === null) return bye(ws, "no-player");
+    // The name of a player who is away: that player, on a new phone (the
+    // old one's token stops working). Before the checks for newcomers:
+    // a locked or full room takes its own players back.
+    if (this.#reclaim) {
+      const typed = cleanText(hello.name, MAX_NAME);
+      const p = typed ? this.#players.find((x) => !x.connected && nameKey(x.name) === nameKey(typed)) : undefined;
+      if (p) {
+        p.resume = token();
+        return this.#takeBack(ws, p, address, "is back on another phone");
+      }
+    }
     if (this.#locked) return bye(ws, "locked");
     if (this.#inProgress && this.#lateJoin === "closed") return bye(ws, "in-progress", "A game is in progress");
     if (this.#players.length >= this.maxPlayers) return bye(ws, "full");
@@ -867,6 +886,24 @@ export class Party extends Emitter<PartyEvents> {
     this.#log("info", `party ${this.code}: ${name} joined (${address})`);
     this.emit("join", p);
     if (p.vip) this.emit("vip", p);
+    this.#changed();
+  }
+
+  /** A known player's new socket: replaces the old one (`bye replaced`). */
+  #takeBack(ws: RelayConn, p: Player, address: string, how: string): void {
+    const old = p.client;
+    const c = new Client(ws, "player", p.id, address, this.#limits.rate, this.#limits.burst);
+    c.player = p;
+    p.client = c;
+    if (old) {
+      old.player = undefined;
+      old.bye("replaced");
+      this.#clients.delete(old);
+    }
+    this.#adopt(c);
+    this.#welcome(c);
+    this.#log("info", `party ${this.code}: ${p.name} ${how}`);
+    this.emit("reconnect", p);
     this.#changed();
   }
 

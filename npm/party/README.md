@@ -88,11 +88,41 @@ come through a tunnel; docs/short-links.md) or `null` (show only the QR
 code). Do not show the tunnel's link or the room code itself: too long to
 type, and the room code alone lets nobody in.
 
+## Players who drop out
+
+Phones drop out all the time at a party: the signal goes, a screen
+locks, a page is reloaded, the link is opened in another browser or on
+another phone. The library brings them back to their seat, score and
+turn; a game only has to keep going while they are away (deadlines, a
+player who is away keeps their place) and let them carry on when they are
+back.
+
+- **The same phone** reconnects by itself with its resume token (kept in
+  `localStorage`) and gets the whole view again.
+- **Another phone or browser**: typing the same name takes the seat of
+  a player who is away (the `reclaim` option, on by default), even when
+  the room is locked, full or closed to newcomers.
+- **The TV shows the way back**: TV pages draw a **rejoin badge** by
+  themselves while a game is in progress (`party.inProgress`) and a phone
+  has been away for 4 s: the join QR code, the short link and who is
+  missing, in a corner. `PartyClient.fromLocation({ rejoinBadge: { corner:
+  "top-left" } })` or `client.rejoinBadge.corner = …` moves it clear of
+  the game; set `client.joinVisible = true` while the game shows its own
+  join code (the lobby, a corner for latecomers) and it steps aside.
+- **The host page** can show a player their own code
+  (`party.showRejoin(player)`: a QR code of `party.rejoinLink(player)`
+  over the host page, closing when they are back). Put a button beside
+  away players.
+- **Tests**: `dropOuts(phones)` from `@tvpipe/party/testing` drops and
+  brings back phones while a whole game runs; every game should pass a
+  game played through it (see Tests).
+
 ## Host API
 
 `await tvpipe.party(options)`: options `maxPlayers` (default: the
 manifest's `players.max`), `lateJoin`, `moderate`, `limits`, `grace`,
-`log`, `code`, `tvDelay` (fixed; default: follow the TVs).
+`log`, `code`, `tvDelay` (fixed; default: follow the TVs), `reclaim`
+(default `true`: an away player's name takes their seat back).
 
 | | |
 |---|---|
@@ -104,6 +134,7 @@ manifest's `players.max`), `lateJoin`, `moderate`, `limits`, `grace`,
 | `party.send(player, type, data)`, `party.broadcast(type, data, role)` | Transient messages (`msg` events on phones). |
 | `party.players`, `connectedPlayers`, `vip`, `player(id)` | Players in join order; `player.id`, `name`, `vip`, `connected`, `waiting`, `data` (yours). |
 | `party.lock()`, `unlock()`, `kick(player)`, `close()` | No new players (resumes still work), remove one, end the party. |
+| `party.rejoinLink(player)`, `party.showRejoin(player)` | A link that brings the player back on any phone (their resume token: show it to them only); the host page's dialog with its QR code, closing when they are back. |
 | `party.inProgress`, `party.lateJoin`, `party.activate(player)` | Joining mid-game: `closed` (refused, `bye in-progress`), `wait` (default) or `open` (waiting players until the game activates them). |
 | `party.now()` | The host's clock (ms); deadlines in views use it, phones are synced to it. |
 | `party.links` | `join` (in the QR code), `tv` (the TV page with the screen key), `watch` (a read-only screen on this computer, e.g. an `<iframe>` preview). |
@@ -152,10 +183,14 @@ HTML-in-Canvas (Drawbluff's "TV picture: drawn here").
 storage, WebSocket })`; `join(name)`, `connect()`, `act(type, data)`
 (rejects with `PartyActionError`: `code`, `message`), `input(data)`,
 `on("view" | "msg" | "status" | "bye" | "welcome" | "tv", fn)`, `view`, `you`,
-`status`, `now()`, `hostNow()`, `tvDelay`, `leave()`, `close()`; `qrSvg(qr)`, `drawQr(ctx, qr, x,
+`status`, `now()`, `hostNow()`, `tvDelay`, `leave()`, `close()`; on
+screens `rejoinBadge` (`corner`; option `rejoinBadge: false` turns it
+off) and `joinVisible`; `qrSvg(qr)`, `drawQr(ctx, qr, x,
 y, size)`, `joinText(join)`, `memoryStorage()`. It reconnects by itself
 (and when the page becomes visible again), keeps the player's identity in
-`localStorage`, and resends unacknowledged actions.
+`localStorage`, takes a rejoin link's token, and resends unacknowledged
+actions. `drop({ away, forget })` (tests) loses the connection like a
+phone would.
 
 **The TV is behind** (render, capture, the receivers' playout delay, the
 TV's own lag: ~0.25 s on an Apple TV, ~0.45 s on Cast). Changes the host
@@ -178,8 +213,23 @@ const phone = new PartyClient({ url: "ws://test/", room: party.code, key: party.
 await phone.join("Ann");
 ```
 
+Play whole games with phones dropping out (bots on `PartyClient`s):
+
+```js
+import { dropOuts } from "@tvpipe/party/testing";
+
+const chaos = dropOuts(bots.map((b) => b.client), { rng: seeded(1), every: 100, away: [0, 800] });
+await bots[0].client.act("start");
+await gameOver;
+await chaos.stop();   // throws when a phone could not come back as itself
+```
+
+Each drop-out is a lost connection that comes back with its token
+(`network`) or a page on another phone that comes back by name
+(`device`); `chaos.counts` has how many of each.
+
 `npm test`: the host and the client on a relay in memory (joins, names,
-VIP, resumes, replayed actions, `collect`, late joins, limits, busy
+VIP, resumes, rejoining by name and by link, drop-outs, replayed actions, `collect`, late joins, limits, busy
 phones, the protocol vectors in `test/vectors/`), and, when tvpipe is
 built (`cargo build -p tvpipe-cli` or `TVPIPE_BINARY`), the real
 `tvpipe game play` with Node as the host page and fake phones.

@@ -3,7 +3,7 @@ import { test } from "node:test";
 
 import { Party, type LateJoin } from "@tvpipe/party";
 import { memoryStorage, PartyClient } from "@tvpipe/party/client";
-import { MemoryRelay } from "@tvpipe/party/testing";
+import { dropOuts, MemoryRelay } from "@tvpipe/party/testing";
 
 async function until(cond: () => boolean, ms = 3000): Promise<void> {
   const end = Date.now() + ms;
@@ -231,6 +231,28 @@ test("a silent player and one who drops mid-game: deadlines move the game on", a
     assert.equal(table.length, 4, "the away player keeps their place");
     assert.ok(Date.now() - t0 >= fast.draw, "the draw phase waited for the deadline");
     assert.equal(players[2]!.client.status, "open");
+  } finally {
+    for (const b of players) b.close();
+    await server.close();
+  }
+});
+
+test("phones drop out and come back all game long (a lost signal, another phone): the game ends with everyone in it", async () => {
+  const { server, party, g, players, phases } = await game(5, { rounds: 2 });
+  try {
+    const chaos = dropOuts(
+      players.map((b) => b.client),
+      { rng: seeded(5), every: 100, away: [0, 800], maxAway: 2 },
+    );
+    const end = new Promise((r) => g.once("end", r));
+    await players[0]!.client.act("start");
+    const table = (await end) as { name: string }[];
+    await chaos.stop();
+    assert.ok(chaos.counts.network > 0 && chaos.counts.device > 0, JSON.stringify(chaos.counts));
+    assert.equal(table.length, 5);
+    assert.equal(phases.at(-1), "final");
+    assert.equal(party.players.length, 5, "nobody came back as somebody new");
+    await until(() => players.every((b) => b.client.view["me"]?.task === "final"));
   } finally {
     for (const b of players) b.close();
     await server.close();

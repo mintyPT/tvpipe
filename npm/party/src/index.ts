@@ -56,6 +56,7 @@ export {
 } from "./tvpipe.ts";
 export { TvpipeRelay, frame, OP_TEXT, OP_BINARY, type Relay, type RelayConn, type Via } from "./relay.ts";
 export { Emitter } from "./emitter.ts";
+export { RejoinBadge } from "./rejoin.ts";
 export { StateBox, diff, applyDiff, toJson, type Diff, type Json, type JsonObject } from "./sync.ts";
 export { cleanText, graphemes, nameKey } from "./names.ts";
 export { TokenBucket, WindowCounter } from "./limits.ts";
@@ -66,14 +67,16 @@ export {
   qrSvg,
   drawQr,
   joinText,
+  type Corner,
   type PartyClientOptions,
+  type RejoinBadgeOptions,
   type QrRows,
   type StorageLike,
   type Status,
   type WebSocketFactory,
   type WebSocketLike,
 } from "./client.ts";
-export { memoryRelay, MemoryRelay } from "./testing.ts";
+export { memoryRelay, MemoryRelay, dropOuts, type DropKind, type DropOutOptions, type DropOuts } from "./testing.ts";
 export {
   SurfaceEncoder,
   captureAudio,

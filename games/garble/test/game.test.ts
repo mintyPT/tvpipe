@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import { Party } from "@tvpipe/party";
-import { MemoryRelay } from "@tvpipe/party/testing";
+import { dropOuts, MemoryRelay } from "@tvpipe/party/testing";
 
 import { Bot, bots } from "../game/bots.ts";
 import { Garble, type Timings } from "../game/game.ts";
@@ -95,6 +95,28 @@ test("a whole game with 4 players", async () => {
     }
     await until(() => players.every((b) => b.client.view["me"].task === "final"));
     assert.equal((party.screenView()["screen"] as { phase: string }).phase, "final");
+  } finally {
+    for (const b of players) b.close();
+    close();
+  }
+});
+
+test("phones drop out and come back all game long (a lost signal, another phone): the game ends with everyone in it", async () => {
+  const { party, g, players, phases, close } = await game(5, { rounds: 2 });
+  try {
+    const chaos = dropOuts(
+      players.map((b) => b.client),
+      { rng: seeded(5), every: 100, away: [0, 800], maxAway: 2 },
+    );
+    const end = new Promise<{ score: number }[]>((r) => g.once("end", r));
+    await players[0]!.client.act("start");
+    const table = await end;
+    await chaos.stop();
+    assert.ok(chaos.counts.network > 0 && chaos.counts.device > 0, JSON.stringify(chaos.counts));
+    assert.equal(table.length, 5);
+    assert.equal(phases.at(-1), "final");
+    assert.equal(party.players.length, 5, "nobody came back as somebody new");
+    await until(() => players.every((b) => b.client.view["me"]?.task === "final"));
   } finally {
     for (const b of players) b.close();
     close();

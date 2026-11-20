@@ -187,3 +187,69 @@ export class MemoryRelay {
 export function memoryRelay(publicUrl) {
     return new MemoryRelay(publicUrl);
 }
+/**
+ * Drops phones while a game runs and lets them come back, the way phones
+ * do at a party: the signal goes, a screen locks, a page is reloaded or
+ * opened on another phone. Every game's tests should play whole games
+ * through it (with bots on `PartyClient`s) and check that the game ends
+ * and everyone is back in it:
+ *
+ *   const chaos = dropOuts(bots.map((b) => b.client), { rng: seeded(1) });
+ *   await players[0].client.act("start");
+ *   await gameOver;
+ *   await chaos.stop();      // throws if a phone could not come back
+ *
+ * Only phones that are in (`open`, with a `you`) drop.
+ */
+export function dropOuts(phones, options = {}) {
+    const list = typeof phones === "function" ? phones : () => phones;
+    const rng = options.rng ?? Math.random;
+    const every = options.every ?? 300;
+    const [lo, hi] = options.away ?? [0, 1200];
+    const kinds = options.kinds ?? ["network", "device"];
+    const counts = { network: 0, device: 0 };
+    const ids = new Map();
+    const back = new Map();
+    let stopped = false;
+    let timer;
+    const tick = () => {
+        if (stopped)
+            return;
+        const all = list();
+        const now = Date.now();
+        for (const [p, t] of back)
+            if (t <= now && p.status === "open")
+                back.delete(p);
+        const max = options.maxAway ?? Math.max(1, Math.floor(all.length / 3));
+        const ready = all.filter((p) => p.status === "open" && p.you && !back.has(p));
+        if (back.size < max && ready.length > 0) {
+            const p = ready[Math.floor(rng() * ready.length)];
+            const kind = kinds[Math.floor(rng() * kinds.length)];
+            const away = lo + rng() * (hi - lo);
+            if (!ids.has(p))
+                ids.set(p, String(p.you["id"]));
+            counts[kind]++;
+            back.set(p, now + away);
+            p.drop({ away, forget: kind === "device" });
+        }
+        timer = setTimeout(tick, every * (0.5 + rng()));
+    };
+    timer = setTimeout(tick, every * rng());
+    return {
+        counts,
+        async stop(timeout = 5000) {
+            stopped = true;
+            if (timer)
+                clearTimeout(timer);
+            const end = Date.now() + timeout;
+            const missing = () => [...ids].filter(([p, id]) => p.status !== "open" || String(p.you?.["id"]) !== id);
+            while (missing().length > 0) {
+                if (Date.now() > end) {
+                    const who = missing().map(([p, id]) => `${id} (${p.status}${p.byeReason ? `, ${p.byeReason}` : ""}, now ${String(p.you?.["id"])})`);
+                    throw new Error(`phones did not come back: ${who.join("; ")}`);
+                }
+                await new Promise((r) => setTimeout(r, 10));
+            }
+        },
+    };
+}

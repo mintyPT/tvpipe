@@ -56,12 +56,21 @@ let confirmTimer: ReturnType<typeof setTimeout> | undefined;
 let playersKey = "";
 
 /**
- * A player's buttons, in the lobby and during a game: make them the VIP
- * (connected players; a tvpipe whose library has `makeVip`), and remove
- * them, which asks once more.
+ * A player's buttons, in the lobby and during a game: their rejoin code
+ * (away players), make them the VIP (connected players; a tvpipe whose
+ * library has `makeVip`), and remove them, which asks once more.
  */
 function playerButtons(p: Player): HTMLButtonElement[] {
   const out: HTMLButtonElement[] = [];
+  // Away: their own code to scan with any phone (a tvpipe whose library has `showRejoin`).
+  if (!p.connected && typeof party.showRejoin === "function") {
+    const back = document.createElement("button");
+    back.className = "act";
+    back.title = t.rejoinTitle(p.name);
+    back.textContent = t.rejoin;
+    back.onclick = () => void party.showRejoin(p).catch(() => {});
+    out.push(back);
+  }
   if (!p.vip && p.connected && typeof party.makeVip === "function") {
     const vip = document.createElement("button");
     vip.className = "act";
@@ -296,7 +305,7 @@ async function main(): Promise<void> {
 
   if ((await tvpipe.selection()).length > 0) await cast();
   // For checks and tests (DevTools): the party and the game.
-  Object.assign(globalThis, { garble: { party, game, tvpipe, addBots } });
+  Object.assign(globalThis, { garble: { party, game, tvpipe, addBots, robots } });
 }
 
 void main();
