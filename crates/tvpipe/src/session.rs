@@ -867,7 +867,10 @@ fn connect_all(
 fn target_delay_ms(t: &Target, opts: &CastOptions, mirror: &crate::airplay::MirrorOptions) -> u32 {
     match t {
         Target::Cast { .. } => opts.latency_ms,
+        #[cfg(feature = "airplay")]
         Target::AirPlay { .. } => crate::airplay::policy::Leads::new(mirror.latency_ms).video_ms,
+        #[cfg(not(feature = "airplay"))]
+        Target::AirPlay { .. } => mirror.latency_ms.unwrap_or(0),
         Target::Browser(o) => o.latency_ms,
     }
 }
