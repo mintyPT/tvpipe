@@ -574,7 +574,9 @@ export function forms(key: string, opt: DeOptions = {}): Forms {
         // compound itself is a lemma too (its own singular).
         isKnown = [...c.readings.keys()].some((l) => (lex.pos.get(l) ?? []).some((p) => p[0] === "n"));
         infl = new Map([[key, "self"]]);
-        for (const [l, k] of c.readings) if (k !== "self") infl.set(c.mod + l, k);
+        // A compound with a noun at the end inflects as a noun (Minirock is no "minirocken").
+        const nounHead = (lex.pos.get(c.head) ?? []).includes("n");
+        for (const [l, k] of c.readings) if (k !== "self" && !(nounHead && k === "verb form")) infl.set(c.mod + l, k);
         fam = new Set(infl.keys());
         own = [...infl.keys()];
         for (const x of familyOf(c.readings.keys(), lex)) fam.add(c.mod + x);
@@ -920,7 +922,7 @@ function containsPart(long: string, short: string, opt: DeOptions, plurals: read
   for (const j of new Set([...joins(short), ...plurals])) {
     if (!long.startsWith(j)) continue;
     // A first part that is another word: Reise- is not Reis + e.
-    if (lex && j !== short && !plurals.includes(j) && content(j, lex) && ![...lookup(j, lex).keys()].includes(short)) continue;
+    if (lex && j !== short && !plurals.includes(j) && otherNoun(j, short, lex)) continue;
     const tail = long.slice(j.length);
     if (tail.length >= 3 && knownPart(tail, opt)) return true;
     if (tail === "ei") return true; // Hühner-ei
@@ -937,6 +939,12 @@ function containsPart(long: string, short: string, opt: DeOptions, plurals: read
     }
   }
   return false;
+}
+
+/** `j` reads as a noun other than `short` (Reise- for Reis, Fall- for Falle, Rinden- for Rind); a noun spelled `short` + n is the same (der Socken). */
+function otherNoun(j: string, short: string, lex: Lexicon): boolean {
+  const lemmas = [...lookup(j, lex)].filter(([l, k]) => k !== "verb form" && (lex.pos.get(l) ?? []).includes("n")).map(([l]) => l);
+  return lemmas.length > 0 && !lemmas.some((l) => l === short || l === short + "n" || l === short + "en");
 }
 
 /** The word's lemmas it is an inflected form of (not itself). */
@@ -967,7 +975,9 @@ function containment(c: Clue, s: Clue, opt: DeOptions): Reason | null {
   if (s.parts.length > 1) for (const p of s.parts) if (related(p, c.key, opt)) return "part of the word";
   const fc = forms(c.key, opt);
   const fs = forms(s.key, opt);
-  const sForms = [s.key, ...bases(fs).filter((x) => x.length >= 3)];
+  // A secret that is a word of its own is only that word: Kohle is not "ich kohle"
+  // (kohlen, in Blumenkohl), Wand not "wand" (winden), Falle not "falle" (fallen).
+  const sForms = fs.lemma ? [s.key] : [s.key, ...bases(fs).filter((x) => x.length >= 3)];
   // The clue contains the secret when every reading of it does: an inflected
   // clue is read as its lemmas ("Schneemänner" is Schneemann, which contains Schnee).
   const b = bases(fc);

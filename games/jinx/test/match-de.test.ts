@@ -317,6 +317,16 @@ const INVALID = table(`
   Ofen               | offen         | -
   Hose               | Rose          | -
   Hundert            | Hund          | -                  # hund + ert is no word
+  Reisepass          | Reis          | -                  # Reise + Pass
+  Butterbrot         | rot           | -
+  Fallschirm         | Falle         | -                  # Fall-, not Falle without its e
+  Rindenmulch        | Rind          | -                  # Rinden- is Rinde's
+  Blumenkohl         | Kohle         | -                  # Kohle is not "ich kohle"
+  Windmühle          | Wand          | -                  # Wand is not "wand" (winden)
+  gestern            | Stern         | -                  # ge- is no part
+  Sandale            | Sand          | -                  # a loan, no compound
+  Minirock           | Rock          | contains the word
+  Sockenpaar         | Socke         | contains the word
   Eisen              | Eis           | same family        # (eisen: to ice)
   Reise              | Eis           | -
   Torte              | Tor           | -
