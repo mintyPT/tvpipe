@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * drawbluff's TV page: tvpipe casts it with its own browser, or anyone
+ * Drawbluff's TV page: tvpipe casts it with its own browser, or anyone
  * opens the watch link (the host page's preview). It shows the screen
  * view (`{ roster, screen, join }`) in the room's language
  * (`screen.lang`).
@@ -532,7 +532,7 @@ function build(view) {
     case "final":
       return final(view);
     default:
-      stage.replaceChildren(h("div", { class: "col grow center" }, h("div", { class: "logo", style: "font-size:8vh" }, "drawbluff")));
+      stage.replaceChildren(h("div", { class: "col grow center" }, h("div", { class: "logo", style: "font-size:8vh" }, "Drawbluff")));
   }
 }
 
@@ -554,7 +554,7 @@ function lobby(view) {
   const shortHost = h("span", { class: "host" });
   const shortCode = h("span", { class: "code" });
   short.append(shortHost, shortCode);
-  const letters = Array.from("drawbluff", (c, i) => h("span", { style: `--i:${i}` }, c));
+  const letters = Array.from("Drawbluff", (c, i) => h("span", { style: `--i:${i}` }, c));
   stage.replaceChildren(
     h(
       "div",

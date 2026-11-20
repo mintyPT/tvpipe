@@ -216,7 +216,7 @@ The full API is in [`npm/party/README.md`](../npm/party/README.md).
 (`npm install --save-dev @tvpipe/party`), then make the built files
 import tvpipe's copy: rewrite `"@tvpipe/party"` to
 `"/_tvpipe/lib/index.js"` and `"@tvpipe/party/client"` to
-`"/_tvpipe/lib/client.js"` (drawbluff's `scripts/build.ts` does it in
+`"/_tvpipe/lib/client.js"` (Drawbluff's `scripts/build.ts` does it in
 ten lines), mark them external in a bundler, or put an import map in
 each page:
 
@@ -232,7 +232,7 @@ with `type="module"` scripts.
 
 **Tests** run in Node without tvpipe: `memoryRelay()` from
 `@tvpipe/party/testing` connects a `Party` and `PartyClient`s in memory
-(drawbluff's `test/` has examples, bots included).
+(Drawbluff's `test/` has examples, bots included).
 
 **tvpipe's look (optional).** The host page sits in tvpipe's window
 right after the launcher; for a host page that looks like tvpipe (the
@@ -417,7 +417,7 @@ the file and the pictures. This repository's games take theirs with their
 live check: `node test/live/play.ts --shots ../../site/static/games/NAME`
 (see the script's header for the bots it needs).
 
-**This repository's games** (drawbluff, jinx, garble) release this way through
+**This repository's games** (Drawbluff, Jinx, Garble) release this way through
 `.github/workflows/games.yml`:
 
 1. Bump `games/NAME/package.json`'s `version`; when tvpipe's series
@@ -550,7 +550,7 @@ browser. `--port PORT` fixes the window's port on 127.0.0.1.
 
 In the app window, a page the host page opens (a link with
 `target="_blank"`, `window.open`) opens in the system's browser instead,
-where it can be presented in a video call; drawbluff's "Open the TV view"
+where it can be presented in a video call; Drawbluff's "Open the TV view"
 is one. Navigations of the window itself stay in it.
 
 ## Resolution

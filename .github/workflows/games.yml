@@ -84,7 +84,9 @@ jobs:
             echo "games/$name/tvpipe.json has \"tvpipe\": \"$game_series\", this tvpipe is $series" >&2
             exit 1
           }
+          title="$(node -p "require('./games/$name/tvpipe.json').title || '$name'")"
           echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "title=$title" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "series=$series" >> "$GITHUB_OUTPUT"
       - name: Build tvpipe
@@ -115,6 +117,7 @@ jobs:
       - name: Checksums and notes
         env:
           NAME: ${{ steps.game.outputs.name }}
+          TITLE: ${{ steps.game.outputs.title }}
           VERSION: ${{ steps.game.outputs.version }}
           SERIES: ${{ steps.game.outputs.series }}
         run: |
@@ -124,7 +127,7 @@ jobs:
           cd ..
           {
             echo "<!-- tvpipe: $SERIES -->"
-            echo "$NAME $VERSION, a game for tvpipe $SERIES. Play it with"
+            echo "$TITLE $VERSION, a game for tvpipe $SERIES. Play it with"
             echo
             echo '```'
             echo "tvpipe game play $NAME"
@@ -146,11 +149,11 @@ jobs:
         if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
-          NAME: ${{ steps.game.outputs.name }}
+          TITLE: ${{ steps.game.outputs.title }}
           VERSION: ${{ steps.game.outputs.version }}
         run: |
           gh release create "$GITHUB_REF_NAME" dist/* \
             --verify-tag \
             --latest=false \
-            --title "$NAME $VERSION" \
+            --title "$TITLE $VERSION" \
             --notes-file release-notes.md

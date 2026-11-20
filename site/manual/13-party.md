@@ -30,7 +30,7 @@ Games are not part of tvpipe: each one comes out on its own. A name from the [li
 
 ```sh
 $ tvpipe game play drawbluff
-drawbluff ("drawbluff") from gh:mitsuhiko/tvpipe/drawbluff@drawbluff-v* ("drawbluff" in the games list), release drawbluff-v0.3.0
+Drawbluff ("drawbluff") from gh:mitsuhiko/tvpipe/drawbluff@drawbluff-v* ("drawbluff" in the games list), release drawbluff-v0.3.0
   128.2 KiB, 24 files (254.5 KiB unpacked), made for tvpipe 0.3
   sha256 67a1867955902de214916aa67a287580fda732d46008d98b7e36d763094b0dd3
   It runs in tvpipe's window, can cast to the TVs on this network and serves pages to phones.
@@ -63,7 +63,7 @@ Other sources work the same way:
 3. Everyone scans the QR code and plays on their phone. Phones that lose the connection (a locked screen, a tunnel hiccup) come back on their own.
 4. Close the window (or press Ctrl-C in the terminal) to end it: the TVs leave the game, the phones say the room closed.
 
-![The start window: a game, its TVs to pick, and the Start buttons](shots/game-launcher.png "The start window of `tvpipe game play`, with drawbluff.")
+![The start window: a game, its TVs to pick, and the Start buttons](shots/game-launcher.png "The start window of `tvpipe game play`, with Drawbluff.")
 
 :::aside How phones get in
 By default through a public link: OpenTunnel, which tvpipe sets up once and reuses, with Cloudflare when OpenTunnel fails. `--lan` serves phones on the same Wi-Fi instead.
@@ -105,7 +105,7 @@ A game is a small web app: a host page with the rules, a TV page, a phone page a
 
 ## The demo game
 
-drawbluff is a drawing and bluffing game for 3 to 50 players:
+Drawbluff is a drawing and bluffing game for 3 to 50 players:
 
 ```sh
 $ tvpipe game play drawbluff
@@ -120,7 +120,7 @@ $ tvpipe game play .
 
 Its window shows the room code and the QR code, the TVs, the players, the number of rounds, the timers and whether latecomers join at the next round, at the next drawing, or not at all, and a preview of the TV.
 
-drawbluff speaks English and German. Pick the language on the host page, which starts with your browser's, and every phone and the TV follow. A phone can switch for itself in the lobby.
+Drawbluff speaks English and German. Pick the language on the host page, which starts with your browser's, and every phone and the TV follow. A phone can switch for itself in the lobby.
 
 Each language has its own prompts, written for it rather than translated: 665 in English, 698 in German. They range from odd pairs, idioms taken literally and useless superpowers to history gone wrong, and in German also compounds taken literally („ein glückspilz“). A room never deals the same prompt twice until it has used them all.
 

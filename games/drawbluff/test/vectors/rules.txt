@@ -1,4 +1,4 @@
-# drawbluff's rules, written by `node test/vectors.ts --bless` from game/rules.ts
+# Drawbluff's rules, written by `node test/vectors.ts --bless` from game/rules.ts
 
 # (the reference); replayed by test/vectors.test.ts.
 

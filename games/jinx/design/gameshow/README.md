@@ -1,4 +1,4 @@
-# JINX! — the TV as a Saturday-night show
+# Jinx — the TV as a Saturday-night show
 
 Direction: **game show / bold motion graphics.** The TV is the host, the
 set and the scoreboard of a live show taped on your couch. Big skewed
@@ -37,7 +37,7 @@ Mood washes change the burst and the cones, never the whole screen:
 
 ### Type
 
-Only fonts we already ship (`fonts/`, copied from drawbluff, OFL):
+Only fonts we already ship (`fonts/`, copied from Drawbluff, OFL):
 
 - **IBM Plex Sans 700, uppercase, skewed −8°** (`.slam`): every headline,
   every clue word, names. The skew is the show's motion even when nothing
@@ -93,7 +93,7 @@ outline and two big googly eyes. Recommendation over the doodle:
 - Cheap: one inline SVG each, mood = swap the face group.
 
 A doodle can come later as the *face*: draw on your phone inside your
-shape's silhouette (drawbluff's canvas), keep the shape and colour.
+shape's silhouette (Drawbluff's canvas), keep the shape and colour.
 
 ### Motion language
 

@@ -1,4 +1,4 @@
-# garble
+# Garble
 
 A telephone drawing game (our own rules, names and look) on
 [`@tvpipe/party`](../../npm/party), for 4–12 players. Everyone draws a

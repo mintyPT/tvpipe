@@ -1,5 +1,5 @@
 /**
- * drawbluff's host page: the game runs here, in tvpipe's
+ * Drawbluff's host page: the game runs here, in tvpipe's
  * window (docs/playshare-design.md). It makes the party on tvpipe's
  * relay, puts the TV page on the TVs the launcher chose, runs the rules
  * (`game/`), and shows the room: the QR code, the TVs,

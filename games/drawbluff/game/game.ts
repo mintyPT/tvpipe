@@ -1,5 +1,5 @@
 /**
- * drawbluff on a party, for 3 to 50 players (docs/drawbluff-scale.md):
+ * Drawbluff on a party, for 3 to 50 players (docs/drawbluff-scale.md):
  * the lobby, then per round everyone draws their prompt, a gallery shows
  * the drawings that do not get the stage, and per spotlight drawing its
  * liars write fake titles, the others vote, the truth is revealed;

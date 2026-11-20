@@ -71,7 +71,7 @@ folder makes it):
 ```json
 {
   "name": "drawbluff",
-  "title": "drawbluff",
+  "title": "Drawbluff",
   "root": "dist",
   "pages": {
     "host": "host/index.html",
@@ -355,7 +355,7 @@ sweep, the TVs' reconnect window. The URL must be on the local origin
 host through `/_tvpipe/ws` like any client (`via: local`). A cast that
 fails (every receiver gone) is reported (`cast` event `failed`); the
 host decides whether to retry (the library offers `party.cast()` again,
-drawbluff shows the error and a button). `browser` casts to the player
+Drawbluff shows the error and a button). `browser` casts to the player
 page (`--to browser`): the event's `player` is its URL.
 
 ### 9.1 Resolution
@@ -524,10 +524,10 @@ tunnels (about 29 per address in 90 minutes, each a new hostname):
 - `crates/tvpipe-party` (host, WebRTC fast path, examples): the relay
   needs only tvpipe's `httpd`/`websocket`, now used inside the crate;
   `tvpipe::__web` goes with it.
-- `crates/tvpipe-canvas` and the Rust drawbluff (`games/drawbluff/src`,
+- `crates/tvpipe-canvas` and the Rust Drawbluff (`games/drawbluff/src`,
   `tests`, `Cargo.toml`): no Rust game logic or TV rendering.
 - The Node host of `@tvpipe/party` (`server.ts`, `ws.ts`, `create.ts`,
-  `toTv`, the video screen) and drawbluff's `main.ts`,
+  `toTv`, the video screen) and Drawbluff's `main.ts`,
   `screen-video.ts` (`@napi-rs/canvas`).
 - `docs/multiscreen-design.md` (replaced by this document); the parts of
   `docs/party-design.md` about the Node host are marked historical.
@@ -541,7 +541,7 @@ tunnels (about 29 per address in 90 minutes, each a new hostname):
    casting through `share`, the window, the CLI; tests.
 3. `@tvpipe/party` in the browser: host, client, API client, test
    relay, the standard launcher; the build into the crate.
-4. drawbluff as a bundle (host page with `game/*.ts`, TV and phone pages
+4. Drawbluff as a bundle (host page with `game/*.ts`, TV and phone pages
    as they are), tests, the live check, a zip.
 5. Deletions, README, ARCHITECTURE, AGENTS, the manual's text, CI.
 
@@ -562,7 +562,7 @@ tunnels (about 29 per address in 90 minutes, each a new hostname):
   modules with `.js` imports); `npm run build` writes `dist/` and copies
   the browser files into the crate (`scripts/web.ts`; `--check` in
   `npm run check`). The session vectors moved to `npm/party/test/vectors/`.
-- **drawbluff**: `tvpipe.json` at the game's folder with `root: dist`;
+- **Drawbluff**: `tvpipe.json` at the game's folder with `root: dist`;
   `npm run build` compiles `game/` and `host/` and rewrites the library
   imports to `/_tvpipe/lib/`; `npm run zip` writes `drawbluff.zip`
   (first `scripts/zip.ts`, deflate through Node's zlib; now `tvpipe game
@@ -692,7 +692,7 @@ into a canvas: `<canvas layoutsubtree content="drawable">` with
 `<iframe drawable>` is drawn with its document (checked: the inner page's
 pixels in the canvas). So a game's existing DOM TV page can become a
 surface without changes: the host page puts the TV page in such an
-iframe, draws it every frame and encodes the canvas. drawbluff's host
+iframe, draws it every frame and encodes the canvas. Drawbluff's host
 page does this with **TV picture: drawn here** (`host.ts`,
 `beamCanvas`); a whole game ran that way (`node test/live/play.ts
 --tv canvas`: the TV picture through the `browser` receiver, every
@@ -736,7 +736,7 @@ Recommendation, as implemented:
 2. **DOM TV pages keep the tab path** (`party.cast()`) by default: it
    needs nothing from the window. HTML-in-Canvas is the opt-in for
    Chrome 157+ where one browser matters more than a minimized window
-   (drawbluff offers both).
+   (Drawbluff offers both).
 3. **Multi-screen games** open a surface per screen (or mix: a surface
    for one TV, the tab path for another).
 4. Sound: Web Audio routed through `captureAudio`; a DOM page's own
@@ -859,7 +859,7 @@ workspace's series, packs with a tvpipe built from the same commit
 (`game pack --strict`, `game check --strict`), writes `SHA256SUMS` and
 the notes (with the marker), and runs `gh release create --latest=false`.
 `game check --smoke` is not run there (no headless Chrome is promised on
-the runners; run it before tagging). CI packs and checks drawbluff the
+the runners; run it before tagging). CI packs and checks Drawbluff the
 same way on every push, and checks every game's series. tvpipe's own
 release marks itself `--latest`; the installers pick the newest
 `vX.Y.Z` tag from `/releases?per_page=100` themselves (falling back to

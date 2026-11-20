@@ -147,7 +147,7 @@ optional, comma-separated). Built and curated in `games/jinx/design/words/`:
   ten. *Hard*: medium and hard. A game never deals two related words
   (fire and firework, sea and ocean: the word notes list them). A room
   deals no word twice until it dealt them all, across games (the host
-  page keeps that in `localStorage`, as drawbluff does with prompts).
+  page keeps that in `localStorage`, as Drawbluff does with prompts).
 
 ### 5.2 When two clues are the same (jinx)
 
@@ -251,7 +251,7 @@ look and the **game show's** pacing and voice.
   and the room code), shipped with the game. A handwritten face for the
   clue words is an option for later; it needs the human's OK.
 - **Avatars:** each player draws a face on the phone in the lobby
-  (drawbluff's canvas, one ink colour, a few seconds) and it is printed
+  (Drawbluff's canvas, one ink colour, a few seconds) and it is printed
   into the centre of a chip in the player's colour. A shuffle button
   gives a ready-made face (and bots get one). The chip carries state: a
   crown (VIP), a blindfold (the guesser during writing), a wiggling
@@ -316,7 +316,7 @@ The TV page is rendered in a headless Chrome and H.264-encoded at about
 - Nothing important faster than about 6 frames.
 - Sound is synthesized with Web Audio (no audio files) and routed
   through `captureAudio`; the recipes are in both READMEs. The host
-  page's preview is muted (`#mute=1`, as drawbluff).
+  page's preview is muted (`#mute=1`, as Drawbluff).
 - The TV animates the difference between two views and holds every final
   state statically, so a TV that reconnects renders the current state
   without replaying anything.

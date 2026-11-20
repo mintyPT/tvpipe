@@ -1,5 +1,5 @@
 /**
- * garble on a party, for 4 to 12 players (docs/garble-design.md): the
+ * Garble on a party, for 4 to 12 players (docs/garble-design.md): the
  * lobby, then per round a secret word for everyone and one secret
  * Wrecker, the chains passed seat to seat (draw, guess, draw, …), the
  * reveal (each chain shown on the TV, judged by its author), the hunt

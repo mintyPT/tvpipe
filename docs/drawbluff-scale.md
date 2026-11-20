@@ -1,11 +1,11 @@
-# drawbluff at scale (design)
+# Drawbluff at scale (design)
 
 Status: implemented. Since `tvpipe game play` the game runs in its host
 page in the browser (`game/` unchanged), the TV is the web screen only;
 the Rust host and the video screens mentioned below are gone, their
 measurements stay as recorded ([`playshare-design.md`](playshare-design.md)).
 
-drawbluff for 3 to 50 players in one mode, on one TV. Today's game
+Drawbluff for 3 to 50 players in one mode, on one TV. Today's game
 (`games/drawbluff`, `docs/party-design.md` §10) is the small end of it:
 with 3–6 players nothing changes but a few extra lines on the screens.
 The goal for 50: everybody's phone always has something to do, the TV
@@ -208,7 +208,7 @@ kinds of lie:
 | `then` | history mixed up | a caveman with a selfie stick | 32 | 33 |
 | `scene` | everyday scenes gone wrong | grandpa's first video call | 32 | 35 |
 
-All are written for drawbluff, drawable, family friendly and in the
+All are written for Drawbluff, drawable, family friendly and in the
 display form.
 
 - **Format**: `[tag]` lines start a structure, then one prompt per

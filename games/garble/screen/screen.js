@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * garble's TV page: tvpipe casts it with its own browser, or anyone opens
+ * Garble's TV page: tvpipe casts it with its own browser, or anyone opens
  * the watch link (the host page's preview, muted). It shows the screen
  * view (`{ roster, screen, join }`) in the room's language and animates
  * it: the lobby, the round's secrets, the ring of players passing their
@@ -314,7 +314,7 @@ function logo(small = false) {
   return h(
     "div",
     { class: `logo${small ? " small" : ""}` },
-    ...[..."garble"].map((c, i) =>
+    ...[..."Garble"].map((c, i) =>
       h("span", { class: i === 3 ? "red" : "", style: { "--r": `${(jitter(`l${i}`) * 5).toFixed(1)}deg`, "--d": `${-i * 0.45}s`, "--y": `${(jitter(`y${i}`) * 0.8).toFixed(2)}vh` } }, c),
     ),
   );

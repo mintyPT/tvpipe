@@ -13,7 +13,7 @@ tvpipe · Playing movie.mkv
 ✓ Connected to Living Room TV · Google Cast (1.8 s)
 ⠋ Stopping…
 ===
-tvpipe · drawbluff
+tvpipe · Drawbluff
 
   Play in a browser on this computer
   http://127.0.0.1:62991/
@@ -27,7 +27,7 @@ tvpipe · drawbluff
 • Casting to Living Room TV
 ? End the game? Press q again to end it, any other key to keep playing
 ---
-tvpipe · drawbluff
+tvpipe · Drawbluff
 
   Play in a browser on this computer
   http://127.0.0.1:62991/

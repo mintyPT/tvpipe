@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * garble's ink: drawings are black strokes on paper. The phone's pad,
+ * Garble's ink: drawings are black strokes on paper. The phone's pad,
  * the guesser's view and the TV all draw with this module, so a drawing
  * looks the same everywhere. A drawing is `{ strokes }`, each stroke
  * `[width, x0, y0, x1, y1, …]` on a 1000 × 1000 grid (one point: a dot).

@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * Languages for drawbluff's phone and TV pages (their string tables:
+ * Languages for Drawbluff's phone and TV pages (their string tables:
  * `phone/strings.js`, `screen/strings.js`): which language, numbers,
  * plurals and lists the way the language writes them (Intl). The room's
  * language comes with the views (`room.lang`, `screen.lang`); the host

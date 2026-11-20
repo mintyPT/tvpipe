@@ -8,7 +8,7 @@ depends on the list's shape.
 
 - **The list** (`site/static/games.json`, served at
   `https://tvpipe.party/games.json`) has all three of this repository's
-  games (drawbluff, jinx, garble) and screenshots for each.
+  games (Drawbluff, Jinx, Garble) and screenshots for each.
 - **The site** has a games page, `tvpipe.party/games/`, rendered from the
   list with the screenshots.
 - **`tvpipe game play` without a game** opens the window on the list:
@@ -26,7 +26,7 @@ list, as §18 says. A game has no URL of its own at tvpipe.party.
   "games": [
     {
       "name": "drawbluff",
-      "title": "drawbluff",
+      "title": "Drawbluff",
       "summary": "Draw your prompt, fake the others' titles, find the real one",
       "players": { "min": 3, "max": 50 },
       "languages": ["en", "de"],

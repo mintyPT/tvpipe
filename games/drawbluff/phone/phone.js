@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * drawbluff's phone page: joining, the lobby, the drawing pad, lies,
+ * Drawbluff's phone page: joining, the lobby, the drawing pad, lies,
  * votes, scores. Everything it shows comes from the party's view
  * (`{ roster, room, me }`); everything it does is an action. It speaks
  * the room's language (`room.lang`), or the one the player picked with

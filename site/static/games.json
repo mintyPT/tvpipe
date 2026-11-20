@@ -3,7 +3,7 @@
   "games": [
     {
       "name": "drawbluff",
-      "title": "drawbluff",
+      "title": "Drawbluff",
       "summary": "Draw your prompt, fake the others' titles, find the real one",
       "players": { "min": 3, "max": 50 },
       "languages": ["en", "de"],
@@ -31,7 +31,7 @@
     },
     {
       "name": "garble",
-      "title": "garble",
+      "title": "Garble",
       "summary": "Draw, guess, pass it on: find where each chain died, smuggle your secret word in, catch the Wrecker",
       "players": { "min": 4, "max": 12 },
       "languages": ["en", "de"],

@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * Drawing drawbluff's drawings: the phone's canvas, the web screen and
+ * Drawing Drawbluff's drawings: the phone's canvas, the web screen and
  * the video screen (Node, @napi-rs/canvas) all use this module, so a
  * drawing looks the same everywhere. A drawing is `{ strokes }`, each
  * stroke `[colour, width, x0, y0, x1, y1, …]` on a 1000×1000 grid,

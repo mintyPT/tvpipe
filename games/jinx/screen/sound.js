@@ -2,7 +2,7 @@
 /**
  * The TV's sound: every cue is synthesized with Web Audio (oscillators and
  * one noise buffer, no files), mixed through one compressor into the
- * context's destination, as drawbluff's TV does (tvpipe's browser captures
+ * context's destination, as Drawbluff's TV does (tvpipe's browser captures
  * the page's sound and allows autoplay). The host page's preview is muted
  * (`#mute=1`). Recipes: games/jinx/design/tabletop/README.md §6 and the game
  * show's (heartbeat, drumroll).

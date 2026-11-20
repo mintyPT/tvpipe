@@ -686,7 +686,7 @@ fn limits() {
     );
 }
 
-/// drawbluff, when it is built (`npm run build` in games/drawbluff).
+/// Drawbluff, when it is built (`npm run build` in games/drawbluff).
 #[test]
 fn drawbluff_bundles_cleanly() {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../games/drawbluff");

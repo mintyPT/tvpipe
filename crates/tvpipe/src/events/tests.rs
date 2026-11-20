@@ -473,7 +473,7 @@ fn progress_round_trips_and_is_not_machine() {
     }
     all.extend([
         Progress::Game {
-            title: s("drawbluff"),
+            title: s("Drawbluff"),
             local: s("http://127.0.0.1:1/"),
             lan: Some(s("http://192.168.1.2:7420/")),
         },

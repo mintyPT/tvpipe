@@ -1,4 +1,4 @@
-# drawbluff
+# Drawbluff
 
 A Drawful-style party game (our own name, prompts and look) on
 [`@tvpipe/party`](../../npm/party): 3–50 players in one mode, everyone

@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * garble's phone page: joining, the lobby, the round's secret card, the
+ * Garble's phone page: joining, the lobby, the round's secret card, the
  * drawing pad (black ink; undo only when the room allows it), guessing
  * (with the round's twist), passing on, reactions during the reveal,
  * judging your own chain, accusing the Wrecker, scores. Everything it
@@ -240,7 +240,7 @@ function joinForm(error = "", typed) {
 }
 
 function logo() {
-  return h("div", { class: "logo" }, ...[..."garble"].map((c, i) => h("span", { class: i === 3 ? "red" : "", style: { "--r": `${[-4, 3, -2, 4, -3, 2][i]}deg` } }, c)));
+  return h("div", { class: "logo" }, ...[..."Garble"].map((c, i) => h("span", { class: i === 3 ? "red" : "", style: { "--r": `${[-4, 3, -2, 4, -3, 2][i]}deg` } }, c)));
 }
 
 /** @param {any} e */

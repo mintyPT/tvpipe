@@ -56,7 +56,7 @@ export interface Session {
  * any, and the share of rounds as mixed as can be (`mixed`: no structure
  * more often than players / structures, rounded up; with up to 17
  * players: every prompt of another structure): with a fresh {@link deck}
- * per game spread over `window` (`fresh`, how drawbluff dealt before,
+ * per game spread over `window` (`fresh`, how Drawbluff dealt before,
  * with a window of 3) or the room's {@link PromptDeck}.
  */
 export function repeats(prompts: readonly Prompt[], s: Session, fresh: boolean, runs: number, window = SPREAD): { mean: number; sessions: number; mixed: number } {

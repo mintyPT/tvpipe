@@ -1,5 +1,5 @@
 /**
- * Fake players: clients that play drawbluff by themselves (scribbles,
+ * Fake players: clients that play Drawbluff by themselves (scribbles,
  * silly lies in the room's language, random votes). For the tests (in Node), and for trying the
  * game alone: the host page's "Add a bot" runs them in the window,
  * connected through tvpipe like a phone.

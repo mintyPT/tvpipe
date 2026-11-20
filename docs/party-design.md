@@ -18,7 +18,7 @@ as a **video** the game renders, and as a **web page** tvpipe casts.
 Contents: 1. the split, 2. where the message bus lives, 3. what tvpipe
 adds, 4. `@tvpipe/party`, 5. the protocol, 6. security and abuse, 7. the
 main screen on the TV, 8. latency, 9. a game author's view, 10.
-drawbluff, 11. tests, 12. plan and open questions, 13. as built.
+Drawbluff, 11. tests, 12. plan and open questions, 13. as built.
 
 ## 1. The split
 
@@ -268,7 +268,7 @@ shows*. Each client has one **view**: `{ roster, room | screen, me }`.
   host pages' "Make VIP"). The VIP starts the game ("everybody's in").
 - `party.lock()` (the game started): new names are refused (`bye
   locked`), resumes still work. `maxPlayers` (drawbluff: 50) and
-  `minPlayers` (3) are the game's. drawbluff no longer locks: a name
+  `minPlayers` (3) are the game's. Drawbluff no longer locks: a name
   that joins mid-game plays from the next round.
 - **Clock**: `ping`/`pong` on connect (five) and every 10 s; the client
   keeps the offset of the shortest round trip (as the player page does)
@@ -443,7 +443,7 @@ await party.toTv({ to: "Living Room", mode: "video", canvas,
   render: (ctx, view, t) => drawScreen(ctx, view, t) });   // view = party.screen.view
 ```
 
-## 10. drawbluff (the demo game)
+## 10. Drawbluff (the demo game)
 
 Rules (Drawful's shape, our own prompts and names): 3–8 players, two
 rounds (round 2 scores double). This section is the classic game as
@@ -511,7 +511,7 @@ same as WAV files on the web screen.
   (property-style: random views, the client's merge equals the server's
   view); coalescing; slow consumers (a client that does not read);
   rate limits; `collect` with deadlines and away players.
-- **drawbluff**: rules and scoring as pure functions (lies equal to the
+- **Drawbluff**: rules and scoring as pure functions (lies equal to the
   truth, merged lies, nobody fooled, everyone fooled, round 2 doubling);
   whole games with 3 and 8 fake phones over real WebSockets, including a
   phone that drops mid-vote and resumes, and one that never answers.
@@ -557,7 +557,7 @@ Questions for the owner:
 Decided with the lead (for the owner, 2026-11-19): the bus lives in
 `@tvpipe/party` (§2 B); tvpipe adds only `tunnel PORT` and `qr TEXT`
 (+ the SDK's `tunnel()`/`qr()`; a public Rust `tvpipe::Tunnel`/`qr` API
-later); `@napi-rs/canvas` only as an optional dependency of drawbluff;
+later); `@napi-rs/canvas` only as an optional dependency of Drawbluff;
 `@tvpipe/party` versioned with the crate (0.2.0; CI and the release job
 check it; publishing waits).
 
@@ -580,10 +580,10 @@ What changed against the design while building it:
 - **`collect`** waits, with a deadline, also for players who are away
   (they may come back before it: a phone whose screen locked while
   drawing); `skipAway` stops waiting for them; `reply` makes the
-  acknowledgement's result (drawbluff answers a lie with its display form).
+  acknowledgement's result (Drawbluff answers a lie with its display form).
 - **Screens' actions** are deduplicated per connection only (screens have
   no lasting identity).
-- **The repository's binary**: drawbluff and the live scripts use
+- **The repository's binary**: Drawbluff and the live scripts use
   `target/release/tvpipe` (or `debug`) when `TVPIPE_BINARY` is unset.
 
 Measurements (2026-11-19, Vienna, macOS 26, release build, the client on

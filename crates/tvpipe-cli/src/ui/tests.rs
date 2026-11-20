@@ -617,7 +617,7 @@ fn game() -> Vec<(u64, In)> {
         (
             2,
             p(Progress::Game {
-                title: "drawbluff".into(),
+                title: "Drawbluff".into(),
                 local: "http://127.0.0.1:62991/".into(),
                 lan: None,
             }),

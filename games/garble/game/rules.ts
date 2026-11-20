@@ -1,5 +1,5 @@
 /**
- * garble's rules, without a party: drawings and guesses as they arrive
+ * Garble's rules, without a party: drawings and guesses as they arrive
  * from phones, the seating (who works on which chain at which step),
  * the decks of prompts and secret words, the word matcher (smuggled
  * words, the fallback verdict) and the points. Pure functions with

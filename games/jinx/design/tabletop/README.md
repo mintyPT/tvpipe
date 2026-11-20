@@ -96,7 +96,7 @@ Contrast rule: text sits on cream or on the felt, never on a player colour.
 
 **Avatars = poker-chip tokens.** A coloured disc with notched cream edge marks, an ink
 outline and a cream centre with an ink face. The proposal: each player **doodles their
-face on the phone in the lobby** (drawbluff's canvas, one ink colour, 4 s) and it is
+face on the phone in the lobby** (Drawbluff's canvas, one ink colour, 4 s) and it is
 printed into the chip's centre as a rubber-stamp impression. A shuffle button gives eight
 ready-made faces (the mockup's) as the fallback for "I can't draw" and for bots. The
 rim colour plus the face keeps tokens distinct for colour-blind players. Tokens carry
@@ -411,6 +411,6 @@ and satisfying, not spectacular: ~1.8 s from the pick to the chips.)
 - The live guess needs a throttled draft from the guesser's phone (≈ every keystroke,
   ≤ 20/s) in the view; the TV punches one letter per changed character.
 - Sound: one `AudioContext` and the synth table above, routed through `captureAudio`;
-  `#mute=1` on the host preview, as drawbluff does.
+  `#mute=1` on the host preview, as Drawbluff does.
 - Files: `tv.html`, `tv.css`, `tv.js` (all phases, the fake data and the controls) and
   `fonts/` (Plex Sans and Plex Mono, copied from `crates/tvpipe/src/browser/fonts/`, OFL).

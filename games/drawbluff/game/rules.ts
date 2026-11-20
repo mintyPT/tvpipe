@@ -1,5 +1,5 @@
 /**
- * drawbluff's rules as pure functions: drawings, titles, options, votes
+ * Drawbluff's rules as pure functions: drawings, titles, options, votes
  * and points. No I/O, no clocks; `game.ts` drives them.
  */
 
@@ -188,7 +188,7 @@ export function displayTitle(text: string): string {
   }
 }
 
-/** The languages drawbluff speaks (`data/prompts.txt`, `data/prompts.de.txt`); a room has one. */
+/** The languages Drawbluff speaks (`data/prompts.txt`, `data/prompts.de.txt`); a room has one. */
 export const LANGS = ["en", "de"] as const;
 export type Lang = (typeof LANGS)[number];
 

@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * Languages for garble's phone and TV pages: which language, numbers the
+ * Languages for Garble's phone and TV pages: which language, numbers the
  * way it writes them. The room's language comes with the views
  * (`room.lang`, `screen.lang`); the host page sets it.
  */

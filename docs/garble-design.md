@@ -1,4 +1,4 @@
-# garble (design)
+# Garble (design)
 
 A telephone drawing game for 4–12 players in `games/garble`: a web app on
 `@tvpipe/party`, like `games/drawbluff`. Draw, guess, pass it on; every
@@ -11,7 +11,7 @@ chains to die. People judge; the machine only checks facts.
 
 - **Drift is funny by itself.** "A peacock showing off" becomes "a
   sneaky pancake" in four steps. Bad drawers make it better, not worse,
-  which is the opposite of drawbluff, where a good drawing matters.
+  which is the opposite of Drawbluff, where a good drawing matters.
 - **Nobody waits.** Every step, every player works on one chain at the
   same time, so a step takes as long as its timer at most, whatever the
   room's size.
@@ -138,7 +138,7 @@ view of a whole game for leaks.
 ## 8. Not done (yet)
 
 - More than 12 players: the reveal shows every chain, about 30–45 s
-  each; past 12 it would need drawbluff's spotlights and a gallery.
+  each; past 12 it would need Drawbluff's spotlights and a gallery.
 - Joining mid-game: newcomers wait for the next round (`wait`) or the
   next game (`closed`); a chain cannot take a player in mid-round.
 - The machine's verdict is a simple word match; synonyms ("granny" for

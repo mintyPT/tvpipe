@@ -1,4 +1,4 @@
-// JINX! — the TV page as a Saturday-night show. A clickable mockup with fake
+// Jinx — the TV page as a Saturday-night show. A clickable mockup with fake
 // data: no network, no build, no dependencies. Keys: ←/→ phase, Space next
 // beat, A autoplay, S safe area, M sound. URL hash: #p=reveal&b=2&shot
 // (jump to a phase, fast-forward beats, hide the controls).

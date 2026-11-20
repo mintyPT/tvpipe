@@ -1,7 +1,7 @@
 // @ts-check
 /**
  * The face pad: one ink, one width, drawn inside the chip's circle on the
- * 1000 grid (as drawbluff's pad, smaller limits: 40 strokes, 2000 points).
+ * 1000 grid (as Drawbluff's pad, smaller limits: 40 strokes, 2000 points).
  */
 
 import { DOODLE_WIDTH, GRID, INK, MAX_POINTS, MAX_STROKES } from "./faces.js";

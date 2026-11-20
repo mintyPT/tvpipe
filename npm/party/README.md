@@ -140,7 +140,7 @@ worker.postMessage({ canvas: canvas.transferControlToOffscreen(), info }, [canva
 events `status`, `stats` (`fps`, `kbps`, `lagMs` to tvpipe, `encodeMs`),
 `end`, `error`; `captureAudio(context, node, channels, onPcm)` taps Web
 Audio. A DOM TV page can be drawn into a canvas with Chrome's
-HTML-in-Canvas (drawbluff's "TV picture: drawn here").
+HTML-in-Canvas (Drawbluff's "TV picture: drawn here").
 
 ## Client API
 

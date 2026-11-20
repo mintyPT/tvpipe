@@ -363,7 +363,7 @@ function pick<T>(r: () => number, xs: readonly T[]): T {
 
 function bless(): void {
   const out: string[] = [
-    "# drawbluff's rules, written by `node test/vectors.ts --bless` from game/rules.ts",
+    "# Drawbluff's rules, written by `node test/vectors.ts --bless` from game/rules.ts",
     "# (the reference); replayed by test/vectors.test.ts.",
   ];
   for (const seed of [0, 1, 7, 42, 0xdeadbeef, 0xffffffff]) {

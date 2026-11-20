@@ -52,7 +52,7 @@ but prefer none.
   clues that helped; Kamikaze: most jinxed), and a **word web**: every word of
   the evening on one screen, linked by the clues that led to it.
 - Avatars: undecided (ready-made characters vs a quick doodle in the lobby,
-  drawbluff has a drawing canvas).
+  Drawbluff has a drawing canvas).
 
 Scratch space for design work: `games/jinx/design/` (not committed yet).
 Do not change anything outside `games/jinx/`. Do not commit. Do not add

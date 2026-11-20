@@ -1,5 +1,5 @@
 /**
- * Fake players: clients that play garble by themselves (doodles, guesses
+ * Fake players: clients that play Garble by themselves (doodles, guesses
  * in the room's language, random verdicts and suspects). For the tests
  * (in Node), and for trying the game alone: the host page's "Add a bot"
  * runs them in the window, connected through tvpipe like a phone.
