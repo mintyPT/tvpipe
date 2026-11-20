@@ -2,11 +2,12 @@
 /**
  * What the phone page says, per language (the room's, `room.lang`, or
  * the phone's own choice). German is written for German speakers, not
- * translated word for word: "du", „Anführungszeichen“, "Platz 3 von 8",
- * the table's cheeky voice.
+ * translated word for word: "du", „Anführungszeichen“, the table's
+ * cheeky voice. Jinx is a team game: the room plays as one, with one bank
+ * of chips ("we", "our chips"), no personal points, ranks or winners.
  *
  * @typedef {import("../game/views.ts").Reason} Reason
- * @typedef {import("../game/views.ts").Payout} Payout
+ * @typedef {import("../game/views.ts").Part} Part
  * @typedef {import("../game/views.ts").Award} Award
  * @typedef {import("../game/views.ts").RoomTitle} RoomTitle
  */
@@ -26,7 +27,7 @@ const en = (f) => ({
   yourName: "Your name",
   takeSeat: "Take a seat",
   hello: ["One word each.", "Don't think alike."],
-  helloNote: "3 to 8 players · you draw your face next",
+  helloNote: "3 to 8 players, one team · you draw your face next",
   reconnecting: "Connection lost. Reconnecting…",
   disconnected: "Disconnected",
   closedText: "The connection to the game is closed.",
@@ -103,9 +104,6 @@ const en = (f) => ({
     "part of the word": "part of the word",
     "too close": "too close",
   },
-  // The header.
-  /** @param {number} n */
-  points: (n) => f.p(n, { one: "# point", other: "# points" }),
   // Waiting for the TV.
   jinxCheck: "Jinx check",
   theVerdict: "The verdict",
@@ -145,7 +143,7 @@ const en = (f) => ({
   roundOf: (r, of) => `Round ${f.n(r)} of ${f.n(of)}`,
   hotSeat: "You're in the hot seat",
   noPeeking: "Don't look at anyone's phone.",
-  hotSeatNote: "Your friends write clues. You guess the word.",
+  hotSeatNote: "Your friends write clues. You guess the word for the team.",
   /** @param {string} name */
   guesses: (name) => `${name} guesses`,
   getReady: "Get ready: the word is coming.",
@@ -153,7 +151,7 @@ const en = (f) => ({
   /** @param {string} name @param {number} each */
   whoGuesses: (name, each) => ` ${name} guesses · ${each === 2 ? "two clues each" : "one word each"}`,
   bold: "Bold",
-  boldNote: " bets on your clue: +4 if it's turned, −2 if it's jinxed.",
+  boldNote: " bets our chips on your clue: +2 to the pot if it's turned, −2 more if it's jinxed.",
   allIn: "All in! Watch the pile on the TV. You can still change it.",
   /** @param {number} i */
   cluePlaceholder: (i) => `Clue ${f.n(i)}: one word`,
@@ -184,7 +182,7 @@ const en = (f) => ({
   /** @param {string[]} names */
   jinxedWith: (names) => `with ${f.list(names)}`,
   withOwn: "with your other clue",
-  boldMinus: "Bold: −2",
+  boldMinus: "Bold: the pot loses 2 more",
   /** @param {number} n @returns {string} */
   yourCards: (n) => (n > 1 ? "Your cards" : "Your card"),
   dontSay: "Don't say a word: the guesser hasn't guessed yet.",
@@ -210,15 +208,17 @@ const en = (f) => ({
   /** @param {string} name */
   noHints: (name) => `No hints! ${name} is guessing.`,
   // The verdict.
-  /** @type {Record<Payout["why"], string>} */
-  why: {
-    pot: "The pot is yours",
-    wrong: "Wrong guess: −2",
-    turned: "Your card was turned: +2",
-    bold: "Your bold card was turned: +4",
-    "bold-jinxed": "Your bold card was jinxed: −2",
-    mvp: "MVP clue: +3",
+  /** What this phone's card did for the room. @type {Record<Part, string>} */
+  parts: {
+    turned: "Your clue was turned: it helped!",
+    bold: "Bold paid off: +2 to the pot",
+    jinxed: "Jinxed: the pot lost 1",
+    "bold-jinxed": "Bold and jinxed: the pot lost 3",
+    best: "Your clue helped most!",
   },
+  forTheRoom: " for the room",
+  /** @param {number} n */
+  bankIs: (n) => `Bank ${f.n(n)}`,
   /** The guesser's stamp. @type {Record<"right" | "wrong" | "pass" | "lost", string>} */
   stamps: { right: "Right!", wrong: "Not it", pass: "Pass", lost: "All jinxed" },
   /** @param {string} name */
@@ -228,28 +228,37 @@ const en = (f) => ({
   /** @param {string} name */
   passed: (name) => `${name} passed`,
   allJinxed: "Every clue was jinxed",
-  noLoss: "No points, no loss.",
-  noPoints: "No points this round.",
-  noPointsYou: "No points for you this round.",
+  /** The guesser's line under the bank, by result. @type {Record<"right" | "wrong" | "pass" | "lost", string>} */
+  guesserNote: {
+    right: "The pot goes into our bank!",
+    wrong: "A wrong guess costs the bank 2 chips.",
+    pass: "No chips won, none lost.",
+    lost: "Every clue was jinxed: the bank stays as it is.",
+  },
   /** @param {string} name */
-  pickingMvp: (name) => `${name} is picking the MVP clue…`,
+  pickingBest: (name) => `${name} is picking the best clue…`,
   replay: "Look at the TV: the replay.",
-  // The MVP clue.
+  // The best clue.
   /** @param {string} word @param {string} name */
-  mvpLabel: (word, name) => `MVP: ${word} by ${name}`,
+  bestLabel: (word, name) => `Best clue: ${word} by ${name}`,
   /** @param {string} name */
-  mvpDone: (name) => `${name} gets +3. Look at the TV!`,
-  mvp: "MVP",
+  bestDone: (name) => `Thanks, ${name}! Look at the TV.`,
+  best: "Best",
   whichHelped: "Which clue helped most?",
-  mvpNote: "The MVP clue's author gets +3.",
-  // Scores and the end.
+  bestNote: "Say thanks on the TV. No chips, just glory.",
+  // The bank and the end.
   /** @param {number} r @param {number} of */
   afterRound: (r, of) => `After round ${f.n(r)} of ${f.n(of)}`,
-  /** The rank, big, and the rest, small: "#2", " of 5". @param {number} r @param {number} of @returns {[string, string]} */
-  rank: (r, of) => [`#${f.n(r)}`, ` of ${f.n(of)}`],
+  /** @param {number} n */
+  chipsInBank: (n) => f.p(n, { one: "chip in our bank", other: "chips in our bank" }),
+  thisRound: " this round",
+  /** @param {number} n @param {string} title */
+  moreTo: (n, title) => `${f.p(n, { one: "# more chip", other: "# more chips" })} to ${title}`,
+  topTitle: "We're at the top: Telepaths!",
   upNext: "You're up next!",
   upNextNote: "You guess the next word. Don't peek at any phone.",
-  scoresOnTv: "Look at the TV for the scores.",
+  bankOnTv: "Look at the TV for the bank.",
+  newRecord: "New record!",
   /** @type {Record<RoomTitle, string>} */
   titles: {
     telepaths: "Telepaths!",
@@ -261,13 +270,12 @@ const en = (f) => ({
   /** @type {Record<Award["kind"], [string, string]>} */
   awards: {
     "mind meld": ["Mind meld", "You and your twin brain jinxed each other the most."],
-    "lone wolf": ["Lone wolf", "The most one-of-a-kind clues that got turned."],
-    kamikaze: ["Kamikaze", "The most clues lost to jinxes. And you kept going."],
+    telepath: ["Telepath", "The most clues turned before a right guess."],
   },
   playAgain: "Play again",
   gameOver: "Game over",
-  of: "of",
-  wordsTogether: "words found together",
+  /** @param {number} n @param {number} of */
+  wordsFound: (n, of) => `${f.n(n)} of ${f.p(of, { one: "# word", other: "# words" })} found together`,
   yourAward: "Your award",
   /** @param {string} name */
   vipAgain: (name) => `${name} can start a new game from their phone`,
@@ -285,7 +293,7 @@ const de = (f) => ({
   yourName: "Dein Name",
   takeSeat: "Hinsetzen",
   hello: ["Ein Wort pro Kopf.", "Bloß nicht gleich denken."],
-  helloNote: "3 bis 8 Leute · gleich malst du dein Gesicht",
+  helloNote: "3 bis 8 Leute, ein Team · gleich malst du dein Gesicht",
   reconnecting: "Verbindung weg. Verbinde neu…",
   disconnected: "Getrennt",
   closedText: "Die Verbindung zum Spiel ist zu.",
@@ -355,7 +363,6 @@ const de = (f) => ({
     "part of the word": "Teil des Wortes",
     "too close": "zu nah dran",
   },
-  points: (n) => f.p(n, { one: "# Punkt", other: "# Punkte" }),
   jinxCheck: "Jinx-Check",
   theVerdict: "Die Auflösung",
   lookAtTv: "Schau auf den Fernseher",
@@ -387,13 +394,13 @@ const de = (f) => ({
   roundOf: (r, of) => `Runde ${f.n(r)} von ${f.n(of)}`,
   hotSeat: "Heißer Stuhl für dich",
   noPeeking: "Schau auf kein fremdes Handy.",
-  hotSeatNote: "Die anderen schreiben Hinweise. Du rätst das Wort.",
+  hotSeatNote: "Die anderen schreiben Hinweise. Du rätst das Wort fürs Team.",
   guesses: (name) => `${name} rät`,
   getReady: "Mach dich bereit: Gleich kommt das Wort.",
   hotSeatGiver: "Ein Wort pro Kopf. Gleicher Hinweis? Dann gehen beide Karten in Rauch auf.",
   whoGuesses: (name, each) => ` ${name} rät · ${each === 2 ? "zwei Hinweise pro Kopf" : "ein Wort pro Kopf"}`,
   bold: "Mutig",
-  boldNote: " setzt auf deinen Hinweis: +4, wenn er umgedreht wird, −2, wenn er gejinxt wird.",
+  boldNote: " setzt unsere Chips auf deinen Hinweis: +2 für den Pott, wenn er umgedreht wird, −2 extra, wenn er gejinxt wird.",
   allIn: "Alle fertig! Schau auf den Stapel am Fernseher. Ändern geht noch.",
   cluePlaceholder: (i) => `Hinweis ${f.n(i)}: ein Wort`,
   oneWord: "Ein Wort",
@@ -418,7 +425,7 @@ const de = (f) => ({
   stampJinxed: "Jinx!",
   jinxedWith: (names) => `mit ${f.list(names)}`,
   withOwn: "mit deinem anderen Hinweis",
-  boldMinus: "Mutig: −2",
+  boldMinus: "Mutig: der Pott verliert 2 extra",
   yourCards: (n) => (n > 1 ? "Deine Karten" : "Deine Karte"),
   dontSay: "Kein Wort jetzt: Es wurde noch nicht geraten.",
   theWord: "Das Wort",
@@ -438,34 +445,42 @@ const de = (f) => ({
   turnCard: (name) => `${/[sßxz]$/i.test(name) ? `${name}’` : `${name}s`} Karte umdrehen`,
   shhh: "PSSST!",
   noHints: (name) => `Keine Tipps! ${name} rät gerade.`,
-  why: {
-    pot: "Der Pott gehört dir",
-    wrong: "Falsch geraten: −2",
-    turned: "Deine Karte wurde umgedreht: +2",
-    bold: "Deine mutige Karte wurde umgedreht: +4",
-    "bold-jinxed": "Deine mutige Karte wurde gejinxt: −2",
-    mvp: "MVP-Hinweis: +3",
+  parts: {
+    turned: "Dein Hinweis wurde umgedreht: Er hat geholfen!",
+    bold: "Mutig zahlt sich aus: +2 für den Pott",
+    jinxed: "Gejinxt: Der Pott hat 1 verloren",
+    "bold-jinxed": "Mutig und gejinxt: Der Pott hat 3 verloren",
+    best: "Dein Hinweis hat am meisten geholfen!",
   },
+  forTheRoom: " fürs Team",
+  bankIs: (n) => `Bank ${f.n(n)}`,
   stamps: { right: "Richtig!", wrong: "Daneben", pass: "Gepasst", lost: "Alle weg" },
   gotIt: (name) => `${name} hat's!`,
   missed: (name) => `${name} lag daneben`,
   passed: (name) => `${name} hat gepasst`,
   allJinxed: "Alle Hinweise wurden gejinxt",
-  noLoss: "Keine Punkte, kein Verlust.",
-  noPoints: "Keine Punkte diese Runde.",
-  noPointsYou: "Diese Runde keine Punkte für dich.",
-  pickingMvp: (name) => `${name} wählt den MVP-Hinweis…`,
+  guesserNote: {
+    right: "Der Pott geht in unsere Bank!",
+    wrong: "Falsch geraten kostet die Bank 2 Chips.",
+    pass: "Nichts gewonnen, nichts verloren.",
+    lost: "Alle Hinweise gejinxt: Die Bank bleibt, wie sie ist.",
+  },
+  pickingBest: (name) => `${name} wählt den besten Hinweis…`,
   replay: "Schau auf den Fernseher: die Wiederholung.",
-  mvpLabel: (word, name) => `MVP: ${word} von ${name}`,
-  mvpDone: (name) => `${name} kriegt +3. Schau auf den Fernseher!`,
-  mvp: "MVP",
+  bestLabel: (word, name) => `Bester Hinweis: ${word} von ${name}`,
+  bestDone: (name) => `Danke, ${name}! Schau auf den Fernseher.`,
+  best: "Bester",
   whichHelped: "Welcher Hinweis hat am meisten geholfen?",
-  mvpNote: "Wer den MVP-Hinweis schrieb, kriegt\u00a0+3.",
+  bestNote: "Ein Dankeschön auf dem Fernseher. Keine Chips, nur Ruhm.",
   afterRound: (r, of) => `Nach Runde ${f.n(r)} von ${f.n(of)}`,
-  rank: (r, of) => [`Platz ${f.n(r)}`, ` von ${f.n(of)}`],
+  chipsInBank: (n) => f.p(n, { one: "Chip in unserer Bank", other: "Chips in unserer Bank" }),
+  thisRound: " diese Runde",
+  moreTo: (n, title) => `Noch ${f.p(n, { one: "# Chip", other: "# Chips" })} bis ${title}`,
+  topTitle: "Wir sind ganz oben: Telepathen!",
   upNext: "Als Nächstes: du!",
   upNextNote: "Du rätst das nächste Wort. Schau auf kein Handy.",
-  scoresOnTv: "Die Punkte stehen auf dem Fernseher.",
+  bankOnTv: "Die Bank steht auf dem Fernseher.",
+  newRecord: "Neuer Rekord!",
   titles: {
     telepaths: "Telepathen!",
     "mind readers": "Gedankenleser!",
@@ -475,13 +490,11 @@ const de = (f) => ({
   },
   awards: {
     "mind meld": ["Seelenverwandt", "Du und dein Zwillingshirn habt euch am öftesten gejinxt."],
-    "lone wolf": ["Einzelgänger", "Die meisten einzigartigen Hinweise, die umgedreht wurden."],
-    kamikaze: ["Kamikaze", "Die meisten Hinweise gejinxt. Und trotzdem weitergemacht."],
+    telepath: ["Hellseher", "Die meisten Hinweise, die vor einem Treffer umgedreht wurden."],
   },
   playAgain: "Nochmal spielen",
   gameOver: "Spiel vorbei",
-  of: "von",
-  wordsTogether: "Wörter zusammen gefunden",
+  wordsFound: (n, of) => `${f.n(n)} von ${f.p(of, { one: "# Wort", other: "# Wörtern" })} zusammen gefunden`,
   yourAward: "Deine Auszeichnung",
   vipAgain: (name) => `${name} kann am Handy ein neues Spiel starten`,
   thanks: "Danke fürs Mitspielen!",

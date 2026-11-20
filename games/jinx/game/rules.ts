@@ -1,45 +1,60 @@
 /**
- * Jinx's rules, pure (docs/jinx-design.md): the pot and the payouts (§4),
- * dealing the secret words by difficulty (§5.1), the guesser order (§2),
- * the room's title, the MVP of the night, the awards and the word web
- * (§6), ranks. No party, no timers: game.ts drives them.
+ * Jinx's rules, pure (docs/jinx-design.md): the pot and the room's bank
+ * (§4), dealing the secret words by difficulty (§5.1), the guesser order
+ * (§2), the room's title, the awards and the word web (§6). No party, no
+ * timers: game.ts drives them.
  */
 
 import { matcher, type Matcher } from "./lang.ts";
 import type { Clue, MatchOptions, WordEntry } from "./match.ts";
-import type { Award, Payout, RoomTitle, ScoreLine, Web } from "./views.ts";
+import type { Award, Goals, Part, RoomTitle, Web } from "./views.ts";
 
 // ---------------------------------------------------------------------------
-// The pot and the points (§4)
+// The pot and the bank (§4)
 // ---------------------------------------------------------------------------
 
 export const POT = {
   start: 10,
   /** Lost per jinxed clue, at the jinx check. */
   jinx: 1,
+  /** Lost on top per bold clue that jinxed. */
+  boldJinx: 2,
   /** Lost per turned card after the first. */
   turn: 2,
+  /** Won per bold card turned. */
+  bold: 2,
   /** The pot never goes below this: a right guess always pays. */
   min: 2,
 } as const;
 
-export const POINTS = {
-  wrong: -2,
-  turned: 2,
-  bold: 4,
-  boldJinxed: -2,
-  mvp: 3,
-} as const;
+/** What a wrong guess takes out of the bank. */
+export const WRONG = 2;
 
-/** The pot after `jinxed` jinxed clues and `turned` turned cards. */
-export function pot(jinxed: number, turned: number): number {
-  return Math.max(POT.min, POT.start - POT.jinx * jinxed - POT.turn * Math.max(0, turned - 1));
+/** What the pot has seen: jinxed and turned cards, and how many of each were bold. */
+export interface PotCount {
+  jinxed: number;
+  boldJinxed?: number;
+  turned: number;
+  boldTurned?: number;
+}
+
+/** The pot after the jinx check and the turns so far. */
+export function pot(c: PotCount): number {
+  const raw = POT.start - POT.jinx * c.jinxed - POT.boldJinx * (c.boldJinxed ?? 0) - POT.turn * Math.max(0, c.turned - 1) + POT.bold * (c.boldTurned ?? 0);
+  return Math.max(POT.min, raw);
 }
 
 export type Result = "right" | "wrong" | "pass" | "lost";
 
-/** A card as the payouts see it. */
-export interface PaidCard {
+/** What a round does to the bank (`bank` before it): the pot when right, −2 when wrong (never below 0), else 0. */
+export function banked(result: Result, potNow: number, bank: number): number {
+  if (result === "right") return potNow;
+  if (result === "wrong") return 0 - Math.min(WRONG, Math.max(0, bank));
+  return 0;
+}
+
+/** A card as the result line sees it. */
+export interface PartCard {
   author: string;
   bold: boolean;
   fate: "alive" | "jinxed";
@@ -47,30 +62,39 @@ export interface PaidCard {
   turned: boolean;
 }
 
-/**
- * The verdict's points: the guesser (the pot when right, −2 when wrong),
- * the turned cards' authors after a right guess (+2, bold +4), bold jinxed
- * cards (−2, whatever the result). One entry per person and reason, summed.
- */
-export function payouts(guesser: string, result: Result, potNow: number, cards: readonly PaidCard[]): Payout[] {
-  const out: Payout[] = [];
-  const add = (id: string, delta: number, why: Payout["why"]) => {
-    const e = out.find((p) => p.id === id && p.why === why);
-    if (e) e.delta += delta;
-    else out.push({ id, delta, why });
-  };
-  if (result === "right") add(guesser, potNow, "pot");
-  if (result === "wrong") add(guesser, POINTS.wrong, "wrong");
+/** What `id`'s cards did for the room this round (views.ts `Part`), one per card that did something. */
+export function parts(id: string, result: Result, cards: readonly PartCard[]): Part[] {
+  const out: Part[] = [];
   for (const c of cards) {
-    if (c.fate === "jinxed" && c.bold) add(c.author, POINTS.boldJinxed, "bold-jinxed");
-    if (c.fate === "alive" && c.turned && result === "right") add(c.author, c.bold ? POINTS.bold : POINTS.turned, c.bold ? "bold" : "turned");
+    if (c.author !== id) continue;
+    if (c.fate === "jinxed") out.push(c.bold ? "bold-jinxed" : "jinxed");
+    else if (c.turned && result === "right") out.push(c.bold ? "bold" : "turned");
   }
   return out;
 }
 
-/** The MVP clue's payout. */
-export function mvpPayout(author: string): Payout {
-  return { id: author, delta: POINTS.mvp, why: "mvp" };
+/**
+ * The room titles' marks for a game of `rounds` rounds: 2, 4, 6 and 8
+ * chips a round (a word found at once with nothing jinxed is 10).
+ */
+export function goals(rounds: number): Goals {
+  const n = Math.max(1, rounds);
+  return { "mixed signals": 2 * n, "in sync": 4 * n, "mind readers": 6 * n, telepaths: 8 * n };
+}
+
+const TITLES: readonly Exclude<RoomTitle, "total jinx">[] = ["telepaths", "mind readers", "in sync", "mixed signals"];
+
+/** The room's title for `chips` in a game of `rounds` rounds. */
+export function roomTitle(chips: number, rounds: number): RoomTitle {
+  const g = goals(rounds);
+  return TITLES.find((t) => chips >= g[t]) ?? "total jinx";
+}
+
+/** The next title to reach and its mark, or undefined at the top. */
+export function nextGoal(chips: number, rounds: number): { title: RoomTitle; chips: number } | undefined {
+  const g = goals(rounds);
+  const t = [...TITLES].reverse().find((x) => chips < g[x]);
+  return t ? { title: t, chips: g[t] } : undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -217,49 +241,26 @@ export function addLate(queue: readonly Turn[], id: string, times: number): Turn
 // The end (§4, §6)
 // ---------------------------------------------------------------------------
 
-/** The room's title by the share of words found. */
-export function roomTitle(found: number, played: number): RoomTitle {
-  if (played <= 0) return "total jinx";
-  const share = found / played;
-  if (share >= 1) return "telepaths";
-  if (share >= 0.75) return "mind readers";
-  if (share >= 0.5) return "in sync";
-  if (share >= 0.25) return "mixed signals";
-  return "total jinx";
-}
-
-/** Score lines, best first, 1-based ranks shared by ties (stable: the given order breaks ties). */
-export function rank(scores: readonly { id: string; score: number; delta?: number }[]): ScoreLine[] {
-  const sorted = scores.map((s, i) => ({ ...s, i })).sort((a, b) => b.score - a.score || a.i - b.i);
-  return sorted.map((s) => ({ id: s.id, score: s.score, delta: s.delta ?? 0, rank: 1 + sorted.filter((o) => o.score > s.score).length }));
-}
-
-/** What a player did this game (for the MVP of the night and the awards). */
+/** What a player did this game (for the awards and the best clues). */
 export interface PlayerStats {
   id: string;
-  score: number;
-  /** Their clues picked as MVP clue. */
-  mvpClues: number;
+  /** Their clues the guesser picked as best clue. */
+  bestClues: number;
   /** Their clues jinxed. */
   jinxed: number;
   /** Their clues that survived and were turned before a right guess. */
   turnedRight: number;
 }
 
-/** The MVP of the night: the highest score; ties: more MVP clues, then fewer jinxed. Undefined when nobody scored. */
-export function mvpOfNight(stats: readonly PlayerStats[]): PlayerStats | undefined {
-  const best = [...stats].sort((a, b) => b.score - a.score || b.mvpClues - a.mvpClues || a.jinxed - b.jinxed)[0];
-  return best && best.score > 0 ? best : undefined;
-}
-
 /** Awards need at least this count. */
 export const AWARD_MIN = 2;
 
 /**
- * The awards: mind meld (the pair that jinxed together most often), lone
- * wolf (most clues turned before a right guess), kamikaze (most jinxed
- * clues); each only with a count of at least 2, ties to the first in
- * `stats`' order. `pairs`: jinxes per pair of ids, keyed `a|b`.
+ * The awards: mind meld (the pair that jinxed together most often) and
+ * telepath (most clues turned before a right guess); each only with a
+ * count of at least 2, ties to the first in `stats`' order. `pairs`:
+ * jinxes per pair of ids, keyed `a|b`. Nobody is singled out for losing
+ * chips: the room plays as one.
  */
 export function awards(stats: readonly PlayerStats[], pairs: ReadonlyMap<string, number>): Award[] {
   const out: Award[] = [];
@@ -274,10 +275,8 @@ export function awards(stats: readonly PlayerStats[], pairs: ReadonlyMap<string,
   }
   if (meld && meld.count >= AWARD_MIN) out.push({ kind: "mind meld", ids: meld.ids, count: meld.count });
   const top = (key: (s: PlayerStats) => number) => stats.reduce<PlayerStats | undefined>((b, s) => (!b || key(s) > key(b) ? s : b), undefined);
-  const wolf = top((s) => s.turnedRight);
-  if (wolf && wolf.turnedRight >= AWARD_MIN) out.push({ kind: "lone wolf", ids: [wolf.id], count: wolf.turnedRight });
-  const kami = top((s) => s.jinxed);
-  if (kami && kami.jinxed >= AWARD_MIN) out.push({ kind: "kamikaze", ids: [kami.id], count: kami.jinxed });
+  const tele = top((s) => s.turnedRight);
+  if (tele && tele.turnedRight >= AWARD_MIN) out.push({ kind: "telepath", ids: [tele.id], count: tele.turnedRight });
   return out;
 }
 

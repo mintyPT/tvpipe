@@ -8,7 +8,7 @@
  * clue when one is refused. A bot guesser turns a random number of cards,
  * then guesses: it cheats (`peek`, the host's secret word) to be right
  * most of the time, else guesses a random word or passes. It picks a
- * random MVP clue. Bots write in the room's language (`room.lang`): the
+ * random best clue. Bots write in the room's language (`room.lang`): the
  * category in its words ("Tier" for `animal`), that language's words.
  */
 
@@ -196,9 +196,9 @@ export class Bot {
       }
       case "guess":
         return this.#guess(round, me);
-      case "mvp": {
+      case "best": {
         const card = this.#pick((me.cards ?? []) as { id: string }[]);
-        if (card) this.#once(`mvp:${round}`, () => c.act("mvp", { card: card.id }));
+        if (card) this.#once(`best:${round}`, () => c.act("best", { card: card.id }));
         return;
       }
     }

@@ -7,13 +7,16 @@ live in `games/jinx` (a web app on `@tvpipe/party`, like
 `gameshow/tv.html`, open them in Chrome), the word list (`words/`) and the
 clue matcher with its tests (`matching/`).
 
-A cooperative word game with personal scores for 3–8 players, in
-English and German (§11). It takes the general idea of *Just One*: one player guesses a
-word from one-word clues, and identical clues cancel. The rest is our
-own: the game decides which clues are the same, the guesser picks
-whose clue to turn, a pot shrinks with every card, clue-givers can bet
-on a clue, the guess is typed live on the TV, and the evening ends with
-awards and a web of every word and clue.
+A team word game for 3–8 players, in English and German (§11): the room
+plays as one, with one bank of chips and no personal points. It takes the
+general idea of *Just One*: one player guesses a word from one-word clues,
+and identical clues cancel. The rest is our own: the game decides which
+clues are the same, the guesser picks whose clue to turn, a pot shrinks
+with every card and goes into the room's bank on a right guess,
+clue-givers can bet the room's chips on a bold clue, the guess is typed
+live on the TV, the bank climbs towards the room's titles and its record,
+and the evening ends with the room's result, the best clues of the night
+and a web of every word and clue.
 
 The TV is the table everybody watches. The phones hold what is secret:
 the word (clue-givers), the clue being written, the guess being typed.
@@ -21,7 +24,7 @@ the word (clue-givers), the clue being written, the guess being typed.
 ## 1. A round
 
 ```
-hot seat ─▶ writing ─▶ jinx check ─▶ reveal ─▶ verdict ─▶ replay + MVP clue ─▶ scores
+hot seat ─▶ writing ─▶ jinx check ─▶ reveal ─▶ verdict ─▶ replay + best clue ─▶ bank
   4 s        ≤ 45 s       ~6–12 s      ≤ ~2 min    ~6 s       ≤ 20 s              ~5 s
 ```
 
@@ -44,15 +47,18 @@ hot seat ─▶ writing ─▶ jinx check ─▶ reveal ─▶ verdict ─▶ re
   the guesser may guess once, or pass. While the guesser types, every
   letter appears on the TV as it is typed, deletions included. The room
   must stay silent.
-- **Verdict.** The word comes out, the guess is judged (§5.4), points
-  are paid (§4).
+- **Verdict.** The word comes out, the guess is judged (§5.4): right, the
+  pot pours into the room's bank; wrong, 2 chips leave the bank (§4).
 - **Replay.** All clues face up with their authors, the jinxed ones
   taped back together ("3 of you wrote LAVA"). After a right guess the
-  guesser picks the **MVP clue** on the phone.
-- **Scores.** Personal points, and the room's count ("6 of 8 words").
+  guesser picks the **best clue** on the phone: the clue that helped most,
+  a thank-you on the TV, no points.
+- **The bank.** The room's chips on a meter with the room titles' marks
+  and the record, what this round did ("+7"), the words found so far, and
+  who guesses next.
 
 If every clue is jinxed, the round goes straight to the verdict: the word
-counts as missed, nobody scores.
+counts as missed, the bank stays as it is.
 
 ## 2. A game
 
@@ -64,8 +70,8 @@ counts as missed, nobody scores.
   (the game gets one or two rounds longer). A player who leaves is
   skipped as guesser; a clue-giver who is gone when writing ends simply
   has no card.
-- **End of the game:** the room's result first, then the MVP of the
-  night, then the awards, then the word web (§6). The VIP's phone offers
+- **End of the game:** the room's result first, then the best clues of
+  the night, then the awards, then the word web (§6). The VIP's phone offers
   "Play again".
 
 ## 3. Timers
@@ -75,43 +81,60 @@ counts as missed, nobody scores.
 | Writing | 45 s (host setting: 30 / 45 / 60 / 90) | clues not submitted are lost (no card) |
 | Reveal: each decision (turn a card or guess) | 30 s | a random face-down card is turned; after the last card, a pass |
 | Reveal: once the guesser starts typing | at least 15 s left | the draft is submitted as the guess, if any letters, else a pass |
-| MVP clue | 20 s | no MVP clue this round |
+| Best clue | 20 s | no best clue this round |
 
 A guesser who is disconnected at the start of the reveal gets the same
 timers: the game goes on without them.
 
-## 4. Scoring
+## 4. Scoring: one team, one bank
 
-Small whole numbers, so the pot can be a tower of chips (one chip, one
-point).
+Everybody plays for the room. There are no personal points, no ranks and
+no winner: one **bank** of chips for the whole game, small whole numbers
+so the pot and the bank can be towers of chips (one chip, one point).
 
-**The pot** starts at **10**. It loses **1 per jinxed clue** (at the jinx
-check) and **2 per turned card after the first**. It never goes below
-**2**: a right guess always pays something.
+**The pot** of a round starts at **10**. At the jinx check it loses **1
+per jinxed clue**, and **2 more per bold clue** that jinxed. In the
+reveal it loses **2 per turned card after the first** and wins **2 per
+bold card** turned. It never goes below **2**: a right guess always pays
+something.
 
-| Who | When | Points |
-|---|---|---|
-| Guesser | right | the pot |
-| Guesser | wrong | −2 |
-| Guesser | pass | 0 |
-| Clue-giver | the card was turned before a right guess | +2 (bold: +4) |
-| Clue-giver | the card was jinxed | 0 (bold: −2) |
-| Clue-giver | the card was not turned, or the guess was wrong | 0 (also bold) |
-| Clue-giver | the guesser picked it as MVP clue | +3 |
+| Verdict | The bank |
+|---|---|
+| right | + the pot |
+| wrong | −2 (never below 0) |
+| pass, or every clue jinxed | ± 0 |
 
-The tension this sets up:
+**Bold** is a bet with the room's chips: "nobody else will write this,
+and it is the card to turn". A bold card that survives is cheap to turn
+(the turn's −2 and the bold +2 cancel); a bold card that jinxes costs the
+pot 3 instead of 1. The guesser sees the flame on the face-down card.
 
-- The guesser wants to guess early (the pot shrinks), the clue-givers
-  want their card turned (only turned cards pay). Who the guesser trusts
-  first is a public statement; the MVP clue pays the clue that helped.
-- The obvious clue helps most but jinxes most. Bold is the bet on it:
-  "nobody else will write this, and it will be turned".
-- A wrong guess costs the guesser and pays no one, so passing after the
-  last card is a real choice.
+The tension this sets up, all of it shared:
 
-**The room** counts words found ("6 of 8"). The end screen gives it a
-title: 100 % *Telepaths*, ≥ 75 % *Mind readers*, ≥ 50 % *In sync*,
-≥ 25 % *Mixed signals*, below *Total jinx*.
+- The guesser wants to guess early (the pot shrinks with every card) and
+  to be sure (a wrong guess costs the bank), so passing after the last
+  card is a real choice. The room watches, silent, and wins or loses
+  with them.
+- The obvious clue helps most but jinxes most. Writing something only
+  you would write keeps the pot whole; bold says you are sure of it.
+- Who the guesser turns first is a public statement of trust; the best
+  clue is the guesser's thank-you, on the TV and the phone, worth
+  nothing but the moment.
+
+**Goals.** The room titles are marks on the bank's meter, by chips a
+round: **2** *Mixed signals*, **4** *In sync*, **6** *Mind readers*, **8**
+*Telepaths* (a word found at once with nothing jinxed pays 10); below 2,
+*Total jinx*. A game of 8 rounds needs 48 chips for *Mind readers*. The
+marks move when the game gets longer (a late joiner) or shorter (a
+guesser leaves). The phones say what is next: "6 more chips to *Mind
+readers*".
+
+**The record.** The host page keeps the room's best bank per game
+length (rounds) in `localStorage`; the meter shows it, the end says "New
+record!" when the room beat it (or set the first).
+
+The room's count ("6 of 8 words") stays in the header as the words of
+the night, found or missed.
 
 ## 5. Words and clues
 
@@ -227,16 +250,18 @@ accepted near miss shows its reason next to the word ("≈ typo").
 
 ## 6. The end of the game
 
-1. **The room:** "6 of 8 words", the room's title (§4), the words of the
-   night as cards (missed ones struck).
-2. **MVP of the night:** the highest score; ties go to more MVP clues,
-   then fewer jinxed clues. Shown with a stat line ("41 points · 3 MVP
-   clues · never jinxed").
-3. **Awards** (each only when someone qualifies, at least 2):
+Everything at the end is about the room; nobody comes first.
+
+1. **The room:** the bank on its meter with the title marks, the room's
+   title stamp (§4), "New record!" when the room beat it, and the words of
+   the night as cards (missed ones struck), "6 of 8 words".
+2. **The clues of the night:** every best clue the guessers picked, each
+   with its word and its author's chip (skipped when there are none).
+3. **Awards** (each only when someone qualifies, at least 2), for fun,
+   never for blame:
    - **Mind meld:** the pair whose clues jinxed together most often.
-   - **Lone wolf:** most clues that survived and were turned before a
-     right guess.
-   - **Kamikaze:** most jinxed clues.
+   - **Telepath:** most clues that survived and were turned before a right
+     guess.
 4. **Word web:** every word of the evening as a card, the clues as tags
    around it, and red yarn between a word and every clue the room used
    for more than one word (by the clue's cleaned form). Clues used only
@@ -253,11 +278,13 @@ look and the **game show's** pacing and voice.
   information is an object on it: clue cards (tomato backs with a
   cream **J** diamond; bold cards ink-black with a gold flame sticker;
   cream faces with the word in ink), poker-chip avatars, the pot as a
-  tower of gold chips with a cream number label, a kraft envelope with a
-  wax seal holding the word, a kitchen dial timer, rubber stamps (JINX!,
-  RIGHT!, NOT IT, LOCKED IN), masking-tape labels for reasons, a spiral
-  score pad, a red label-maker tape for the guess, an MVP rosette, red
-  yarn and push-pins for the word web. Wooden letter tiles for the logo.
+  tower of gold chips with a cream number label, the room's bank (a
+  label in the header during a round, a tall meter with the title marks
+  between rounds and at the end), a kraft envelope with a wax seal
+  holding the word, a kitchen dial timer, rubber stamps (JINX!, RIGHT!,
+  NOT IT, LOCKED IN), masking-tape labels for reasons, a red label-maker
+  tape for the guess, a rosette for the best clue, red yarn and
+  push-pins for the word web. Wooden letter tiles for the logo.
 - Palette, type and object sizes: `games/jinx/design/tabletop/README.md`
   §2–§4. Type is IBM Plex Sans (and Plex Mono for the tape, the timer
   and the room code), shipped with the game. A handwritten face for the
@@ -284,7 +311,7 @@ look and the **game show's** pacing and voice.
 - **Silence under the typing:** while the guesser types, the sound bed
   stops and only a heartbeat and the label-maker clicks are heard.
 - **A light pool** (a flat lighter disc on the felt) that moves to what
-  matters (the hot seat, the card being turned, the MVP), in place of the
+  matters (the hot seat, the card being turned, the best clue), in place of the
   game show's spotlights.
 
 ### 7.3 The three big moments
@@ -292,19 +319,20 @@ look and the **game show's** pacing and voice.
 1. **The jinx:** the matching cards lift, accelerate into each other and
    slam (a short table shake, a dust puff, a low thud), shatter into
    paper shards that fall with gravity, a JINX! stamp lands with the
-   reason on tape, a bold author's −2 floats up, a chip falls off the
-   pot. Several groups play one after another, each faster. No jinx: a
+   reason on tape, chips fall off the pot (three for a bold card). Several groups play one after another, each faster. No jinx: a
    gold CLEAN! stamp.
 2. **The guess and the verdict:** the SHHH! sign swings down, every
    letter is punched into the label tape as it is typed, the tape is
    snipped, a drumroll while the envelope shivers, the word rises out of
    it. Right: a RIGHT! stamp, paper confetti, the pot pours chip by chip
-   into the guesser's chip. Wrong: a NOT IT stamp, a trombone, the chips
-   tumble off the table.
-3. **The MVP of the night and the word web:** the winner's chip drops
-   onto a pedestal in the light pool, a ribbon unfurls; then the evening
-   as a red-yarn board, drawn string by string. It is the closing frame
-   people take a photo of.
+   into the room's bank, every chip at the table smiles. Wrong: a NOT IT
+   stamp, a trombone, the pot tumbles off the table and two chips leave
+   the bank.
+3. **The room's result and the word web:** the bank's meter fills past
+   its marks, the title stamp lands (and "New record!"), the best clues
+   of the night are pinned up; then the evening as a red-yarn board,
+   drawn string by string. It is the closing frame people take a photo
+   of.
 
 The card turn is the most frequent beat: quick and satisfying (about
 2 s from the pick to the chips), not spectacular.
@@ -342,10 +370,10 @@ The TV page is rendered in a headless Chrome and H.264-encoded at about
 | Writing | the word on an index card, one field, the bold flame toggle, Send; a rejected clue shows the reason and stays editable; then "Sent: BEACON 🔥" | "Eyes on the TV: your friends are writing", who is done |
 | Jinx check | your card's fate ("JINXED with Esme: plural"), not the other words | "3 clues survived · 4 were jinxed" |
 | Reveal | the cards (face down or turned) and "Shh, no hints!" | the face-down cards as buttons with their authors' faces, the pot, the guess field, Pass |
-| Verdict | your points and why ("Your card was turned · bold ×2") | ✓ or ✗, the word, the points |
-| Replay | the replay; "Anna is picking the MVP clue…" | all clues as buttons: "Which clue helped most?" |
-| Scores | your rank and total; "You're up next!" for the next guesser | the same |
-| End | the room's result, your line, your award; the VIP: Play again | the same |
+| Verdict | the word, what the room banked ("+7 for the room · bank 23"), what your card did ("Your clue was turned", "Bold paid: +2 to the pot", "Jinxed: the pot lost 3") | ✓ or ✗, the word, the bank |
+| Replay | the replay; "Anna is picking the best clue…"; "Your clue helped most!" | all clues as buttons: "Which clue helped most?" |
+| Bank | the room's bank, the next title ("6 more chips to *Mind readers*"); "You're up next!" for the next guesser | the same |
+| End | the room's bank, title and words, "New record!", your award; the VIP: Play again | the same |
 
 ## 9. Shape of the code
 
@@ -359,7 +387,7 @@ difficulty), `screen/` (the TV page), `phone/` (the phone page), `data/`
   show views and send actions.
 - `screen` view: the phase, the cards (authors, bold, face down or the
   word once turned or in the replay), the jinx groups with their
-  reasons, the turn order, the pot, the **guess draft**, the scores. The
+  reasons, the turn order, the pot, the **guess draft**, the bank. The
   word only from the verdict on.
 - The guess draft: the guesser's phone sends its field's text as an
   action on every change (throttled to about 20 per second); the host
@@ -373,8 +401,9 @@ difficulty), `screen/` (the TV page), `phone/` (the phone page), `data/`
 
 - The name: check "Jinx" against existing party games before it is
   published.
-- The numbers in §4 (pot 10, −2 per card, bold ±, MVP +3) are a first
-  guess: play-test them with bots and people.
+- The numbers in §4 (pot 10, −2 per card, bold ±2, a wrong guess −2, the
+  goals at 2/4/6/8 a round) are a first guess: play-test them with bots
+  and people.
 - The word family rule's not-derived list will need entries from real
   play ("same family" where players disagree).
 - Languages: English and German (§11).
@@ -435,7 +464,7 @@ tape: GLEICHES WORT, GLEICHE ZAHL, ANDERE SCHREIBWEISE, PLURAL, VERBFORM,
 ANDERE FORM (declension, adjective endings), WORTFAMILIE, TIPPFEHLER,
 KLINGT GLEICH, ENTHÄLT DAS WORT, TEIL DES WORTES. Room titles:
 Telepathen, Gedankenleser, Eingespielt, Funkstörung, Totaler Jinx;
-awards: Seelenverwandt, Einzelgänger, Kamikaze.
+awards: Seelenverwandt, Hellseher.
 
 **Refusals.** A refused clue carries its reason in the code
 (`too-close:plural`, `own-clue:verb form`) and the matcher's message in

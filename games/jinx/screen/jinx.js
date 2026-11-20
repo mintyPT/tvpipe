@@ -2,8 +2,9 @@
 /**
  * The jinx check: every card face down with its author; the jinx groups
  * lift, accelerate into each other and slam, shatter into paper shards, a
- * JINX! stamp lands with the reason on tape, bold authors lose 2, chips fall
- * off the pot. Groups play one after another, each faster. Then the
+ * JINX! stamp lands with the reason on tape, chips fall off the pot (one
+ * per jinxed card, three for a bold one). Groups play one after another,
+ * each faster. Then the
  * survivors glide into the reveal row. Paced to `until`.
  *
  * @typedef {import("../game/views.ts").JinxScreen} JinxScreen
@@ -55,7 +56,7 @@ export function jinx(ctx, v, prev) {
   const spare = prev ? (v.until - 800 - ctx.now()) / natural : 0;
   const pace = !prev ? 0 : spare >= 1 ? Math.min(1.3, spare) : ctx.pace(natural, v.until - 800);
 
-  ctx.head.set({ tab: tr.jinxCheck, guesser: g, blind: pace > 0, tally: v.tally }, !!prev);
+  ctx.head.set({ tab: tr.jinxCheck, guesser: g, blind: pace > 0, tally: v.tally, bank: v.bank.chips }, !!prev);
   ctx.pool.off(!!prev);
   ctx.pot.show(true, !!prev && pace > 0);
 
@@ -68,7 +69,7 @@ export function jinx(ctx, v, prev) {
       if (s) cardEl(c, ctx.person(c.author), { parent: L, down: true, x: s.x, y: s.y, w: s.w, h: s.h, who: s.who, whoLeft: s.whoLeft, font: 44 });
     }
     ctx.pot.set(v.pot);
-    ctx.head.set({ tab: tr.jinxCheck, guesser: g, blind: false, tally: v.tally }, false);
+    ctx.head.set({ tab: tr.jinxCheck, guesser: g, blind: false, tally: v.tally, bank: v.bank.chips }, false);
     sayResult(anim);
     if (alive.length === 0) stampAt(L, 522, 330, tr.totalJinx, { rot: -6, size: 72, anim });
   };
@@ -184,16 +185,15 @@ export function jinx(ctx, v, prev) {
       if (!(await ctx.wait(S(330)))) return;
       const tp = tapeAt(L, mx, my + 56, groupReason(grp), { rot: 2 });
       if (!(await ctx.wait(S(400)))) return;
-      let fy = my - 70;
-      for (const id of grp.cards) {
-        const c = v.cards.find((x) => x.id === id);
-        if (!c?.bold) continue;
-        floatText(mx, fy, tr.boldMinus(short(ctx.person(c.author)?.name, 10)), "minus", 2400);
-        fy -= 44;
-      }
-      const drop = Math.min(potLeft, grp.cards.length);
+      // one chip per card, three for a bold one (its flame flares as they go)
+      const cost = grp.cards.reduce((n, id) => n + (v.cards.find((x) => x.id === id)?.bold ? 3 : 1), 0);
+      const drop = Math.min(potLeft, cost);
       potLeft -= drop;
-      ctx.pot.drain(ctx.fx, drop, null, S(170));
+      if (drop > 0) {
+        const top = ctx.pot.top();
+        floatText(top.x, top.y - 30, `−${drop}`, "minus", 1800);
+      }
+      ctx.pot.drain(ctx.fx, drop, null, S(drop > 3 ? 120 : 170));
       if (!(await ctx.wait(S(1000)))) return;
       fadeOut(st, 300);
       fadeOut(tp, 300);
@@ -216,9 +216,12 @@ export function jinx(ctx, v, prev) {
       shatter(el, cx, cy, 0, sl.w, sl.h);
       el.remove();
       els.delete(c.id);
-      if (potLeft > 0) {
-        potLeft--;
-        ctx.pot.drain(ctx.fx, 1);
+      const drop = Math.min(potLeft, c.bold ? 3 : 1);
+      if (drop > 0) {
+        potLeft -= drop;
+        const top = ctx.pot.top();
+        floatText(top.x, top.y - 30, `−${drop}`, "minus", 1800);
+        ctx.pot.drain(ctx.fx, drop, null, 140);
       }
       if (!(await ctx.wait(T(400)))) return;
       fadeOut(st, 300);

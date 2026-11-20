@@ -3,8 +3,9 @@
  * The reveal (the guesser turns cards, the pot shrinks, the guess is
  * punched into a label-maker tape live, under a SHHH! sign and a
  * heartbeat) and the verdict (the drumroll, the envelope opens, RIGHT! or
- * NOT IT, the pot pours into the guesser or off the table, everyone's
- * points).
+ * NOT IT, the pot pours into the room's bank in the header or tumbles off
+ * the table and two chips leave the bank; every chip at the table smiles
+ * or sulks together).
  *
  * @typedef {import("../game/views.ts").RevealScreen} RevealScreen
  * @typedef {import("../game/views.ts").VerdictScreen} VerdictScreen
@@ -13,11 +14,11 @@
  * @typedef {import("./tv.js").Ctx} Ctx
  */
 
-import { A, EASE, fitText, h, short } from "./dom.js";
+import { A, EASE, fitText, h, removeLater, short } from "./dom.js";
 import { confetti, dust, floatText, shake, stampAt, strikeThrough } from "./fx.js";
 import { reasonText } from "./jinx.js";
 import { grid } from "./layout.js";
-import { Dymo, cardEl, chip, dial, envelope, setWord, sign, swingIn } from "./pieces.js";
+import { Dymo, cardEl, chip, dial, envelope, mood, setWord, sign, swingIn } from "./pieces.js";
 import { bed, heartbeat, sfx } from "./sound.js";
 import { t as tr } from "./strings.js";
 
@@ -31,7 +32,7 @@ export function reveal(ctx, v, prev) {
   const g = ctx.person(v.guesser);
   const gname = short(g?.name, 12);
   const anim = !!prev;
-  ctx.head.set({ tab: tr.theReveal, guesser: g, tally: v.tally }, anim);
+  ctx.head.set({ tab: tr.theReveal, guesser: g, tally: v.tally, bank: v.bank.chips }, anim);
   ctx.pot.show(true, anim && prev?.phase !== "jinx");
   if (prev?.phase !== "jinx" || ctx.pot.n !== v.pot) ctx.pot.set(v.pot);
   ctx.pool.off(false);
@@ -150,12 +151,22 @@ export function reveal(ctx, v, prev) {
     A(badge, [{ transform: "scale(0)" }, { transform: "scale(1)" }], 260, { delay: 200, easing: EASE.back });
     if (c.bold) {
       el.querySelectorAll(".front .flame").forEach((f) => A(f, [{ transform: "scale(1)" }, { transform: "scale(1.6) rotate(-12deg)" }, { transform: "scale(1)" }], 500, { delay: 200 }));
-      ctx.later(250, () => floatText(s.x + s.w - 10, s.y - 40, tr.boldX2, "plus", 1500));
       ctx.later(250, sfx.sparkle);
     }
     if (!(await ctx.wait(450))) return;
-    if (potFrom > potTo) ctx.pot.drain(ctx.fx, potFrom - potTo);
-    else if (ctx.pot.n !== potTo) ctx.pot.set(potTo);
+    // the turn's cost first, then a bold card's +2 drops onto the pot
+    const gain = c.bold ? Math.max(0, Math.min(2, potTo - 2)) : 0;
+    const mid = potTo - gain;
+    if (potFrom > mid) {
+      const ms = ctx.pot.drain(ctx.fx, potFrom - mid);
+      if (gain && !(await ctx.wait(ms))) return;
+    } else if (ctx.pot.n !== mid && !gain) ctx.pot.set(mid);
+    if (gain) {
+      if (ctx.pot.n !== mid) ctx.pot.set(mid);
+      const top = ctx.pot.top();
+      floatText(top.x, top.y - 40 - gain * 15, tr.boldPlus, "plus", 1800);
+      ctx.pot.add(potTo, 160);
+    }
     if (!(await ctx.wait(1400))) return;
     ctx.pool.off();
     if (!typingShown) idleLine(v);
@@ -208,12 +219,12 @@ export function verdict(ctx, v, prev) {
   const pace = prev ? ctx.pace(6400 + lockMs, v.until) : 0;
   const anim = pace > 0;
   const T = (/** @type {number} */ ms) => ms * (pace || 1);
-  ctx.memo.payouts = v.payouts;
-  ctx.memo.result = v.result;
   ctx.pool.off(anim);
   ctx.pot.show(true);
   const prevTally = prev && "tally" in prev ? prev.tally : v.tally;
-  ctx.head.set({ tab: tr.theVerdict, guesser: g, tally: anim ? prevTally : v.tally }, anim);
+  // the bank before this round: the verdict's chips come in (or go) on screen
+  const before = v.bank.chips - v.banked;
+  ctx.head.set({ tab: tr.theVerdict, guesser: g, tally: anim ? prevTally : v.tally, bank: anim ? before : v.bank.chips }, anim);
   if (!fromReveal) {
     ctx.head.who.classList.remove("off");
     ctx.host.hide(false);
@@ -235,22 +246,27 @@ export function verdict(ctx, v, prev) {
   if (v.guess) area.append(dymo.el);
   dymo.el.style.transform = "translateX(-50%) rotate(-1.5deg)";
   L.append(area);
-  const row = h("div", { class: "abs", style: "left:96px;top:606px;width:880px;height:70px" });
+  // everyone at the table: the card authors, then the rest of the room
+  /** @type {string[]} */
+  const ids = [];
+  for (const c of v.cards) if (c.author !== v.guesser && !ids.includes(c.author)) ids.push(c.author);
+  for (const p of v.people) if (p.id !== v.guesser && !p.left && !ids.includes(p.id)) ids.push(p.id);
+  const seats = ids.slice(0, 7);
+  const rowW = seats.length * 112 - 48;
+  const row = h("div", { class: "abs", style: `left:${Math.round(522 - rowW / 2)}px;top:600px;width:${rowW}px;height:70px` });
   L.append(row);
-
-  // points
-  /** @type {Map<string, number>} */
-  const sums = new Map();
-  // everyone who played this round (the card authors, then the rest of the room)
-  for (const c of v.cards) if (c.author !== v.guesser) sums.set(c.author, 0);
-  for (const p of v.people) if (p.id !== v.guesser && !p.left && !sums.has(p.id) && sums.size < 7) sums.set(p.id, 0);
-  for (const p of v.payouts) if (p.id !== v.guesser) sums.set(p.id, (sums.get(p.id) ?? 0) + p.delta);
-  const mine = v.payouts.filter((p) => p.id === v.guesser).reduce((s, p) => s + p.delta, 0);
+  const toks = seats.map((id, i) => {
+    const t = chip(ctx.person(id), 64, { style: `left:${i * 112}px;top:0` });
+    row.append(t);
+    return t;
+  });
+  /** @type {"happy" | "sad" | null} */
+  const feel = right ? "happy" : v.result === "pass" ? null : "sad";
 
   const outcome = () => {
-    if (v.result === "right") ctx.host.say(v.near ? tr.closeEnough(reasonText(v.near)) : tr.nailedIt, { second: tr.plusFor(mine, gname), anim });
+    if (v.result === "right") ctx.host.say(v.near ? tr.closeEnough(reasonText(v.near)) : tr.nailedIt, { second: tr.forTheRoom(v.banked), anim });
     else if (v.result === "wrong") ctx.host.say(tr.soClose, { second: tr.soWrong, anim });
-    else if (v.result === "pass") ctx.host.say(tr.noGuess, { second: tr.noGlory, anim });
+    else if (v.result === "pass") ctx.host.say(tr.noGuess, { second: tr.bankSafe, anim });
     else ctx.host.say(tr.emptyPot, { anim });
   };
   /** @param {boolean} anim */
@@ -264,22 +280,12 @@ export function verdict(ctx, v, prev) {
       area.append(tag);
     }
   };
-  /** @param {boolean} anim */
-  const points = (anim) => {
-    let i = 0;
-    for (const [id, dlt] of sums) {
-      const x = i * 126;
-      const t = chip(ctx.person(id), 56, { style: `left:${x}px;top:4px` });
-      const tag = h("div", { class: `pts ${dlt > 0 ? "plus" : dlt < 0 ? "minus" : "zero"}`, style: `left:${x + 62}px;top:14px` }, dlt > 0 ? `+${dlt}` : dlt < 0 ? `−${-dlt}` : "0");
-      row.append(t, tag);
-      if (anim) {
-        A(t, [{ transform: "translateY(110px)" }, { transform: "none" }], 380, { delay: i * 90, easing: EASE.back });
-        A(tag, [{ transform: "scale(0)" }, { transform: dlt ? "scale(1.25)" : "scale(1)" }, { transform: "scale(1)" }], 360, { delay: 500 + i * 120, easing: EASE.back });
-        if (dlt > 0) ctx.later(500 + i * 120, sfx.clink);
-        else if (dlt < 0) ctx.later(500 + i * 120, sfx.bonk);
-      }
-      i++;
-    }
+  /** Every chip at the table smiles (or sulks) together. @param {boolean} anim */
+  const moods = (anim) => {
+    if (!feel) return;
+    mood(gt, feel, anim ? 0 : -1);
+    toks.forEach((t, i) => mood(t, feel, anim ? 120 + i * 90 : -1));
+    if (anim && feel === "happy") ctx.later(120, sfx.sparkle);
   };
 
   if (!anim) {
@@ -290,7 +296,7 @@ export function verdict(ctx, v, prev) {
     if (v.result === "wrong") strikeThrough(dymo.el, false);
     ctx.pot.set(0);
     final(false);
-    points(false);
+    moods(false);
     outcome();
     return {};
   }
@@ -314,6 +320,7 @@ export function verdict(ctx, v, prev) {
   }
   L.style.visibility = "hidden";
   heartbeat(false);
+  toks.forEach((t, i) => A(t, [{ transform: "translateY(130px)" }, { transform: "none" }], 380, { delay: lockMs + 400 + i * 70, easing: EASE.back }));
 
   (async () => {
     if (!(await ctx.wait(lockMs))) return;
@@ -354,6 +361,7 @@ export function verdict(ctx, v, prev) {
     }
     final(true);
     outcome();
+    moods(true);
     if (right) {
       ctx.later(150, () => {
         confetti(560, 255, 54);
@@ -366,20 +374,44 @@ export function verdict(ctx, v, prev) {
     }
     if (!(await ctx.wait(T(1000)))) return;
     const n = ctx.pot.n;
+    const bankAt = ctx.head.bankPoint();
     if (right) {
-      const ms = ctx.pot.drain(ctx.fx, n, { x: 159, y: 311 }, T(110));
+      // the pot pours into the room's bank, chip by chip
+      const gap = T(n > 8 ? 90 : 120);
+      const ms = ctx.pot.drain(ctx.fx, n, bankAt, gap);
+      for (let i = 0; i < n; i++) ctx.later(i * gap + 480, () => ctx.head.setBank(before + Math.round(((i + 1) * v.banked) / n), true));
       if (!(await ctx.wait(ms - 150))) return;
-      floatText(159, 200, `+${mine}`, "plus", 2200);
-      A(gt, [{ transform: "scale(1)" }, { transform: "translateY(-24px) scale(1.15) rotate(-6deg)" }, { transform: "scale(1)" }], 400, { easing: EASE.back, fill: "none" });
+      ctx.head.setBank(v.bank.chips, true);
+      floatText(bankAt.x + 40, bankAt.y + 46, `+${v.banked}`, "plus", 2200);
       sfx.sparkle();
+      A(gt, [{ transform: "scale(1)" }, { transform: "translateY(-24px) scale(1.15) rotate(-6deg)" }, { transform: "scale(1)" }], 400, { easing: EASE.back, fill: "none" });
+      toks.forEach((t, i) => A(t, [{ transform: "none" }, { transform: "translateY(-18px)" }, { transform: "none" }], 360, { delay: i * 80, easing: EASE.out, fill: "none" }));
     } else {
+      // the pot tumbles off the table; a wrong guess costs the bank too
       const ms = ctx.pot.drain(ctx.fx, n, null, T(90));
-      if (mine < 0) floatText(159, 200, `−${-mine}`, "minus", 2200);
       A(gt, [{ transform: "none" }, { transform: "rotate(-10deg) translateY(8px)" }, { transform: "none" }], 700, { fill: "none" });
       if (!(await ctx.wait(Math.min(ms, T(700))))) return;
+      const k = Math.min(10, -v.banked);
+      for (let i = 0; i < k; i++) {
+        const dir = i % 2 ? 1 : -1;
+        const c = h("div", { class: "chip", style: `left:${bankAt.x - 65}px;top:${bankAt.y - 13}px` });
+        ctx.fx.append(c);
+        A(c, [
+          { transform: "scale(.36)", opacity: 1 },
+          { offset: 0.25, transform: `translate(${dir * 40}px,-24px) rotate(${dir * 30}deg) scale(.45)`, opacity: 1, easing: EASE.in },
+          { transform: `translate(${dir * 150}px,680px) rotate(${dir * 260}deg) scale(.6)`, opacity: 1 },
+        ], 1000, { delay: i * 260 });
+        removeLater(c, i * 260 + 1020);
+        ctx.later(i * 260, () => {
+          ctx.head.setBank(before - i - 1, true);
+          sfx.drain(i);
+        });
+      }
+      if (k > 0) ctx.later(100, () => floatText(bankAt.x + 40, bankAt.y + 46, `−${k}`, "minus", 2200));
+      if (!(await ctx.wait(k * 260 + 200))) return;
+      ctx.head.setBank(v.bank.chips, false);
     }
     if (!(await ctx.wait(T(300)))) return;
-    points(true);
     ctx.head.setTally(v.tally, true);
   })();
   return { sweepDelay: lockMs };

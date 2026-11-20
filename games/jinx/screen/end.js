@@ -1,9 +1,11 @@
 // @ts-check
 /**
- * The end of the game, in the host's steps: `room` (the count in wooden
- * tiles, the words of the night, the room's title stamp), `mvp` (the
- * winner's chip drops onto a pedestal in the light pool), `awards` (cards
- * flipped one by one) and `web` (the evening as a red-yarn board).
+ * The end of the game, in the host's steps; everything is about the room,
+ * nobody comes first: `room` (the bank's meter fills past its marks, the
+ * chips in wooden tiles, the title stamp, "New record!", the words of the
+ * night), `clues` (the best clues of the night pinned up with their
+ * authors' chips), `awards` (cards flipped one by one) and `web` (the
+ * evening as a red-yarn board).
  *
  * @typedef {import("../game/views.ts").EndScreen} EndScreen
  * @typedef {import("../game/views.ts").Award} Award
@@ -11,9 +13,10 @@
  * @typedef {import("./tv.js").Ctx} Ctx
  */
 
+import { meter } from "./bank.js";
 import { A, EASE, clamp, fitText, h, hm, short, svg } from "./dom.js";
-import { confetti, dust, shake, stampAt } from "./fx.js";
-import { INK, chip } from "./pieces.js";
+import { confetti, shake, stampAt } from "./fx.js";
+import { INK, cardEl, chip } from "./pieces.js";
 import { sfx } from "./sound.js";
 import { t as tr } from "./strings.js";
 
@@ -46,7 +49,7 @@ export function end(ctx, v, prev) {
     const go = () => {
       if (!ctx.alive()) return;
       if (v.step === "room") room(ctx, b, v, anim);
-      else if (v.step === "mvp") mvp(ctx, b, v, anim);
+      else if (v.step === "clues") clues(ctx, b, v, anim);
       else if (v.step === "awards") awards(ctx, b, v, anim);
       else web(ctx, b, v, anim);
     };
@@ -68,105 +71,137 @@ function tab(box, text) {
 }
 
 /**
+ * The room: the meter fills to the bank, the chips land in wooden tiles,
+ * the title stamp, a new record, the words of the night.
  * @param {Ctx} ctx @param {HTMLElement} box @param {EndScreen} v @param {boolean} anim
  */
 function room(ctx, box, v, anim) {
   tab(box, tr.endRoom);
+  const chips = v.bank.chips;
   const t = v.tally;
-  const tiles = h("div", { class: "bigtiles", style: "top:104px" });
-  const tilesOf = (/** @type {number} */ n) => [...String(n)].map((d) => h("div", { class: "tile" }, d));
-  tiles.append(...tilesOf(t.found), h("div", { class: "of" }, tr.of), ...tilesOf(t.played));
-  box.append(tiles, h("div", { class: "caption", style: "top:270px" }, tr.wordsTogether));
+  const m = meter(box, v.bank, { x: 240, top: 112, height: 560, from: anim ? 0 : chips });
+  const CX = 950;
+  const W = 520;
+  // the meter fills while the tiles and the words land; the title stamps when both are done
+  const fillMs = Math.min(1800, 600 + chips * 25);
+  const at = { tiles: 700, words: 1300 };
+
+  const tiles = h("div", { class: "bigtiles mid", style: `top:112px;left:${CX - W / 2}px;right:auto;width:${W}px` });
+  tiles.append(...[...String(chips)].map((d) => h("div", { class: "tile" }, d)));
+  const cap = h("div", { class: "caption", style: `top:236px;left:${CX - W / 2}px;right:auto;width:${W}px;white-space:nowrap` }, tr.bankCaption(chips, t.found, Math.max(t.played, v.words.length)));
+  box.append(tiles, cap);
+  fitText(cap, 28, 24, W, 0.7);
   const rots = [-3, 2, -2, 3, -1];
   [...tiles.children].forEach((el, i) => {
     const e = /** @type {HTMLElement} */ (el);
-    if (e.classList.contains("of")) return;
     e.style.transform = `rotate(${rots[i % 5]}deg)`;
     if (!anim) return;
-    A(e, [{ transform: "translateY(-300px) rotate(-25deg)", opacity: 0 }, { transform: e.style.transform, opacity: 1 }], 420, { delay: 200 + i * 140, easing: EASE.back });
-    ctx.later(400 + i * 140, sfx.thunk);
+    A(e, [{ transform: "translateY(-300px) rotate(-25deg)", opacity: 0 }, { transform: e.style.transform, opacity: 1 }], 420, { delay: at.tiles + i * 140, easing: EASE.back });
+    ctx.later(at.tiles + 200 + i * 140, sfx.thunk);
   });
-  const words = v.words.slice(0, 18);
-  const perRow = words.length > 10 ? 6 : 5;
-  const cw = perRow === 6 ? 170 : 186;
-  const ch = perRow === 6 ? 66 : 78;
-  const pitchX = cw + 18;
-  const rowsN = Math.ceil(words.length / perRow);
-  const top = rowsN > 2 ? 324 : 340;
+  if (anim) A(cap, [{ opacity: 0 }, { opacity: 1 }], 300, { delay: at.tiles + 400 });
+
+  // the words of the night, under the title
+  const words = v.words.slice(0, 16);
+  const perRow = words.length > 12 ? 4 : 3;
+  const cw = perRow === 4 ? 120 : 164;
+  const gapX = 14;
+  const rowsN = Math.max(1, Math.ceil(words.length / perRow));
+  const top = 418;
+  const ch = Math.min(62, Math.floor((684 - top - (rowsN - 1) * 10) / rowsN));
   words.forEach((w, i) => {
     const col = i % perRow;
     const r = Math.floor(i / perRow);
     const inRow = Math.min(perRow, words.length - r * perRow);
-    const x = 640 + (col - (inRow - 1) / 2) * pitchX - cw / 2;
-    const y = top + r * (ch + 20);
+    const x = CX + (col - (inRow - 1) / 2) * (cw + gapX) - cw / 2;
+    const y = top + r * (ch + 10);
     const a = ((i * 7) % 5) - 2;
     const c = h("div", { class: `mc ${w.found ? "won" : "lost"}`, style: `left:${x}px;top:${y}px;width:${cw}px;height:${ch}px;transform:rotate(${a}deg);z-index:${i}` }, h("span", null, w.word.toUpperCase()));
     box.append(c);
-    const span = /** @type {HTMLElement} */ (c.firstElementChild);
     // long compounds ("GEBURTSTAGSKUCHEN") condense further than clue cards: the card is small
-    fitText(span, perRow === 6 ? 26 : 30, 24, cw - 20, 0.55);
+    fitText(/** @type {HTMLElement} */ (c.firstElementChild), 28, 24, cw - 18, 0.5);
     if (anim) {
-      A(c, [{ transform: `translate(${640 - x - cw / 2}px,420px) rotate(${a * 8}deg)` }, { transform: `rotate(${a}deg)` }], 480, { delay: 900 + i * 80 });
-      ctx.later(900 + i * 80, sfx.slide);
+      A(c, [{ transform: `translate(${CX - x - cw / 2}px,420px) rotate(${a * 8}deg)` }, { transform: `rotate(${a}deg)` }], 480, { delay: at.words + i * 80 });
+      ctx.later(at.words + i * 80, sfx.slide);
     }
   });
+
+  // the title stamp, and a new record
   const title = tr.titles[v.title] ?? `${v.title}!`;
-  const sy = Math.min(640, top + rowsN * (ch + 20) + 46);
+  /** @param {boolean} a */
+  const stamps = (a) => {
+    const st = stampAt(box, CX, 312, title, { cls: "gold", rot: -4, size: 52, anim: a, shakePx: a ? 6 : undefined });
+    if (st.offsetWidth > W - 10) st.style.fontSize = `${Math.max(36, Math.floor((52 * (W - 10)) / st.offsetWidth))}px`;
+    if (!v.record) return;
+    const rec = () => stampAt(box, CX + 110, 376, tr.newRecord, { rot: 5, size: 28, anim: a });
+    if (!a) {
+      rec();
+      return;
+    }
+    ctx.later(800, () => {
+      rec();
+      confetti(CX + 110, 370, 40, 1.1);
+      sfx.fanfare();
+    });
+  };
+  const stampAtMs = Math.max(600 + fillMs, at.words + words.length * 80 + 300) + 200;
   if (anim) {
-    ctx.later(1100 + words.length * 80, () => {
-      stampAt(box, 640, sy, title, { cls: "gold", rot: -4, size: 60, shakePx: 6 });
-      ctx.later(200, () => confetti(640, sy - 30, 30));
+    A(m.el, [{ transform: "translateY(760px) rotate(4deg)" }, { transform: "none" }], 560, { easing: EASE.back });
+    ctx.later(600, () => m.to(chips, fillMs, { alive: () => ctx.alive() }));
+    ctx.later(stampAtMs, () => {
+      stamps(true);
+      ctx.later(200, () => confetti(CX, 330, 30));
       ctx.later(200, sfx.fanfare);
     });
-  } else stampAt(box, 640, sy, title, { cls: "gold", rot: -4, size: 60, anim: false });
+  } else stamps(false);
 }
 
 /**
+ * The best clues of the night, pinned up: the clue on a card with its
+ * author's chip and name, the word it led to on tape.
  * @param {Ctx} ctx @param {HTMLElement} box @param {EndScreen} v @param {boolean} anim
  */
-function mvp(ctx, box, v, anim) {
-  tab(box, tr.endMvp);
-  const m = v.mvp;
-  ctx.pool.to(640, 330, 250, anim);
-  const ped = h("div", { class: "pedestal", style: "left:490px;top:396px" });
-  box.append(ped);
-  if (!m) {
-    box.append(h("div", { class: "caption", style: "top:520px;font-size:34px" }, tr.nobodyTonight[0], h("b", null, tr.nobodyTonight[1])));
-    return;
-  }
-  const p = ctx.person(m.id);
-  const t = chip(p, 220, { style: "left:530px;top:196px;z-index:5" });
-  const rib = h("div", { class: "ribbon", style: "top:508px;z-index:6" }, tr.mvpOfNight);
-  const cap = h("div", { class: "caption", style: "top:612px;font-size:32px" }, h("b", null, short(p?.name, 16)), ` · ${tr.mvpStats(m)}`);
-  box.append(t, rib, cap);
-  if (!anim) return;
-  A(ped, [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], 300, { delay: 300, easing: EASE.back });
-  sfx.drumroll(1500);
-  A(t, [
-    { transform: "translateY(-420px) scale(1.5)", opacity: 0 },
-    { offset: 0.6, transform: "translateY(0) scale(1)", opacity: 1, easing: EASE.out },
-    { offset: 0.8, transform: "scale(1.12,.86)", easing: EASE.out },
-    { transform: "scale(1)", opacity: 1 },
-  ], 520, { easing: EASE.in, delay: 1550 });
-  ctx.later(1870, () => {
-    sfx.slam();
-    sfx.cymbal();
-    shake(12, 400);
-    dust(640, 428, 12, 160);
+function clues(ctx, box, v, anim) {
+  tab(box, tr.endClues);
+  box.append(h("div", { class: "caption dimtext", style: "top:104px" }, tr.cluesSub));
+  const list = v.clues.slice(0, 8);
+  const rows = list.length > 4 ? [list.slice(0, Math.ceil(list.length / 2)), list.slice(Math.ceil(list.length / 2))] : [list];
+  const W = list.length > 4 ? 220 : 240;
+  const H = list.length > 4 ? 140 : 160;
+  const gap = 56;
+  const ys = rows.length === 1 ? [290] : [200, 460];
+  let k = 0;
+  rows.forEach((row, ri) => {
+    const total = row.length * W + (row.length - 1) * gap;
+    const y = ys[ri] ?? 200;
+    row.forEach((b, i) => {
+      const x = 640 - total / 2 + i * (W + gap);
+      const rot = ((k * 5) % 7) - 3;
+      const wrap = h("div", { class: "abs", style: `left:0;top:0;width:1280px;height:720px;transform-origin:${x + W / 2}px ${y + H / 2}px` });
+      box.append(wrap);
+      const el = cardEl({ id: `best${k}`, author: b.author, bold: false, word: b.clue }, ctx.person(b.author), { parent: wrap, x, y, w: W, h: H, font: 40, style: `transform:rotate(${rot}deg)` });
+      const tp = h("div", { class: "tape small bestfor", style: `left:44px;top:-22px;transform-origin:left center` }, tr.forWord(b.word.toUpperCase()));
+      el.append(tp);
+      // right of the author's chip, over the card's top edge (a little past its right edge if need be)
+      fitText(tp, 24, 24, W - 24, 0.6);
+      tp.style.transform = `rotate(${-rot - 2}deg) ${tp.style.transform}`;
+      if (anim) {
+        const d = 300 + k * 320;
+        A(wrap, [{ transform: "translateY(-60px) scale(1.5)", opacity: 0 }, { transform: "none", opacity: 1 }], 300, { delay: d, easing: EASE.in });
+        ctx.later(d + 260, sfx.thwap);
+        A(tp, [{ clipPath: "inset(-12px 100% -12px -12px)" }, { clipPath: "inset(-12px -12px -12px -12px)" }], 260, { delay: d + 360, easing: EASE.inout });
+        ctx.later(d + 360, sfx.zip);
+      }
+      k++;
+    });
   });
-  ctx.later(1990, () => {
-    confetti(640, 300, 70, 1.2);
-    sfx.fanfare();
-  });
-  A(rib, [{ clipPath: "polygon(50% 0,50% 0,50% 100%,50% 100%)" }, { clipPath: "polygon(0 0,100% 0,95% 50%,100% 100%,0 100%,5% 50%)" }], 420, { delay: 2170 });
-  A(cap, [{ opacity: 0, transform: "translateY(20px)" }, { opacity: 1, transform: "none" }], 400, { delay: 2520 });
+  if (anim && list.length) ctx.later(400 + list.length * 320, () => shake(4));
 }
 
 /** @type {Record<Award["kind"], string>} */
 const ICONS = {
   "mind meld": `<svg viewBox="0 0 110 90"><circle cx="40" cy="45" r="32" fill="#ff7a5c" stroke="${INK}" stroke-width="5"/><circle cx="70" cy="45" r="32" fill="#8bd648" fill-opacity=".85" stroke="${INK}" stroke-width="5"/><path d="M55 18 A32 32 0 0 1 55 72 A32 32 0 0 1 55 18 Z" fill="${INK}"/></svg>`,
-  "lone wolf": `<svg viewBox="0 0 110 90"><path d="M55 6 L65 34 L95 35 L71 53 L80 83 L55 65 L30 83 L39 53 L15 35 L45 34 Z" fill="#f6b93b" stroke="${INK}" stroke-width="5" stroke-linejoin="round"/></svg>`,
-  kamikaze: `<svg viewBox="0 0 110 90"><circle cx="50" cy="54" r="30" fill="${INK}"/><path d="M68 30 Q80 14 92 18" stroke="${INK}" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M92 6 L95 15 L104 14 L97 20 L102 28 L93 24 L88 31 L88 21 L80 18 L89 15 Z" fill="#f6b93b" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/><circle cx="40" cy="44" r="7" fill="#fbf1dc" opacity=".6"/></svg>`,
+  telepath: `<svg viewBox="0 0 110 90"><path d="M55 4 L55 16 M22 12 L30 22 M88 12 L80 22 M6 34 L18 38 M104 34 L92 38" stroke="${INK}" stroke-width="5" stroke-linecap="round"/><path d="M10 56 Q55 14 100 56 Q55 98 10 56 Z" fill="#fbf1dc" stroke="${INK}" stroke-width="5" stroke-linejoin="round"/><circle cx="55" cy="56" r="19" fill="#4aa8f5" stroke="${INK}" stroke-width="4"/><circle cx="55" cy="56" r="8" fill="${INK}"/><circle cx="61" cy="50" r="4" fill="#fbf1dc"/></svg>`,
 };
 
 /**
@@ -196,7 +231,7 @@ function awards(ctx, box, v, anim) {
     box.append(el);
     const nm = /** @type {HTMLElement} */ (el.querySelector(".names"));
     fitText(nm, 30, 24, 280, 0.7);
-    // "Seelenverwandt", "Einzelgänger": the title fits the card
+    // "Seelenverwandt": the title fits the card
     fitText(/** @type {HTMLElement} */ (el.querySelector("h3")), 40, 28, 276, 0.8);
     if (anim) {
       A(el, [{ transform: `translateY(560px) rotate(${tilt * 10}deg)` }, { transform: `rotate(${tilt}deg)` }], 560, { delay: 150 + i * 150 });

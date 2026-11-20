@@ -1,13 +1,16 @@
 # Jinx
 
-A cooperative word game with personal scores for 3–8 players on
-[`@tvpipe/party`](../../npm/party), in English and German. One player guesses a
+A team word game for 3–8 players on
+[`@tvpipe/party`](../../npm/party), in English and German: the room plays
+as one, with one bank of chips and no personal points. One player guesses a
 secret word from one-word clues the others write on their phones; clues
 that are the same (the game decides: same word, plural, verb form, word
 family, typo, …) jinx and are lost. The guesser picks whose card to turn,
-the pot shrinks with every card, clue-givers can bet on a bold clue, and
-the guess is typed live on the TV. The evening ends with the room's
-title, the MVP of the night, awards and a web of every word and clue.
+the pot shrinks with every card and goes into the room's bank on a right
+guess, clue-givers can bet the room's chips on a bold clue, and the guess
+is typed live on the TV. The bank climbs towards the room's titles and its
+record; the evening ends with the room's title, the best clues of the
+night, awards and a web of every word and clue.
 The design, with every rule and number: [`docs/jinx-design.md`](../../docs/jinx-design.md).
 
 It is a web app for [`tvpipe game play`](../../docs/playshare-design.md):
@@ -44,7 +47,8 @@ with 6–8; or once, or twice), writing time (30/45/60/90 s), words (easy,
 normal: mostly easy and medium with one hard word in ten, hard: medium
 and hard). The room deals no word twice until it dealt them all (kept per
 language in the host page's `localStorage`) and never two related words
-in one game.
+in one game. The host page also keeps the room's record: its best bank
+for a game of that many rounds.
 
 ## Languages
 
@@ -71,10 +75,10 @@ the phone's index card condenses further; running text hyphenates
 
 `npm test`: the matchers' known-answer tables (`test/match*.test.ts`), the
 German word list against the German matcher (`test/words-de.test.ts`), the
-rules (`test/rules.test.ts`: pot, payouts, dealing, guesser order, titles,
+rules (`test/rules.test.ts`: the pot, the bank, dealing, guesser order, titles and goals,
 awards, the web), and whole games with bots on `@tvpipe/party`'s relay
 in memory (`test/game.test.ts`): 3 and 4 players, play again, clue
-refusals and replacing, all clues jinxed, wrong guesses and passes, timers
+refusals and replacing, all clues jinxed, wrong guesses and passes (the bank never below 0), the bank, best clues and the record, timers
 for a silent or disconnected guesser, a late joiner, a player who leaves,
 a guesser who leaves, the secrecy of the word on the TV and the guesser's
 phone; a German game with bots, the language switched between games

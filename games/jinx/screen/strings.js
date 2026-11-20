@@ -35,7 +35,8 @@ const en = (f) => ({
   shhh: "SHHH!",
   /** @param {string} name */
   isGuessing: (name) => `${name} is guessing`,
-  mvp: "MVP",
+  bank: "BANK",
+  bestClue: "BEST CLUE",
   // The lobby.
   /** @type {((name: string) => string)[]} */
   greet: [(n) => `Welcome, *${n}*. Mind your words.`, (n) => `*${n}* is in. The plot thickens.`, (n) => `Here comes *${n}*!`, (n) => `*${n}* pulls up a chair.`],
@@ -102,8 +103,6 @@ const en = (f) => ({
   groupLines: ["Uh-oh. *Great minds…*", "And *again*…", "*Another one!*", "Is this *contagious*?"],
   selfJinx: "Self-jinx!",
   jinx: "Jinx!",
-  /** @param {string} name */
-  boldMinus: (name) => `${name}'s bold card −2`,
   tooCloseLine: "Too close to the word. *Out it goes.*",
   void: "Void",
   tooCloseTape: "too close to the word",
@@ -121,24 +120,24 @@ const en = (f) => ({
   mayNow: (name) => `${name} may guess now`,
   /** @param {string} name uppercase */
   trusts: (name) => `${name} TRUSTS…`,
-  boldX2: "bold ×2",
+  boldPlus: "+2 bold",
   theVerdict: "The verdict",
   theWordWas: "THE WORD WAS",
   /** @param {string} reason */
   closeEnough: (reason) => `Close enough: *${reason}*.`,
   nailedIt: "Nailed it!",
-  /** @param {number} n @param {string} name */
-  plusFor: (n, name) => `+${f.n(n)} FOR ${name.toUpperCase()}`,
+  /** @param {number} n */
+  forTheRoom: (n) => `+${f.n(n)} FOR THE ROOM`,
   soClose: "So close.",
   soWrong: "SO WRONG.",
   noGuess: "No guess.",
-  noGlory: "NO GLORY.",
+  bankSafe: "THE BANK IS SAFE.",
   emptyPot: "Every card jinxed. *The pot goes home empty.*",
   /** The verdict's stamps. @type {Record<"right" | "wrong" | "pass" | "lost", string>} */
   stamps: { right: "Right!", wrong: "Not it", pass: "Pass", lost: "Missed" },
   lockedIn: "Locked in",
   wordWas: "The word was…",
-  // The replay and the scores.
+  // The replay and the bank.
   /** @param {number} r */
   replayTab: (r) => `Round ${f.n(r)} · replay`,
   /** @param {string} word uppercase @param {string} mark */
@@ -149,58 +148,57 @@ const en = (f) => ({
   ofYouWrote: (n, word) => `${n === 2 ? "Two" : f.n(n)} of you wrote ${word}`,
   notTurned: "not turned",
   thisRound: "THIS ROUND",
-  nobodyScored: "Nobody scored",
+  /** @param {number} n */
+  bankIs: (n) => `bank ${f.n(n)}`,
   /** @param {string} name */
   picksThe: (name) => `${name} picks the `,
-  mvpClue: "MVP clue",
-  noMvp: "No MVP clue this round",
+  bestClueLower: "best clue",
+  noBest: "No best clue this round",
   /** @param {string} name */
-  whichCracked: (name) => `${name}, which clue *cracked it*?`,
-  mvpClueK: "MVP CLUE",
-  mvpClueHit: "MVP CLUE…",
-  noMvpLine: "No MVP clue this round.",
-  scores: "SCORES",
+  whichCracked: (name) => `${name}, which clue *helped most*?`,
+  bestClueHit: "BEST CLUE…",
+  noBestLine: "No best clue this round. *Still a team.*",
+  /** @param {string} name */
+  thanks: (name) => `thanks, ${name}!`,
   /** @param {number} r @param {number} of */
-  afterRound: (r, of) => `after round ${f.n(r)} of ${f.n(of)}`,
+  bankTab: (r, of) => `The bank · round ${f.n(r)} of ${f.n(of)}`,
+  /** The titles as marks on the meter. @type {Record<RoomTitle, string>} */
+  goalNames: { telepaths: "Telepaths", "mind readers": "Mind readers", "in sync": "In sync", "mixed signals": "Mixed signals", "total jinx": "Total jinx" },
+  record: "record",
+  /** @param {number} n @param {string} title */
+  toGoal: (n, title) => `${f.p(n, { one: "# more chip", other: "# more chips" })} to *${title}*`,
+  topGoal: "Telepath territory. *Hold it.*",
   /** @param {number} found @param {number} played */
-  onFire: (found, played) => `${f.n(found)} for ${f.n(played)}. The room is on fire.`,
-  inSync: "The room is in sync.",
-  nothingYet: "Nothing yet. Think harder, together.",
-  mixed: "Mixed signals. Keep going.",
-  together: "THE ROOM, TOGETHER",
-  /** @param {number} n */
-  ofN: (n) => ` of ${f.n(n)}`,
+  wordsSoFar: (found, played) => `${f.p(found, { one: "# word", other: "# words" })} of ${f.n(played)} so far`,
+  /** @param {number} n @returns {string} */
+  bankLine: (n) => (n > 0 ? "*We're in the money.*" : n < 0 ? "Ouch. *We'll win it back.*" : "*Steady.* On to the next one."),
   nextUp: "Next up:",
   thatsTheGame: "That's the game!",
   joiningLate: "Joining late? Go to ",
   // The end.
   endRoom: "Game over · the room",
   of: "of",
-  wordsTogether: "words found together",
+  /** @param {number} chips @param {number} found @param {number} total */
+  bankCaption: (chips, found, total) => `${f.p(chips, { one: "chip", other: "chips" })} in the bank · ${f.n(found)} of ${f.n(total)} words`,
+  newRecord: "New record!",
+  /** @param {number} n */
+  recordWas: (n) => `the record was ${f.n(n)}`,
   /** The room's title on the stamp. @type {Record<RoomTitle, string>} */
   titles: { telepaths: "telepaths!", "mind readers": "mind readers!", "in sync": "in sync!", "mixed signals": "mixed signals!", "total jinx": "total jinx!" },
-  /** "41 points · 3 MVP clues · never jinxed" @param {{ score: number, mvpClues: number, jinxed: number }} m */
-  mvpStats: (m) => {
-    const s = [f.p(m.score, { one: "# point", other: "# points" })];
-    if (m.mvpClues) s.push(f.p(m.mvpClues, { one: "# MVP clue", other: "# MVP clues" }));
-    s.push(m.jinxed === 0 ? "never jinxed" : m.jinxed === 1 ? "jinxed once" : `jinxed ${f.n(m.jinxed)} times`);
-    return s.join(" · ");
-  },
-  endMvp: "Game over · MVP of the night",
-  /** @type {[string, string]} */
-  nobodyTonight: ["Nobody scored tonight. ", "Impressive, in a way."],
-  mvpOfNight: "MVP OF THE NIGHT",
+  endClues: "Game over · the best clues",
+  cluesSub: "The clues that helped us most tonight",
+  /** @param {string} word uppercase */
+  forWord: (word) => `for ${word}`,
   endAwards: "Game over · awards",
   /** @type {[string, string]} */
-  noAwards: ["No awards tonight. ", "Too evenly matched."],
+  noAwards: ["No awards tonight. ", "We're all in this together."],
   /** @type {Record<Award["kind"], string>} */
-  awards: { "mind meld": "mind meld", "lone wolf": "lone wolf", kamikaze: "kamikaze" },
+  awards: { "mind meld": "mind meld", telepath: "telepath" },
   /** @param {Award} a */
   awardStat: (a) => {
     const n = a.count;
     if (a.kind === "mind meld") return n === 1 ? "jinxed each other once" : `jinxed each other ${f.n(n)} times`;
-    if (a.kind === "lone wolf") return f.p(n, { one: "# one-of-a-kind clue that got turned", other: "# one-of-a-kind clues that got turned" });
-    return n === 1 ? "lost a clue to a jinx (and kept going)" : `lost ${f.n(n)} clues to jinxes (and kept going)`;
+    return f.p(n, { one: "# clue turned before a right guess", other: "# clues turned before a right guess" });
   },
   and: " & ",
   wordWeb: "The word web",
@@ -221,7 +219,8 @@ const de = (f) => ({
   thePot: "DER POTT",
   shhh: "PSSST!",
   isGuessing: (name) => `${name} rät gerade`,
-  mvp: "MVP",
+  bank: "BANK",
+  bestClue: "BESTER HINWEIS",
   greet: [(n) => `Willkommen, *${n}*. Wähl deine Worte gut.`, (n) => `*${n}* ist dabei. Jetzt wird's spannend.`, (n) => `Da kommt *${n}*!`, (n) => `*${n}* rückt einen Stuhl ran.`],
   tagline: ["Ein Wort pro Kopf. ", "Bloß nicht dasselbe."],
   scanToJoin: "HIER SCANNEN",
@@ -270,7 +269,6 @@ const de = (f) => ({
   groupLines: ["Oh-oh. *Zwei Dumme, ein Gedanke…*", "Und *nochmal*…", "*Noch einer!*", "Ist das *ansteckend*?"],
   selfJinx: "Selbst-Jinx!",
   jinx: "Jinx!",
-  boldMinus: (name) => `${/[sßxz]$/i.test(name) ? `${name}’` : `${name}s`} mutige Karte −2`,
   tooCloseLine: "Zu nah am Wort. *Weg damit.*",
   void: "Ungültig",
   tooCloseTape: "zu nah am Wort",
@@ -282,16 +280,16 @@ const de = (f) => ({
   mayAfterAny: (name) => `${name} darf nach jeder Karte raten`,
   mayNow: (name) => `${name} darf jetzt raten`,
   trusts: (name) => `${name} VERTRAUT…`,
-  boldX2: "mutig ×2",
+  boldPlus: "+2 mutig",
   theVerdict: "Die Auflösung",
   theWordWas: "DAS WORT WAR",
   closeEnough: (reason) => `Nah genug: *${reason}*.`,
   nailedIt: "Volltreffer!",
-  plusFor: (n, name) => `+${f.n(n)} FÜR ${name.toUpperCase()}`,
+  forTheRoom: (n) => `+${f.n(n)} FÜR ALLE`,
   soClose: "So nah dran.",
   soWrong: "SO DANEBEN.",
   noGuess: "Kein Tipp.",
-  noGlory: "KEIN RUHM.",
+  bankSafe: "DIE BANK BLEIBT HEIL.",
   emptyPot: "Alles gejinxt. *Der Pott geht leer aus.*",
   stamps: { right: "Richtig!", wrong: "Daneben", pass: "Gepasst", lost: "Verloren" },
   lockedIn: "Eingeloggt",
@@ -302,46 +300,40 @@ const de = (f) => ({
   ofYouWrote: (n, word) => `${n === 2 ? "Zwei" : f.n(n)} von euch schrieben ${word}`,
   notTurned: "verdeckt",
   thisRound: "DIESE RUNDE",
-  nobodyScored: "Keiner hat gepunktet",
+  bankIs: (n) => `Bank ${f.n(n)}`,
   picksThe: (name) => `${name} wählt den `,
-  mvpClue: "MVP-Hinweis",
-  noMvp: "Diese Runde kein MVP-Hinweis",
-  whichCracked: (name) => `${name}, welcher Hinweis hat es *geknackt*?`,
-  mvpClueK: "MVP-HINWEIS",
-  mvpClueHit: "MVP-HINWEIS…",
-  noMvpLine: "Diese Runde kein MVP-Hinweis.",
-  scores: "PUNKTE",
-  afterRound: (r, of) => `nach Runde ${f.n(r)} von ${f.n(of)}`,
-  onFire: (found, played) => `${f.n(found)} von ${f.n(played)}. Hier brennt die Luft.`,
-  inSync: "Ihr seid auf einer Wellenlänge.",
-  nothingYet: "Noch nichts. Gemeinsam fester denken!",
-  mixed: "Funkstörung. Weitermachen.",
-  together: "ALLE ZUSAMMEN",
-  ofN: (n) => ` von ${f.n(n)}`,
+  bestClueLower: "besten Hinweis",
+  noBest: "Diese Runde kein bester Hinweis",
+  whichCracked: (name) => `${name}, welcher Hinweis hat dir *am meisten* geholfen?`,
+  bestClueHit: "BESTER HINWEIS…",
+  noBestLine: "Diese Runde kein bester Hinweis. *Trotzdem ein Team.*",
+  thanks: (name) => `danke, ${name}!`,
+  bankTab: (r, of) => `Die Bank · Runde ${f.n(r)} von ${f.n(of)}`,
+  goalNames: { telepaths: "Telepathen", "mind readers": "Gedankenleser", "in sync": "Eingespielt", "mixed signals": "Funkstörung", "total jinx": "Totaler Jinx" },
+  record: "Rekord",
+  toGoal: (n, title) => `Noch ${f.p(n, { one: "# Chip", other: "# Chips" })} bis *${title}*`,
+  topGoal: "Telepathen-Niveau. *Haltet es.*",
+  wordsSoFar: (found, played) => `${f.p(found, { one: "# Wort", other: "# Wörter" })} von ${f.n(played)} bisher`,
+  bankLine: (n) => (n > 0 ? "*Es klingelt in der Kasse.*" : n < 0 ? "Autsch. *Das holen wir uns zurück.*" : "*Ruhig Blut.* Weiter geht's."),
   nextUp: "Als Nächstes:",
   thatsTheGame: "Das war's!",
   joiningLate: "Zu spät dran? Geh auf ",
   endRoom: "Spiel vorbei · alle zusammen",
   of: "von",
-  wordsTogether: "Wörter zusammen gefunden",
+  bankCaption: (chips, found, total) => `${f.p(chips, { one: "Chip", other: "Chips" })} in der Bank · ${f.n(found)} von ${f.n(total)} Wörtern`,
+  newRecord: "Neuer Rekord!",
+  recordWas: (n) => `der Rekord war ${f.n(n)}`,
   titles: { telepaths: "Telepathen!", "mind readers": "Gedankenleser!", "in sync": "Eingespielt!", "mixed signals": "Funkstörung!", "total jinx": "Totaler Jinx!" },
-  mvpStats: (m) => {
-    const s = [f.p(m.score, { one: "# Punkt", other: "# Punkte" })];
-    if (m.mvpClues) s.push(f.p(m.mvpClues, { one: "# MVP-Hinweis", other: "# MVP-Hinweise" }));
-    s.push(m.jinxed === 0 ? "nie gejinxt" : m.jinxed === 1 ? "einmal gejinxt" : `${f.n(m.jinxed)}-mal gejinxt`);
-    return s.join(" · ");
-  },
-  endMvp: "Spiel vorbei · MVP des Abends",
-  nobodyTonight: ["Heute hat keiner gepunktet. ", "Auch eine Leistung."],
-  mvpOfNight: "MVP DES ABENDS",
+  endClues: "Spiel vorbei · die besten Hinweise",
+  cluesSub: "Die Hinweise, die uns heute am meisten geholfen haben",
+  forWord: (word) => `für ${word}`,
   endAwards: "Spiel vorbei · Auszeichnungen",
-  noAwards: ["Heute keine Auszeichnungen. ", "Zu ausgeglichen."],
-  awards: { "mind meld": "Seelenverwandt", "lone wolf": "Einzelgänger", kamikaze: "Kamikaze" },
+  noAwards: ["Heute keine Auszeichnungen. ", "Wir sind eben ein Team."],
+  awards: { "mind meld": "Seelenverwandt", telepath: "Hellseher" },
   awardStat: (a) => {
     const n = a.count;
     if (a.kind === "mind meld") return n === 1 ? "haben sich einmal gegenseitig gejinxt" : `haben sich ${f.n(n)}-mal gegenseitig gejinxt`;
-    if (a.kind === "lone wolf") return f.p(n, { one: "# einzigartiger Hinweis, der umgedreht wurde", other: "# einzigartige Hinweise, die umgedreht wurden" });
-    return n === 1 ? "hat einen Hinweis verloren (und weitergemacht)" : `hat ${f.n(n)} Hinweise verloren (und weitergemacht)`;
+    return f.p(n, { one: "# Hinweis vor einem Treffer umgedreht", other: "# Hinweise vor einem Treffer umgedreht" });
   },
   and: " & ",
   wordWeb: "Das Wortnetz",

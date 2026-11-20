@@ -8,7 +8,7 @@
  *
  * Layers on the table, bottom to top: the light pool, the scenes (the old
  * one is swept off while the new one is dealt on), the pot, the header
- * (round tab, guesser, the room's tally) and the host line (masking tape
+ * (round tab, guesser, the room's tally and bank) and the host line (masking tape
  * under the header). Particles fly in #fx above the table.
  *
  * The TV speaks the room's language (`screen.lang`, strings.js): a view in
@@ -22,7 +22,7 @@
  * @typedef {(ctx: Ctx, v: any, prev: ScreenView | null) => Scene} SceneFn
  */
 
-import { A, EASE, clamp, h, short } from "./dom.js";
+import { A, EASE, clamp, h, rich, short } from "./dom.js";
 import { resetShakes, setSurfaces } from "./fx.js";
 import { Pot, chip } from "./pieces.js";
 import { quiet, setMuted, sfx } from "./sound.js";
@@ -109,37 +109,67 @@ export class Ctx {
     return clamp(left / natural, 0.4, 1);
   }
 
-  /** Memory carried over the round (e.g. the verdict's payouts for the replay). */
+  /** Memory carried over the round. */
   get memo() {
     return this.tv.memo;
   }
 }
 
 // ---------------------------------------------------------------------------
-// The header: round tab, who guesses, the room's tally.
+// The header: round tab, who guesses, the room's tally and bank.
 
 class Header {
   constructor() {
     this.tab = h("div", { class: "tab paper" });
     this.who = h("div", { class: "who-guesses" });
     this.tally = h("div", { class: "tally" });
-    this.el = h("div", { class: "head" }, h("div", { class: "head-left" }, this.tab, this.who), this.tally);
+    this.bankNum = h("b", null, "0");
+    this.bankWord = h("small", null, t.bank);
+    this.bank = h("div", { class: "bank-lbl paper", hidden: true }, h("div", { class: "minichips" }, h("i"), h("i"), h("i")), this.bankWord, this.bankNum);
+    this.el = h("div", { class: "head" }, h("div", { class: "head-left" }, this.tab, this.who), h("div", { class: "head-right" }, this.tally, this.bank));
     this.state = "";
     this.tabText = "";
     this.whoKey = "";
+    /** The bank's chips as drawn (-1: hidden). */
+    this.bankN = -1;
   }
 
   /** Forgets what is drawn (another language): the next `set` draws it all. */
   relabel() {
     this.state = "";
     this.whoKey = "";
+    this.bankWord.textContent = t.bank;
   }
 
   /**
-   * @param {{ tab?: string, guesser?: Person, blind?: boolean, tally?: Tally, round?: number, hideWho?: boolean }} o
+   * The bank's label: hidden without `n`; a changed number pops when `anim`.
+   * @param {number | undefined} n @param {boolean} [anim]
+   */
+  setBank(n, anim = false) {
+    if (n == null) {
+      this.bank.hidden = true;
+      this.bankN = -1;
+      return;
+    }
+    const was = this.bankN;
+    this.bank.hidden = false;
+    this.bankN = n;
+    this.bankNum.textContent = String(n);
+    if (anim && was >= 0 && was !== n) A(this.bankNum, [{ transform: "scale(1.45)", color: n > was ? "#2f9e57" : "#df4a3c" }, { transform: "scale(1)", color: "#1d1a2b" }], 320, { easing: EASE.back });
+  }
+
+  /** The bank label's centre on the table (for chips flying in or out). */
+  bankPoint() {
+    const e = this.bank;
+    return { x: 64 + e.offsetLeft + 38, y: 36 + e.offsetTop + e.offsetHeight / 2 };
+  }
+
+  /**
+   * @param {{ tab?: string, guesser?: Person, blind?: boolean, tally?: Tally, bank?: number, round?: number, hideWho?: boolean }} o
    * @param {boolean} anim
    */
   set(o, anim) {
+    this.setBank(o.bank, anim);
     if (o.tab !== this.tabText) {
       this.tabText = o.tab ?? "";
       this.tab.textContent = this.tabText;
@@ -171,13 +201,15 @@ class Header {
     this.tally.replaceChildren();
     if (!tl) return;
     const n = Math.max(tl.total, tl.history.length);
-    const w = n > 12 ? 18 : 24;
+    // room for the bank beside it: up to 16 rounds in about 260 px (the count's words go when it is that long)
+    const w = n > 12 ? 12 : n > 8 ? 16 : 22;
+    this.tally.style.gap = n > 12 ? "4px" : "";
     const minis = [];
     for (let i = 0; i < n; i++) {
       const s = tl.history[i];
       minis.push(h("i", { class: `mini ${s === "found" ? "won" : s === "missed" ? "lost" : "todo"}`, style: `width:${w}px;height:${Math.round(w * 1.42)}px` }));
     }
-    this.tally.append(h("span", { class: "tl" }, t.tally(tl.found, tl.total)), ...minis);
+    this.tally.append(n > 12 ? "" : h("span", { class: "tl" }, t.tally(tl.found, tl.total)), ...minis);
     // the round that just ended turns over
     const prevLen = before ? (before.split("/")[3] ?? "").split(",").filter(Boolean).length : tl.history.length;
     if (anim && tl.history.length > prevLen) {
@@ -247,10 +279,6 @@ class HostLine {
   }
 }
 
-/** `*bold*` segments. @param {string} s */
-function rich(s) {
-  return s.split(/(\*[^*]+\*)/).filter(Boolean).map((p) => (p.startsWith("*") && p.endsWith("*") ? h("b", null, p.slice(1, -1)) : p));
-}
 
 // ---------------------------------------------------------------------------
 // The light pool: a flat lighter disc on the felt that moves to what matters.

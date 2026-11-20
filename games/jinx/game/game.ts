@@ -2,8 +2,9 @@
  * Jinx on a party (docs/jinx-design.md): the lobby (faces, colours), then
  * per round the hot seat, the clue-givers write, the jinx check, the
  * guesser turns cards and guesses (the draft typed live on the TV), the
- * verdict, the replay with the MVP clue, the scores; the end in steps
- * (the room, the MVP of the night, the awards, the word web). The host is
+ * verdict, the replay with the best clue, the room's bank; the end in
+ * steps (the room, the best clues, the awards, the word web). The room
+ * plays as one team: one bank, no personal points. The host is
  * the only authority: phones and the TV only get views (`views.ts`, the
  * contract) and send actions.
  *
@@ -22,15 +23,15 @@ import type { Clue, MatchOptions, WordEntry } from "./match.ts";
 import {
   addLate,
   awards,
+  banked,
+  goals,
   guesserOrder,
   guessesEach,
-  mvpOfNight,
-  mvpPayout,
+  nextGoal,
   pairKey,
-  payouts,
+  parts,
   pot,
   POT,
-  rank,
   roomTitle,
   validateFace,
   web,
@@ -42,7 +43,7 @@ import {
   type RoundsSetting,
   type Turn,
 } from "./rules.ts";
-import type { Card, Face, JinxGroup, Payout, People, Person, PlayerState, Reason, RoomView, ScoreLine, ScreenView, Tally } from "./views.ts";
+import type { Award, Bank, BestClue, Card, Face, JinxGroup, People, Person, PlayerState, Reason, RoomView, ScreenView, Tally } from "./views.ts";
 
 export interface Timings {
   /** The round intro. */
@@ -61,16 +62,17 @@ export interface Timings {
   fateBefore: number;
   /** Phones get the verdict this long into it (the TV opens the envelope first). */
   resultAfter: number;
-  /** Picking the MVP clue. */
-  mvp: number;
-  /** The replay when there is no MVP clue to pick. */
+  /** Picking the best clue. */
+  best: number;
+  /** The replay when there is no best clue to pick. */
   replay: number;
-  /** The replay after the MVP clue was picked. */
+  /** The replay after the best clue was picked. */
   replayHold: number;
-  scores: number;
+  /** The bank between rounds. */
+  bank: number;
   /** The end's steps (the web stays). */
   endRoom: number;
-  endMvp: number;
+  endClues: number;
   endAwards: number;
   /** At most one draft update of the TV per this many ms. */
   draftEvery: number;
@@ -86,12 +88,12 @@ export const DEFAULT_TIMINGS: Timings = {
   verdict: 6000,
   fateBefore: 1500,
   resultAfter: 3000,
-  mvp: 20_000,
+  best: 20_000,
   replay: 8000,
   replayHold: 4000,
-  scores: 5000,
+  bank: 5000,
   endRoom: 8000,
-  endMvp: 7000,
+  endClues: 8000,
   endAwards: 8000,
   draftEvery: 50,
 };
@@ -115,6 +117,8 @@ export interface JinxOptions {
   known?: ((word: string) => boolean) | undefined;
   /** Match options per language (the matcher's `dictionary(text)` of its `dict*.txt`): typo matching, word forms. */
   match?: Partial<Record<Lang, MatchOptions>> | undefined;
+  /** The room's records (the host page's `localStorage`): the best bank per game length in rounds; see the `record` event. */
+  records?: Readonly<Record<number, number>> | undefined;
   /** Words this room dealt before (the host page's `localStorage`), for `lang` or per language; see the `dealt` event. */
   dealt?: readonly string[] | Partial<Record<Lang, readonly string[]>> | undefined;
   rounds?: RoundsSetting | undefined;
@@ -130,7 +134,9 @@ export interface JinxEvents {
   phase: [phase: Phase];
   /** A word was dealt: the room's dealt words so far in that language (to keep). */
   dealt: [used: string[], lang: Lang];
-  end: [lines: ScoreLine[]];
+  /** A game of `rounds` rounds beat the room's record (or set the first): keep it. */
+  record: [rounds: number, chips: number];
+  end: [bank: number];
 }
 
 interface Profile {
@@ -178,11 +184,9 @@ interface Round {
   draft: string;
   typing: boolean;
   outcome?: Outcome;
-  payouts: Payout[];
+  banked: number;
   picking: boolean;
-  mvp?: string;
-  /** Scores before the round. */
-  before: Map<string, number>;
+  best?: string;
   abort: AbortController;
   signal: AbortSignal;
 }
@@ -192,6 +196,8 @@ interface Played {
   found: boolean;
   guesser: string;
   clues: { display: string; key: string }[];
+  /** The best clue, once picked. */
+  best?: { clue: string; author: string };
 }
 
 const obj = (d: Json): Record<string, Json> => (typeof d === "object" && d !== null && !Array.isArray(d) ? d : {});
@@ -209,8 +215,12 @@ export class Jinx extends Emitter<JinxEvents> {
   readonly #profiles = new Map<string, Profile>();
   /** Players who left during this game (kept in `people`). */
   #left: Person[] = [];
-  /** This game's points, per player id (players in the game). */
-  readonly #scores = new Map<string, number>();
+  /** Players in this game (ids). */
+  readonly #ingame = new Set<string>();
+  /** The room's bank this game. */
+  #bank = 0;
+  /** The best bank per game length (rounds). */
+  readonly #records = new Map<number, number>();
   readonly #stats = new Map<string, PlayerStats>();
   readonly #pairs = new Map<string, number>();
   #played: Played[] = [];
@@ -238,6 +248,7 @@ export class Jinx extends Emitter<JinxEvents> {
     this.timings = { ...DEFAULT_TIMINGS, ...options.timings };
     this.#rng = options.rng ?? Math.random;
     this.#lang = options.lang ?? "en";
+    for (const [k, v] of Object.entries(options.records ?? {})) if (Number.isInteger(Number(k)) && Number.isFinite(v)) this.#records.set(Number(k), v);
     const words: Partial<Record<Lang, readonly WordEntry[]>> = Array.isArray(options.words) ? { [this.#lang]: options.words } : (options.words as Partial<Record<Lang, readonly WordEntry[]>>);
     const dealt: Partial<Record<Lang, readonly string[]>> = Array.isArray(options.dealt) ? { [this.#lang]: options.dealt } : ((options.dealt ?? {}) as Partial<Record<Lang, readonly string[]>>);
     for (const l of LANGS) {
@@ -362,7 +373,7 @@ export class Jinx extends Emitter<JinxEvents> {
     party.handle("pick", (d, from) => this.#onPick(d, from as Player));
     party.handle("guess", (d, from) => this.#onGuess(d, from as Player));
     party.handle("pass", (_d, from) => this.#onPass(from as Player));
-    party.handle("mvp", (d, from) => this.#onMvp(d, from as Player));
+    party.handle("best", (d, from) => this.#onBest(d, from as Player));
     party.on("input", (p, data) => this.#onInput(p, data));
     party.on("join", (p) => {
       this.#profile(p);
@@ -415,7 +426,7 @@ export class Jinx extends Emitter<JinxEvents> {
 
   #person(p: Player): Person {
     const pr = this.#profile(p);
-    const out: Person = { id: p.id, name: p.name, color: pr.color, face: pr.face, vip: p.vip, connected: p.connected, score: this.#scores.get(p.id) ?? 0 };
+    const out: Person = { id: p.id, name: p.name, color: pr.color, face: pr.face, vip: p.vip, connected: p.connected };
     if (pr.bot) out.bot = true;
     return out;
   }
@@ -433,8 +444,8 @@ export class Jinx extends Emitter<JinxEvents> {
   #onLeave(p: Player): void {
     const pr = this.#profiles.get(p.id);
     this.#queue = this.#queue.filter((t) => t.id !== p.id);
-    if ((this.#running || this.#phase === "end") && this.#scores.has(p.id) && pr) {
-      this.#left.push({ id: p.id, name: p.name, color: pr.color, face: pr.face, vip: false, connected: false, score: this.#scores.get(p.id) ?? 0, ...(pr.bot ? { bot: true } : {}), left: true });
+    if ((this.#running || this.#phase === "end") && this.#ingame.has(p.id) && pr) {
+      this.#left.push({ id: p.id, name: p.name, color: pr.color, face: pr.face, vip: false, connected: false, ...(pr.bot ? { bot: true } : {}), left: true });
     }
     if (!this.#left.some((l) => l.id === p.id)) this.#profiles.delete(p.id);
     const r = this.#round;
@@ -478,7 +489,7 @@ export class Jinx extends Emitter<JinxEvents> {
   /** Lobby and end states (they follow the roster). */
   #passiveState(p: Player): void {
     if (this.#running) return;
-    if (this.#phase === "end" && this.#scores.has(p.id)) {
+    if (this.#phase === "end" && this.#ingame.has(p.id)) {
       p.state.replace(this.#s(this.#finalState(p)));
       return;
     }
@@ -500,13 +511,22 @@ export class Jinx extends Emitter<JinxEvents> {
   #roundsChanged(): void {
     if (!this.#round) return;
     const rounds = this.#total();
-    if ("tally" in this.#view) this.#screenSet({ rounds, tally: this.#tally() });
+    if ("tally" in this.#view) this.#screenSet({ rounds, tally: this.#tally(), bank: this.#bankView() });
     this.party.room.set({ rounds });
+  }
+
+  /** The bank, the titles' marks and the record for this game's length. */
+  #bankView(): Bank {
+    const rounds = this.#total();
+    const out: Bank = { chips: this.#bank, goals: goals(rounds) };
+    const rec = this.#records.get(rounds);
+    if (rec !== undefined) out.record = rec;
+    return out;
   }
 
   /** The base of a round's screen view. */
   #inRound(r: Round): Record<string, unknown> {
-    return { round: r.n, rounds: this.#total(), guesser: r.guesser.id, tally: this.#tally() };
+    return { round: r.n, rounds: this.#total(), guesser: r.guesser.id, tally: this.#tally(), bank: this.#bankView() };
   }
 
   #cardView(c: RoundCard, word: boolean): Card {
@@ -517,11 +537,7 @@ export class Jinx extends Emitter<JinxEvents> {
   }
 
   #inGame(): Player[] {
-    return this.party.players.filter((p) => this.#scores.has(p.id));
-  }
-
-  #lines(before?: ReadonlyMap<string, number>): ScoreLine[] {
-    return rank(this.#inGame().map((p) => ({ id: p.id, score: this.#scores.get(p.id) ?? 0, delta: (this.#scores.get(p.id) ?? 0) - (before?.get(p.id) ?? this.#scores.get(p.id) ?? 0) })));
+    return this.party.players.filter((p) => this.#ingame.has(p.id));
   }
 
   // -------------------------------------------------------------------------
@@ -554,8 +570,9 @@ export class Jinx extends Emitter<JinxEvents> {
   // -------------------------------------------------------------------------
   // A game
 
-  /** Plays a whole game with the players there (and those who join). */
-  async play(): Promise<ScoreLine[]> {
+  // Plays a whole game with the players there (and those who join).
+  /** Plays a whole game; resolves to the room's bank. */
+  async play(): Promise<number> {
     if (this.#running) throw new PartyError("running", "The game is on");
     const party = this.party;
     this.#endAbort.abort();
@@ -563,7 +580,8 @@ export class Jinx extends Emitter<JinxEvents> {
     const signal = this.#gameAbort.signal;
     this.#running = true;
     party.inProgress = true;
-    this.#scores.clear();
+    this.#ingame.clear();
+    this.#bank = 0;
     this.#stats.clear();
     this.#pairs.clear();
     this.#played = [];
@@ -589,7 +607,7 @@ export class Jinx extends Emitter<JinxEvents> {
         const turn = this.#queue.shift();
         if (!turn) break;
         const guesser = party.player(turn.id);
-        if (!guesser || !this.#scores.has(guesser.id)) continue;
+        if (!guesser || !this.#ingame.has(guesser.id)) continue;
         await this.#playRound(++n, guesser, signal);
         if (this.#history.length < n) n--; // dropped (the guesser left)
       }
@@ -599,19 +617,19 @@ export class Jinx extends Emitter<JinxEvents> {
       party.inProgress = false;
       for (const p of party.players) party.activate(p);
     }
-    if (signal.aborted) return this.#lines();
+    if (signal.aborted) return this.#bank;
     return this.#end();
   }
 
   #join(p: Player): void {
-    this.#scores.set(p.id, 0);
-    this.#stats.set(p.id, { id: p.id, score: 0, mvpClues: 0, jinxed: 0, turnedRight: 0 });
+    this.#ingame.add(p.id);
+    this.#stats.set(p.id, { id: p.id, bestClues: 0, jinxed: 0, turnedRight: 0 });
   }
 
   /** Late joiners: in from this round, their turns at the end of each pass. */
   #dealIn(): void {
     for (const p of this.party.players) {
-      if (this.#scores.has(p.id)) continue;
+      if (this.#ingame.has(p.id)) continue;
       this.party.activate(p);
       this.#join(p);
       this.#queue = addLate(this.#queue, p.id, this.#times);
@@ -645,14 +663,13 @@ export class Jinx extends Emitter<JinxEvents> {
       turns: 0,
       draft: "",
       typing: false,
-      payouts: [],
+      banked: 0,
       picking: false,
-      before: new Map(this.#scores),
       abort,
       signal: AbortSignal.any([gameSignal, abort.signal]),
     };
     this.#round = r;
-    for (const p of party.players) if (!this.#scores.has(p.id)) p.state.replace(this.#s({ task: "wait" }));
+    for (const p of party.players) if (!this.#ingame.has(p.id)) p.state.replace(this.#s({ task: "wait" }));
 
     // The hot seat.
     this.#setPhase("hotseat");
@@ -678,7 +695,7 @@ export class Jinx extends Emitter<JinxEvents> {
     await this.#sleep(this.timings.verdict - resultAfter, gameSignal);
     await this.#replay(r, gameSignal);
     if (gameSignal.aborted) return;
-    await this.#scoresPhase(r, gameSignal);
+    await this.#bankPhase(r, gameSignal);
   }
 
   // -------------------------------------------------------------------------
@@ -775,7 +792,7 @@ export class Jinx extends Emitter<JinxEvents> {
     }));
     for (const g of res.groups) for (const i of g.members) r.cards[i]!.fate = "jinxed";
     r.jinxed = r.cards.filter((c) => c.fate === "jinxed").length;
-    r.pot = pot(r.jinxed, 0);
+    r.pot = this.#pot(r);
     const weight = r.groups.reduce((s, g) => s + (g.cards.length >= 3 ? 1.5 : 1), 0);
     const until = party.now() + this.timings.jinxBase + Math.round(this.timings.jinxGroup * weight);
     this.#setPhase("jinx");
@@ -857,9 +874,16 @@ export class Jinx extends Emitter<JinxEvents> {
     else this.#finish(r, { result: "pass" });
   }
 
+  /** The pot after the jinx check and the turns so far. */
+  #pot(r: Round): number {
+    const jinxed = r.cards.filter((c) => c.fate === "jinxed");
+    const turned = r.cards.filter((c) => c.turned !== undefined);
+    return pot({ jinxed: jinxed.length, boldJinxed: jinxed.filter((c) => c.bold).length, turned: turned.length, boldTurned: turned.filter((c) => c.bold).length });
+  }
+
   #turn(r: Round, card: RoundCard): void {
     card.turned = ++r.turns;
-    r.pot = pot(r.jinxed, r.turns);
+    r.pot = this.#pot(r);
     r.picked = card.id;
     r.typing = false;
     const started = this.party.now();
@@ -951,18 +975,13 @@ export class Jinx extends Emitter<JinxEvents> {
   }
 
   // -------------------------------------------------------------------------
-  // Verdict, replay, scores
+  // Verdict, replay, the bank
 
   #verdict(r: Round): void {
     const party = this.party;
     const o = r.outcome!;
-    r.payouts = payouts(
-      r.guesser.id,
-      o.result,
-      r.pot,
-      r.cards.map((c) => ({ author: c.author, bold: c.bold, fate: c.fate, turned: c.turned !== undefined })),
-    );
-    for (const p of r.payouts) this.#addScore(p.id, p.delta);
+    r.banked = banked(o.result, r.pot, this.#bank);
+    this.#bank += r.banked;
     // The game's record.
     const found = o.result === "right";
     this.#history.push(found ? "found" : "missed");
@@ -988,7 +1007,7 @@ export class Jinx extends Emitter<JinxEvents> {
       word: r.entry.word,
       result: o.result,
       cards: r.cards.map((c) => this.#cardView(c, true)),
-      payouts: r.payouts,
+      banked: r.banked,
       pot: r.pot,
       until: party.now() + this.timings.verdict,
     };
@@ -999,7 +1018,6 @@ export class Jinx extends Emitter<JinxEvents> {
     this.#roomView({ phase: "verdict" });
     // Phones watch the TV until the envelope is open.
     for (const p of this.#inGame()) p.state.replace(this.#s({ task: "tv" }));
-    this.#peopleChanged();
   }
 
   /** The verdict on the phones (after `resultAfter`). */
@@ -1007,25 +1025,15 @@ export class Jinx extends Emitter<JinxEvents> {
     for (const p of this.#inGame()) p.state.replace(this.#s(this.#resultState(r, p)));
   }
 
-  #addScore(id: string, delta: number): void {
-    const s = (this.#scores.get(id) ?? 0) + delta;
-    if (this.#scores.has(id)) this.#scores.set(id, s);
-    const st = this.#stats.get(id);
-    if (st) st.score = s;
-    const l = this.#left.find((x) => x.id === id);
-    if (l) l.score = s;
-  }
-
   #resultState(r: Round, p: Player): PlayerState {
-    const mine = r.payouts.filter((x) => x.id === p.id);
-    return {
-      task: "result",
-      word: r.entry.word,
-      result: r.outcome!.result,
-      guesser: p === r.guesser,
-      delta: mine.reduce((s, x) => s + x.delta, 0),
-      why: mine.map((x) => x.why),
-    };
+    const result = r.outcome!.result;
+    const mine = parts(
+      p.id,
+      result,
+      r.cards.map((c) => ({ author: c.author, bold: c.bold, fate: c.fate, turned: c.turned !== undefined })),
+    );
+    if (r.best && r.cards.find((c) => c.id === r.best)?.author === p.id) mine.push("best");
+    return { task: "result", word: r.entry.word, result, guesser: p === r.guesser, banked: r.banked, bank: this.#bank, parts: mine };
   }
 
   async #replay(r: Round, signal: AbortSignal): Promise<void> {
@@ -1033,7 +1041,7 @@ export class Jinx extends Emitter<JinxEvents> {
     const right = r.outcome!.result === "right" && party.players.includes(r.guesser);
     const choices = this.#alive(r);
     r.picking = right && choices.length > 0;
-    const deadline = party.now() + this.timings.mvp;
+    const deadline = party.now() + this.timings.best;
     const view: Record<string, unknown> = {
       phase: "replay",
       ...this.#inRound(r),
@@ -1042,7 +1050,7 @@ export class Jinx extends Emitter<JinxEvents> {
       cards: r.cards.map((c) => this.#cardView(c, true)),
       groups: r.groups,
       picking: r.picking,
-      payouts: r.payouts,
+      banked: r.banked,
       pot: r.pot,
     };
     if (r.picking) view["deadline"] = deadline;
@@ -1053,7 +1061,7 @@ export class Jinx extends Emitter<JinxEvents> {
       await this.#sleep(this.timings.replay, signal);
       return;
     }
-    r.guesser.state.replace(this.#s({ task: "mvp", cards: choices.map((c) => this.#cardView(c, true)), deadline }));
+    r.guesser.state.replace(this.#s({ task: "best", cards: choices.map((c) => this.#cardView(c, true)), deadline }));
     while (r.picking && !signal.aborted && party.now() < deadline + party.grace && party.players.includes(r.guesser)) {
       await this.#until(deadline + party.grace, signal, true);
     }
@@ -1066,7 +1074,7 @@ export class Jinx extends Emitter<JinxEvents> {
     await this.#sleep(this.timings.replayHold, signal);
   }
 
-  #onMvp(d: Json, from: Player): unknown {
+  #onBest(d: Json, from: Player): unknown {
     const r = this.#round;
     if (from.role !== "player") throw new PartyError("not-player", "Players only");
     if (!r || this.#phase !== "replay" || !r.picking) throw new PartyError("late", "Not now");
@@ -1075,91 +1083,95 @@ export class Jinx extends Emitter<JinxEvents> {
     const card = this.#alive(r).find((c) => c.id === id);
     if (!card) throw new PartyError("bad-card", "Pick one of the clues");
     r.picking = false;
-    r.mvp = card.id;
-    const pay = mvpPayout(card.author);
-    r.payouts.push(pay);
-    this.#addScore(pay.id, pay.delta);
+    r.best = card.id;
     const st = this.#stats.get(card.author);
-    if (st) st.mvpClues++;
-    this.#screenSet({ picking: false, mvp: card.id, deadline: undefined, payouts: r.payouts });
+    if (st) st.bestClues++;
+    const played = this.#played[this.#played.length - 1];
+    if (played) played.best = { clue: card.clue.display, author: card.author };
+    this.#screenSet({ picking: false, best: card.id, deadline: undefined });
     r.guesser.state.replace(this.#s(this.#resultState(r, r.guesser)));
     const author = this.party.player(card.author);
     if (author) author.state.replace(this.#s(this.#resultState(r, author)));
-    this.#peopleChanged();
     this.#wake();
     return null;
   }
 
-  async #scoresPhase(r: Round, signal: AbortSignal): Promise<void> {
+  async #bankPhase(r: Round, signal: AbortSignal): Promise<void> {
     const party = this.party;
-    const lines = this.#lines(r.before);
     const next = this.#queue.find((t) => party.player(t.id));
-    const view: Record<string, unknown> = { phase: "scores", ...this.#inRound(r), lines, until: party.now() + this.timings.scores };
+    const view: Record<string, unknown> = { phase: "bank", ...this.#inRound(r), banked: r.banked, until: party.now() + this.timings.bank };
     if (next) view["next"] = next.id;
-    this.#setPhase("scores");
+    this.#setPhase("bank");
     this.#screen(view);
-    this.#roomView({ phase: "scores" });
+    this.#roomView({ phase: "bank" });
+    const goal = nextGoal(this.#bank, this.#total());
     for (const p of this.#inGame()) {
-      const l = lines.find((x) => x.id === p.id)!;
-      p.state.replace(this.#s({ task: "scores", score: l.score, rank: l.rank, of: lines.length, next: next?.id === p.id }));
+      const st: PlayerState = { task: "bank", bank: this.#bank, banked: r.banked, next: next?.id === p.id };
+      if (goal) st.goal = goal;
+      p.state.replace(this.#s(st));
     }
-    await this.#sleep(this.timings.scores, signal);
+    await this.#sleep(this.timings.bank, signal);
   }
 
   // -------------------------------------------------------------------------
   // The end
 
   #finalState(p: Player): PlayerState {
-    const lines = this.#lines();
-    const l = lines.find((x) => x.id === p.id);
-    const view = this.#view as { awards?: { kind: string; ids: string[] }[] };
+    const view = this.#view as { awards?: Award[]; record?: true };
     const award = (view.awards ?? []).find((a) => a.ids.includes(p.id));
     const found = this.#history.filter((h) => h === "found").length;
     const out: PlayerState = {
       task: "final",
-      score: l?.score ?? 0,
-      rank: l?.rank ?? lines.length + 1,
-      of: lines.length,
+      bank: this.#bank,
+      title: roomTitle(this.#bank, this.#history.length),
+      record: view.record === true,
       canRestart: p.vip,
       found,
       total: this.#history.length,
-      title: roomTitle(found, this.#history.length),
     };
-    if (award) out.award = award.kind as "mind meld" | "lone wolf" | "kamikaze";
+    if (award) out.award = award.kind;
     return out;
   }
 
-  async #end(): Promise<ScoreLine[]> {
+  async #end(): Promise<number> {
     const party = this.party;
     this.#endAbort = new AbortController();
     const signal = this.#endAbort.signal;
     const present = this.#inGame().map((p) => this.#stats.get(p.id)!);
-    const best = mvpOfNight(present);
     const aw = awards(present, this.#pairs);
-    const lines = this.#lines();
-    const found = this.#history.filter((h) => h === "found").length;
+    const rounds = this.#history.length;
+    const bank: Bank = { chips: this.#bank, goals: goals(rounds) };
+    const before = this.#records.get(rounds);
+    if (before !== undefined) bank.record = before;
+    const record = rounds > 0 && this.#bank > 0 && (before === undefined || this.#bank > before);
+    const clues: BestClue[] = this.#played.filter((x) => x.best).map((x) => ({ word: x.entry.word, clue: x.best!.clue, author: x.best!.author, guesser: x.guesser }));
     const view: Record<string, unknown> = {
       phase: "end",
       step: "room",
       tally: this.#tally(),
-      title: roomTitle(found, this.#history.length),
+      bank,
+      title: roomTitle(this.#bank, rounds),
       words: this.#played.map((x) => ({ word: x.entry.word, found: x.found, guesser: x.guesser })),
+      clues,
       awards: aw,
       web: web(this.#played.map((x) => ({ word: x.entry.word, found: x.found, clues: x.clues }))),
-      lines,
     };
-    if (best) view["mvp"] = { id: best.id, score: best.score, mvpClues: best.mvpClues, jinxed: best.jinxed };
+    if (record) {
+      view["record"] = true;
+      this.#records.set(rounds, this.#bank);
+      this.emit("record", rounds, this.#bank);
+    }
     this.#setPhase("end");
     this.#screen(view);
     this.#roomView({ phase: "end" });
     for (const p of party.players) this.#passiveState(p);
-    this.emit("end", lines);
+    this.emit("end", this.#bank);
     void (async () => {
       await this.#sleep(this.timings.endRoom, signal);
       if (signal.aborted) return;
-      if (best) {
-        this.#screenSet({ step: "mvp" });
-        await this.#sleep(this.timings.endMvp, signal);
+      if (clues.length > 0) {
+        this.#screenSet({ step: "clues" });
+        await this.#sleep(this.timings.endClues, signal);
         if (signal.aborted) return;
       }
       if (aw.length > 0) {
@@ -1169,6 +1181,6 @@ export class Jinx extends Emitter<JinxEvents> {
       }
       this.#screenSet({ step: "web" });
     })();
-    return lines;
+    return this.#bank;
   }
 }

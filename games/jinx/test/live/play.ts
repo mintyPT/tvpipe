@@ -4,7 +4,7 @@
  * (the launcher, then the host page, which adds the bots), one phone
  * (joining, drawing a face, starting as the VIP, writing clues with a
  * refusal and a bold one, turning cards, typing a guess letter by letter,
- * picking the MVP clue, playing again) and the TV: the `browser`
+ * picking the best clue, playing again) and the TV: the `browser`
  * receiver's player page, so the picture went through tvpipe's own
  * headless Chrome, the capture and the stream. Screenshots of the host
  * window, the TV (the stream, and the TV page itself) and the phone per
@@ -537,17 +537,17 @@ try {
       }
       case "replay":
         if (mine && (await phone.until(`!!document.querySelector(".cards button.card")`, 4000).then(() => true, () => false))) {
-          await shot(`${at}-replay-mvp-pick`, { wait: 800 });
+          await shot(`${at}-replay-best-pick`, { wait: 800 });
           await phone.eval(`document.querySelector(".cards button.card").click(); true`);
-          await win.until(`!!jinx.party.screen.peek().mvp`, 5000);
-          log(`phone: picked the MVP clue`);
-          await shot(`${at}-replay-mvp`, { wait: 1800 });
+          await win.until(`!!jinx.party.screen.peek().best`, 5000);
+          log(`phone: picked the best clue`);
+          await shot(`${at}-replay-best`, { wait: 1800 });
         } else {
           await shot(`${at}-replay`, { wait: 2500 });
         }
         break;
-      case "scores":
-        await shot(`${at}-scores`, { wait: 3800 });
+      case "bank":
+        await shot(`${at}-bank`, { wait: 3800 });
         break;
       case "end":
         await shot(`${at}-end-${s.step}`, { wait: s.step === "web" ? 7000 : s.step === "room" ? 3500 : 5000 });

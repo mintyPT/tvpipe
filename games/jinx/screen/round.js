@@ -30,7 +30,7 @@ export function hotseat(ctx, v, prev) {
   const pace = prev ? ctx.pace(2400, v.until) : 0;
   const anim = pace > 0;
   const T = (/** @type {number} */ ms) => ms * (pace || 1);
-  ctx.head.set({ tab: roundTab(v), tally: v.tally }, !!prev);
+  ctx.head.set({ tab: roundTab(v), tally: v.tally, bank: v.bank.chips }, !!prev);
   ctx.pot.show(false);
   ctx.host.say(tr.makeItCount, { anim });
   ctx.pool.to(640, 330, 230, anim);
@@ -91,7 +91,7 @@ export function write(ctx, v, prev) {
   const L = ctx.layer;
   const anim = !!prev;
   const g = ctx.person(v.guesser);
-  ctx.head.set({ tab: roundTab(v), guesser: g, blind: true, tally: v.tally }, anim);
+  ctx.head.set({ tab: roundTab(v), guesser: g, blind: true, tally: v.tally, bank: v.bank.chips }, anim);
   ctx.pot.show(false);
   ctx.pool.off(anim);
   ctx.host.say(tr.writeLine(v.each), { anim });

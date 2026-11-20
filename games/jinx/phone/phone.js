@@ -7,7 +7,9 @@
  * Everything players typed is shown as text (`textContent`), never as markup.
  * It speaks the room's language (`room.lang`), or the one the player
  * picked with the header's switch (joining, the lobby, the end);
- * `strings.js` has the texts.
+ * `strings.js` has the texts. Jinx is a team game: the room shares one
+ * bank of chips, so the phone shows the room's bank and what this phone's
+ * cards did for it, never personal points or ranks.
  *
  * @typedef {import("../game/views.ts").RoomView} RoomView
  * @typedef {import("../game/views.ts").PlayerState} PlayerState
@@ -15,7 +17,6 @@
  * @typedef {import("../game/views.ts").Card} Card
  * @typedef {import("../game/views.ts").Face} Face
  * @typedef {import("../game/views.ts").Reason} Reason
- * @typedef {import("../game/views.ts").Payout} Payout
  * @typedef {import("../game/views.ts").Award} Award
  * @typedef {import("../game/views.ts").RoomTitle} RoomTitle
  */
@@ -475,8 +476,6 @@ function renderHeader() {
   meBox.replaceChildren();
   if (!p) return;
   meBox.append(h("span", { class: "name" }, p.name), chip(p, 36));
-  const task = meView()?.task;
-  if (roomView().phase !== "lobby" && task !== "wait") meBox.prepend(h("span", { class: "score", "aria-label": t.points(p.score) }, p.score));
 }
 
 function render() {
@@ -580,10 +579,10 @@ function build(me, room) {
       return watch(me, room);
     case "result":
       return result(me, room);
-    case "mvp":
-      return mvp(me);
-    case "scores":
-      return scores(me, room);
+    case "best":
+      return best(me);
+    case "bank":
+      return bank(me, room);
     case "final":
       return final(me);
     default:
@@ -1262,7 +1261,9 @@ function watch(me, room) {
 }
 
 /**
- * The verdict (and the replay for clue-givers).
+ * The verdict (and the replay for clue-givers): the word, what the round
+ * did to the room's bank, and what this phone's cards did (`parts`; the
+ * best clue's author gets "best" during the replay, on the same screen).
  * @param {Task<"result">} me
  * @param {RoomView} room
  * @returns {Screen}
@@ -1279,9 +1280,11 @@ function result(me, room) {
     const name = g?.name ?? t.theGuesser;
     const verdict = me.result === "right" ? t.gotIt(name) : me.result === "wrong" ? t.missed(name) : me.result === "pass" ? t.passed(name) : t.allJinxed;
     top = h("h1", { class: "title" }, verdict);
-    buzz(me.delta > 0 ? [40, 40, 80] : me.delta < 0 ? [200] : [30]);
+    buzz(me.banked > 0 ? [40, 40, 80] : me.banked < 0 ? [200] : [30]);
   }
-  const why = me.why.map((w) => h("li", {}, t.why[w] ?? w));
+  const parts = h("ul", { class: "why" });
+  /** @type {string | null} */
+  let lastParts = null;
   return {
     tone: me.result === "right" ? "good" : "",
     main: [
@@ -1290,24 +1293,37 @@ function result(me, room) {
         { class: "center" },
         top,
         indexCard(me.word, t.theWordWas),
-        h("p", { class: `points ${me.delta > 0 ? "plus" : me.delta < 0 ? "minus" : "zero"}` }, signed(me.delta)),
-        why.length ? h("ul", { class: "why" }, ...why) : note(me.guesser ? (me.result === "pass" ? t.noLoss : t.noPoints) : t.noPointsYou),
+        h(
+          "div",
+          { class: "banked" },
+          h("p", { class: `points ${me.banked > 0 ? "plus" : me.banked < 0 ? "minus" : "zero"}` }, signed(me.banked), h("small", {}, t.forTheRoom)),
+          h("p", { class: "bank-line" }, t.bankIs(me.bank)),
+        ),
+        me.guesser ? note(t.guesserNote[me.result]) : null,
+        parts,
         replay,
       ),
     ],
     refresh: (m, r) => {
       if (m.task !== "result") return;
-      replay.textContent = r.phase === "replay" && !m.guesser && m.result === "right" ? t.pickingMvp(g?.name ?? t.theGuesser) : r.phase === "replay" ? t.replay : "";
+      const key = m.parts.join();
+      if (key !== lastParts) {
+        if (lastParts !== null) buzz([30, 30, 60]);
+        lastParts = key;
+        parts.replaceChildren(...m.parts.map((p) => h("li", { class: p }, t.parts[p] ?? p)));
+      }
+      parts.hidden = !m.parts.length;
+      replay.textContent = r.phase === "replay" && !m.guesser && m.result === "right" && !m.parts.includes("best") ? t.pickingBest(g?.name ?? t.theGuesser) : r.phase === "replay" ? t.replay : "";
     },
   };
 }
 
 /**
- * The guesser picks the clue that helped most.
- * @param {Task<"mvp">} me
+ * The guesser picks the clue that helped most: a thank-you, no chips.
+ * @param {Task<"best">} me
  * @returns {Screen}
  */
-function mvp(me) {
+function best(me) {
   const err = h("p", { class: "line error", role: "alert" });
   const grid = h("div", { class: "cards" });
   /** @type {string | null} */
@@ -1319,14 +1335,14 @@ function mvp(me) {
         const b = cardEl(c, {
           tag: "button",
           extra: chosen === c.id ? "chosen" : chosen ? "dim" : "",
-          label: t.mvpLabel(c.word ?? "", nameOf(c.author)),
+          label: t.bestLabel(c.word ?? "", nameOf(c.author)),
           onclick: () => {
             if (chosen) return;
             chosen = c.id;
             buzz([30, 30, 60]);
             draw();
-            act("mvp", { card: c.id }, err).then(
-              () => (done.textContent = t.mvpDone(nameOf(c.author))),
+            act("best", { card: c.id }, err).then(
+              () => (done.textContent = t.bestDone(nameOf(c.author))),
               () => {
                 chosen = null;
                 draw();
@@ -1334,7 +1350,7 @@ function mvp(me) {
             );
           },
         });
-        if (chosen === c.id) b.append(h("span", { class: "rosette" }, t.mvp));
+        if (chosen === c.id) b.append(h("span", { class: "rosette" }, t.best));
         return b;
       }),
     );
@@ -1343,40 +1359,53 @@ function mvp(me) {
   fitWords(grid);
   return {
     tone: "good",
-    main: [h("h1", { class: "title" }, t.whichHelped), note(t.mvpNote), grid, done, err],
+    main: [h("h1", { class: "title" }, t.whichHelped), note(t.bestNote), grid, done, err],
   };
 }
 
 /**
- * @param {Task<"scores">} me
+ * Between rounds: the room's bank, this round's change, the next title.
+ * @param {Task<"bank">} me
  * @param {RoomView} room
  * @returns {Screen}
  */
-function scores(me, room) {
+function bank(me, room) {
   if (me.next) buzz([80, 60, 80]);
+  const goal = me.goal ? t.moreTo(Math.max(0, me.goal.chips - me.bank), t.titles[me.goal.title] ?? me.goal.title) : t.topTitle;
   return {
     main: [
       h(
         "section",
         { class: "center" },
         room.round && room.rounds ? tape(t.afterRound(room.round, room.rounds)) : null,
-        rankNote(me.rank, me.of, me.score),
-        me.next ? h("div", { class: "next" }, stamp(t.upNext, "gold"), note(t.upNextNote)) : note(t.scoresOnTv),
+        bankNote(me.bank, { banked: me.banked }),
+        h("p", { class: "goal" }, goal),
+        me.next ? h("div", { class: "next" }, stamp(t.upNext, "gold"), note(t.upNextNote)) : note(t.bankOnTv),
       ),
     ],
   };
 }
 
 /**
- * The score pad's note: the rank, big, and the points.
- * @param {number} rank @param {number} of @param {number} score
+ * The score pad's note: the room's bank, big, and this round's change.
+ * @param {number} chips
+ * @param {{ banked?: number, record?: boolean }} [o] `banked` between rounds, `record` at the end
  */
-function rankNote(rank, of, score) {
-  const [big, rest] = t.rank(rank, of);
-  return h("div", { class: "pad-note" }, h("p", { class: "rank" }, big, h("small", {}, rest)), h("p", { class: "total" }, t.points(score)));
+function bankNote(chips, o = {}) {
+  const { banked, record } = o;
+  return h(
+    "div",
+    { class: "pad-note" },
+    h("p", { class: "chips" }, String(chips)),
+    h("p", { class: "total" }, t.chipsInBank(chips)),
+    banked === undefined ? null : h("p", { class: `delta ${banked > 0 ? "plus" : banked < 0 ? "minus" : "zero"}` }, signed(banked), t.thisRound),
+    record ? h("p", { class: "record" }, t.newRecord) : null,
+  );
 }
 
 /**
+ * The end: the room's bank and title, a new record, the words found, own
+ * award; the VIP plays again.
  * @param {Task<"final">} me
  * @returns {Screen}
  */
@@ -1388,17 +1417,17 @@ function final(me) {
   }, t.playAgain);
   const slip = h("p", { class: "slip" });
   const award = me.award ? t.awards[me.award] : null;
-  const words = h("div", { class: "tiles big count" }, ...[String(me.found), t.of, String(me.total)].map((x, i) => h("b", { class: i === 1 ? "of" : "", style: `--r:${[-3, 2, 4][i]}deg` }, x)));
+  const low = me.title === "total jinx" || me.title === "mixed signals";
+  if (me.record) buzz([40, 40, 40, 40, 140]);
   return {
     main: [
       h(
         "section",
-        { class: "center" },
+        { class: "center final" },
         tape(t.gameOver),
-        words,
-        note(t.wordsTogether),
-        stamp(t.titles[me.title] ?? me.title, me.found * 2 >= me.total ? "leaf" : "tomato"),
-        rankNote(me.rank, me.of, me.score),
+        bankNote(me.bank, { record: me.record }),
+        stamp(t.titles[me.title] ?? me.title, low ? "tomato" : "leaf"),
+        big(t.wordsFound(me.found, me.total)),
         award ? h("div", { class: "award" }, h("small", {}, t.yourAward), h("b", {}, award[0]), h("p", {}, award[1])) : null,
       ),
     ],

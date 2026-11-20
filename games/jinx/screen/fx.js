@@ -1,7 +1,7 @@
 // @ts-check
 /**
  * Effects on the table: shakes (a budget of three per round), dust, paper
- * confetti, floating points, rubber stamps, masking tape, shards, marker
+ * confetti, floating numbers, rubber stamps, masking tape, shards, marker
  * strokes. Few, big particles; transform and opacity only.
  */
 
@@ -73,7 +73,7 @@ export function confetti(x, y, n = 44, up = 1) {
   }
 }
 
-/** Points that float up and fade. @param {number} x @param {number} y @param {string} text @param {"plus" | "minus"} [cls] @param {number} [dur] */
+/** Numbers (chips won or lost) that float up and fade. @param {number} x @param {number} y @param {string} text @param {"plus" | "minus"} [cls] @param {number} [dur] */
 export function floatText(x, y, text, cls = "plus", dur = 1800) {
   x = Math.max(64 + text.length * 11, Math.min(1216 - text.length * 11, x));
   const f = h("div", { class: `float ${cls}`, style: `left:${x}px;top:${y}px` }, text);

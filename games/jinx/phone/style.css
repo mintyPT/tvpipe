@@ -60,10 +60,6 @@ header {
   background: var(--felt-deep); color: var(--cream); box-shadow: 0 0 0 2px var(--felt-print);
 }
 #me .name { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 700; }
-#me .score {
-  flex: none; font-family: "Plex Mono", monospace; font-size: 15px; color: var(--ink); background: var(--gold);
-  border-radius: 999px; padding: 2px 9px; box-shadow: 0 0 0 2px var(--ink);
-}
 .dial {
   flex: none; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center;
   background: var(--paper); color: var(--ink); font-family: "Plex Mono", monospace; font-size: 19px;
@@ -90,8 +86,6 @@ header {
 .tiles.big { gap: 8px; margin: 0 auto 14px; justify-content: center; }
 .tiles.big b { width: 58px; height: 62px; font-size: 38px; border-radius: 9px; box-shadow: 0 0 0 3px var(--ink), 0 5px 0 3px rgba(0,0,0,.3); }
 .tiles.big sub { font-size: 12px; right: 4px; bottom: 3px; }
-.tiles.count b { width: auto; min-width: 62px; padding: 0 10px; }
-.tiles.count b.of { min-width: 0; font-size: 22px; background: transparent; box-shadow: none; color: var(--cream); }
 
 /* ---------------------------------------------------------------- main and dock */
 main {
@@ -388,14 +382,21 @@ button.pass.armed { background: var(--tomato); color: #fff; box-shadow: 0 0 0 2p
 .fate .tape { font-size: 13px; }
 .fate .minus { color: #ff9a8c; }
 
-/* ---------------------------------------------------------------- verdict, scores, end */
+/* ---------------------------------------------------------------- verdict, the bank, the end */
+.banked { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .points { margin: 0; font-size: 64px; font-weight: 700; line-height: 1; }
+.points small { font-size: 20px; color: var(--cream); }
+.bank-line {
+  margin: 0; font-family: "Plex Mono", monospace; font-size: 17px; font-weight: 700; color: var(--ink); background: var(--gold);
+  border-radius: 999px; padding: 3px 14px; box-shadow: 0 0 0 2px var(--ink);
+}
 .points.plus { color: var(--gold); }
 .points.minus { color: #ff9a8c; }
 .points.zero { color: var(--mint); }
 ul.why { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; align-items: center; }
 ul.why li { background: var(--tape); color: var(--ink); font-weight: 700; padding: 5px 12px; transform: rotate(-1deg); }
 ul.why li:nth-child(2n) { transform: rotate(1.2deg); }
+ul.why li.best { background: var(--gold); }
 .replay { color: var(--gold); text-align: center; }
 .pad-note {
   position: relative; width: min(100%, 260px); margin: 18px auto 6px; padding: 26px 16px 14px; border-radius: 6px;
@@ -406,9 +407,18 @@ ul.why li:nth-child(2n) { transform: rotate(1.2deg); }
   background: radial-gradient(circle, var(--ink) 0 5px, transparent 5.5px) 0 0 / 22px 18px repeat-x;
 }
 .pad-note p { margin: 0; }
-.pad-note .rank { font-size: 52px; font-weight: 700; line-height: 1; }
-.pad-note .rank small { font-size: 20px; color: var(--ink-2); }
-.pad-note .total { font-size: 20px; font-weight: 700; color: var(--ink-2); margin-top: 4px; }
+.pad-note .chips { font-size: 56px; font-weight: 700; line-height: 1; font-family: "Plex Mono", monospace; }
+.pad-note .total { font-size: 18px; font-weight: 700; color: var(--ink-2); margin-top: 4px; }
+.pad-note .delta { font-size: 18px; font-weight: 700; margin-top: 6px; }
+.pad-note .delta.plus { color: var(--leaf); }
+.pad-note .delta.minus { color: var(--tomato); }
+.pad-note .delta.zero { color: var(--ink-2); }
+.goal { margin: 4px 0 0; font-weight: 700; font-size: 19px; color: var(--gold); text-align: center; }
+.pad-note .record {
+  display: inline-block; margin-top: 10px; padding: 4px 12px; border-radius: 999px; background: var(--gold); color: var(--ink);
+  font-weight: 700; letter-spacing: .08em; text-transform: uppercase; box-shadow: 0 0 0 2px var(--ink); transform: rotate(2deg);
+}
+.final .stamp { font-size: 26px; transform: rotate(-3deg); margin: 8px 0 6px; }
 .next { display: flex; flex-direction: column; align-items: center; gap: 16px; margin-top: 10px; }
 .award {
   width: min(100%, 280px); padding: 14px 16px; border-radius: 12px; background: var(--ink); color: var(--cream);
@@ -442,6 +452,7 @@ ul.why li:nth-child(2n) { transform: rotate(1.2deg); }
   .card { font-size: 20px; }
   .tiles.big b { width: 50px; height: 54px; font-size: 32px; }
   button.boldtoggle { width: 52px; }
+  .final .stamp { font-size: 22px; padding: 5px 12px; }
   .editor .primary { min-width: 74px; padding: 10px 10px; }
 }
 

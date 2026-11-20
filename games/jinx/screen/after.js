@@ -1,22 +1,19 @@
 // @ts-check
 /**
  * After the verdict: the replay (every card face up, the jinxed ones taped
- * back together, the MVP clue gets a rosette) and the scores (a spiral
- * score pad that re-sorts, the room's count).
+ * back together, the best clue gets a rosette: the guesser's thank-you,
+ * no points). The bank between rounds is bank.js.
  *
  * @typedef {import("../game/views.ts").ReplayScreen} ReplayScreen
- * @typedef {import("../game/views.ts").ScoresScreen} ScoresScreen
  * @typedef {import("../game/views.ts").Card} Card
- * @typedef {import("../game/views.ts").Payout} Payout
  * @typedef {import("../game/views.ts").ScreenView} ScreenView
  * @typedef {import("./tv.js").Ctx} Ctx
  */
 
-import { joinText } from "/_tvpipe/lib/client.js";
 import { A, EASE, fitText, h, hm, rnd, short } from "./dom.js";
-import { dust, floatText, shake } from "./fx.js";
+import { dust, shake } from "./fx.js";
 import { groupReason } from "./jinx.js";
-import { cardEl, chip, rosette } from "./pieces.js";
+import { cardEl, chip, fitRosette, rosette } from "./pieces.js";
 import { sfx } from "./sound.js";
 import { t as tr } from "./strings.js";
 
@@ -35,7 +32,7 @@ export function replay(ctx, v, prev) {
   const g = ctx.person(v.guesser);
   const gname = short(g?.name, 12);
   const anim = !!prev;
-  ctx.head.set({ tab: tr.replayTab(v.round), guesser: g, tally: v.tally }, anim);
+  ctx.head.set({ tab: tr.replayTab(v.round), guesser: g, tally: v.tally, bank: v.bank.chips }, anim);
   ctx.pot.show(false);
   ctx.pool.off(anim);
   const mark = v.result === "right" ? " ✓" : " ✗";
@@ -145,79 +142,72 @@ export function replay(ctx, v, prev) {
     }
   });
 
-  // the right column: this round's points (`payouts`, with the MVP's +3 once picked) and the MVP note
+  // the right column: what the room banked this round, and the best clue
   const note = h("div", { class: "paper note", style: "left:984px;width:232px;top:150px;transform:rotate(1.5deg)" });
-  let paysKey = "";
-  /** @param {Payout[] | undefined} pays @param {boolean} anim */
-  const fillNote = (pays, anim) => {
-    const key = JSON.stringify(pays ?? null);
-    if (key === paysKey) return;
-    const first = !paysKey;
-    paysKey = key;
-    note.hidden = !pays;
-    if (!pays) return;
-    /** @type {Map<string, number>} */
-    const sums = new Map();
-    for (const p of pays) sums.set(p.id, (sums.get(p.id) ?? 0) + p.delta);
-    const list = [...sums].filter(([, d]) => d !== 0).sort((a, b) => b[1] - a[1]).slice(0, 5);
-    const lineEls = list.map(([id, d]) =>
-      h("div", { class: "line" }, chip(ctx.person(id), 40, { style: "position:relative;flex:none;box-shadow:0 0 0 3px #1d1a2b" }), h("span", { class: "n" }, short(ctx.person(id)?.name, 12)), h("span", { class: d > 0 ? "plus" : "minus" }, d > 0 ? `+${d}` : `−${-d}`)),
-    );
-    note.replaceChildren(h("div", { class: "k" }, tr.thisRound), ...(lineEls.length ? lineEls : [h("div", { class: "line" }, tr.nobodyScored)]));
-    // names fit the note: smaller, then condensed (never cut)
-    note.querySelectorAll(".line .n").forEach((n) => fitText(/** @type {HTMLElement} */ (n), 26, 24, 104, 0.6));
-    if (anim && first) A(note, [{ transform: "translateX(300px) rotate(8deg)" }, { transform: "rotate(1.5deg)" }], 500, { delay: 600 });
-    else if (anim) A(note, [{ transform: "rotate(1.5deg) scale(1.08)" }, { transform: "rotate(1.5deg)" }], 300, { delay: 1200, easing: EASE.back });
-  };
+  const d = v.banked;
+  note.append(
+    h("div", { class: "k" }, tr.thisRound),
+    h("div", { class: `bignum ${d > 0 ? "plus" : d < 0 ? "minus" : "zero"}` }, d > 0 ? `+${d}` : d < 0 ? `−${-d}` : "±0"),
+    h("div", { class: "line center" }, h("div", { class: "minichips" }, h("i"), h("i"), h("i")), h("span", null, tr.bankIs(v.bank.chips))),
+  );
   L.append(note);
-  fillNote(v.payouts ?? /** @type {Payout[] | undefined} */ (ctx.memo.payouts), anim);
-  const mvpNote = h("div", { class: "paper note mvpnote", style: "left:984px;width:232px;top:450px;transform:rotate(-1.5deg)" });
-  L.append(mvpNote);
-  let mvpShown = "";
+  if (anim) A(note, [{ transform: "translateX(300px) rotate(8deg)" }, { transform: "rotate(1.5deg)" }], 500, { delay: 600 });
+  const bestNote = h("div", { class: "paper note bestnote", style: "left:984px;width:232px;top:400px;transform:rotate(-1.5deg)" });
+  L.append(bestNote);
+  let bestShown = "";
   let picking = false;
 
   /** @param {ReplayScreen} v */
   const noteText = (v) => {
-    if (v.mvp) return;
-    mvpNote.hidden = v.result !== "right";
+    if (v.best) return;
+    bestNote.hidden = v.result !== "right";
     if (v.picking) {
       const s = v.deadline ? Math.max(0, Math.ceil((v.deadline - ctx.now()) / 1000)) : 0;
-      mvpNote.replaceChildren(tr.picksThe(gname), h("span", { style: "color:#df4a3c" }, tr.mvpClue), s ? `… ${s}` : "…");
-    } else mvpNote.replaceChildren(tr.noMvp);
+      bestNote.replaceChildren(tr.picksThe(gname), h("span", { style: "color:#df4a3c" }, tr.bestClueLower), s ? `… ${s}` : "…");
+    } else bestNote.replaceChildren(tr.noBest);
   };
 
   /** @param {ReplayScreen} v @param {boolean} anim */
   const render = (v, anim) => {
-    if (v.picking && !picking && !v.mvp) {
+    if (v.picking && !picking && !v.best) {
       picking = true;
       ctx.host.say(tr.whichCracked(gname), { anim });
     }
     noteText(v);
-    if (v.mvp && v.mvp !== mvpShown) {
-      mvpShown = v.mvp;
-      const c = byId.get(v.mvp);
-      const at = els.get(v.mvp);
+    if (v.best && v.best !== bestShown) {
+      bestShown = v.best;
+      const c = byId.get(v.best);
+      const at = els.get(v.best);
       if (!c || !at) return;
       const author = ctx.person(c.author);
+      // a small rosette with a heart on the card's bottom-left corner, ribbons swung left off the name tab
       const r = rosette();
-      // on the bottom-left corner, ribbons swung left off the name tab: the sticker, the flame and the turn-order badge stay visible
       const x = at.x - 42;
       const y = at.y + H - 92;
       r.style.left = x + "px";
       r.style.top = y + "px";
       r.style.transform = "rotate(32deg) scale(.65)";
       L.append(r);
-      mvpNote.hidden = false;
-      // "MVP-HINWEIS" on one line; a long clue ("GEBURTSTAGSKUCHEN") smaller, hyphenated if need be
-      const k = h("div", { class: "k", style: "white-space:nowrap;letter-spacing:.04em" }, tr.mvpClueK);
+      // the note: a big rosette that says BEST CLUE, the clue, its author
+      const big = rosette({ d: 150, label: true });
+      big.style.left = "41px";
+      big.style.top = "-70px";
       const word = (c.word ?? "").toUpperCase();
-      const wordEl = h("div", { class: "mvpword", style: [...word].length > 10 ? "font-size:28px" : "" }, word);
-      mvpNote.replaceChildren(k, wordEl, h("div", { class: "plus" }, `${short(author?.name, 9)} +3`));
+      const wordEl = h("div", { class: "bestword" }, word);
+      const who = h("div", { class: "line center" }, chip(author, 40, { style: "position:relative;flex:none;box-shadow:0 0 0 3px #1d1a2b" }), h("span", { class: "n" }, tr.thanks(short(author?.name, 10))));
+      bestNote.hidden = false;
+      bestNote.classList.add("has-rosette");
+      bestNote.replaceChildren(big, wordEl, who);
+      fitRosette(big);
+      fitText(wordEl, 36, 24, 200, 0.6);
+      const n = /** @type {HTMLElement} */ (who.querySelector(".n"));
+      fitText(n, 26, 24, 150, 0.6);
       ctx.pool.to(at.x + W / 2, at.y + H / 2, 200, anim);
-      ctx.host.say(tr.mvpClueHit, { second: (c.word ?? "").toUpperCase(), anim });
+      ctx.host.say(tr.bestClueHit, { second: word, anim });
       if (!anim) return;
       sfx.whoosh();
       A(r, [{ transform: "translate(420px,-380px) rotate(80deg) scale(2.4)", opacity: 0 }, { offset: 0.2, opacity: 1 }, { transform: "rotate(32deg) scale(.65)", opacity: 1 }], 520, { easing: EASE.in, delay: 650 });
+      A(bestNote, [{ transform: "translateX(300px) rotate(-8deg)" }, { transform: "rotate(-1.5deg)" }], 460, { delay: 1100, easing: EASE.back });
       ctx.later(1170, () => {
         sfx.stamp();
         shake(7);
@@ -226,12 +216,13 @@ export function replay(ctx, v, prev) {
         at.el.querySelector(".front")?.append(shine);
         if (shine.firstElementChild) A(shine.firstElementChild, [{ transform: "skewX(-20deg) translateX(-120px)" }, { transform: "skewX(-20deg) translateX(380px)" }], 700, { delay: 150, easing: EASE.inout });
         ctx.later(150, sfx.sparkle);
-        floatText(at.x + W / 2, at.y - 10, `+3 ${short(author?.name, 10)}`, "plus", 2200);
-        A(mvpNote, [{ transform: "rotate(-1.5deg) scale(1.2)" }, { transform: "rotate(-1.5deg) scale(1)" }], 300, { easing: EASE.back });
+        // the author's chip on the card beams
+        const st = at.el.querySelector(".front .sticker");
+        if (st) A(st, [{ transform: "none" }, { transform: "translateY(-14px) scale(1.25)" }, { transform: "none" }], 500, { delay: 200, easing: EASE.back, fill: "none" });
       });
-    } else if (!v.mvp && !v.picking && picking) {
+    } else if (!v.best && !v.picking && picking) {
       picking = false;
-      ctx.host.say(tr.noMvpLine, { anim });
+      ctx.host.say(tr.noBestLine, { anim });
     }
   };
   render(v, anim);
@@ -240,125 +231,7 @@ export function replay(ctx, v, prev) {
     /** @param {ReplayScreen} nv */
     update(nv) {
       v = nv;
-      fillNote(nv.payouts, true);
       render(nv, true);
     },
   };
-}
-
-// ---------------------------------------------------------------------------
-
-/**
- * @param {Ctx} ctx
- * @param {ScoresScreen} v
- * @param {ScreenView | null} prev
- */
-export function scores(ctx, v, prev) {
-  const L = ctx.layer;
-  const pace = prev ? ctx.pace(3400, v.until) : 0;
-  const anim = pace > 0;
-  const T = (/** @type {number} */ ms) => ms * (pace || 1);
-  ctx.head.set({}, false);
-  ctx.host.clear();
-  ctx.pot.show(false);
-  ctx.pool.off(!!prev);
-
-  const lines = [...v.lines].sort((a, b) => a.rank - b.rank).slice(0, 8);
-  const before = [...lines].sort((a, b) => b.score - b.delta - (a.score - a.delta) || a.rank - b.rank);
-  const pad = h("div", { class: "pad paper" },
-    h("div", { class: "binding" }, ...Array.from({ length: 9 }, (_, i) => h("i", { style: `left:${40 + i * 68}px` }))),
-    h("div", { class: "margin" }),
-    h("h2", null, tr.scores, h("span", null, tr.afterRound(v.round, v.rounds))));
-  L.append(pad);
-  const order = anim ? before : lines;
-  /** @type {Map<string, { r: HTMLElement, i: number, t: HTMLElement, d: HTMLElement, rank: HTMLElement }>} */
-  const rows = new Map();
-  order.forEach((l, i) => {
-    const d = l.delta;
-    const dEl = h("div", { class: `d ${d > 0 ? "plus" : d < 0 ? "minus" : "zero"}` }, d > 0 ? `+${d}` : d < 0 ? `−${-d}` : "–");
-    const tEl = h("div", { class: "t" }, String(anim ? l.score - l.delta : l.score));
-    const rank = h("div", { class: "rank" }, String(anim ? i + 1 : l.rank));
-    const r = h("div", { class: `prow${!anim && l.rank === 1 && l.score > 0 ? " first" : ""}`, style: `top:${120 + i * 64}px` }, rank, chip(ctx.person(l.id), 46), h("div", { class: "n" }, short(ctx.person(l.id)?.name, 16)), dEl, tEl);
-    pad.append(r);
-    rows.set(l.id, { r, i, t: tEl, d: dEl, rank });
-    if (anim) dEl.style.clipPath = "inset(0 100% 0 0)";
-  });
-
-  const t = v.tally;
-  const n = Math.max(t.total, t.history.length);
-  const small = n > 10;
-  const slots = h("div", { class: `slots${small ? " small" : ""}` });
-  for (let i = 0; i < n; i++) {
-    const s = t.history[i];
-    slots.append(h("i", { class: s === "found" ? "won" : s === "missed" ? "lost" : "todo" }, s === "found" ? "✓" : s === "missed" ? "✕" : ""));
-  }
-  const nextP = v.next ? ctx.person(v.next) : undefined;
-  const ratio = t.played ? t.found / t.played : 0;
-  const quip = t.played && t.found === t.played ? tr.onFire(t.found, t.played) : ratio >= 0.5 ? tr.inSync : t.found === 0 ? tr.nothingYet : tr.mixed;
-  const room = h("div", { class: "room" },
-    h("div", { class: "k" }, tr.together),
-    h("div", { class: "big" }, String(t.found), h("span", null, tr.ofN(t.played))),
-    h("div", { class: "sub" }, quip),
-    slots,
-    v.next
-      ? h("div", { class: "next" }, h("span", { class: "dim" }, tr.nextUp), chip(nextP, 72, { style: "position:relative" }), tr.guesses(short(nextP?.name, 10)))
-      : h("div", { class: "next" }, tr.thatsTheGame));
-  L.append(room);
-  // newcomers may join for the next round
-  const j = ctx.join;
-  const link = joinText(j);
-  if (v.next && link && j?.lateJoin && j.lateJoin !== "closed") room.append(h("div", { class: "joinline" }, tr.joiningLate, h("b", null, link)));
-  if (!anim) return {};
-
-  A(pad, [{ transform: "translateY(760px) rotate(6deg)" }, { transform: "rotate(-1deg)" }], T(620), { easing: EASE.back });
-  sfx.slide();
-  A(room, [{ transform: "translateX(500px)", opacity: 0 }, { transform: "none", opacity: 1 }], T(520), { delay: T(200) });
-  (async () => {
-    if (!(await ctx.wait(T(700)))) return;
-    let k = 0;
-    for (const l of order) {
-      const row = rows.get(l.id);
-      if (!row) continue;
-      A(row.d, [{ clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0 0 0)" }], 240, { delay: k * T(100), easing: EASE.inout });
-      if (l.delta) ctx.later(k * T(100), sfx.marker);
-      k++;
-    }
-    if (!(await ctx.wait(k * T(100) + T(300)))) return;
-    for (const l of order) {
-      const row = rows.get(l.id);
-      if (!row || !l.delta) continue;
-      const a = l.score - l.delta;
-      const steps = Math.min(Math.abs(l.delta), 12);
-      for (let s = 1; s <= steps; s++) ctx.later((s * T(500)) / steps, () => (row.t.textContent = String(Math.round(a + (l.delta * s) / steps))));
-      A(row.t, [{ transform: "scale(1)" }, { transform: "scale(1.3)" }, { transform: "scale(1)" }], T(500), { fill: "none" });
-    }
-    sfx.clink();
-    ctx.later(200, sfx.clink);
-    if (!(await ctx.wait(T(700)))) return;
-    lines.forEach((l, ni) => {
-      const row = rows.get(l.id);
-      if (!row) return;
-      const i = row.i;
-      if (ni !== i) {
-        row.r.style.zIndex = ni < i ? "3" : "1";
-        A(row.r, [{ transform: "none" }, { offset: 0.5, transform: `translateY(${(ni - i) * 32}px) scale(${ni < i ? 1.04 : 0.98})` }, { transform: `translateY(${(ni - i) * 64}px)` }], T(700), { easing: EASE.inout });
-        if (ni < i) ctx.later(T(700), () => floatText(380, 120 + ni * 64 + 50 + 8, `▲${i - ni}`, "plus", 1500));
-      }
-    });
-    sfx.whoosh();
-    if (!(await ctx.wait(T(720)))) return;
-    for (const l of lines) {
-      const row = rows.get(l.id);
-      if (!row) continue;
-      row.rank.textContent = String(l.rank);
-      row.t.textContent = String(l.score);
-    }
-    const first = lines[0] ? rows.get(lines[0].id) : undefined;
-    if (first && (lines[0]?.score ?? 0) > 0) {
-      first.r.classList.add("first");
-      A(first.r, [{ backgroundColor: "#fbf1dc" }, { backgroundColor: "#fde7a6" }], 300);
-      sfx.pop();
-    }
-  })();
-  return {};
 }

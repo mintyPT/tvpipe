@@ -1,8 +1,8 @@
 // @ts-check
 /**
  * The objects on the table: poker-chip avatars, clue cards, the pot, the
- * envelope, the kitchen timer, the label-maker tape, the SHHH sign, the MVP
- * rosette. Faces come from the phone's faces.js so the TV and the phones
+ * envelope, the kitchen timer, the label-maker tape, the SHHH sign, the
+ * best clue's rosette, the chips' moods. Faces come from the phone's faces.js so the TV and the phones
  * draw them the same.
  *
  * @typedef {import("../game/views.ts").Person} Person
@@ -10,7 +10,7 @@
  */
 
 import { COLORS, FLAME, INK, faceSvg } from "../phone/faces.js";
-import { A, EASE, clamp, h, hm, removeLater, short } from "./dom.js";
+import { A, EASE, clamp, fitText, h, hm, removeLater, short } from "./dom.js";
 import { sfx } from "./sound.js";
 import { t } from "./strings.js";
 
@@ -142,6 +142,33 @@ export class Pot {
     this.num.textContent = String(n);
   }
 
+  /**
+   * Chips dropped onto the tower up to `to` (a bold card's +2), one by one.
+   * @param {number} to @param {number} [gap] ms between chips
+   * @returns {number} ms until the last one lands
+   */
+  add(to, gap = 120) {
+    to = clamp(Math.round(to), 0, 30);
+    let k = 0;
+    for (let i = this.n; i < to; i++, k++) {
+      const c = this.#chip(i);
+      this.chips.append(c);
+      const delay = k * gap;
+      const x = ((i * 37) % 9) - 4;
+      A(c, [{ transform: `translate(${x}px,-200px) rotate(-20deg)`, opacity: 0 }, { offset: 0.2, opacity: 1 }, { transform: `translateX(${x}px)`, opacity: 1 }], 320, { delay, easing: EASE.in });
+      setTimeout(() => {
+        sfx.clink();
+        this.count(i + 1, true);
+      }, delay + 300);
+    }
+    return k * gap + 320;
+  }
+
+  /** The tower's top (table coordinates), for what floats off it. */
+  top() {
+    return { x: 1010 + 103, y: 140 + 520 - 150 - this.n * 15 - 26 };
+  }
+
   /** @param {number} i */
   #chip(i) {
     return h("div", { class: "chip", style: `bottom:${i * 15}px;transform:translateX(${((i * 37) % 9) - 4}px)` });
@@ -154,11 +181,11 @@ export class Pot {
     if (on && anim) A(this.el, [{ transform: "translateX(320px)" }, { transform: "none" }], 460, { easing: EASE.out });
   }
 
-  /** @param {number} n */
-  count(n) {
+  /** @param {number} n @param {boolean} [up] a gain (green) */
+  count(n, up = false) {
     this.n = n;
     this.num.textContent = String(n);
-    A(this.num, [{ transform: "scale(1.35)", color: "#df4a3c" }, { transform: "scale(1)", color: INK }], 300);
+    A(this.num, [{ transform: "scale(1.35)", color: up ? "#2f9e57" : "#df4a3c" }, { transform: "scale(1)", color: INK }], 300);
   }
 
   /**
@@ -190,8 +217,8 @@ export class Pot {
       } else {
         A(c2, [
           { transform: "none", opacity: 1 },
-          { offset: 0.4, transform: `translate(${(to.x - p.x - 65) * 0.4}px,${(to.y - p.y) * 0.4 - 90}px) scale(1.1)`, opacity: 1, easing: EASE.in },
-          { transform: `translate(${to.x - p.x - 65}px,${to.y - p.y - 13}px) scale(.5)`, opacity: 0.2 },
+          { offset: 0.4, transform: `translate(${(to.x - p.x - 65) * 0.4}px,${(to.y - p.y) * 0.4 - 90}px) scale(.8)`, opacity: 1, easing: EASE.in },
+          { transform: `translate(${to.x - p.x - 65}px,${to.y - p.y - 13}px) scale(.32)`, opacity: 0.3 },
         ], 520, { delay });
         removeLater(c2, delay + 540);
         setTimeout(sfx.clink, delay + 480);
@@ -246,8 +273,14 @@ export function dial(x, y, size = 170) {
   };
 }
 
-/** The MVP rosette with ribbons. */
-export function rosette() {
+const HEART = `<svg viewBox="0 0 40 36" width="44" height="40"><path d="M20 34 C6 24 2 17 2 11 C2 5 7 2 11 2 C15 2 18 5 20 8 C22 5 25 2 29 2 C33 2 38 5 38 11 C38 17 34 24 20 34 Z" fill="#df4a3c" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/></svg>`;
+
+/**
+ * The best clue's rosette with ribbons: `d` px across; with `label` it says
+ * BEST CLUE in the middle (big enough to read: `d` ≥ 140), else a heart.
+ * @param {{ d?: number, label?: boolean }} [o]
+ */
+export function rosette({ d = 124, label = false } = {}) {
   const pts = [];
   for (let i = 0; i < 32; i++) {
     const a = (i / 32) * Math.PI * 2;
@@ -255,13 +288,53 @@ export function rosette() {
     pts.push(`${50 + Math.sin(a) * r}% ${50 - Math.cos(a) * r}%`);
   }
   const poly = pts.join(",");
-  return h("div", { class: "rosette" },
-    h("div", { style: "position:absolute;left:22px;top:72px;width:80px;height:88px" },
-      h("i", { style: "position:absolute;left:0;top:0;width:36px;height:88px;background:#df4a3c;transform:rotate(14deg);clip-path:polygon(0 0,100% 0,100% 100%,50% 80%,0 100%)" }),
-      h("i", { style: "position:absolute;right:0;top:0;width:36px;height:88px;background:#df4a3c;transform:rotate(-14deg);clip-path:polygon(0 0,100% 0,100% 100%,50% 80%,0 100%)" })),
-    h("div", { style: `position:absolute;left:0;top:0;width:124px;height:124px;background:${INK};clip-path:polygon(${poly})` }),
-    h("div", { style: `position:absolute;left:5px;top:5px;width:114px;height:114px;background:#f6b93b;clip-path:polygon(${poly})` }),
-    h("div", { class: "rosette-mid" }, t.mvp));
+  const k = d / 124;
+  const mid = Math.round(76 * k);
+  const rw = 36 * k;
+  const rh = 88 * k;
+  const center = label ? h("div", { class: "rosette-mid", style: `left:${(d - mid) / 2}px;top:${(d - mid) / 2}px;width:${mid}px;height:${mid}px` }) : hm("div", { class: "rosette-mid", style: `left:${(d - mid) / 2}px;top:${(d - mid) / 2}px;width:${mid}px;height:${mid}px` }, HEART);
+  if (label) {
+    // "BEST CLUE" / "BESTER HINWEIS": one word per line, fitted to the middle
+    const words = t.bestClue.split(" ");
+    for (const w of words) center.append(h("span", null, w));
+  }
+  const el = h("div", { class: "rosette", style: `width:${d}px;height:${Math.round(d + 36 * k)}px` },
+    h("div", { style: `position:absolute;left:${22 * k}px;top:${72 * k}px;width:${80 * k}px;height:${rh}px` },
+      h("i", { style: `position:absolute;left:0;top:0;width:${rw}px;height:${rh}px;background:#df4a3c;transform:rotate(14deg);clip-path:polygon(0 0,100% 0,100% 100%,50% 80%,0 100%)` }),
+      h("i", { style: `position:absolute;right:0;top:0;width:${rw}px;height:${rh}px;background:#df4a3c;transform:rotate(-14deg);clip-path:polygon(0 0,100% 0,100% 100%,50% 80%,0 100%)` })),
+    h("div", { style: `position:absolute;left:0;top:0;width:${d}px;height:${d}px;background:${INK};clip-path:polygon(${poly})` }),
+    h("div", { style: `position:absolute;left:${5 * k}px;top:${5 * k}px;width:${d - 10 * k}px;height:${d - 10 * k}px;background:#f6b93b;clip-path:polygon(${poly})` }),
+    center);
+  return el;
+}
+
+/** Fits a labelled rosette's words to its middle (once it is in the document). @param {HTMLElement} r */
+export function fitRosette(r) {
+  const mid = /** @type {HTMLElement | null} */ (r.querySelector(".rosette-mid"));
+  if (!mid) return;
+  const avail = mid.offsetWidth - 10;
+  mid.querySelectorAll("span").forEach((s) => fitText(/** @type {HTMLElement} */ (s), 28, 24, avail, 0.7));
+}
+
+const MOODS = {
+  happy: `<svg viewBox="0 0 40 40"><path d="M10 16 Q14 10 18 16 M22 16 Q26 10 30 16" fill="none" stroke="${INK}" stroke-width="3.5" stroke-linecap="round"/><path d="M9 23 Q20 36 31 23 Z" fill="${INK}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/></svg>`,
+  sad: `<svg viewBox="0 0 40 40"><circle cx="14" cy="15" r="3" fill="${INK}"/><circle cx="26" cy="15" r="3" fill="${INK}"/><path d="M11 31 Q20 21 29 31" fill="none" stroke="${INK}" stroke-width="3.5" stroke-linecap="round"/><path d="M29 18 Q31 23 29 25 Q27 23 29 18 Z" fill="#4aa8f5"/></svg>`,
+};
+
+/**
+ * A chip's mood: a little badge on its lower right (the room smiles together).
+ * @param {HTMLElement} tok a chip @param {"happy" | "sad"} mood @param {number} [delay] ms; < 0: no animation
+ */
+export function mood(tok, mood, delay = -1) {
+  tok.querySelector(".mood")?.remove();
+  const s = parseFloat(tok.style.getPropertyValue("--s")) || 80;
+  const d = Math.max(30, Math.round(s * 0.42));
+  const m = hm("div", { class: `mood ${mood}`, style: `width:${d}px;height:${d}px` }, MOODS[mood]);
+  tok.append(m);
+  if (delay < 0) return m;
+  A(m, [{ transform: "scale(0) rotate(-40deg)", opacity: 0 }, { transform: "scale(1) rotate(0)", opacity: 1 }], 300, { delay, easing: EASE.back });
+  A(tok, mood === "happy" ? [{ transform: "none" }, { transform: "translateY(-16px) scale(1.08)" }, { transform: "none" }] : [{ transform: "none" }, { transform: "rotate(-8deg) translateY(6px)" }, { transform: "none" }], 420, { delay, composite: "add", fill: "none" });
+  return m;
 }
 
 /** The SHHH! sign on two strings. @param {number} x centre @param {string} name */

@@ -9,7 +9,7 @@ import { Bot, CATEGORY_DE, FALLBACK, type BotOptions } from "../game/bots.ts";
 import { Jinx, type Timings } from "../game/game.ts";
 import { matcher } from "../game/lang.ts";
 import { dictionary, parseWordList } from "../game/match.ts";
-import { seeded } from "../game/rules.ts";
+import { roomTitle, seeded } from "../game/rules.ts";
 import type { ScreenView } from "../game/views.ts";
 
 const WORDS = parseWordList(readFileSync(new URL("../data/words.txt", import.meta.url), "utf8"));
@@ -30,12 +30,12 @@ const fast: Partial<Timings> = {
   decide: 400,
   typing: 300,
   verdict: 10,
-  mvp: 400,
+  best: 400,
   replay: 10,
   replayHold: 10,
-  scores: 10,
+  bank: 10,
   endRoom: 10,
-  endMvp: 10,
+  endClues: 10,
   endAwards: 10,
   draftEvery: 20,
 };
@@ -53,7 +53,10 @@ const URL_ = "ws://party.test/_tvpipe/ws";
 
 type BotOpts = Partial<Omit<BotOptions, "url" | "room" | "key" | "name">>;
 
-async function setup(n: number, o: { rounds?: "auto" | 1 | 2; bot?: (i: number) => BotOpts; timings?: Partial<Timings>; lang?: "en" | "de"; dealt?: { en?: string[]; de?: string[] } } = {}) {
+async function setup(
+  n: number,
+  o: { rounds?: "auto" | 1 | 2; bot?: (i: number) => BotOpts; timings?: Partial<Timings>; lang?: "en" | "de"; dealt?: { en?: string[]; de?: string[] }; records?: Record<number, number> } = {},
+) {
   const relay = new MemoryRelay();
   const party = new Party({ grace: 100, maxPlayers: 8 }).listen(relay);
   const g = new Jinx(party, {
@@ -61,6 +64,7 @@ async function setup(n: number, o: { rounds?: "auto" | 1 | 2; bot?: (i: number) 
     words: { en: WORDS, de: WORDS_DE },
     match: { en: { known }, de: MATCH_DE },
     dealt: o.dealt,
+    records: o.records,
     rounds: o.rounds ?? "auto",
     timings: { ...fast, ...o.timings },
     rng: seeded(n + 1),
@@ -117,45 +121,57 @@ function checkSecrecy(screens: ScreenView[]): void {
   }
 }
 
-test("a whole game with 4 bots: every player guesses twice, scores add up, the end in steps", async () => {
-  const { party, g, players, phases, screens, close } = await setup(4);
+test("a whole game with 4 bots: every player guesses twice, the room's bank adds up, the end in steps", async () => {
+  const { party, g, players, phases, screens, close } = await setup(4, { records: { 8: 3 } });
   try {
     // The guesser's phone never has the word.
     const leaks: string[] = [];
     for (const b of players) {
       b.client.on("view", (v) => {
         const me = v["me"] ?? {};
-        if (["hotseat", "blind", "check", "guess", "mvp"].includes(me.task) && "word" in me) leaks.push(`${b.name}: ${me.task}`);
+        if (["hotseat", "blind", "check", "guess", "best"].includes(me.task) && "word" in me) leaks.push(`${b.name}: ${me.task}`);
         if ("word" in (v["room"] ?? {})) leaks.push("room");
       });
     }
-    const end = new Promise<unknown[]>((r) => g.once("end", r));
+    const end = new Promise<number>((r) => g.once("end", r));
+    const records: [number, number][] = [];
+    g.on("record", (rounds, chips) => records.push([rounds, chips]));
     await players[0]!.client.act("start");
-    const lines = (await end) as { id: string; score: number }[];
+    const bank = await end;
     assert.deepEqual(leaks, []);
-    assert.equal(lines.length, 4);
     assert.equal(phases.filter((p) => p === "hotseat").length, 8);
     assert.equal(phases.filter((p) => p === "verdict").length, 8);
     const verdicts = of(screens, "verdict");
     const guessers = verdicts.map((v) => v.guesser);
     for (const p of players) assert.equal(guessers.filter((x) => x === p.client.you!["id"]).length, 2);
-    // Points: the payouts at the verdicts, plus 3 per MVP clue.
-    const atVerdict = verdicts.reduce((s, v) => s + v.payouts.reduce((x, p) => x + p.delta, 0), 0);
-    const mvps = new Set(of(screens, "replay").filter((r) => r.mvp).map((r) => `${r.round}:${r.mvp}`)).size;
-    assert.ok(mvps > 0, "MVP clues picked");
+    // The bank: the sum of the verdicts' changes, each the pot when right, −2 when wrong.
     assert.equal(
-      lines.reduce((s, l) => s + l.score, 0),
-      atVerdict + mvps * 3,
+      verdicts.reduce((s, v) => s + v.banked, 0),
+      bank,
     );
+    let before = 0;
+    for (const v of verdicts) {
+      assert.equal(v.banked, v.result === "right" ? v.pot : v.result === "wrong" ? 0 - Math.min(2, before) : 0);
+      before += v.banked;
+      assert.equal(v.bank.chips, before);
+      assert.deepEqual(v.bank.goals, { "mixed signals": 16, "in sync": 32, "mind readers": 48, telepaths: 64 });
+      assert.equal(v.bank.record, 3);
+    }
+    assert.ok(of(screens, "replay").some((r) => r.best), "best clues picked");
     assert.ok(verdicts.some((v) => v.result === "right"), "some right guesses");
+    assert.ok(screens.every((s) => s.people.every((p) => !("score" in p))), "no personal scores");
+    // Between rounds: the bank, and each phone the next goal.
+    const banks = of(screens, "bank");
+    assert.equal(banks.length, 8);
+    assert.ok(banks.every((b) => b.bank.chips === verdicts.find((v) => v.round === b.round)!.bank.chips));
     checkSecrecy(screens);
-    // The dials' start times, the cards per giver, the replay's payouts.
+    // The dials' start times, the cards per giver, the replay's bank.
     const writes = of(screens, "write");
     assert.ok(writes.every((w) => w.started < w.deadline && Object.values(w.sentBy).reduce((a, b) => a + b, 0) === w.sent));
     assert.ok(writes.some((w) => w.sent > 0 && Object.keys(w.sentBy).every((id) => w.givers.includes(id))));
     assert.ok(of(screens, "reveal").every((x) => x.started < x.deadline));
     assert.ok(of(screens, "verdict").every((v) => typeof v.pot === "number"));
-    for (const rp of of(screens, "replay").filter((x) => x.mvp)) assert.ok(rp.payouts.some((p) => p.why === "mvp"));
+    for (const rp of of(screens, "replay")) assert.equal(rp.banked, verdicts.find((v) => v.round === rp.round)!.banked);
     // The draft went to the TV while typing.
     assert.ok(of(screens, "reveal").some((s) => s.typing && s.draft.length > 0), "a live draft");
     // The end: steps up to the web, which stays.
@@ -164,11 +180,22 @@ test("a whole game with 4 bots: every player guesses twice, scores add up, the e
     assert.equal(e.tally.played, 8);
     assert.equal(e.words.length, 8);
     assert.equal(e.web.words.length, 8);
+    assert.equal(e.bank.chips, bank);
+    assert.equal(e.title, roomTitle(bank, 8));
+    assert.equal(e.clues.length, new Set(of(screens, "replay").filter((r) => r.best).map((r) => r.round)).size);
+    assert.ok(e.clues.every((c) => e.words.some((w) => w.word === c.word && w.found)));
+    assert.ok(e.awards.every((a) => a.kind === "mind meld" || a.kind === "telepath"));
+    if (bank > 3) {
+      assert.equal(e.record, true);
+      assert.deepEqual(records, [[8, bank]]);
+    } else assert.deepEqual(records, []);
     assert.ok(e.people.every((p) => p.bot));
     await until(() => players.every((b) => b.client.view["me"]?.task === "final"));
     const vip = players[0]!.client.view["me"];
     assert.equal(vip.canRestart, true);
     assert.equal(vip.total, 8);
+    assert.equal(vip.bank, bank);
+    assert.equal(vip.title, e.title);
     assert.equal(players[1]!.client.view["me"].canRestart, false);
     assert.equal(party.inProgress, false);
     assert.deepEqual(
@@ -236,7 +263,7 @@ test("clue checks: too close, own clue, replacing, late; guess rules", async () 
     const j = party.screen.peek() as unknown as Extract<ScreenView, { phase: "jinx" }>;
     assert.equal(j.groups.length, 1);
     assert.equal(j.groups[0]!.pairs[0]!.reason, "same word");
-    assert.equal(j.pot, 8);
+    assert.equal(j.pot, 6, "2 jinxed, one of them bold");
     await until(() => guesser.client.view["me"]?.task === "check");
     assert.deepEqual({ ...guesser.client.view["me"] }, { task: "check", survived: 2, jinxed: 2 });
     await until(() => a!.client.view["me"]?.task === "fate");
@@ -261,18 +288,24 @@ test("clue checks: too close, own clue, replacing, late; guess rules", async () 
     assert.equal(v.result, "right");
     assert.equal(v.word, word);
     assert.equal(v.near, undefined);
-    // Pot 8 (2 jinxed, one card); the turned card's author +2 (or bold +4); b's bold jinxed −2.
-    assert.deepEqual(
-      v.payouts.find((p) => p.id === guesserId),
-      { id: guesserId, delta: 8, why: "pot" },
-    );
-    assert.ok(v.payouts.some((p) => p.id === b!.client.you!["id"] && p.why === "bold-jinxed" && p.delta === -2));
-    await until(() => guesser.client.view["me"]?.task === "mvp");
-    const mvp = guesser.client.view["me"].cards as { id: string; word: string }[];
-    assert.equal(mvp.length, 2);
-    assert.ok(mvp.every((c) => typeof c.word === "string"));
-    await guesser.client.act("mvp", { card: mvp[1]!.id });
-    await until(() => (party.screen.peek() as { mvp?: string }).mvp === mvp[1]!.id);
+    // Pot 6 (2 jinxed, b's bold: 2 more; one card), all of it into the room's bank.
+    assert.equal(v.pot, 6);
+    assert.equal(v.banked, 6);
+    assert.equal(v.bank.chips, 6);
+    await until(() => b!.client.view["me"]?.task === "result");
+    assert.equal(b!.client.view["me"].parts[0], "bold-jinxed");
+    assert.equal(b!.client.view["me"].banked, 6);
+    await until(() => guesser.client.view["me"]?.task === "best");
+    const best = guesser.client.view["me"].cards as { id: string; word: string; author: string }[];
+    assert.equal(best.length, 2);
+    assert.ok(best.every((c) => typeof c.word === "string"));
+    await assert.rejects(a!.client.act("best", { card: best[1]!.id }), (e: { code: string }) => e.code === "not-guesser");
+    await guesser.client.act("best", { card: best[1]!.id });
+    await until(() => (party.screen.peek() as { best?: string }).best === best[1]!.id);
+    // A thank-you: no points; the author's phone says so.
+    assert.equal((party.screen.peek() as { bank: { chips: number } }).bank.chips, 6);
+    const author = players.find((p) => p.client.you!["id"] === best[1]!.author)!;
+    await until(() => (author.client.view["me"]?.parts ?? []).includes("best"));
   } finally {
     close();
   }
@@ -286,7 +319,7 @@ test("all jinxed: straight to the verdict, the word is lost", async () => {
     await end;
     const lost = of(screens, "verdict").filter((v) => v.result === "lost");
     assert.ok(lost.length >= 2, `lost rounds: ${lost.length}`);
-    for (const v of lost) assert.deepEqual(v.payouts, []);
+    for (const v of lost) assert.equal(v.banked, 0);
     const rounds = new Set(lost.map((v) => v.round));
     for (const s of screens) if (s.phase === "reveal") assert.ok(!rounds.has(s.round), "no reveal when all are jinxed");
     const replay = of(screens, "replay").find((r) => r.result === "lost")!;
@@ -297,28 +330,49 @@ test("all jinxed: straight to the verdict, the word is lost", async () => {
   }
 });
 
-test("wrong guesses cost 2, passes nothing", async () => {
+test("wrong guesses cost the bank 2 (never below 0), passes nothing", async () => {
   for (const style of ["wrong", "pass"] as const) {
     const { g, players, screens, close } = await setup(4, { rounds: 1, bot: () => ({ guess: style, clues: "random", bold: 0 }) });
     try {
       const end = new Promise((r) => g.once("end", r));
       await players[0]!.client.act("start");
-      const lines = (await end) as { score: number }[];
+      const bank = await end;
       const vs = of(screens, "verdict").filter((v) => v.result !== "lost");
       assert.ok(vs.length > 0);
       for (const v of vs) {
         assert.equal(v.result, style);
-        assert.deepEqual(v.payouts, style === "wrong" ? [{ id: v.guesser, delta: -2, why: "wrong" }] : []);
+        assert.equal(v.banked, 0, "the bank is empty: nothing to lose");
         if (style === "wrong") assert.ok(typeof v.guess === "string");
       }
+      assert.equal(bank, 0);
       assert.ok(of(screens, "replay").every((r) => !r.picking));
-      if (style === "pass") assert.ok(lines.every((l) => l.score === 0));
       const e = of(screens, "end").at(-1)!;
       assert.equal(e.title, "total jinx");
-      assert.equal(e.mvp, undefined);
+      assert.deepEqual(e.clues, []);
+      assert.equal(e.record, undefined, "no record with an empty bank");
     } finally {
       close();
     }
+  }
+});
+
+test("a wrong guess takes 2 out of a bank that has chips", async () => {
+  const { g, screens, players, close } = await setup(4, { rounds: 1, bot: (i) => ({ guess: i === 3 ? "wrong" : "right", clues: "random", bold: 0 }) });
+  try {
+    const end = new Promise<number>((r) => g.once("end", r));
+    await players[0]!.client.act("start");
+    const bank = await end;
+    const vs = of(screens, "verdict");
+    const last = vs.at(-1)!;
+    assert.equal(last.guesser, players[3]!.client.you!["id"]);
+    const before = vs.slice(0, -1).reduce((s, v) => s + v.banked, 0);
+    assert.ok(before > 2, `the bank before: ${before}`);
+    if (last.result === "wrong") assert.equal(last.banked, -2);
+    assert.equal(bank, before + last.banked);
+    await until(() => players.every((b) => b.client.view["me"]?.task === "final"));
+    assert.ok(players.every((b) => b.client.view["me"].bank === bank));
+  } finally {
+    close();
   }
 });
 
@@ -406,7 +460,7 @@ test("a player who leaves: skipped as guesser, kept on the TV as left", async ()
   try {
     const end = new Promise((r) => g.once("end", r));
     await players[0]!.client.act("start");
-    await until(() => (of(screens, "scores").length >= 1));
+    await until(() => of(screens, "bank").length >= 1);
     const gone = players[3]!;
     const goneId = gone.client.you!["id"];
     const guessedBefore = of(screens, "verdict").some((v) => v.guesser === goneId);
@@ -423,7 +477,7 @@ test("a player who leaves: skipped as guesser, kept on the TV as left", async ()
     assert.equal(vs.length, guessedBefore ? 4 : 3);
     const e = of(screens, "end").at(-1)!;
     assert.ok(e.people.some((p) => p.id === goneId && p.left));
-    assert.ok(e.lines.every((l) => l.id !== goneId));
+    assert.ok(e.words.length === vs.length);
   } finally {
     close();
   }

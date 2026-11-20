@@ -42,6 +42,11 @@ export function hm(tag, attrs, markup) {
   return e;
 }
 
+/** Copy with `*bold*` segments as nodes. @param {string} s */
+export function rich(s) {
+  return s.split(/(\*[^*]+\*)/).filter(Boolean).map((p) => (p.startsWith("*") && p.endsWith("*") ? h("b", null, p.slice(1, -1)) : p));
+}
+
 export const SVGNS = "http://www.w3.org/2000/svg";
 /**
  * @param {string} tag

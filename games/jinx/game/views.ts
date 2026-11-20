@@ -42,8 +42,6 @@ export interface Person {
   face: Face;
   vip: boolean;
   connected: boolean;
-  /** Points this game (0 in the lobby). */
-  score: number;
   /** A bot (the host page's), drawn with a dashed rim. */
   bot?: boolean;
   /**
@@ -112,27 +110,30 @@ export interface Tally {
   history: ("found" | "missed")[];
 }
 
-export interface ScoreLine {
-  id: string;
-  score: number;
-  /** This round's change. */
-  delta: number;
-  /** 1-based, ties share a rank. */
-  rank: number;
+/**
+ * The room's bank: one score for everybody (the design's §4). A right guess
+ * puts the pot in, a wrong one takes 2 out (never below 0). `goals` are the
+ * room titles' marks for this game (chips; they move when the game gets
+ * longer or shorter), `record` the room's best for a game of this many
+ * rounds (the host page's `localStorage`), absent when there is none.
+ */
+export interface Bank {
+  chips: number;
+  goals: Goals;
+  record?: number;
 }
 
+/** The chips a game of this length needs for each room title above "total jinx". */
+export type Goals = Record<Exclude<RoomTitle, "total jinx">, number>;
+
 /**
- * Points paid at the verdict, with why (for the TV's chips and the phones):
- * one entry per person and `why`, summed (two turned cards: one `turned`
- * entry of +4). A person may have several entries (3 players: a bold card
- * turned and the other jinxed): renderers sum by `id`.
+ * What one card did for the room (the phones' result line): `turned`
+ * (turned before a right guess), `bold` (bold and turned before a right
+ * guess: it put 2 more in the pot),
+ * `jinxed`, `bold-jinxed` (−2 more off the pot), `best` (the guesser's best
+ * clue).
  */
-export interface Payout {
-  id: string;
-  delta: number;
-  /** `pot` (the guesser, right), `wrong` (the guesser, −2), `turned` (+2), `bold` (+4), `bold-jinxed` (−2), `mvp` (+3). */
-  why: "pot" | "wrong" | "turned" | "bold" | "bold-jinxed" | "mvp";
-}
+export type Part = "turned" | "bold" | "jinxed" | "bold-jinxed" | "best";
 
 // ---------------------------------------------------------------------------
 // The TV: party.screen
@@ -150,6 +151,7 @@ interface InRound extends Base {
   /** The guesser's person id. */
   guesser: string;
   tally: Tally;
+  bank: Bank;
   /** The pot (chips), from the jinx check on. */
   pot?: number;
 }
@@ -185,8 +187,8 @@ export interface WriteScreen extends InRound {
 
 /**
  * The jinx check: all cards face down (no `word`), `fate` set, the groups
- * to slam in order. `pot` is after the jinx losses, `potBefore` before
- * (10). The host waits until `until` (time for the animation:
+ * to slam in order. `pot` is after the jinx losses (1 per jinxed card, 2
+ * more per bold one), `potBefore` before (10). The host waits until `until` (time for the animation:
  * 4 s + 4.5 s per group, a group of 3+ cards counting 1.5; faster groups after the first are the TV's business).
  */
 export interface JinxScreen extends InRound {
@@ -201,7 +203,8 @@ export interface JinxScreen extends InRound {
 /**
  * The reveal: the surviving cards (turned ones with `word` and `turned`).
  * `picked` is the card the guesser just picked (the TV's "ANNA TRUSTS… BEN"),
- * set with the turn. `draft` is the guess being typed, live (may be "");
+ * set with the turn. `pot` after the turns (−2 per card after the first, +2
+ * per bold card). `draft` is the guess being typed, live (may be "");
  * `typing` once the guesser started typing this decision.
  */
 export interface RevealScreen extends InRound {
@@ -221,7 +224,8 @@ export interface RevealScreen extends InRound {
  * The verdict. `result`: `right`, `wrong`, `pass`, or `lost` (every card
  * jinxed: no guess). `guess` as typed (absent for pass/lost); `near`: the
  * reason a near miss was accepted ("typo", "plural", …; absent for an exact
- * match). `payouts` for the round so far (the MVP clue comes later).
+ * match). `banked`: what the round did to the bank (the pot when right, −2
+ * or less when wrong, else 0); `bank` is after it.
  */
 export interface VerdictScreen extends InRound {
   phase: "verdict";
@@ -230,15 +234,16 @@ export interface VerdictScreen extends InRound {
   guess?: string;
   near?: Reason;
   cards: Card[];
-  payouts: Payout[];
+  banked: number;
   until: number;
 }
 
 /**
  * The replay: every card of the round face up (`word` set), with `fate`
- * and `turned`; `groups` as in the jinx check. `mvp`: the card the guesser
- * picked (absent while picking, or none). `picking` while the guesser may
- * still pick (only after a right guess).
+ * and `turned`; `groups` as in the jinx check. `best`: the clue the
+ * guesser picked as the one that helped most (a thank-you, no points;
+ * absent while picking, or none). `picking` while the guesser may still
+ * pick (only after a right guess).
  */
 export interface ReplayScreen extends InRound {
   phase: "replay";
@@ -247,15 +252,15 @@ export interface ReplayScreen extends InRound {
   cards: Card[];
   groups: JinxGroup[];
   picking: boolean;
-  /** The verdict's payouts, plus the MVP payout once picked. */
-  payouts: Payout[];
-  mvp?: string;
+  banked: number;
+  best?: string;
   deadline?: number;
 }
 
-export interface ScoresScreen extends InRound {
-  phase: "scores";
-  lines: ScoreLine[];
+/** Between rounds: the bank (`bank`) and what this round did to it (`banked`). */
+export interface BankScreen extends InRound {
+  phase: "bank";
+  banked: number;
   /** The next guesser, absent after the last round. */
   next?: string;
   until: number;
@@ -263,8 +268,12 @@ export interface ScoresScreen extends InRound {
 
 export type RoomTitle = "telepaths" | "mind readers" | "in sync" | "mixed signals" | "total jinx";
 
+/**
+ * Light awards, no winners: `mind meld` (the pair whose clues jinxed
+ * together most), `telepath` (most clues turned before a right guess).
+ */
 export interface Award {
-  kind: "mind meld" | "lone wolf" | "kamikaze";
+  kind: "mind meld" | "telepath";
   /** Mind meld: two ids; the others: one. */
   ids: string[];
   count: number;
@@ -277,22 +286,33 @@ export interface Web {
   links: { clue: string; words: number[] }[];
 }
 
+/** A best clue of the night: the word, the clue, its author. */
+export interface BestClue {
+  word: string;
+  clue: string;
+  author: string;
+  guesser: string;
+}
+
 /**
- * The end of the game, in steps the TV plays in order: `room` (the count,
- * the title, the words), `mvp`, `awards`, `web`. The host sets `step` and
- * holds each one; `web` stays until the VIP plays again.
+ * The end of the game, in steps the TV plays in order: `room` (the bank,
+ * the title, the words, a new record), `clues` (the best clues of the
+ * night; skipped when there are none), `awards` (skipped when none),
+ * `web`. The host sets `step` and holds each one; `web` stays until the
+ * VIP plays again. `bank.record` is the record before this game; `record`
+ * is set when this game beat it (or set the first one).
  */
 export interface EndScreen extends Base {
   phase: "end";
-  step: "room" | "mvp" | "awards" | "web";
+  step: "room" | "clues" | "awards" | "web";
   tally: Tally;
+  bank: Bank;
   title: RoomTitle;
+  record?: true;
   words: { word: string; found: boolean; guesser: string }[];
-  /** Absent when nobody scored. */
-  mvp?: { id: string; score: number; mvpClues: number; jinxed: number };
+  clues: BestClue[];
   awards: Award[];
   web: Web;
-  lines: ScoreLine[];
 }
 
 export type ScreenView =
@@ -303,7 +323,7 @@ export type ScreenView =
   | RevealScreen
   | VerdictScreen
   | ReplayScreen
-  | ScoresScreen
+  | BankScreen
   | EndScreen;
 
 // ---------------------------------------------------------------------------
@@ -339,14 +359,18 @@ export interface RoomView {
  * - `check`: the guesser during the jinx check: how many cards survived and
  *   how many were jinxed (counts only).
  * - Clue-givers keep `result` through the replay (the phone shows "Anna is
- *   picking the MVP clue…" from `room.phase`).
+ *   picking the best clue…" from `room.phase`).
  * - `guess`: the guesser in the reveal: the cards (face down unless turned),
  *   the pot, `deadline`.
  * - `watch`: a clue-giver in the reveal: the word, the cards, "Shh".
- * - `result`: the verdict for this phone: the word, the result, own points.
- * - `mvp`: the guesser picks the MVP clue among `cards` (turned or not, not jinxed).
- * - `scores`: own rank and total, `next` (am I up next).
- * - `final`: the end: the room, own line, own award; the VIP: `canRestart`.
+ * - `result`: the verdict for this phone: the word, the result, what the
+ *   round did to the room's bank (`banked`, `bank`) and what this phone's
+ *   cards did (`parts`, one per card, plus `best`).
+ * - `best`: the guesser picks the best clue among `cards` (turned or not, not jinxed).
+ * - `bank`: the room's bank, the next title to reach (`goal`, absent at
+ *   the top), `next` (am I up next).
+ * - `final`: the end: the room's bank, title and words found, a new
+ *   record, own award; the VIP: `canRestart`.
  */
 export type PlayerState =
   | { task: "lobby"; face: Face; color: number; canStart: boolean }
@@ -366,10 +390,10 @@ export type PlayerState =
   | { task: "tv" }
   | { task: "guess"; cards: Card[]; pot: number; deadline: number; jinxed: number }
   | { task: "watch"; word: string; cards: Card[]; pot: number }
-  | { task: "result"; word: string; result: "right" | "wrong" | "pass" | "lost"; guesser: boolean; delta: number; why: Payout["why"][] }
-  | { task: "mvp"; cards: Card[]; deadline: number }
-  | { task: "scores"; score: number; rank: number; of: number; next: boolean }
-  | { task: "final"; score: number; rank: number; of: number; award?: Award["kind"]; canRestart: boolean; found: number; total: number; title: RoomTitle };
+  | { task: "result"; word: string; result: "right" | "wrong" | "pass" | "lost"; guesser: boolean; banked: number; bank: number; parts: Part[] }
+  | { task: "best"; cards: Card[]; deadline: number }
+  | { task: "bank"; bank: number; banked: number; goal?: { title: RoomTitle; chips: number }; next: boolean }
+  | { task: "final"; bank: number; title: RoomTitle; record: boolean; award?: Award["kind"]; canRestart: boolean; found: number; total: number };
 
 // ---------------------------------------------------------------------------
 // Actions (phone → host), `client.act(type, data)`; refusals are PartyErrors.
@@ -401,8 +425,8 @@ export interface Actions {
   guess: { text: string };
   /** The guesser, reveal: no guess. */
   pass: null;
-  /** The guesser, replay after a right guess: the MVP clue. */
-  mvp: { card: string };
+  /** The guesser, replay after a right guess: the clue that helped most. */
+  best: { card: string };
 }
 
 /**

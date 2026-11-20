@@ -54,13 +54,25 @@ html, body { margin: 0; height: 100%; background: #0d1716; overflow: hidden; }
 
 /* ---------------------------------------------------------------- header + host line */
 .head { position: absolute; left: 64px; right: 64px; top: 36px; height: 52px; display: flex; align-items: center; justify-content: space-between; z-index: 20; pointer-events: none; }
-.head-left { display: flex; align-items: center; gap: 26px; min-width: 0; }
+.head-left { display: flex; align-items: center; gap: 26px; min-width: 0; flex: 1 1 auto; margin-right: 18px; }
+/* a long name gives way to the tally and the bank (cut with an ellipsis) */
+.who-guesses { min-width: 0; overflow: hidden; padding: 8px 10px; margin: -8px -10px; }
+.who-guesses span { overflow: hidden; text-overflow: ellipsis; }
 .paper { background: var(--paper); color: var(--ink); border-radius: 10px; box-shadow: 0 5px 0 rgba(0,0,0,.25), 0 10px 18px rgba(0,0,0,.18); }
 .tab { padding: 8px 20px; font-weight: 700; font-size: 26px; letter-spacing: .06em; text-transform: uppercase; transform: rotate(-1.5deg); white-space: nowrap; background: var(--paper); color: var(--ink); border-radius: 10px; box-shadow: 0 5px 0 rgba(0,0,0,.25); }
 .layer .tab { position: absolute; left: 64px; top: 36px; }
 .layer .tab.center { left: 50%; transform: translateX(-50%) rotate(-1deg); }
 .who-guesses { display: flex; align-items: center; gap: 14px; font-size: 26px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; transition: opacity .25s; }
 .who-guesses.off { opacity: 0; }
+.head-right { display: flex; align-items: center; gap: 22px; flex: none; }
+.bank-lbl { display: flex; align-items: center; gap: 8px; height: 52px; padding: 0 14px 0 10px; transform: rotate(1.2deg); white-space: nowrap; }
+.bank-lbl small { font-size: 24px; font-weight: 700; letter-spacing: .12em; color: var(--ink-2); }
+.bank-lbl b { display: inline-block; min-width: 1.2em; text-align: right; font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.minichips { position: relative; width: 42px; height: 36px; flex: none; }
+.minichips i { position: absolute; left: 0; width: 42px; height: 12px; border-radius: 6px; background: var(--gold); box-shadow: inset 0 -4px 0 var(--gold-2), 0 0 0 2.5px var(--ink); }
+.minichips i:nth-child(1) { bottom: 1px; }
+.minichips i:nth-child(2) { bottom: 12px; left: -2px; }
+.minichips i:nth-child(3) { bottom: 23px; left: 1px; }
 .tally { display: flex; align-items: center; gap: 7px; font-weight: 700; font-size: 26px; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
 .tally .tl { margin-right: 8px; }
 .tally .mini { display: block; border-radius: 5px; box-shadow: 0 0 0 3px var(--ink); }
@@ -90,6 +102,9 @@ html, body { margin: 0; height: 100%; background: #0d1716; overflow: hidden; }
 .token.ghost::before { display: none; }
 .token .blindfold { position: absolute; left: -6%; right: -6%; top: 36%; height: 20%; background: var(--ink); border-radius: 6px; transform: rotate(-8deg); box-shadow: 0 3px 0 rgba(0,0,0,.25); }
 .token .crown { position: absolute; left: 50%; top: -34%; width: 52%; height: 32%; transform: translateX(-50%) rotate(8deg); background: var(--gold); clip-path: polygon(0 100%, 0 20%, 25% 60%, 50% 0, 75% 60%, 100% 20%, 100% 100%); }
+.token .mood { position: absolute; right: -10%; bottom: -10%; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 3px var(--ink); z-index: 3; }
+.token .mood.sad { background: #c9d3e2; }
+.token .mood svg { position: static; width: 100%; height: 100%; background: none; box-shadow: none; border-radius: 0; inset: auto; }
 .check { position: absolute; width: 40px; height: 40px; border-radius: 50%; background: var(--leaf); color: #fff; right: -10px; top: -8px; font-size: 26px; font-weight: 700; display: grid; place-items: center; box-shadow: 0 0 0 3px var(--ink); }
 .pencil { position: absolute; right: -14px; top: -14px; width: 40px; height: 40px; }
 .pencil svg { width: 40px; height: 40px; }
@@ -192,10 +207,6 @@ html, body { margin: 0; height: 100%; background: #0d1716; overflow: hidden; }
 .sign .board { position: absolute; left: -170px; top: 52px; width: 340px; padding: 8px 14px; text-align: center; border-radius: 12px; background: var(--paper); color: var(--ink); box-shadow: 0 0 0 4px var(--ink), 0 8px 0 rgba(0,0,0,.3); }
 .sign .board b { display: block; font-size: 44px; line-height: 1; color: var(--tomato); letter-spacing: .08em; }
 .sign .board span { font-size: 24px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
-.pts { position: absolute; font-size: 30px; font-weight: 700; }
-.pts.plus { color: #8ff0a8; }
-.pts.minus { color: #ff9b8f; }
-.pts.zero { color: #7fb3ac; }
 
 /* ---------------------------------------------------------------- envelope, secret, dial */
 .envelope { position: absolute; width: 300px; height: 190px; perspective: 900px; }
@@ -238,32 +249,42 @@ html, body { margin: 0; height: 100%; background: #0d1716; overflow: hidden; }
 .note .line .token { --s: 36px; }
 .note .plus { color: var(--leaf); }
 .note .minus { color: var(--tomato); }
-.note .mvpword { font-size: 34px; line-height: 1.05; overflow-wrap: anywhere; }
-.rosette { position: absolute; width: 124px; height: 160px; z-index: 30; }
-.rosette-mid { position: absolute; left: 24px; top: 24px; width: 76px; height: 76px; border-radius: 50%; background: var(--paper); box-shadow: 0 0 0 4px var(--ink); display: grid; place-items: center; font-weight: 700; font-size: 30px; color: var(--ink); }
+.note .line.center { justify-content: center; }
+.note .bignum { font-size: 60px; line-height: 1.05; }
+.note .bignum.zero { color: var(--ink-2); }
+.note .minichips { transform: scale(.85); }
+.note.bestnote.has-rosette { padding-top: 124px; }
+.note .bestword { font-size: 36px; line-height: 1.1; white-space: nowrap; transform-origin: center; }
+.rosette { position: absolute; z-index: 30; }
+.rosette-mid { position: absolute; border-radius: 50%; background: var(--paper); box-shadow: 0 0 0 4px var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; font-size: 28px; line-height: 1; letter-spacing: .02em; color: var(--ink); }
+.rosette-mid span { display: block; white-space: nowrap; transform-origin: center; }
+.rosette-mid svg { display: block; }
 
-/* ---------------------------------------------------------------- score pad */
-.pad { position: absolute; left: 64px; top: 46px; width: 640px; height: 636px; border-radius: 12px; overflow: hidden; transform: rotate(-1deg); }
-.pad .binding { position: absolute; left: 0; right: 0; top: 0; height: 56px; background: var(--ink); }
-.pad .binding i { position: absolute; top: 18px; width: 22px; height: 22px; border-radius: 50%; background: var(--felt); }
-.pad h2 { position: absolute; left: 92px; top: 66px; margin: 0; font-size: 34px; letter-spacing: .12em; }
-.pad h2 span { color: var(--ink-2); font-size: 24px; letter-spacing: .1em; margin-left: 12px; }
-.pad .margin { position: absolute; left: 76px; top: 56px; bottom: 0; width: 3px; background: #e88c80; }
-.prow { position: absolute; left: 0; right: 0; height: 64px; border-bottom: 3px solid #bcd3e6; display: flex; align-items: center; background: var(--paper); }
-.prow .rank { width: 76px; text-align: center; font-weight: 700; font-size: 30px; color: var(--ink-2); flex: none; }
-.prow .token { position: relative; --s: 46px; margin: 0 18px 0 16px; box-shadow: 0 0 0 3px var(--ink); }
-.prow .n { flex: 1; font-size: 32px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.prow .d { width: 110px; text-align: right; font-size: 30px; font-weight: 700; flex: none; }
-.prow .d.plus { color: var(--leaf); }
-.prow .d.minus { color: var(--tomato); }
-.prow .d.zero { color: #a89a85; }
-.prow .t { width: 120px; text-align: right; padding-right: 28px; font-size: 38px; font-weight: 700; font-variant-numeric: tabular-nums; flex: none; }
-.prow.first { background: #fde7a6; }
-.room { position: absolute; left: 760px; top: 56px; width: 456px; text-align: center; }
-.room .k { font-size: 26px; font-weight: 700; letter-spacing: .14em; color: var(--dim); }
-.room .big { font-size: 128px; font-weight: 700; line-height: 1; margin: 8px 0 0; }
-.room .big span { font-size: 56px; color: var(--dim); }
-.room .sub { font-size: 28px; font-weight: 600; }
+/* ---------------------------------------------------------------- the bank */
+.meter { position: absolute; border-radius: 22px; background: var(--paper); box-shadow: 0 0 0 4px var(--ink), 0 8px 0 rgba(0,0,0,.3); }
+.meter .well { position: absolute; inset: 8px; border-radius: 15px; background: #163533; overflow: hidden; }
+.meter .fill { position: absolute; left: 0; right: 0; top: 0; background: repeating-linear-gradient(to bottom, var(--gold) 0 16px, var(--gold-2) 16px 20px); box-shadow: inset 0 0 0 3px rgba(29,26,43,.35); }
+.meter .mk { position: absolute; left: -10px; right: -22px; height: 4px; background: var(--ink); z-index: 2; }
+.meter .mk.rec { height: 0; left: -22px; right: -10px; background: none; border-top: 4px dashed var(--tomato); }
+.meter .mklbl.rec { transform-origin: right center; }
+.meter .mklbl { position: absolute; height: 38px; margin-top: -19px; display: flex; align-items: center; gap: 10px; padding: 0 12px; background: #cfe0dc; color: var(--ink-2); font-size: 24px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; transform-origin: left center; box-shadow: 0 4px 0 rgba(0,0,0,.25); z-index: 3; }
+.meter .mklbl b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.meter .mklbl.on { background: var(--gold); color: var(--ink); }
+.meter .mklbl.rec { background: var(--tomato); color: var(--paper); }
+.meter .mklbl.rec b { color: var(--paper); }
+.meter .mklbl.rec.on { background: var(--leaf); }
+.meter .level { position: absolute; left: 50%; top: 0; z-index: 4; padding: 0 12px; font-size: 44px; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; border-radius: 10px; box-shadow: 0 0 0 4px var(--ink), 0 5px 0 rgba(0,0,0,.3); white-space: nowrap; }
+.bankside { position: absolute; left: 700px; top: 112px; width: 516px; text-align: center; }
+.bankside .k { font-size: 26px; font-weight: 700; letter-spacing: .14em; color: var(--dim); }
+.bankside .big { font-size: 112px; font-weight: 700; line-height: 1; margin-top: 4px; text-shadow: 0 5px 0 rgba(0,0,0,.3); }
+.bankside .big.plus { color: #8ff0a8; }
+.bankside .big.minus { color: #ff9b8f; }
+.bankside .big.zero { color: var(--dim); }
+.bankside .sub { font-size: 28px; font-weight: 600; margin-top: 8px; }
+.bankside .goal { display: inline-block; font-size: 28px; font-weight: 600; margin-top: 14px; white-space: nowrap; transform-origin: center; }
+.bankside .goal b { color: var(--gold); }
+.bankside .words { margin-top: 24px; font-size: 24px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.bankside .slots { margin-top: 12px; }
 .slots { display: grid; grid-template-columns: repeat(5, 62px); gap: 18px 22px; justify-content: center; margin-top: 26px; }
 .slots.small { grid-template-columns: repeat(8, 40px); gap: 14px 12px; }
 .slots i { height: 84px; border-radius: 8px; box-shadow: 0 0 0 3px var(--ink), 0 4px 0 rgba(0,0,0,.3); display: grid; place-items: center; font-style: normal; font-weight: 700; font-size: 34px; }
@@ -284,9 +305,9 @@ html, body { margin: 0; height: 100%; background: #0d1716; overflow: hidden; }
 .mc.lost::after { content: ""; position: absolute; left: 14px; right: 14px; top: 50%; height: 4px; background: var(--tomato); transform: rotate(-6deg); }
 .bigtiles { position: absolute; display: flex; gap: 14px; justify-content: center; left: 0; right: 0; }
 .bigtiles .tile { width: 120px; height: 140px; font-size: 100px; }
+.bigtiles.mid .tile { width: 100px; height: 112px; font-size: 80px; }
 .bigtiles .of { align-self: center; font-size: 56px; font-weight: 700; margin: 0 10px; }
-.pedestal { position: absolute; width: 300px; height: 70px; border-radius: 50%; background: var(--wood); box-shadow: inset 0 -16px 0 #d7ae6a, 0 0 0 4px var(--ink), 0 10px 0 rgba(0,0,0,.3); }
-.ribbon { position: absolute; left: 50%; transform: translateX(-50%); padding: 14px 80px; background: var(--tomato); color: var(--paper); font-weight: 700; font-size: 50px; letter-spacing: .08em; white-space: nowrap; clip-path: polygon(0 0, 100% 0, 95% 50%, 100% 100%, 0 100%, 5% 50%); }
+.card .bestfor { z-index: 6; }
 .award { position: absolute; width: 320px; height: 460px; perspective: 1200px; }
 .award .flip { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateY(180deg); }
 .award.up .flip { transform: none; }

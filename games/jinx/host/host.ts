@@ -6,7 +6,8 @@
  * settings (rounds, writing time, words) and a muted preview of the TV.
  * Bots are for tests: their buttons show only with `?bots` in the page's
  * URL. The room's dealt words are kept in
- * `localStorage` per language, so no word comes twice until all were dealt.
+ * `localStorage` per language, so no word comes twice until all were dealt,
+ * and so are the room's records (the best bank per game length).
  * The room's language (default: this browser's, then the last choice
  * here) is a setting, changed only between games: the words, the clue
  * matcher, every phone, the TV and this page follow it. A language whose
@@ -41,6 +42,8 @@ const robots: Bot[] = [];
 
 /** The dealt words per language: English under the old key. */
 const dealtKey = (l: Lang) => (l === "en" ? "jinx:dealt" : `jinx:dealt:${l}`);
+/** The room's best bank per game length (rounds), every language. */
+const RECORDS_KEY = "jinx:records";
 const SETTINGS_KEY = "jinx:settings";
 
 /** The room's language: last time's choice on this computer, else the browser's. */
@@ -312,6 +315,7 @@ async function main(): Promise<void> {
     words,
     match,
     dealt,
+    records: loadJson<Record<number, number>>(RECORDS_KEY, {}),
     rounds: settings.rounds ?? "auto",
     difficulty: settings.difficulty ?? "normal",
     timings: { write: (settings.write ?? 45) * 1000 },
@@ -321,6 +325,13 @@ async function main(): Promise<void> {
       localStorage.setItem(dealtKey(l), JSON.stringify(used));
     } catch {
       // Full or blocked: the deck still works for this session.
+    }
+  });
+  game.on("record", (rounds, chips) => {
+    try {
+      localStorage.setItem(RECORDS_KEY, JSON.stringify({ ...loadJson<Record<number, number>>(RECORDS_KEY, {}), [rounds]: chips }));
+    } catch {
+      // Full or blocked: the record lasts this session.
     }
   });
   game.open();
