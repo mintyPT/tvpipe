@@ -7,6 +7,7 @@
 
 use std::collections::{BTreeMap, HashMap};
 use std::net::SocketAddr;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard, OnceLock, RwLock};
 use std::time::{Duration, Instant};
 
@@ -132,6 +133,8 @@ pub struct Hub {
     pub shortlinks: OnceLock<Arc<super::shortlink::ShortLinks>>,
     /// The TVs' display lags (the storage's `tv-lag`), by name.
     lags: Mutex<BTreeMap<String, u32>>,
+    /// Test mode (`--dev`): `info.dev`, the games' test tools.
+    pub dev: AtomicBool,
 }
 
 /// `{"t":"event","type":…,"data":…}`.
@@ -200,6 +203,7 @@ impl Hub {
         };
         Arc::new(Hub {
             lags: Mutex::new(lags),
+            dev: AtomicBool::new(false),
             bundle,
             token,
             ports: OnceLock::new(),
@@ -803,6 +807,7 @@ impl Hub {
             .with("local", self.local_origin())
             .with("version", self.version)
             .with("resolutions", self.resolutions())
+            .with("dev", self.dev.load(Ordering::Relaxed))
     }
 
     /// The resolution until someone chooses one (`--resolution`).

@@ -155,7 +155,7 @@ ignored, or `unknown-method`.
 
 | Method | Params → value | |
 |---|---|---|
-| `info` | → `{name, title, players, pages, tv, phone: {url, mode, lan}, tunnel, version, launcher, resolutions}` | `phone.url`: the base phones use (`https://HOST/`, `http://IP:P'/` or `http://127.0.0.1:P/`), `mode` `tunnel`/`lan`/`local` |
+| `info` | → `{name, title, players, pages, tv, phone: {url, mode, lan}, tunnel, version, launcher, resolutions, dev}` | `phone.url`: the base phones use (`https://HOST/`, `http://IP:P'/` or `http://127.0.0.1:P/`), `mode` `tunnel`/`lan`/`local`; `dev`: test mode (`--dev`), the game's test tools (docs/games.md) |
 | `devices.watch` | `{on: bool}` → the current list | discovery runs while any socket watches; `devices` events with the whole list when it changes |
 | `select` / `selection` | `{devices: [name], resolution?}` → `{devices, resolution}` | the launcher's (or the cast picker's) choice, kept by tvpipe for the host page (a navigation away); `resolution` `auto`, `720p`, `1080p`, `2160p` (§9.1; absent: unchanged, default `auto`; `null` in the answer when `tv.resolution` is fixed) |
 | `pair.start` | `{device}` → `{}` | AirPlay PIN pairing; `pair` events `{device, state: connecting\|pin\|done\|failed, error?}` |
@@ -572,7 +572,7 @@ tunnels (about 29 per address in 90 minutes, each a new hostname):
   (first `scripts/zip.ts`, deflate through Node's zlib; now `tvpipe game
   pack`, §18). The host page shows
   the room, the TVs (with "try again"), the players (remove; bots,
-  for tests, only with `?bots`), the
+  for tests, only with `?bots` or `--dev`), the
   rounds, timers and late joining, and a muted preview of the TV (the
   watch link in an `<iframe>`).
 - **Checked** (2026-11-19, macOS 26, Chrome 157): `node

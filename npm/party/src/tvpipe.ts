@@ -61,6 +61,12 @@ export interface Info {
   /** `http://127.0.0.1:PORT`. */
   local: string;
   version: string;
+  /**
+   * Test mode (`tvpipe game play --dev`): the host page may offer its
+   * test tools (bots: dummy players that join and play). An older
+   * tvpipe has none: not in test mode.
+   */
+  dev?: boolean;
 }
 
 /** A receiver the launcher can pick. */

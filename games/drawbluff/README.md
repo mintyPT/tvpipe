@@ -72,6 +72,7 @@ cargo build --release -p tvpipe-cli         # tvpipe (or a release build of it)
 (cd npm/party && npm ci && npm run build)
 cd games/drawbluff && npm install && npm run build
 ../../target/release/tvpipe game play .     # or: tvpipe game play games/drawbluff
+../../target/release/tvpipe game play . --dev   # test mode: bot buttons on the host page
 npm run zip                                 # drawbluff.zip (tvpipe game pack): tvpipe game play drawbluff.zip
 ```
 
@@ -85,7 +86,10 @@ from tvpipe's own browser showing the TV page (the default), or, with
 **TV picture: drawn here** in Chrome 157+, from the TV page drawn into a
 canvas in the window (HTML-in-Canvas) and streamed as a surface: no
 second browser, but the window must stay visible (docs/playshare-design.md
-§17). Closing the window ends it all. `tvpipe game play --help`: tunnels (`--tunnel=opentunnel`,
+§17). Closing the window ends it all. To try it alone, `--dev` (test mode)
+puts "Add a bot" and "Add 3 bots" on the host page: dummy players that
+join and play by themselves; join with your phone (or the join link in
+a browser tab), add two bots, start. `tvpipe game play --help`: tunnels (`--tunnel=opentunnel`,
 `--no-tunnel`), the LAN (`--lan`), `--window`.
 
 ## Tests
@@ -106,7 +110,8 @@ playshare` on the bundle (or the zip), a headless Chrome as the window
 events, lies and votes) and as the TV (the `browser` receiver's player
 page: the TV page went through tvpipe's own headless Chrome and the
 stream), bots through the phones' listener (the host page's bot
-buttons are for tests: they show only with `?bots` in its URL), and
+buttons are for tests: they show only with `?bots` in its URL or with
+`tvpipe game play --dev`), and
 screenshots of the
 launcher, the host window, the TV and the phone (also at 320 px wide)
 per phase, each checked for text out of its box and, with `--lang de`

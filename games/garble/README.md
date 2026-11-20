@@ -67,7 +67,7 @@ node test/live/scenario.ts --preview /tmp/garble-scenario                # the s
 ```
 
 Bots are for tests: the host page's bot buttons show only with `?bots`
-in its URL, and the live check adds them through `garble.addBots`. They
+in its URL or with `tvpipe game play --dev`, and the live check adds them through `garble.addBots`. They
 cannot see drawings: the host page tells them what the latest layer with
 ink was meant to be, and they read it right most of the time. The live
 check needs Chrome and a built tvpipe (`TVPIPE_BINARY`, else

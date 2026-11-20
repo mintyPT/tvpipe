@@ -70,6 +70,7 @@ enum PlayshareArg {
     Browser,
     Port,
     Resolution,
+    Dev,
 }
 
 #[derive(Copy, Clone)]
@@ -302,7 +303,7 @@ static TUNNEL: Cli<TunnelArg> = Cli::new("tunnel")
 
 static GAME_PLAY: Cli<PlayshareArg> = Cli::new("play")
     .about("Play a game: the host window here, the TV page on TVs, phones join")
-    .usage("[GAME] [--yes] [--refresh | --offline] [--tunnel[=PROVIDER] | --no-tunnel] [--lan[=IP]] [--window=MODE]")
+    .usage("[GAME] [--yes] [--refresh | --offline] [--tunnel[=PROVIDER] | --no-tunnel] [--lan[=IP]] [--window=MODE] [--dev]")
     .opts(&[
         Opt::new(PlayshareArg::Yes)
             .short('y')
@@ -345,6 +346,9 @@ static GAME_PLAY: Cli<PlayshareArg> = Cli::new("play")
             .long("resolution")
             .value("RES")
             .help("The TV picture: auto, 720p, 1080p or 4k (default auto; the window can change it)"),
+        Opt::new(PlayshareArg::Dev)
+            .long("dev")
+            .help("Test mode: the game's host page offers its test tools (bots: dummy players that join and play)"),
     ])
     .args(&[Pos::new(PlayshareArg::Path, "GAME").optional().help(
         "A folder or .zip with tvpipe.json, an https:// URL of a zip, gh:OWNER/REPO[/ASSET][@TAG], \
@@ -1078,6 +1082,7 @@ fn parse_playshare(mut p: Parser<PlayshareArg>) -> Result<Command, Error> {
             }
             PlayshareArg::NoTunnel => no_tunnel = true,
             PlayshareArg::NoShortLink => o.no_short_link = true,
+            PlayshareArg::Dev => o.dev = true,
             PlayshareArg::Lan => {
                 o.lan = Some(match p.optional_value::<String>()? {
                     None => None,
@@ -1728,6 +1733,7 @@ mod tests {
         assert_eq!(o.window, WindowMode::App);
         assert_eq!(o.lan, None);
         assert_eq!(o.resolution, Resolution::Auto);
+        assert!(!o.dev);
         // No game: the window's picker.
         let Ok((_, Command::Playshare(o))) = parse_from(&["game", "play"]) else {
             panic!()
@@ -1744,11 +1750,13 @@ mod tests {
             "8000",
             "--resolution",
             "4k",
+            "--dev",
             "x.zip",
         ]) else {
             panic!()
         };
         assert_eq!(o.resolution, Resolution::P2160);
+        assert!(o.dev);
         assert_eq!(o.tunnel, TunnelChoice::Provider(Provider::Cloudflare));
         assert_eq!(o.lan, Some(Some("192.168.1.5".parse().unwrap())));
         assert_eq!((o.window, o.port), (WindowMode::None, 8000));

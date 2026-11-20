@@ -1033,6 +1033,11 @@ fn resolution_is_chosen() {
         info.get("resolutions").unwrap().to_json(),
         r#"["auto","720p","1080p","2160p"]"#
     );
+    // Not in test mode unless `--dev`.
+    assert_eq!(info.get("dev").and_then(Value::as_bool), Some(false));
+    s.hub.dev.store(true, std::sync::atomic::Ordering::Relaxed);
+    let info = value(call(&mut w, "info", Value::object()));
+    assert_eq!(info.get("dev").and_then(Value::as_bool), Some(true));
     let sel = value(call(&mut w, "selection", Value::object()));
     assert_eq!(sel.get("resolution").and_then(Value::as_str), Some("auto"));
     let r = call(

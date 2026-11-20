@@ -4,8 +4,8 @@
  * the TV page on the TVs the launcher chose, runs the rules (`game/`), and
  * shows the room: the join code and QR code, the TVs, the players, the
  * settings (rounds, writing time, words) and a muted preview of the TV.
- * Bots are for tests: their buttons show only with `?bots` in the page's
- * URL. The room's dealt words are kept in
+ * Bots are for tests: their buttons show only in test mode (`tvpipe game
+ * play --dev`) or with `?bots` in the page's URL. The room's dealt words are kept in
  * `localStorage` per language, so no word comes twice until all were dealt,
  * and so are the room's records (the best bank per game length).
  * The room's language (default: this browser's, then the last choice
@@ -429,8 +429,9 @@ async function main(): Promise<void> {
     game.configure({ difficulty: difficulty.value as Difficulty });
     save();
   };
-  // Bots are for tests, not for players: their buttons show only with ?bots.
-  $("bots").hidden = !new URLSearchParams(location.search).has("bots");
+  // Bots are for tests, not for players: their buttons show only in test
+  // mode (tvpipe game play --dev) or with ?bots.
+  $("bots").hidden = !party.info.dev && !new URLSearchParams(location.search).has("bots");
   $("bot1").onclick = () => void addBots(1);
   $("bot3").onclick = () => void addBots(3);
   $("start").onclick = () => {

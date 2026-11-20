@@ -91,6 +91,7 @@ for the others; screenshots of every phase, layout checks, and checks that
 no phone shows a jinx or the word before the TV does. Bots write the
 word's category or another word from the word list, so they jinx now and
 then, and they peek at the word to guess. They are for tests: the host
-page's bot buttons show only with `?bots` in its URL. `--lang de` plays a
+page's bot buttons show only with `?bots` in its URL or with `tvpipe
+game play --dev`. `--lang de` plays a
 German room (screenshots in `/tmp/jinx-live-de`): the phone's browser in
 German, German clues and guesses, the same layout checks.

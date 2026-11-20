@@ -293,6 +293,14 @@ with `type="module"` scripts.
 `@tvpipe/party/testing` connects a `Party` and `PartyClient`s in memory
 (Drawbluff's `test/` has examples, bots included).
 
+**Test mode.** `tvpipe game play --dev` sets `info.dev` (the host page
+reads it as `party.info.dev`): the game may offer its test tools there,
+for people trying it alone. This repository's games show their bot
+buttons ("Add a bot", "Add 3 bots": dummy players that join through the
+phones' listener and play by themselves) in test mode, and also with
+`?bots` in the host page's URL (the live checks). Players never see
+them otherwise.
+
 **tvpipe's look (optional).** The host page sits in tvpipe's window
 right after the launcher; for a host page that looks like tvpipe (the
 launcher, the share page, the manual), link tvpipe's stylesheet:
@@ -615,7 +623,8 @@ come back.
 
 `--browser PATH` (or `$TVPIPE_BROWSER`) picks the browser for the window
 and for the TV page; with only Firefox, the window opens in the system's
-browser. `--port PORT` fixes the window's port on 127.0.0.1.
+browser. `--port PORT` fixes the window's port on 127.0.0.1. `--dev`
+is test mode (`info.dev`, see "Test mode" above).
 
 In the app window, a page the host page opens (a link with
 `target="_blank"`, `window.open`) opens in the system's browser instead,

@@ -42,6 +42,7 @@ pub mod window;
 
 use std::net::{IpAddr, SocketAddr};
 use std::path::PathBuf;
+use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -99,6 +100,9 @@ pub struct Options {
     pub resolution: resolution::Resolution,
     /// `--no-short-link`: no short link at tvpipe.party.
     pub no_short_link: bool,
+    /// `--dev`: test mode, `info.dev` (a game's host page offers its test
+    /// tools: bots, dummy players that join and play).
+    pub dev: bool,
 }
 
 /// A started playshare: the hub, its listeners and the tunnel.
@@ -130,6 +134,7 @@ impl Running {
         let token = crate::util::hex::encode(&crate::crypto::ring::random_array::<16>()?);
         let hub = Hub::new(bundle, token, backend, stop.clone());
         hub.set_resolution(opts.resolution);
+        hub.dev.store(opts.dev, Ordering::Relaxed);
         let _ = hub.events.set(events);
         let _ = hub.shortlinks.set(shortlink::ShortLinks::from_env(
             opts.no_short_link,
