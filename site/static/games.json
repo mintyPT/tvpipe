@@ -24,8 +24,8 @@
       "source": "gh:mitsuhiko/tvpipe/jinx@jinx-v*",
       "home": "https://github.com/mitsuhiko/tvpipe/tree/main/games/jinx",
       "screenshots": [
-        { "src": "static/games/jinx/tv-reveal.png", "alt": "The TV: two clue cards turned, the others face down, the guess being typed on a label tape", "kind": "tv" },
-        { "src": "static/games/jinx/phone-guess.png", "alt": "The guesser's phone: the turned clues, the cards left, the guess being typed", "kind": "phone" },
+        { "src": "static/games/jinx/tv-reveal.png", "alt": "The TV: four clue cards turned (CAPE, GARLIC, TWILIGHT, COFFIN), a bold one still face down, the guess VAMPIRE being typed on a label tape", "kind": "tv" },
+        { "src": "static/games/jinx/phone-guess.png", "alt": "The guesser's phone: four clues turned, the bold card left face down, five cards survived and two jinxed, VAMPIRE being typed", "kind": "phone" },
         { "src": "static/games/jinx/phone-lobby.png", "alt": "Drawing your face for the table on a phone, the players listed below", "kind": "phone" }
       ]
     },

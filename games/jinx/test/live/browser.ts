@@ -41,7 +41,15 @@ export class Tab {
     };
   }
 
+  readonly #listeners = new Map<string, (params: any) => void>();
+
+  /** Calls `fn` with each event `method` (one listener per event). */
+  on(method: string, fn: (params: any) => void): void {
+    this.#listeners.set(method, fn);
+  }
+
   #event(method: string, params: any): void {
+    this.#listeners.get(method)?.(params);
     if (method === "Runtime.exceptionThrown") {
       const d = params.exceptionDetails;
       this.errors.push(`page error: ${d.exception?.description ?? d.text} (${d.url ?? ""}:${d.lineNumber})`.slice(0, 600));

@@ -13,12 +13,17 @@
  * screen), the secrecy of the word on the TV, and every tab's console for
  * errors.
  *
- *   npm run build && node test/live/play.ts [--bots N] [--rounds auto|1|2] [--out DIR] [--shots DIR]
+ *   npm run build && node test/live/play.ts [--bots N] [--rounds auto|1|2] [--lang en|de] [--out DIR] [--shots DIR]
+ *
+ * `--lang de`: the room in German (the host page's Language setting), the
+ * phone's browser in German, German clues and guesses; screenshots in
+ * /tmp/jinx-live-de.
  *
  * `--shots DIR`: the pictures for the games list (docs/game-catalog.md)
  * into DIR: `tv-reveal` (the TV page), `phone-lobby` and `phone-guess`;
- * the game ends there. The other players then have people's names and
- * are not marked as bots on the TV. With `--bots 7` the table is full:
+ * the game ends there. The round is then a fixed one (`scenario.ts`: the
+ * word, the other players' names, faces and clues, the cards Phil turns),
+ * the other players not marked as bots on the TV. With `--bots 7` the table is full:
  *
  *   node test/live/play.ts --bots 7 --shots ../../site/static/games/jinx
  *
@@ -32,17 +37,25 @@ import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
+import { CATEGORY_DE } from "../../game/bots.ts";
 import { Browser, type Tab } from "./browser.ts";
+import * as scenario from "./scenario.ts";
 import { keep } from "./shots.ts";
 
 const { values: args } = parseArgs({
   options: {
     bots: { type: "string", default: "3" },
     rounds: { type: "string", default: "1" },
-    out: { type: "string", default: "/tmp/jinx-live" },
+    out: { type: "string" },
     shots: { type: "string" },
+    lang: { type: "string", default: "en" },
   },
 });
+const de = args.lang === "de";
+/** The phone's texts that the checks look for, per language. */
+const texts = de
+  ? { fate: /überlebt|gejinxt/i, result: /richtig!|daneben|hat's|gepasst|alle weg/i, again: /nochmal/i, over: "vorbei" }
+  : { fate: /survived|jinxed/i, result: /right!|not it|got it|missed it|passed|all jinxed/i, again: /again/i, over: "over" };
 
 const here = new URL("../../", import.meta.url);
 const repo = new URL("../../", here);
@@ -52,7 +65,7 @@ const binary =
   ["release", "debug"].map((p) => fileURLToPath(new URL(`target/${p}/${exe}`, repo))).find((p) => existsSync(p));
 if (!binary) throw new Error("build tvpipe first (cargo build --release -p tvpipe-cli)");
 const bundle = fileURLToPath(here);
-const out = args.out;
+const out = args.out ?? (de ? "/tmp/jinx-live-de" : "/tmp/jinx-live");
 mkdirSync(out, { recursive: true });
 if (args.shots) mkdirSync(args.shots, { recursive: true });
 const nBots = Number(args.bots);
@@ -132,11 +145,11 @@ async function timing(win: Tab, phone: Tab): Promise<void> {
       if (!e) continue;
       const ms = w.to - t;
       const say = (what: string) => problem(`timing: round ${w.round}: the phone showed ${what} ${ms} ms early: ${JSON.stringify(e.text.slice(0, 80))}`);
-      if (w.what === "jinx" && (e.fate || /survived|jinxed/i.test(e.text))) {
+      if (w.what === "jinx" && (e.fate || texts.fate.test(e.text))) {
         say("the jinx fate");
         break;
       }
-      if (w.what === "verdict" && (e.result || /right!|not it|got it|missed it|passed|all jinxed/i.test(e.text))) {
+      if (w.what === "verdict" && (e.result || texts.result.test(e.text))) {
         say("the result");
         break;
       }
@@ -146,7 +159,7 @@ async function timing(win: Tab, phone: Tab): Promise<void> {
       }
     }
     const after = ph.filter((e) => e.at >= w.to && e.at < w.to + 4000);
-    if (w.what === "jinx" && after.some((e) => e.fate || /survived/i.test(e.text))) seenFate++;
+    if (w.what === "jinx" && after.some((e) => e.fate || texts.fate.test(e.text))) seenFate++;
     if (w.what === "verdict" && after.some((e) => e.result)) seenResult++;
   }
   const jinxes = windows.filter((w) => w.what === "jinx").length;
@@ -159,6 +172,7 @@ try {
   // The window: the launcher first.
   const win = await browser.open(start, { width: 1280, height: 800 });
   tabs.push(["host window", win]);
+  if (args.shots) await scenario.deal(win);
   await win.until(`document.querySelectorAll("#devices .device").length > 0`);
   await sleep(1500); // a discovery round: real TVs show up too
   await win.screenshot(`${out}/launcher.png`);
@@ -175,6 +189,9 @@ try {
     `(() => { const r = document.getElementById("rounds"); r.value = ${JSON.stringify(args.rounds)}; r.dispatchEvent(new Event("change")); const w = document.getElementById("write"); w.value = "30"; w.dispatchEvent(new Event("change")); return true; })()`,
   );
   await win.until(`jinx.game.rounds === ${JSON.stringify(args.rounds === "auto" ? "auto" : Number(args.rounds))} && jinx.game.timings.write === 30000`);
+  // The room's language, as the host page sets it (German needs its word list).
+  await win.eval(`(() => { const l = document.getElementById("lang"); l.value = ${JSON.stringify(args.lang)}; l.dispatchEvent(new Event("change")); return true; })()`);
+  await win.until(`jinx.game.lang === ${JSON.stringify(args.lang)}`, 5000);
   const links = await win.eval<{ join: string; watch: string; code: string }>(`({ join: jinx.party.links.join, watch: jinx.party.links.watch, code: jinx.party.code })`);
   log(`room ${links.code}, phones join at ${links.join.replace(/#.*/, "#k=…")}`);
   // The TV: the browser receiver's player page, once the cast streams.
@@ -188,7 +205,7 @@ try {
   tabs.push(["tv page", screen]);
   // A phone (through the phones' listener, as the QR code says).
   const PHONE = { width: 390, height: 844, mobile: true };
-  const phone = await browser.open(links.join, { ...PHONE, locale: "en-US" });
+  const phone = await browser.open(links.join, { ...PHONE, locale: de ? "de-DE" : "en-US" });
   tabs.push(["phone", phone]);
   await phone.until(`!!document.getElementById("name")`, 20_000);
   await phone.screenshot(`${out}/phone-join.png`);
@@ -201,32 +218,20 @@ try {
     `(() => { const r = document.querySelector("canvas.pad").getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width }; })()`,
   );
   const pt = (a: number, b: number): [number, number] => [box.x + a * box.w, box.y + b * box.w];
-  await phone.drag([pt(0.36, 0.38), pt(0.38, 0.42), pt(0.36, 0.44)]);
-  await phone.drag([pt(0.62, 0.38), pt(0.64, 0.42), pt(0.62, 0.44)]);
-  await phone.drag(Array.from({ length: 14 }, (_, i) => pt(0.3 + (0.4 * i) / 13, 0.62 + 0.1 * Math.sin((i / 13) * Math.PI))));
-  await win.until(`jinx.party.screen.peek().people?.find((p) => p.name === "Phil")?.face?.strokes?.length === 3`);
-  log("phone: drew a face (3 strokes on the TV's view)");
+  if (args.shots) await scenario.drawPhil(phone, box);
+  else {
+    await phone.drag([pt(0.36, 0.38), pt(0.38, 0.42), pt(0.36, 0.44)]);
+    await phone.drag([pt(0.62, 0.38), pt(0.64, 0.42), pt(0.62, 0.44)]);
+    await phone.drag(Array.from({ length: 14 }, (_, i) => pt(0.3 + (0.4 * i) / 13, 0.62 + 0.1 * Math.sin((i / 13) * Math.PI))));
+  }
+  const faceStrokes = args.shots ? scenario.PHIL.length : 3;
+  await win.until(`jinx.party.screen.peek().people?.find((p) => p.name === "Phil")?.face?.strokes?.length === ${faceStrokes}`);
+  log(`phone: drew a face (${faceStrokes} strokes on the TV's view)`);
 
   // Bots, as the host page adds them; for the pictures with people's names and unmarked (no dashed rim on the TV).
   if (args.shots) {
-    await win.eval(`(async () => {
-      const at = (path) => new URL(path, location.href).href;
-      const { bots } = await import(at("../game/bots.js"));
-      const { parseWordList } = await import(at("../game/match.js"));
-      const words = parseWordList(await (await fetch(at("../data/words.txt"))).text());
-      const dict = words.map((w) => w.word).filter((w) => /^[a-z]{4,8}$/.test(w));
-      globalThis.__people = await bots(${nBots}, {
-        url: (location.protocol === "https:" ? "wss:" : "ws:") + "//" + location.host + "/_tvpipe/ws",
-        room: jinx.party.code,
-        key: jinx.party.joinKey,
-        names: ["Mia", "Jonas", "Lena", "Sam", "Noah", "Zoe", "Ben"],
-        think: () => 800 + Math.random() * 3000,
-        peek: () => jinx.game.secret,
-        words,
-        dict,
-      });
-      return true;
-    })()`);
+    if (nBots !== scenario.PLAYERS.length || de) throw new Error(`--shots plays scenario.ts (in English): --bots ${scenario.PLAYERS.length}`);
+    await win.eval(scenario.joinScript());
     await win.until(`jinx.party.players.length >= ${nBots + 1}`);
   }
   for (let left = args.shots ? 0 : nBots; left > 0; ) {
@@ -372,14 +377,16 @@ try {
     );
   // The words' categories (the bots write them now and then): the phone writes one too, to jinx with a bot.
   const category = new Map(
-    readFileSync(new URL("dist/data/words.txt", here), "utf8")
+    readFileSync(new URL(`dist/data/${de ? "words.de.txt" : "words.txt"}`, here), "utf8")
       .split("\n")
       .map((l) => l.split("\t"))
       .filter((f) => f.length >= 3)
-      .map((f) => [f[0]!, f[2]!]),
+      .map((f) => [f[0]!, de ? (CATEGORY_DE[f[2]!] ?? f[2]!) : f[2]!]),
   );
   let writeRounds = 0;
-  const clueWords = ["galaxy", "whisper", "pickle", "lantern", "velvet", "thunder", "compass", "biscuit", "orbit", "meadow"];
+  const clueWords = de
+    ? ["Galaxie", "Flüstern", "Gurke", "Laterne", "Samt", "Donner", "Kompass", "Keks", "Umlaufbahn", "Wiese"]
+    : ["galaxy", "whisper", "pickle", "lantern", "velvet", "thunder", "compass", "biscuit", "orbit", "meadow"];
   let clueN = 0;
   let boldDone = false;
   let rejected = false;
@@ -435,19 +442,23 @@ try {
     await phone.until(`!!document.querySelector(".cards") && document.querySelectorAll(".cards .card").length > 0`, 10_000);
     await shot(`${at}-reveal-start`);
     const cards = await phone.eval<number>(`document.querySelectorAll(".cards .card").length`);
-    const turn = Math.min(cards, 2);
+    const turn = args.shots ? scenario.TURN.length : Math.min(cards, 2);
     for (let i = 0; i < turn; i++) {
       await phone.until(`!!document.querySelector(".cards button.card.down:not([disabled])")`);
-      await phone.eval(`document.querySelector(".cards button.card.down").click(); true`);
+      // The scenario's cards by author, else the first face-down one.
+      const by = args.shots ? JSON.stringify(scenario.TURN[i]) : "null";
+      await phone.eval(`[...document.querySelectorAll(".cards button.card.down")].find((b) => ${by} === null || b.querySelector(".who")?.textContent === ${by}).click(); true`);
       await phone.until(`document.querySelectorAll(".cards .card.turned").length === ${i + 1}`);
       await win.until(`jinx.party.screen.peek().cards?.filter((c) => c.turned).length === ${i + 1}`);
       log(`phone: turned card ${i + 1} of ${cards}: "${await phone.eval<string>(`[...document.querySelectorAll(".cards .card.turned .word")].at(-1).textContent`)}"`);
       if (i === 0) await shot(`${at}-reveal-turned`, { wait: 2500 });
     }
     const secret = (await state()).secret!;
+    if (args.shots && secret !== scenario.WORD) problem(`shots: the word is "${secret}", not the scenario's "${scenario.WORD}" (dealt from ${scenario.dealt.join(", ") || "no list"})`);
     // The first time right (a wrong letter first, deleted), later a wrong guess.
     const right = guesserRounds === 1;
-    const guess = right ? secret : secret === "elephant" ? "giraffe" : "elephant";
+    const [wrong1, wrong2] = de ? ["Elefant", "Giraffe"] : ["elephant", "giraffe"];
+    const guess = right ? secret : secret === wrong1 ? wrong2 : wrong1;
     await phone.eval(`document.querySelector("input.tape-field").focus(); true`);
     const half = Math.ceil(guess.length / 2);
     await phone.type(guess.slice(0, half), 150);
@@ -542,7 +553,7 @@ try {
         await shot(`${at}-end-${s.step}`, { wait: s.step === "web" ? 7000 : s.step === "room" ? 3500 : 5000 });
         if (s.step === "web" && !again) {
           again = true;
-          await phone.until(`(() => { const b = [...document.querySelectorAll("#dock button.primary")].find((b) => !b.hidden); return b && /again/i.test(b.textContent); })()`, 10_000);
+          await phone.until(`(() => { const b = [...document.querySelectorAll("#dock button.primary")].find((b) => !b.hidden); return b && ${texts.again}.test(b.textContent); })()`, 10_000);
           await phone.eval(`[...document.querySelectorAll("#dock button.primary")].find((b) => !b.hidden).click(); true`);
           log("phone: Play again");
           games = 2;
@@ -560,7 +571,7 @@ try {
   reportErrors();
   await win.eval(`document.getElementById("quit").click(); true`);
   const code = await Promise.race([exited, new Promise<string>((r) => setTimeout(() => r("still running"), 15_000))]);
-  await phone.until(`document.body.innerText.toLowerCase().includes("over")`, 5000).catch(() => {});
+  await phone.until(`document.body.innerText.toLowerCase().includes(${JSON.stringify(texts.over)})`, 5000).catch(() => {});
   await phone.screenshot(`${out}/phone-after-end.png`);
   log(`tvpipe exited: ${code}; the phone says: ${(await phone.eval<string>(`document.body.innerText.slice(0, 80)`)).replace(/\n/g, " / ")}`);
   if (code !== 0) failed = true;
