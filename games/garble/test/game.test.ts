@@ -101,6 +101,26 @@ test("a whole game with 4 players", async () => {
   }
 });
 
+test("a whole game with 3 players: two layers, then the last guess", async () => {
+  const { players, phases, rounds, g, close } = await game(3);
+  try {
+    const end = new Promise<{ score: number }[]>((r) => g.once("end", r));
+    await players[0]!.client.act("start");
+    const table = await end;
+    assert.equal(table.length, 3);
+    assert.equal(phases.filter((p) => p === "play").length, 3, "3 players: 2 layers, then the last guess");
+    assert.equal(phases.at(-1), "final");
+    assert.deepEqual(
+      players.map((b) => b.errors),
+      [[], [], []],
+    );
+    for (const p of rounds[0]!.pictures) assert.equal(p.layers.length, 2);
+  } finally {
+    for (const b of players) b.close();
+    close();
+  }
+});
+
 test("pictures: who draws and guesses which layer, the words, the verdicts", async () => {
   const { g, players, rounds, close } = await game(7, { length: 7 });
   try {

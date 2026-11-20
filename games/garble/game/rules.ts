@@ -269,7 +269,7 @@ export function dealPicture(deck: Deck<Word>, layers: number, lang: Lang = "en")
 
 /** Layers per picture the room can pick: short, normal, long. */
 export const LENGTHS = [3, 5, 7] as const;
-export const MIN_PLAYERS = 4;
+export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 12;
 
 /**

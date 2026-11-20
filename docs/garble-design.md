@@ -1,6 +1,6 @@
 # Garble (design)
 
-A drawing game for 4–12 players in `games/garble`: a web app on
+A drawing game for 3–12 players in `games/garble`: a web app on
 `@tvpipe/party`, like `games/drawbluff`. One picture per player goes
 round the table, and everyone has to turn it into something else by
 drawing **on top** of it. Nothing is ever erased: a cat becomes a

@@ -33,7 +33,7 @@
       "name": "garble",
       "title": "Garble",
       "summary": "One picture each goes round the table: guess what it is now, then draw your word on top of it; nothing is ever erased",
-      "players": { "min": 4, "max": 12 },
+      "players": { "min": 3, "max": 12 },
       "languages": ["en", "de"],
       "source": "gh:mitsuhiko/tvpipe/garble@garble-v*",
       "home": "https://github.com/mitsuhiko/tvpipe/tree/main/games/garble",

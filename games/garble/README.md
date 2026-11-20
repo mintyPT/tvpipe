@@ -1,7 +1,7 @@
 # Garble
 
 A drawing game (our own rules, names and look) on
-[`@tvpipe/party`](../../npm/party), for 4–12 players. One picture per
+[`@tvpipe/party`](../../npm/party), for 3–12 players. One picture per
 player goes round the table, and everyone has to turn it into something
 else by drawing **on top** of it. Nothing is ever erased: a cat becomes
 a submarine becomes a hedgehog, and the TV replays how.
@@ -38,7 +38,7 @@ phones join with the QR code.
 
 | | | |
 |---|---|---|
-| `tvpipe.json` | the manifest | pages, 4–12 players, the TV's size; `root: dist` |
+| `tvpipe.json` | the manifest | pages, 3–12 players, the TV's size; `root: dist` |
 | `game/` | the rules (`rules.ts`: drawings, the word lists and the matcher, seating, decks, points), the game (`game.ts`), bots (`bots.ts`) | TypeScript on `@tvpipe/party`, tested in Node |
 | `host/` | the host page | the party, the TVs, the players, settings, a preview of the TV; `strings.ts` |
 | `screen/` | the TV page | the lobby, the ring of players passing their pages, the reveal, the gallery and the best move, the ledger, the podium; `strings.js` |

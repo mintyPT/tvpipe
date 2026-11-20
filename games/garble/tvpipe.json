@@ -8,6 +8,6 @@
     "tv": "screen/index.html",
     "phone": "phone/index.html"
   },
-  "players": { "min": 4, "max": 12 },
+  "players": { "min": 3, "max": 12 },
   "tv": { "width": 1280, "height": 720 }
 }

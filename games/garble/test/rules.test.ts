@@ -157,10 +157,10 @@ test("languages", () => {
 });
 
 test("the seating: every step a permutation, no picture visits anyone twice", () => {
-  for (let n = 4; n <= 12; n++) {
+  for (let n = 3; n <= 12; n++) {
     for (const len of [3, 5, 7]) {
       const layers = layerCount(n, len);
-      assert.ok(layers <= len && layers <= n - 1 && layers >= 3, `${n} players, length ${len}: ${layers}`);
+      assert.ok(layers <= len && layers <= n - 1 && layers >= Math.min(3, n - 1), `${n} players, length ${len}: ${layers}`);
       // Steps 0 … layers: the drawers of layers 1 … L, then the last guesser.
       for (let k = 0; k <= layers; k++) {
         const seats = new Set<number>();
@@ -178,6 +178,7 @@ test("the seating: every step a permutation, no picture visits anyone twice", ()
       }
     }
   }
+  assert.equal(layerCount(3, 5), 2);
   assert.equal(layerCount(4, 5), 3);
   assert.equal(layerCount(6, 5), 5);
   assert.equal(layerCount(12, 7), 7);

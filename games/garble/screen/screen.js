@@ -373,7 +373,7 @@ function lobby() {
       short.hidden = !text;
       const roster = /** @type {any[]} */ (v.roster ?? []);
       const max = s.maxPlayers ?? 12;
-      const min = s.minPlayers ?? 4;
+      const min = s.minPlayers ?? 3;
       count.textContent = `${roster.length} / ${max}`;
       /** @type {HTMLElement[]} */
       const kids = [];

@@ -362,7 +362,7 @@ function lobby() {
     const v = client.view;
     const roster = v.roster ?? [];
     const vip = isVip();
-    const min = v.room?.minPlayers ?? 4;
+    const min = v.room?.minPlayers ?? 3;
     const ready = roster.filter((/** @type {any} */ r) => r.connected).length;
     list.replaceChildren(
       ...roster.map((/** @type {any} */ r) =>

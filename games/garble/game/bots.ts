@@ -142,7 +142,7 @@ export class Bot {
         if (me.task === "final") this.#handled.clear();
         const vip = (view["roster"] ?? []).find((r: { id: string }) => r.id === c.you?.id)?.vip;
         const ready = (view["roster"] ?? []).filter((r: { connected: boolean }) => r.connected).length;
-        if (this.#o.autoStart && vip && me.task === "lobby" && ready >= (room.minPlayers ?? 4)) this.#once(`start:${ready}`, () => c.act("start"));
+        if (this.#o.autoStart && vip && me.task === "lobby" && ready >= (room.minPlayers ?? 3)) this.#once(`start:${ready}`, () => c.act("start"));
         return;
       }
       case "draw":
