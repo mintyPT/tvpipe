@@ -1,0 +1,169 @@
+secret	clue	reason
+Eis	Eisdiele	contains the word
+Eis	Eisbär	contains the word
+Eis	Eiswürfel	contains the word
+Eis	Eiszeit	contains the word
+Zug	zügig	same family
+Zug	Zugbrücke	contains the word
+Ton	Ton-Art	contains the word
+Ton	Anton	contains the word
+Tisch	Esstisch	contains the word
+Tisch	Tischdecke	contains the word
+Tisch	Nachttisch	contains the word
+Tisch	Schreibtisch	contains the word
+Tisch	Tischtennis	contains the word
+Falle	Mausefalle	contains the word
+Falle	fallen	plural
+Falle	Fall	same family
+Falle	Fallschirm	contains the word
+Stern	Sternschnuppe	contains the word
+Stern	Seestern	contains the word
+Stern	Sternzeichen	contains the word
+Stern	Polarstern	contains the word
+Wand	Leinwand	contains the word
+Wand	Wandtafel	contains the word
+Wand	Felswand	contains the word
+Decke	Wolldecke	contains the word
+Decke	Bettdecke	contains the word
+Decke	Zimmerdecke	contains the word
+Decke	entdecken	contains the word
+Decke	Tischdecke	contains the word
+Regen	Regenschirm	contains the word
+Regen	Regenbogen	contains the word
+Regen	aufregend	contains the word
+Regen	regnen	same family
+Regen	Regenwurm	contains the word
+Tor	Torwart	contains the word
+Tor	Goal	too close
+Tor	Garagentor	contains the word
+Tor	Burgtor	contains the word
+Tee	Teebeutel	contains the word
+Tee	Teenager	contains the word
+Tee	Eistee	contains the word
+Tee	Teelöffel	contains the word
+Tee	Teekanne	contains the word
+rot	Rotwein	contains the word
+rot	rötlich	same family
+rot	Rothaarige	contains the word
+Rad	Fahrrad	contains the word
+Rad	Riesenrad	contains the word
+Rad	Lenkrad	contains the word
+Rad	Mühlrad	contains the word
+Rad	Rad fahren	contains the word
+Arm	Armband	contains the word
+Arm	Unterarm	contains the word
+Arm	Ärmel	same family
+Arm	Armbanduhr	contains the word
+Arm	arm	same word
+Rose	Rosenkohl	contains the word
+Rose	Rosenkranz	contains the word
+Ring	Ehering	contains the word
+Ring	Boxring	contains the word
+Ring	Herr der Ringe	too-many-words
+Ring	Ohrring	contains the word
+Bank	Parkbank	contains the word
+Bank	Bankräuber	contains the word
+Bank	Sitzbank	contains the word
+Bank	Sandbank	contains the word
+Ball	Fußball	contains the word
+Ball	Basketball	contains the word
+Ball	Ballkleid	contains the word
+Ball	Schneeball	contains the word
+Hand	Handschuh	contains the word
+Hand	Handtasche	contains the word
+Hand	Handball	contains the word
+Hand	Handstand	contains the word
+Hand	Handtuch	contains the word
+Hand	Hände	plural
+Hand	handeln	same family
+Hand	Hand-Schlag	contains the word
+See	Bodensee	contains the word
+See	Seerose	contains the word
+See	Seepferdchen	contains the word
+See	Seemann	contains the word
+See	Ostsee	contains the word
+Reis	Reiskorn	contains the word
+Reis	Milchreis	contains the word
+Reis	Reisfeld	contains the word
+Hut	Sonnenhut	contains the word
+Hut	Strohhut	contains the word
+Hut	Hutmacher	contains the word
+Hut	Hutschnur	contains the word
+Ohr	Ohrring	contains the word
+Ohr	Ohrwurm	contains the word
+Reh	Rehkitz	contains the word
+Reh	Rehbraun	contains the word
+Kuh	Kuhglocke	contains the word
+Bär	Eisbär	contains the word
+Bär	Braunbär	contains the word
+Bär	Pandabär	contains the word
+Bär	Gummibär	contains the word
+Mais	Maiskolben	contains the word
+Mais	Maisfeld	contains the word
+Mais	Mais-Chips	contains the word
+Mais	Kukuruz	too close
+Mais	Mais	same word
+Rock	Minirock	contains the word
+Rock	Schottenrock	contains the word
+Rock	Rockmusik	contains the word
+Rock	Faltenrock	contains the word
+Rock	Rocker	same family
+Uhr	Armbanduhr	contains the word
+Uhr	Kuckucksuhr	contains the word
+Uhr	Sanduhr	contains the word
+Uhr	Turmuhr	contains the word
+Uhr	Uhrzeit	contains the word
+Gold	Goldmedaille	contains the word
+Gold	Goldfisch	contains the word
+Gold	Goldlöckchen	contains the word
+Gold	golden	same family
+Gold	Goldgräber	contains the word
+Sand	Sandburg	contains the word
+Sand	Sandkasten	contains the word
+Sand	Sanduhr	contains the word
+Sand	Sandmann	contains the word
+Wal	Blauwal	contains the word
+Wal	Walfisch	contains the word
+Wal	Wahl	sounds the same
+Wal	Schwertwal	contains the word
+Fee	Zahnfee	contains the word
+Fee	Feen	plural
+Fee	Feenstaub	contains the word
+Bus	Busfahrer	contains the word
+Bus	Schulbus	contains the word
+Bus	Bushaltestelle	contains the word
+Bus	Omnibus	too close
+Bus	Reisebus	contains the word
+Bett	Bettdecke	contains the word
+Bett	Doppelbett	contains the word
+Bett	Hochbett	contains the word
+Bett	Etagenbett	contains the word
+Hai	Weißer Hai	contains the word
+Hai	Haifisch	contains the word
+Herz	Herzschlag	contains the word
+Herz	Herzlich	same family
+Herz	Lebkuchenherz	contains the word
+Herz	Herzinfarkt	contains the word
+Mund	Mundharmonika	contains the word
+Mund	Mundwasser	contains the word
+Mund	Vormund	contains the word
+Mund	Mundgeruch	contains the word
+Nest	Vogelnest	contains the word
+Nest	Osternest	contains the word
+Nest	Nesthocker	contains the word
+Bein	Beinbruch	contains the word
+Bein	Tischbein	contains the word
+Bein	Holzbein	contains the word
+Bein	Bein-Arbeit	contains the word
+Bein	Beine	plural
+Ast	Ast-Gabel	contains the word
+Tal	Talsperre	contains the word
+Tal	Bergtal	contains the word
+Arzt	Doktor	too close
+Arzt	Zahnarzt	contains the word
+Arzt	Tierarzt	contains the word
+Arzt	Notarzt	contains the word
+Hahn	Wasserhahn	contains the word
+Hahn	Gockel	too close
+Hahn	Wetterhahn	contains the word
+Hahn	Hähnchen	same family

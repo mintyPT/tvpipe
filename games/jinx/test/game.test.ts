@@ -5,8 +5,9 @@ import { test } from "node:test";
 import { Party } from "@tvpipe/party";
 import { MemoryRelay } from "@tvpipe/party/testing";
 
-import { Bot, type BotOptions } from "../game/bots.ts";
+import { Bot, CATEGORY_DE, FALLBACK, type BotOptions } from "../game/bots.ts";
 import { Jinx, type Timings } from "../game/game.ts";
+import { matcher } from "../game/lang.ts";
 import { dictionary, parseWordList } from "../game/match.ts";
 import { seeded } from "../game/rules.ts";
 import type { ScreenView } from "../game/views.ts";
@@ -15,6 +16,11 @@ const WORDS = parseWordList(readFileSync(new URL("../data/words.txt", import.met
 const DICT_TEXT = readFileSync(new URL("../data/dict.txt", import.meta.url), "utf8");
 const known = dictionary(DICT_TEXT);
 const DICT = DICT_TEXT.split("\n").filter((w) => /^[a-z]{4,8}$/.test(w));
+
+// German: its own words, dictionary and matcher.
+const de = matcher("de");
+const WORDS_DE = de.parseWordList(readFileSync(new URL(`../data/${de.files.words}`, import.meta.url), "utf8"));
+const MATCH_DE = de.dictionary(readFileSync(new URL(`../data/${de.files.dict}`, import.meta.url), "utf8"));
 
 const fast: Partial<Timings> = {
   hotseat: 10,
@@ -47,10 +53,18 @@ const URL_ = "ws://party.test/_tvpipe/ws";
 
 type BotOpts = Partial<Omit<BotOptions, "url" | "room" | "key" | "name">>;
 
-async function setup(n: number, o: { rounds?: "auto" | 1 | 2; bot?: (i: number) => BotOpts; timings?: Partial<Timings> } = {}) {
+async function setup(n: number, o: { rounds?: "auto" | 1 | 2; bot?: (i: number) => BotOpts; timings?: Partial<Timings>; lang?: "en" | "de"; dealt?: { en?: string[]; de?: string[] } } = {}) {
   const relay = new MemoryRelay();
   const party = new Party({ grace: 100, maxPlayers: 8 }).listen(relay);
-  const g = new Jinx(party, { words: WORDS, known, rounds: o.rounds ?? "auto", timings: { ...fast, ...o.timings }, rng: seeded(n + 1) });
+  const g = new Jinx(party, {
+    lang: o.lang,
+    words: { en: WORDS, de: WORDS_DE },
+    match: { en: { known }, de: MATCH_DE },
+    dealt: o.dealt,
+    rounds: o.rounds ?? "auto",
+    timings: { ...fast, ...o.timings },
+    rng: seeded(n + 1),
+  });
   g.open();
   const phases: string[] = [];
   g.on("phase", (p) => phases.push(p));
@@ -73,8 +87,8 @@ async function setup(n: number, o: { rounds?: "auto" | 1 | 2; bot?: (i: number) 
       rng: seeded(100 + i),
       think: () => 5,
       peek: () => g.secret,
-      words: WORDS,
-      dict: DICT,
+      words: [...WORDS, ...WORDS_DE],
+      dict: { en: DICT },
       ...o.bot?.(i),
     });
     await b.join();
@@ -204,13 +218,13 @@ test("clue checks: too close, own clue, replacing, late; guess rules", async () 
     const guesserId = (party.screen.peek() as { guesser: string }).guesser;
     const [a, b] = players.filter((p) => p.client.you!["id"] !== guesserId);
     const guesser = players.find((p) => p.client.you!["id"] === guesserId)!;
-    await assert.rejects(a!.client.act("clue", { text: word, bold: false, slot: 0 }), (e: { code: string }) => e.code === "too-close");
+    await assert.rejects(a!.client.act("clue", { text: word, bold: false, slot: 0 }), (e: { code: string }) => e.code === "too-close:same word");
     await assert.rejects(a!.client.act("clue", { text: "", bold: false, slot: 0 }), (e: { code: string }) => e.code === "empty");
     await assert.rejects(a!.client.act("clue", { text: "one two three", bold: false, slot: 0 }), (e: { code: string }) => e.code === "too-many-words");
     await assert.rejects(guesser.client.act("clue", { text: "zebra", bold: false, slot: 0 }), (e: { code: string }) => e.code === "not-asked");
     const ok = await a!.client.act("clue", { text: "Zebra", bold: true, slot: 0 });
     assert.deepEqual(ok, { text: "Zebra", bold: true });
-    await assert.rejects(a!.client.act("clue", { text: "zebras", bold: false, slot: 1 }), (e: { code: string }) => e.code === "own-clue");
+    await assert.rejects(a!.client.act("clue", { text: "zebras", bold: false, slot: 1 }), (e: { code: string }) => e.code === "own-clue:plural");
     await a!.client.act("clue", { text: "stripes", bold: false, slot: 0 }); // replaced
     await until(() => a!.client.view["me"]?.sent?.[0]?.text === "stripes");
     assert.equal(guesser.client.view["me"].task, "blind");
@@ -459,6 +473,98 @@ test("no spoilers on phones: fate after the TV's slams, the result after the env
     const last = seq.lastIndexOf("tv");
     assert.ok(last > seq.indexOf("fate") && last < seq.indexOf("result"), seq.join(" "));
     assert.ok(at("result") - tasks[last]!.at >= 400, "the result after the envelope");
+  } finally {
+    close();
+  }
+});
+
+test("a German room: German words, the room and the TV say de, bots write German clues", async () => {
+  const { party, g, players, screens, close } = await setup(4, { lang: "de", rounds: 1 });
+  try {
+    assert.equal(g.lang, "de");
+    assert.deepEqual(g.langs.sort(), ["de", "en"]);
+    assert.equal((party.screen.peek() as { lang: string }).lang, "de");
+    await until(() => players.every((b) => b.client.view["room"]?.lang === "de"));
+    const clues: string[] = [];
+    const dealt: [string[], string][] = [];
+    g.on("dealt", (used, lang) => dealt.push([used, lang]));
+    const end = new Promise((r) => g.once("end", r));
+    await players[0]!.client.act("start");
+    await end;
+    const german = new Set(WORDS_DE.map((w) => w.word));
+    const vs = of(screens, "verdict");
+    assert.equal(vs.length, 4);
+    assert.ok(vs.every((v) => german.has(v.word)), "German words");
+    assert.ok(screens.every((s) => s.lang === "de"));
+    for (const r of of(screens, "replay")) for (const c of r.cards) if (c.word) clues.push(c.word);
+    const allowed = new Set([...Object.values(CATEGORY_DE), ...FALLBACK.de]);
+    assert.ok(clues.length > 0 && clues.every((c) => allowed.has(c)), clues.join(" "));
+    assert.ok(dealt.length === 4 && dealt.every(([, l]) => l === "de"));
+    assert.ok(vs.some((v) => v.result === "right"), "some right guesses");
+    checkSecrecy(screens);
+    assert.deepEqual(
+      players.map((b) => b.errors),
+      [[], [], [], []],
+    );
+  } finally {
+    close();
+  }
+});
+
+test("the language changes between games only; each language keeps its own dealt words", async () => {
+  const enBefore = WORDS.slice(0, 3).map((w) => w.word);
+  const deBefore = WORDS_DE.slice(0, 2).map((w) => w.word);
+  const { party, g, players, screens, close } = await setup(3, { rounds: 1, dealt: { en: enBefore, de: deBefore }, bot: () => ({ clues: "random" }) });
+  try {
+    assert.equal(g.lang, "en");
+    assert.deepEqual(g.dealt, enBefore);
+    const used: Record<string, string[]> = {};
+    g.on("dealt", (u, lang) => (used[lang] = u));
+    g.configure({ lang: "de" });
+    assert.equal(g.lang, "de");
+    assert.deepEqual(g.dealt, deBefore);
+    assert.equal((party.screen.peek() as { lang: string }).lang, "de");
+    await until(() => players.every((b) => b.client.view["room"]?.lang === "de"));
+    g.configure({ lang: "en" });
+    await until(() => players.every((b) => b.client.view["room"]?.lang === "en"));
+    assert.throws(() => g.configure({ lang: "xx" as "de" }), (e: { code: string }) => e.code === "bad-lang");
+    // A game in English: not switchable while it runs.
+    let end = new Promise((r) => g.once("end", r));
+    await players[0]!.client.act("start");
+    await until(() => g.running);
+    assert.throws(() => g.configure({ lang: "de" }), (e: { code: string }) => e.code === "running");
+    await end;
+    const english = of(screens, "verdict").map((v) => v.word);
+    assert.ok(english.every((w) => WORDS.some((x) => x.word === w)));
+    assert.ok(english.every((w) => !enBefore.includes(w)), "no English word dealt before");
+    assert.deepEqual(used["en"]?.slice(0, 3), enBefore);
+    assert.equal(used["de"], undefined);
+    // At the end: German for the next game; the TV and the phones follow at once.
+    g.configure({ lang: "de" });
+    assert.equal((party.screen.peek() as { lang: string; phase: string }).lang, "de");
+    await until(() => players.every((b) => b.client.view["room"]?.lang === "de"));
+    end = new Promise((r) => g.once("end", r));
+    await players[0]!.client.act("again");
+    await end;
+    const german = of(screens, "verdict").slice(english.length).map((v) => v.word);
+    assert.equal(german.length, 3);
+    assert.ok(german.every((w) => WORDS_DE.some((x) => x.word === w)));
+    assert.ok(german.every((w) => !deBefore.includes(w)), "no German word dealt before");
+    assert.deepEqual(used["de"], [...deBefore, ...german]);
+    assert.ok(of(screens, "end").at(-1)!.lang === "de");
+  } finally {
+    close();
+  }
+});
+
+test("a German refusal: the reason in the code, the matcher's message", async () => {
+  const { party, g, players, close } = await setup(3, { lang: "de", rounds: 1, bot: () => ({ silent: true }) });
+  try {
+    await players[0]!.client.act("start");
+    await until(() => g.phase === "write");
+    const guesserId = (party.screen.peek() as { guesser: string }).guesser;
+    const a = players.find((p) => p.client.you!["id"] !== guesserId)!;
+    await assert.rejects(a.client.act("clue", { text: g.secret!, bold: false, slot: 0 }), (e: { code: string; message: string }) => e.code === "too-close:same word" && e.message.length > 0);
   } finally {
     close();
   }

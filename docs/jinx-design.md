@@ -8,7 +8,7 @@ live in `games/jinx` (a web app on `@tvpipe/party`, like
 clue matcher with its tests (`matching/`).
 
 A cooperative word game with personal scores for 3–8 players, in
-English. It takes the general idea of *Just One*: one player guesses a
+English and German (§11). It takes the general idea of *Just One*: one player guesses a
 word from one-word clues, and identical clues cancel. The rest is our
 own: the game decides which clues are the same, the guesser picks
 whose clue to turn, a pot shrinks with every card, clue-givers can bet
@@ -149,7 +149,19 @@ optional, comma-separated). Built and curated in `games/jinx/design/words/`:
   deals no word twice until it dealt them all, across games (the host
   page keeps that in `localStorage`, as Drawbluff does with prompts).
 
+German: `data/words.de.txt`, 1,000 words in the same format and
+categories (`games/jinx/design/words/de/`: 804 translated from the English
+list where they make good German secrets, the rest German everyday words
+like Brezel, Schultüte, Gartenzwerg). The same rules, plus: no words that
+differ between Germany, Austria and Switzerland (Pfannkuchen, Sahne);
+regional names for the same thing are accepted guesses (Stiege for Treppe,
+Nuggi for Schnuller); `banned` holds only translations that are no fair
+German clue.
+
 ### 5.2 When two clues are the same (jinx)
+
+This section is the English matcher; German follows the same rules with
+its own forms (§11, `games/jinx/design/matching/de/SPEC.md`).
 
 The rules are deterministic and run in the host page. Each pair of clues
 is checked in this order; the first rule that applies is the reason the
@@ -365,5 +377,79 @@ difficulty), `screen/` (the TV page), `phone/` (the phone page), `data/`
   guess: play-test them with bots and people.
 - The word family rule's not-derived list will need entries from real
   play ("same family" where players disagree).
-- More languages later: the cleaning is English-specific (number words,
-  plurals, families, the dictionary), the rest of the game is not.
+- Languages: English and German (§11).
+
+## 11. Languages
+
+English and German. A room plays in one language; the matcher, the words
+and the bots are that language's, and so is everything the pages say.
+
+**The room's language.** A host page setting, first the browser's
+language, then the last choice on that computer (`localStorage`); it
+changes only between games (`configure({ lang })` refuses during one).
+The game sends it with the room view and the TV view (`lang`), so every
+phone, the TV and the host page follow at once. A phone may switch for
+itself where rebuilding its screen loses nothing (joining, the lobby,
+the end); it then keeps its own language. A language whose data files
+the host page cannot load (`data/words.de.txt`, `data/dict.de.txt`)
+cannot be picked.
+
+**The words.** Each language has its own list and its own dealt-words
+memory per room (`localStorage`, one key per language): switching to
+German and back does not deal English words again early. Bots write the
+word's category in the room's language ("Tier" for `animal`) or a word
+of that language, and guess in it.
+
+**The clues.** German needs more than English's rules (`games/jinx/design/matching/de/SPEC.md`):
+every noun has its own plural (Hund/Hunde, Haus/Häuser, Museum/Museen),
+strong verbs change their vowel (laufen, lief, gelaufen), adjectives decline
+and compare (rot, rote, röter), and an ending that is stripped by rule finds
+Reis in Reise or Schal in Schale. So the German matcher (`game/match-de.ts`)
+reads word forms from a lexicon built from the German Wiktionary
+(`data/dict.de.txt`: 47,500 common lemmas with their forms and which word
+derives from which, 343 KB gzipped, CC BY-SA 4.0, loaded only by the host
+page), and its rules do what a lexicon cannot:
+
+- **Compounds**, which German writes as one word and invents on the spot:
+  an unknown word is read as a known first part (with its Fugen: Sonne-n-,
+  Arbeit-s-, Kind-er-) and a known head, and inflects like its head
+  (Schneemänner is Schneemann's plural because Männer is Mann's). A clue
+  that contains the secret as a compound part is rejected (Sonnenblume for
+  Sonne, Schnee for Schneemann); two clues that share a part do not jinx.
+- **Spellings**: ä ö ü ß stay in the key; Baer, Strasse, Delphin or a
+  missing umlaut on a phone (Schlussel) are another spelling, but two real
+  words are never one (Bar/Bär, schon/schön). Typos are measured on a QWERTZ
+  keyboard.
+- **Reasons** are the English ones plus "word form" (declension and
+  comparison: rot/rote, gut/besser); guesses also accept the female form of
+  a job or animal (Lehrerin for Lehrer).
+
+**The pages' texts.** One string table per page (`phone/strings.js`,
+`screen/strings.js`, `host/strings.ts`) with numbers, plurals and lists
+by `Intl`. German is written for German speakers, not translated word
+for word: "du", „Anführungszeichen“, "Platz 2 von 5", the same cheeky
+host on the tape ("Oh-oh. *Zwei Dumme, ein Gedanke…*", "So nah dran.
+SO DANEBEN."), German stamps (RICHTIG!, DANEBEN, GEPASST, SAUBER!,
+UNGÜLTIG, EINGELOGGT); JINX! stays the game's word. The reasons on the
+tape: GLEICHES WORT, GLEICHE ZAHL, ANDERE SCHREIBWEISE, PLURAL, VERBFORM,
+ANDERE FORM (declension, adjective endings), WORTFAMILIE, TIPPFEHLER,
+KLINGT GLEICH, ENTHÄLT DAS WORT, TEIL DES WORTES. Room titles:
+Telepathen, Gedankenleser, Eingespielt, Funkstörung, Totaler Jinx;
+awards: Seelenverwandt, Einzelgänger, Kamikaze.
+
+**Refusals.** A refused clue carries its reason in the code
+(`too-close:plural`, `own-clue:verb form`) and the matcher's message in
+the room's language: a phone in the room's language shows the message, a
+phone that switched says it from the code. Every other refusal is shown
+by its code in the phone's language.
+
+**Long words.** German compounds are long ("Geburtstagskuchen",
+"Feuerwehrauto"; clues up to 24 characters). Every page sets `lang` on
+its document for hyphenation. On the TV, card words shrink to 24 px,
+then condense (§7.4), the envelope's word fits beside the verdict stamp,
+the word web's and the end's cards condense further; one-line texts are
+fitted, never wrapped. On the phone the index card's word condenses to
+60 %, a card word that still does not fit breaks onto a second line with
+a hyphen, and running text hyphenates; titles break between words only.
+The live check (`--lang de`) plays a German room with layout checks at
+390 and 320 px and on the TV page.

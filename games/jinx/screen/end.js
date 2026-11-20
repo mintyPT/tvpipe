@@ -15,6 +15,7 @@ import { A, EASE, clamp, fitText, h, hm, short, svg } from "./dom.js";
 import { confetti, dust, shake, stampAt } from "./fx.js";
 import { INK, chip } from "./pieces.js";
 import { sfx } from "./sound.js";
+import { t as tr } from "./strings.js";
 
 /**
  * @param {Ctx} ctx
@@ -70,12 +71,12 @@ function tab(box, text) {
  * @param {Ctx} ctx @param {HTMLElement} box @param {EndScreen} v @param {boolean} anim
  */
 function room(ctx, box, v, anim) {
-  tab(box, "Game over · the room");
+  tab(box, tr.endRoom);
   const t = v.tally;
   const tiles = h("div", { class: "bigtiles", style: "top:104px" });
   const tilesOf = (/** @type {number} */ n) => [...String(n)].map((d) => h("div", { class: "tile" }, d));
-  tiles.append(...tilesOf(t.found), h("div", { class: "of" }, "of"), ...tilesOf(t.played));
-  box.append(tiles, h("div", { class: "caption", style: "top:270px" }, "words found together"));
+  tiles.append(...tilesOf(t.found), h("div", { class: "of" }, tr.of), ...tilesOf(t.played));
+  box.append(tiles, h("div", { class: "caption", style: "top:270px" }, tr.wordsTogether));
   const rots = [-3, 2, -2, 3, -1];
   [...tiles.children].forEach((el, i) => {
     const e = /** @type {HTMLElement} */ (el);
@@ -102,13 +103,14 @@ function room(ctx, box, v, anim) {
     const c = h("div", { class: `mc ${w.found ? "won" : "lost"}`, style: `left:${x}px;top:${y}px;width:${cw}px;height:${ch}px;transform:rotate(${a}deg);z-index:${i}` }, h("span", null, w.word.toUpperCase()));
     box.append(c);
     const span = /** @type {HTMLElement} */ (c.firstElementChild);
-    fitText(span, perRow === 6 ? 26 : 30, 24, cw - 20);
+    // long compounds ("GEBURTSTAGSKUCHEN") condense further than clue cards: the card is small
+    fitText(span, perRow === 6 ? 26 : 30, 24, cw - 20, 0.55);
     if (anim) {
       A(c, [{ transform: `translate(${640 - x - cw / 2}px,420px) rotate(${a * 8}deg)` }, { transform: `rotate(${a}deg)` }], 480, { delay: 900 + i * 80 });
       ctx.later(900 + i * 80, sfx.slide);
     }
   });
-  const title = `${v.title}!`;
+  const title = tr.titles[v.title] ?? `${v.title}!`;
   const sy = Math.min(640, top + rowsN * (ch + 20) + 46);
   if (anim) {
     ctx.later(1100 + words.length * 80, () => {
@@ -119,31 +121,23 @@ function room(ctx, box, v, anim) {
   } else stampAt(box, 640, sy, title, { cls: "gold", rot: -4, size: 60, anim: false });
 }
 
-/** "41 points · 3 MVP clues · never jinxed" @param {NonNullable<EndScreen["mvp"]>} m */
-function mvpStats(m) {
-  const s = [`${m.score} points`];
-  if (m.mvpClues) s.push(m.mvpClues === 1 ? "1 MVP clue" : `${m.mvpClues} MVP clues`);
-  s.push(m.jinxed === 0 ? "never jinxed" : m.jinxed === 1 ? "jinxed once" : `jinxed ${m.jinxed} times`);
-  return s.join(" · ");
-}
-
 /**
  * @param {Ctx} ctx @param {HTMLElement} box @param {EndScreen} v @param {boolean} anim
  */
 function mvp(ctx, box, v, anim) {
-  tab(box, "Game over · MVP of the night");
+  tab(box, tr.endMvp);
   const m = v.mvp;
   ctx.pool.to(640, 330, 250, anim);
   const ped = h("div", { class: "pedestal", style: "left:490px;top:396px" });
   box.append(ped);
   if (!m) {
-    box.append(h("div", { class: "caption", style: "top:520px;font-size:34px" }, "Nobody scored tonight. ", h("b", null, "Impressive, in a way.")));
+    box.append(h("div", { class: "caption", style: "top:520px;font-size:34px" }, tr.nobodyTonight[0], h("b", null, tr.nobodyTonight[1])));
     return;
   }
   const p = ctx.person(m.id);
   const t = chip(p, 220, { style: "left:530px;top:196px;z-index:5" });
-  const rib = h("div", { class: "ribbon", style: "top:508px;z-index:6" }, "MVP OF THE NIGHT");
-  const cap = h("div", { class: "caption", style: "top:612px;font-size:32px" }, h("b", null, short(p?.name, 16)), ` · ${mvpStats(m)}`);
+  const rib = h("div", { class: "ribbon", style: "top:508px;z-index:6" }, tr.mvpOfNight);
+  const cap = h("div", { class: "caption", style: "top:612px;font-size:32px" }, h("b", null, short(p?.name, 16)), ` · ${tr.mvpStats(m)}`);
   box.append(t, rib, cap);
   if (!anim) return;
   A(ped, [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], 300, { delay: 300, easing: EASE.back });
@@ -175,22 +169,14 @@ const ICONS = {
   kamikaze: `<svg viewBox="0 0 110 90"><circle cx="50" cy="54" r="30" fill="${INK}"/><path d="M68 30 Q80 14 92 18" stroke="${INK}" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M92 6 L95 15 L104 14 L97 20 L102 28 L93 24 L88 31 L88 21 L80 18 L89 15 Z" fill="#f6b93b" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/><circle cx="40" cy="44" r="7" fill="#fbf1dc" opacity=".6"/></svg>`,
 };
 
-/** @param {Award} a */
-function awardStat(a) {
-  const n = a.count;
-  if (a.kind === "mind meld") return n === 1 ? "jinxed each other once" : `jinxed each other ${n} times`;
-  if (a.kind === "lone wolf") return n === 1 ? "1 one-of-a-kind clue that got turned" : `${n} one-of-a-kind clues that got turned`;
-  return n === 1 ? "lost a clue to a jinx (and kept going)" : `lost ${n} clues to jinxes (and kept going)`;
-}
-
 /**
  * @param {Ctx} ctx @param {HTMLElement} box @param {EndScreen} v @param {boolean} anim
  */
 function awards(ctx, box, v, anim) {
-  tab(box, "Game over · awards");
+  tab(box, tr.endAwards);
   const list = v.awards.slice(0, 3);
   if (list.length === 0) {
-    box.append(h("div", { class: "caption", style: "top:320px;font-size:36px" }, "No awards tonight. ", h("b", null, "Too evenly matched.")));
+    box.append(h("div", { class: "caption", style: "top:320px;font-size:36px" }, tr.noAwards[0], h("b", null, tr.noAwards[1])));
     return;
   }
   const xs = list.length === 3 ? [110, 480, 850] : list.length === 2 ? [295, 665] : [480];
@@ -201,15 +187,17 @@ function awards(ctx, box, v, anim) {
     const y = 140;
     const tilt = (i - (list.length - 1) / 2) * 2;
     const burst = h("div", { class: "burst", style: `left:${x + 160 - 260}px;top:${y + 230 - 260}px;transform:scale(${anim ? 0 : 1})` });
-    const names = a.ids.map((id) => short(ctx.person(id)?.name, 10)).join(" & ");
+    const names = a.ids.map((id) => short(ctx.person(id)?.name, 10)).join(tr.and);
     const el = h("div", { class: `award${anim ? "" : " up"}`, style: `left:${x}px;top:${y}px;transform:rotate(${tilt}deg)` },
       h("div", { class: "flip" },
-        h("div", { class: "face front" }, h("h3", null, a.kind), hm("div", { class: "icon" }, ICONS[a.kind] ?? ""), h("div", { class: "winners" }, ...a.ids.slice(0, 2).map((id) => chip(ctx.person(id), 68, { style: "position:relative" }))), h("div", { class: "names" }, names), h("div", { class: "stat" }, awardStat(a))),
+        h("div", { class: "face front" }, h("h3", null, tr.awards[a.kind] ?? a.kind), hm("div", { class: "icon" }, ICONS[a.kind] ?? ""), h("div", { class: "winners" }, ...a.ids.slice(0, 2).map((id) => chip(ctx.person(id), 68, { style: "position:relative" }))), h("div", { class: "names" }, names), h("div", { class: "stat" }, tr.awardStat(a))),
         h("div", { class: "face back" }, h("b", null, "?"))));
     bursts.append(burst);
     box.append(el);
     const nm = /** @type {HTMLElement} */ (el.querySelector(".names"));
     fitText(nm, 30, 24, 280, 0.7);
+    // "Seelenverwandt", "Einzelgänger": the title fits the card
+    fitText(/** @type {HTMLElement} */ (el.querySelector("h3")), 40, 28, 276, 0.8);
     if (anim) {
       A(el, [{ transform: `translateY(560px) rotate(${tilt * 10}deg)` }, { transform: `rotate(${tilt}deg)` }], 560, { delay: 150 + i * 150 });
       ctx.later(150 + i * 150, sfx.slide);
@@ -279,7 +267,8 @@ const key = (s) => s.normalize("NFKC").toLowerCase().replace(/[^\p{L}\p{N}]/gu, 
  * @param {Ctx} ctx @param {HTMLElement} box @param {EndScreen} v @param {boolean} anim
  */
 function web(ctx, box, v, anim) {
-  box.append(h("div", { class: "tab paper", style: "left:64px;top:36px" }, "The word web"));
+  const tabEl = h("div", { class: "tab paper", style: "left:64px;top:36px" }, tr.wordWeb);
+  box.append(tabEl);
   const words = v.web.words.slice(0, 16);
   const nWords = words.length;
   const links = v.web.links
@@ -287,11 +276,13 @@ function web(ctx, box, v, anim) {
     .filter((l) => l.words.length > 1)
     .sort((a, b) => b.words.length - a.words.length)
     .slice(0, 10);
-  const W = (/** @type {number} */ k) => (k === 1 ? "word" : "words");
-  const sub = links.length
-    ? `${nWords} ${W(nWords)}, linked by the clues you shared`
-    : `${nWords} ${W(nWords)} and the clues that led there. No clue went to two words!`;
-  box.append(h("div", { class: "abs dimtext", style: "left:330px;top:46px;right:64px;white-space:nowrap;overflow:hidden" }, sub));
+  const sub = links.length ? tr.webLinked(nWords) : tr.webAlone(nWords);
+  const subEl = h("div", { class: "abs dimtext", style: "left:330px;top:46px;right:64px;white-space:nowrap;overflow:hidden" }, sub);
+  box.append(subEl);
+  // the line starts after the tab (its width differs by language) and fits the rest
+  const left = Math.max(330, 64 + tabEl.offsetWidth + 30);
+  subEl.style.left = `${left}px`;
+  fitText(subEl, parseFloat(getComputedStyle(subEl).fontSize) || 26, 24, 1216 - left, 0.8);
   const { spots: grid, w: cw, h: ch, bands } = webGrid(Math.max(nWords, 1), links.length > 0);
   const C = { x: 640, y: 398 };
 
@@ -372,7 +363,7 @@ function web(ctx, box, v, anim) {
     // clues stay whole on a line: spaces inside a clue do not break
     const clues = h("div", { class: "wc" }, own.map((c) => c.replace(/ /g, "\u00a0")).join("\u00a0· "));
     const c = h("div", { class: `wcard ${w.found ? "won" : "lost"}`, style: `left:${p.x - cw / 2}px;top:${p.y - ch / 2}px;width:${cw}px;height:${ch}px;transform:rotate(${rot}deg)` }, word, own.length ? clues : null);
-    if (!w.found) c.append(h("div", { class: "missed" }, "missed"));
+    if (!w.found) c.append(h("div", { class: "missed" }, tr.missed));
     box.append(c);
     fitText(word, ch >= 150 ? 40 : 32, 26, cw - 24, 0.6);
     if (own.length) fitClues(clues, ch - word.offsetHeight - 26);

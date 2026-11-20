@@ -19,32 +19,18 @@ import { dust, floatText, shake, shatter, stampAt, tapeAt } from "./fx.js";
 import { grid } from "./layout.js";
 import { cardEl } from "./pieces.js";
 import { sfx } from "./sound.js";
+import { t as tr } from "./strings.js";
 
-/** How a reason reads on tape. @type {Record<string, string>} */
-export const REASON = {
-  "same word": "same word",
-  "same number": "same number",
-  spelling: "other spelling",
-  plural: "plural",
-  "verb form": "verb form",
-  "same family": "same family",
-  typo: "typo",
-  "sounds the same": "sounds the same",
-  "contains the word": "contains the word",
-  "part of the word": "part of the word",
-  "too close": "too close",
-};
+/** How a reason reads on tape, in the TV's language. @param {Reason} r */
+export const reasonText = (r) => tr.reasons[r] ?? r;
 
 /** The tape under a group's stamp: "same word × 3", "plural", "plural · typo". @param {JinxGroup} g */
 export function groupReason(g) {
-  const rs = [...new Set(g.pairs.map((p) => REASON[p.reason] ?? p.reason))];
-  if (rs.length === 0) return "same word";
-  if (rs.length === 1 && rs[0] === "same word" && g.cards.length > 2) return `same word × ${g.cards.length}`;
-  return rs.join(" · ");
+  const kinds = [...new Set(g.pairs.map((p) => p.reason))];
+  if (kinds.length === 0) return reasonText("same word");
+  if (kinds.length === 1 && kinds[0] === "same word" && g.cards.length > 2) return tr.sameWordTimes(g.cards.length);
+  return kinds.map(reasonText).join(" · ");
 }
-
-/** @param {number} n */
-export const cluesLeft = (n) => (n === 1 ? "1 clue left" : `${n} clues left`);
 
 /**
  * @param {Ctx} ctx
@@ -69,7 +55,7 @@ export function jinx(ctx, v, prev) {
   const spare = prev ? (v.until - 800 - ctx.now()) / natural : 0;
   const pace = !prev ? 0 : spare >= 1 ? Math.min(1.3, spare) : ctx.pace(natural, v.until - 800);
 
-  ctx.head.set({ tab: "Jinx check", guesser: g, blind: pace > 0, tally: v.tally }, !!prev);
+  ctx.head.set({ tab: tr.jinxCheck, guesser: g, blind: pace > 0, tally: v.tally }, !!prev);
   ctx.pool.off(!!prev);
   ctx.pot.show(true, !!prev && pace > 0);
 
@@ -82,16 +68,16 @@ export function jinx(ctx, v, prev) {
       if (s) cardEl(c, ctx.person(c.author), { parent: L, down: true, x: s.x, y: s.y, w: s.w, h: s.h, who: s.who, whoLeft: s.whoLeft, font: 44 });
     }
     ctx.pot.set(v.pot);
-    ctx.head.set({ tab: "Jinx check", guesser: g, blind: false, tally: v.tally }, false);
+    ctx.head.set({ tab: tr.jinxCheck, guesser: g, blind: false, tally: v.tally }, false);
     sayResult(anim);
-    if (alive.length === 0) stampAt(L, 522, 330, "Total jinx", { rot: -6, size: 72, anim });
+    if (alive.length === 0) stampAt(L, 522, 330, tr.totalJinx, { rot: -6, size: 72, anim });
   };
 
   /** @param {boolean} anim */
   const sayResult = (anim) => {
-    if (alive.length === 0) ctx.host.say("Every single card…", { second: "JINXED.", anim });
-    else if (lost === 0) ctx.host.say(`Nobody thought alike. ${short(g?.name, 12)}, *blindfold off.*`, { anim });
-    else ctx.host.say(`${lost} lost…`, { second: `${cluesLeft(alive.length).toUpperCase()} FOR ${short(g?.name, 12).toUpperCase()}`, anim });
+    if (alive.length === 0) ctx.host.say(tr.everyCard, { second: tr.jinxedHit, anim });
+    else if (lost === 0) ctx.host.say(tr.nobodyAlike(short(g?.name, 12)), { anim });
+    else ctx.host.say(tr.lost(lost), { second: tr.leftFor(alive.length, short(g?.name, 12)), anim });
   };
 
   if (!pace) {
@@ -102,7 +88,7 @@ export function jinx(ctx, v, prev) {
 
   (async () => {
     ctx.pot.set(v.potBefore, true);
-    ctx.host.say("Same clue? *Both cards go up in smoke.*");
+    ctx.host.say(tr.sameClueSmoke);
     /** @type {Map<string, HTMLElement>} */
     const els = new Map();
     v.cards.forEach((c, i) => {
@@ -143,12 +129,12 @@ export function jinx(ctx, v, prev) {
 
     let potLeft = v.potBefore - v.pot;
     if (v.groups.length === 0 && invalid.length === 0) {
-      ctx.host.say("Clean sweep!", { second: "NOBODY THOUGHT ALIKE." });
-      stampAt(L, 522, 330, "Clean!", { cls: "gold", rot: -6, size: 84 });
+      ctx.host.say(tr.cleanSweep, { second: tr.nobodyAlikeHit });
+      stampAt(L, 522, 330, tr.clean, { cls: "gold", rot: -6, size: 84 });
       ctx.later(200, sfx.sparkle);
       if (!(await ctx.wait(T(1300)))) return;
     }
-    const lines = ["Uh-oh. *Great minds…*", "And *again*…", "*Another one!*", "Is this *contagious*?"];
+    const lines = tr.groupLines;
     for (let k = 0; k < v.groups.length; k++) {
       const grp = /** @type {JinxGroup} */ (v.groups[k]);
       const s = Math.pow(0.78, k) * pace;
@@ -194,7 +180,7 @@ export function jinx(ctx, v, prev) {
       });
       if (!(await ctx.wait(S(160)))) return;
       const authors = new Set(grp.cards.map((id) => v.cards.find((c) => c.id === id)?.author));
-      const st = stampAt(L, mx, my - 10, authors.size === 1 ? "Self-jinx!" : "Jinx!", { rot: -8, size: authors.size === 1 ? 64 : 84 });
+      const st = stampAt(L, mx, my - 10, authors.size === 1 ? tr.selfJinx : tr.jinx, { rot: -8, size: authors.size === 1 ? 64 : 84 });
       if (!(await ctx.wait(S(330)))) return;
       const tp = tapeAt(L, mx, my + 56, groupReason(grp), { rot: 2 });
       if (!(await ctx.wait(S(400)))) return;
@@ -202,7 +188,7 @@ export function jinx(ctx, v, prev) {
       for (const id of grp.cards) {
         const c = v.cards.find((x) => x.id === id);
         if (!c?.bold) continue;
-        floatText(mx, fy, `${short(ctx.person(c.author)?.name, 10)}'s bold card −2`, "minus", 2400);
+        floatText(mx, fy, tr.boldMinus(short(ctx.person(c.author)?.name, 10)), "minus", 2400);
         fy -= 44;
       }
       const drop = Math.min(potLeft, grp.cards.length);
@@ -216,15 +202,15 @@ export function jinx(ctx, v, prev) {
       const el = els.get(c.id);
       const sl = slots.get(c.id);
       if (!el || !sl) continue;
-      ctx.host.say("Too close to the word. *Out it goes.*");
+      ctx.host.say(tr.tooCloseLine);
       el.style.zIndex = "20";
       A(el, [{ transform: "none" }, { transform: "translateY(-10px) scale(1.06)" }], T(220));
       if (!(await ctx.wait(T(240)))) return;
       const cx = sl.x + sl.w / 2;
       const cy = sl.y + sl.h / 2;
-      const st = stampAt(L, cx, cy, "Void", { cls: "ink", rot: 6, size: 54 });
+      const st = stampAt(L, cx, cy, tr.void, { cls: "ink", rot: 6, size: 54 });
       if (!(await ctx.wait(T(320)))) return;
-      const tp = tapeAt(L, cx, cy + 50, "too close to the word", { rot: -2, size: 24 });
+      const tp = tapeAt(L, cx, cy + 50, tr.tooCloseTape, { rot: -2, size: 24 });
       if (!(await ctx.wait(T(700)))) return;
       sfx.shatter();
       shatter(el, cx, cy, 0, sl.w, sl.h);

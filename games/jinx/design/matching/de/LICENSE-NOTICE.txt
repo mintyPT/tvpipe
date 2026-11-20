@@ -1,0 +1,14 @@
+dict.de.txt (Jinx's German lexicon) is derived from the German Wiktionary
+(https://de.wiktionary.org/), as extracted by wiktextract
+(https://github.com/tatuylonen/wiktextract, data from https://kaikki.org/dewiktionary/).
+The Wiktionary's text is available under the Creative Commons
+Attribution-ShareAlike 4.0 International licence (CC BY-SA 4.0,
+https://creativecommons.org/licenses/by-sa/4.0/); its authors are listed in
+the history of each entry at https://de.wiktionary.org/.
+
+dict.de.txt is likewise licensed under CC BY-SA 4.0. Changes: the word forms
+(declension and conjugation tables), parts of speech and derivations of
+German lemmas were extracted, lowercased, filtered and re-encoded by
+games/jinx/design/matching/de/build-lexicon.ts; which lemmas are included was
+chosen with word frequencies from OpenSubtitles 2018 (Hermit Dave's
+FrequencyWords, content CC BY-SA 4.0), which are not included.

@@ -5,6 +5,9 @@
  * actions of game/views.ts; the guesser's draft goes as `input({ draft })`.
  * The look is the TV's table: felt, cream paper, tomato card backs, chips.
  * Everything players typed is shown as text (`textContent`), never as markup.
+ * It speaks the room's language (`room.lang`), or the one the player
+ * picked with the header's switch (joining, the lobby, the end);
+ * `strings.js` has the texts.
  *
  * @typedef {import("../game/views.ts").RoomView} RoomView
  * @typedef {import("../game/views.ts").PlayerState} PlayerState
@@ -29,7 +32,9 @@
 
 import { PartyClient } from "/_tvpipe/lib/client.js";
 import { COLORS, FLAME, faceSvg, PRESETS } from "./faces.js";
+import { browserLang, pickLang } from "./i18n.js";
 import { Pad } from "./pad.js";
+import { strings } from "./strings.js";
 
 /** The longest clue and guess (the matcher's limit). */
 const MAX_WORD = 24;
@@ -112,12 +117,13 @@ const app = h("div", { id: "app" });
 const header = h("header", { id: "top" });
 /** The wooden letter tiles. @param {boolean} [large] */
 function logo(large = false) {
-  return h("div", { class: `tiles${large ? " big" : ""}`, role: "img", "aria-label": "Jinx" }, ...["J", "I", "N", "X"].map((l, i) => h("b", { style: `--r:${[-4, 3, -2, 5][i]}deg` }, l, h("sub", {}, [8, 1, 1, 8][i]))));
+  return h("div", { class: `tiles${large ? " big" : ""}`, role: "img", "aria-label": "JINX" }, ...["J", "I", "N", "X"].map((l, i) => h("b", { style: `--r:${[-4, 3, -2, 5][i]}deg` }, l, h("sub", {}, [8, 1, 1, 8][i]))));
 }
 const tiles = logo();
 const timer = h("div", { id: "timer", class: "dial", hidden: true, "aria-live": "off" });
 const meBox = h("div", { id: "me" });
-header.append(tiles, timer, meBox);
+const langButton = /** @type {HTMLButtonElement} */ (h("button", { type: "button", id: "lang", hidden: true }));
+header.append(tiles, timer, langButton, meBox);
 const banner = h("div", { id: "banner", role: "status", hidden: true });
 const main = h("main", { id: "main" });
 const dock = h("footer", { id: "dock" });
@@ -147,12 +153,71 @@ document.addEventListener("focusin", (e) => {
 const client = PartyClient.fromLocation();
 
 // ---------------------------------------------------------------------------
+// The language: the phone's own choice, else the room's, else the browser's.
+
+const LANG_KEY = "jinx:lang";
+/** @returns {import("./i18n.js").Lang | null} */
+function ownLang() {
+  try {
+    const v = localStorage.getItem(LANG_KEY);
+    return v ? pickLang(v) : null;
+  } catch {
+    return null;
+  }
+}
+/** @returns {import("./i18n.js").Lang} */
+function roomLang() {
+  const l = client.view?.room?.lang;
+  return typeof l === "string" ? pickLang(l) : browserLang();
+}
+let lang = ownLang() ?? roomLang();
+let t = strings(lang);
+document.documentElement.lang = lang;
+
+/** Follows the language; true when it changed (the screen has to be built again). */
+function useLang() {
+  const l = ownLang() ?? roomLang();
+  if (l === lang) return false;
+  lang = l;
+  t = strings(l);
+  document.documentElement.lang = l;
+  return true;
+}
+
+/** The switch: only where rebuilding loses nothing (joining, the lobby, the end). */
+function showSwitch(on = false) {
+  langButton.hidden = !on;
+  langButton.textContent = t.otherLang;
+  langButton.lang = lang === "de" ? "en" : "de";
+}
+langButton.addEventListener("click", () => {
+  const next = lang === "de" ? "en" : "de";
+  try {
+    // Back to the room's language: follow the room again.
+    if (next === roomLang()) localStorage.removeItem(LANG_KEY);
+    else localStorage.setItem(LANG_KEY, next);
+  } catch {}
+  if (!useLang()) return;
+  if (shown === "join") {
+    const typed = /** @type {HTMLInputElement | null} */ (document.getElementById("name"))?.value;
+    joinForm("", typed);
+  } else if (meView()) {
+    shown = "";
+    render();
+  } else {
+    // Before joining (no room, or a resumed phone connecting): the plain screen again.
+    plain(shown, logo(true), big(shown === "no-room" ? t.scanToJoin : t.connecting));
+    showSwitch(true);
+  }
+});
+
+// ---------------------------------------------------------------------------
 // The view
 
 /** @returns {RoomView} */
 function roomView() {
   const r = client.view?.room;
-  return r && typeof r === "object" && Array.isArray(r.people) ? r : { phase: "lobby", people: [], minPlayers: 3, maxPlayers: 8 };
+  return r && typeof r === "object" && Array.isArray(r.people) ? r : { phase: "lobby", lang: browserLang(), people: [], minPlayers: 3, maxPlayers: 8 };
 }
 
 /** @returns {PlayerState | null} */
@@ -172,23 +237,13 @@ function myself() {
 
 /** @param {string | undefined} id */
 function nameOf(id) {
-  return person(id)?.name ?? "Someone";
-}
-
-/** @param {string} name */
-function possessive(name) {
-  return /s$/i.test(name) ? `${name}’` : `${name}’s`;
-}
-
-/** @param {string[]} names */
-function listNames(names) {
-  if (names.length <= 1) return names[0] ?? "";
-  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+  return person(id)?.name ?? t.someone;
 }
 
 /** @param {number} n */
 function signed(n) {
-  return n > 0 ? `+${n}` : n < 0 ? `−${-n}` : "0";
+  const a = new Intl.NumberFormat(lang).format(Math.abs(n));
+  return n > 0 ? `+${a}` : n < 0 ? `−${a}` : "0";
 }
 
 // ---------------------------------------------------------------------------
@@ -239,7 +294,8 @@ function cardEl(c, o = {}) {
 
 /**
  * Fits words into their card (the TV's rule): smaller down to 60 %, then
- * condensed down to 74 %, then an ellipsis. Runs after layout.
+ * condensed down to 60 % (long German compounds: "GEBURTSTAGSKUCHEN"),
+ * then an ellipsis. Runs after layout.
  * @param {ParentNode} [scope]
  */
 function fitWords(scope = document) {
@@ -249,21 +305,39 @@ function fitWords(scope = document) {
       w.style.fontSize = "";
       w.style.transform = "";
       w.style.maxWidth = "";
+      w.style.width = "";
+      w.style.marginLeft = w.style.marginRight = "";
+      w.style.whiteSpace = w.style.hyphens = w.style.overflowWrap = w.style.lineHeight = "";
       const parent = w.parentElement;
       if (!parent) continue;
       const ps = getComputedStyle(parent);
       const own = getComputedStyle(w);
       const pad = parseFloat(own.paddingLeft) + parseFloat(own.paddingRight);
-      const room = parent.clientWidth - parseFloat(ps.paddingLeft) - parseFloat(ps.paddingRight) - 12 - pad;
+      const inner = parent.clientWidth - parseFloat(ps.paddingLeft) - parseFloat(ps.paddingRight);
+      const room = inner - 12 - pad;
       if (room <= 0) continue;
-      const text = () => w.scrollWidth - pad;
+      // the text's own width (a block's scrollWidth is at least the card's)
+      const range = document.createRange();
+      range.selectNodeContents(w);
+      const text = () => range.getBoundingClientRect().width;
       if (text() <= room) continue;
       const size = parseFloat(getComputedStyle(w).fontSize);
       w.style.fontSize = `${Math.max(size * 0.6, (size * room) / text())}px`;
       const k = room / text();
+      const index = !!w.closest(".index");
+      if (k < 0.6 && !index) {
+        // still too long (a long compound on a small card): two lines, hyphenated
+        Object.assign(w.style, { whiteSpace: "normal", hyphens: "auto", overflowWrap: "anywhere", lineHeight: "1.05", maxWidth: `${room + pad}px` });
+        continue;
+      }
       if (k < 1) {
-        const x = Math.max(0.74, k);
-        w.style.maxWidth = `${(room + pad) / x}px`;
+        const x = Math.max(0.6, k);
+        if (index) {
+          // the index card's word is a block as wide as the card: as wide as the text instead, centred, then condensed
+          const full = text() + pad;
+          w.style.width = `${full}px`;
+          w.style.marginLeft = w.style.marginRight = `${(inner - full) / 2}px`;
+        } else w.style.maxWidth = `${(room + pad) / x}px`;
         w.style.transform = `scaleX(${x.toFixed(3)})`;
       }
     }
@@ -291,7 +365,7 @@ function tape(text) {
  * @param {string} word
  * @param {string} [label]
  */
-function indexCard(word, label = "The word") {
+function indexCard(word, label = t.theWord) {
   const w = h("div", { class: "word" }, word);
   return h("div", { class: "index" }, h("div", { class: "label" }, label), w);
 }
@@ -300,7 +374,7 @@ function indexCard(word, label = "The word") {
 function potEl(pot) {
   const stack = h("div", { class: "stack" });
   for (let i = 0; i < Math.min(pot, 12); i++) stack.append(h("i"));
-  return h("div", { class: "pot" }, stack, h("div", { class: "label" }, h("small", {}, "The pot"), h("b", {}, pot)));
+  return h("div", { class: "pot" }, stack, h("div", { class: "label" }, h("small", {}, t.thePot), h("b", {}, pot)));
 }
 
 /** @param {...Kid} kids */
@@ -318,24 +392,27 @@ const ENVELOPE = `<svg viewBox="0 0 200 130" aria-hidden="true"><rect x="4" y="4
 // ---------------------------------------------------------------------------
 // Errors
 
-/** @param {any} e */
-function message(e) {
-  switch (e?.code) {
-    case "name-taken":
-      return "Someone here already has that name. Pick another.";
-    case "full":
-      return "The table is full.";
-    case "locked":
-    case "in-progress":
-      return "This game is closed to new players right now.";
-    case "bad-key":
-    case "no-room":
-      return "That game is over. Scan the code on the TV again.";
-    case "closed":
-      return "Not connected. Trying again…";
-    default:
-      return typeof e?.message === "string" && e.message ? e.message : "That didn't work. Try again.";
-  }
+/** Refusals of the clue action that are the game's, not the matcher's. */
+const CLUE_GAME_CODES = new Set(["late", "not-asked", "bad-slot", "not-player"]);
+
+/**
+ * A refusal in this phone's language, by its code. A refused clue's
+ * message is the matcher's own wording in the room's language: shown as it
+ * is when this phone speaks the room's language, else said from the code
+ * and its reason ("too-close:plural").
+ * @param {any} e
+ * @param {string} [action] the action refused (`clue`, `guess`, …)
+ */
+function message(e, action = "") {
+  const code = typeof e?.code === "string" ? e.code : "";
+  const [base = "", reason] = code.split(":");
+  const said = typeof e?.message === "string" && e.message ? e.message : "";
+  if (action === "clue" && !CLUE_GAME_CODES.has(base) && lang === roomLang() && said) return said;
+  const r = /** @type {import("../game/views.ts").Reason | undefined} */ (reason && reason in t.reasons ? reason : undefined);
+  if (base === "too-close") return t.tryAnother(t.tooClose[r ?? "too close"]);
+  if (base === "own-clue") return t.ownClue(r && r !== "same word" ? t.reasons[r] : null);
+  if (base === "empty") return action === "guess" ? t.typeGuess : t.typeClue;
+  return t.errors[base] ?? (said || t.failed);
 }
 
 /**
@@ -349,7 +426,7 @@ async function act(type, data, err) {
   try {
     return await client.act(type, data);
   } catch (e) {
-    if (err) err.textContent = message(e);
+    if (err) err.textContent = message(e, type);
     throw e;
   }
 }
@@ -387,6 +464,7 @@ function plain(key, ...kids) {
   mount({ main: [h("section", { class: "center" }, ...kids)] });
   outside = true;
   timer.hidden = true;
+  showSwitch(false);
 }
 
 /** A screen outside the game is up (no clock). */
@@ -398,18 +476,20 @@ function renderHeader() {
   if (!p) return;
   meBox.append(h("span", { class: "name" }, p.name), chip(p, 36));
   const task = meView()?.task;
-  if (roomView().phase !== "lobby" && task !== "wait") meBox.prepend(h("span", { class: "score", "aria-label": `${p.score} points` }, p.score));
+  if (roomView().phase !== "lobby" && task !== "wait") meBox.prepend(h("span", { class: "score", "aria-label": t.points(p.score) }, p.score));
 }
 
 function render() {
   const me = meView();
   const room = roomView();
+  if (useLang() && shown !== "join" && !shown.startsWith("bye:")) shown = "";
   renderHeader();
   if (!me) return;
   const key = screenKey(me, room);
   if (key !== shown) {
     shown = key;
     outside = false;
+    showSwitch(me.task === "lobby" || me.task === "final");
     mount(build(me, room));
   }
   refresh?.(me, room);
@@ -462,9 +542,9 @@ function hold(me, room) {
         "section",
         { class: "center" },
         jinx ? h("div", { class: "backs" }, ...[0, 1, 2].map(() => h("i", { class: "back" }, h("span", {}, "J")))) : h("div", { class: "envelope" }, icon(ENVELOPE)),
-        h("h1", { class: "title" }, jinx ? "Jinx check" : room.phase === "verdict" ? "The verdict" : "Look at the TV"),
-        big("Watch the TV…"),
-        note(jinx ? (guesser ? "Which clues made it?" : "Did anyone write the same clue?") : "Here comes the word."),
+        h("h1", { class: "title" }, jinx ? t.jinxCheck : room.phase === "verdict" ? t.theVerdict : t.lookAtTv),
+        big(t.watchTv),
+        note(jinx ? (guesser ? t.whichMadeIt : t.sameClue) : t.hereComes),
       ),
     ],
   };
@@ -507,26 +587,29 @@ function build(me, room) {
     case "final":
       return final(me);
     default:
-      return { main: [h("section", { class: "center" }, big("Look at the TV!"))] };
+      return { main: [h("section", { class: "center" }, big(t.lookAtTvBang))] };
   }
 }
 
 // ---------------------------------------------------------------------------
 // Joining
 
-/** @param {string} [error] */
-function joinForm(error = "") {
+/**
+ * @param {string} [error]
+ * @param {string} [typed] the name typed so far (the language switched)
+ */
+function joinForm(error = "", typed) {
   shown = "join";
   let saved = "";
   try {
-    saved = client.saved?.name ?? localStorage.getItem(NAME_KEY) ?? "";
+    saved = typed ?? client.saved?.name ?? localStorage.getItem(NAME_KEY) ?? "";
   } catch {}
   const input = /** @type {HTMLInputElement} */ (
-    h("input", { id: "name", maxlength: 16, autocapitalize: "words", autocomplete: "nickname", enterkeyhint: "go", spellcheck: "false", placeholder: "Your name", "aria-label": "Your name" })
+    h("input", { id: "name", maxlength: 16, autocapitalize: "words", autocomplete: "nickname", enterkeyhint: "go", spellcheck: "false", placeholder: t.yourName, "aria-label": t.yourName })
   );
   input.value = saved;
   const err = h("p", { class: "line error", role: "alert" }, error);
-  const go = /** @type {HTMLButtonElement} */ (h("button", { type: "submit", class: "primary" }, "Take a seat"));
+  const go = /** @type {HTMLButtonElement} */ (h("button", { type: "submit", class: "primary" }, t.takeSeat));
   const form = h(
     "form",
     {
@@ -546,7 +629,7 @@ function joinForm(error = "") {
           wake();
         } catch (e) {
           go.disabled = false;
-          err.textContent = message(e);
+          err.textContent = message(e, "join");
           buzz([60, 40, 60]);
         }
       },
@@ -555,9 +638,12 @@ function joinForm(error = "") {
     h("div", { class: "row" }, input, go),
   );
   mount({
-    main: [h("section", { class: "center hello" }, logo(true), big("One word each."), big("Don't think alike."), note("3 to 8 players · you draw your face next"))],
+    main: [h("section", { class: "center hello" }, logo(true), ...t.hello.map((line) => big(line)), note(t.helloNote))],
     dock: [form],
   });
+  outside = true;
+  timer.hidden = true;
+  showSwitch(true);
 }
 
 // ---------------------------------------------------------------------------
@@ -571,7 +657,7 @@ function joinForm(error = "") {
  * @param {HTMLElement} err
  */
 function facePad(face, color, err) {
-  const canvas = /** @type {HTMLCanvasElement} */ (h("canvas", { class: "pad", "aria-label": "Draw your face" }));
+  const canvas = /** @type {HTMLCanvasElement} */ (h("canvas", { class: "pad", "aria-label": t.drawFace }));
   const preset = h("div", { class: "preset" });
   const ring = h("div", { class: "padchip", style: `--c:${COLORS[color] ?? COLORS[0]}` }, preset, canvas);
   const hint = h("p", { class: "line" });
@@ -594,11 +680,11 @@ function facePad(face, color, err) {
   const pad = new Pad(canvas, {
     onStroke: () => {
       showPreset(false);
-      hint.textContent = pad.full ? "That's plenty of ink!" : "Look at the TV: that's you.";
+      hint.textContent = pad.full ? t.plentyInk : t.thatsYou;
       sendFace();
     },
     onFull: () => {
-      hint.textContent = "That's plenty of ink!";
+      hint.textContent = t.plentyInk;
       buzz([30]);
     },
   });
@@ -607,10 +693,10 @@ function facePad(face, color, err) {
   if ("strokes" in face && face.strokes.length) {
     pad.load(face.strokes);
     showPreset(false);
-    hint.textContent = "Look at the TV: that's you.";
+    hint.textContent = t.thatsYou;
   } else {
     showPreset(true);
-    hint.textContent = "Draw over it with your finger, or shuffle.";
+    hint.textContent = t.drawOver;
   }
   const tools = h(
     "div",
@@ -619,19 +705,19 @@ function facePad(face, color, err) {
       pad.undo();
       if (!pad.strokes.length) showPreset(true);
       sendFace();
-    }, "Undo"),
+    }, t.undo),
     btn("ghost", () => {
       pad.clear();
       showPreset(true);
       sendFace();
-    }, "Clear"),
+    }, t.clear),
     btn("ghost", () => {
       base = (base + 1 + Math.floor(Math.random() * (PRESETS.length - 1))) % PRESETS.length;
       pad.clear();
       showPreset(true);
-      hint.textContent = "Shuffled! Draw over it, or shuffle again.";
+      hint.textContent = t.shuffled;
       sendFace();
-    }, "Shuffle"),
+    }, t.shuffle),
   );
   return { ring, tools, hint };
 }
@@ -648,18 +734,18 @@ function lobby(me) {
   const start = btn("primary", () => {
     start.disabled = true;
     act("start", null, err).catch(() => (start.disabled = false));
-  }, "Start");
+  }, t.start);
   const slip = h("p", { class: "slip" });
   /** @type {string | null} */
   let confirmKick = null;
   let lastList = "";
   return {
     main: [
-      h("h1", { class: "title" }, "Draw your face"),
+      h("h1", { class: "title" }, t.drawFace),
       ring,
       tools,
       hint,
-      h("h2", { class: "label" }, "At the table ", count),
+      h("h2", { class: "label" }, `${t.atTable} `, count),
       list,
     ],
     dock: [err, start, slip],
@@ -684,15 +770,15 @@ function lobby(me) {
                     }
                     confirmKick = null;
                     act("kick", { id: p.id }, err).catch(() => {});
-                  }, confirmKick === p.id ? "Remove?" : "✕")
+                  }, confirmKick === p.id ? t.removeSure : "✕")
                 : null;
-            if (kick) kick.setAttribute("aria-label", `Remove ${p.name}`);
+            if (kick) kick.setAttribute("aria-label", t.remove(p.name));
             return h(
               "li",
               { class: p.connected ? "" : "away" },
               chip(p, 40, { crown: p.vip }),
-              h("span", { class: "name" }, p.name, mine ? h("small", {}, " (you)") : null),
-              !p.connected ? h("small", { class: "gone" }, "away") : null,
+              h("span", { class: "name" }, p.name, mine ? h("small", {}, t.you) : null),
+              !p.connected ? h("small", { class: "gone" }, t.away) : null,
               kick,
             );
           }),
@@ -700,10 +786,10 @@ function lobby(me) {
       }
       start.hidden = !vip;
       start.disabled = !m.canStart;
-      start.textContent = m.canStart ? `Start with ${here.length} players` : `Need ${room.minPlayers} players (${Math.max(0, room.minPlayers - here.length)} more)`;
+      start.textContent = m.canStart ? t.startWith(here.length) : t.needPlayers(room.minPlayers, Math.max(0, room.minPlayers - here.length));
       const host = room.people.find((p) => p.vip);
       slip.hidden = vip;
-      slip.textContent = host ? `${host.name} starts the game from their phone` : "The game starts soon";
+      slip.textContent = host ? t.vipStarts(host.name) : t.startsSoon;
     },
   };
 }
@@ -715,8 +801,8 @@ function waitLate() {
   const { ring, tools, hint } = facePad(p?.face ?? { preset: 0 }, p?.color ?? 0, err);
   return {
     main: [
-      h("h1", { class: "title" }, "You're in!"),
-      big("A round is on: you play from the next one. Draw your face in the meantime."),
+      h("h1", { class: "title" }, t.youreIn),
+      big(t.lateNote),
       ring,
       tools,
       hint,
@@ -735,7 +821,7 @@ function waitLate() {
  */
 function hotseat(me, room) {
   const g = person(room.guesser);
-  const round = room.round && room.rounds ? tape(`Round ${room.round} of ${room.rounds}`) : null;
+  const round = room.round && room.rounds ? tape(t.roundOf(room.round, room.rounds)) : null;
   if (me.guesser) {
     buzz([80, 60, 80]);
     return {
@@ -746,9 +832,9 @@ function hotseat(me, room) {
           { class: "center" },
           round,
           chip(myself(), 132, { blindfold: true }),
-          h("h1", { class: "title" }, "You're in the hot seat"),
-          big("Don't look at anyone's phone."),
-          note("Your friends write clues. You guess the word."),
+          h("h1", { class: "title" }, t.hotSeat),
+          big(t.noPeeking),
+          note(t.hotSeatNote),
         ),
       ],
     };
@@ -760,9 +846,9 @@ function hotseat(me, room) {
         { class: "center" },
         round,
         chip(g, 120, { blindfold: true }),
-        h("h1", { class: "title" }, `${g?.name ?? "Someone"} guesses`),
-        big("Get ready: the word is coming."),
-        note("One word each. Same clue? Both cards go up in smoke."),
+        h("h1", { class: "title" }, t.guesses(g?.name ?? t.someone)),
+        big(t.getReady),
+        note(t.hotSeatGiver),
       ),
     ],
   };
@@ -788,16 +874,16 @@ function write(me, room) {
   const screen = {
     main: [
       indexCard(me.word),
-      h("p", { class: "line who-guesses" }, chip(g, 26), ` ${g?.name ?? "Someone"} guesses · ${me.each === 2 ? "two clues each" : "one word each"}`),
+      h("p", { class: "line who-guesses" }, chip(g, 26), t.whoGuesses(g?.name ?? t.someone, me.each)),
       allIn,
-      note(h("b", {}, "Bold"), " bets on your clue: +4 if it's turned, −2 if it's jinxed."),
+      note(h("b", {}, t.bold), t.boldNote),
     ],
     dock: [box],
     refresh: (/** @type {PlayerState} */ m) => {
       if (m.task !== "write") return;
       slots.forEach((s, i) => s.refresh(m.sent[i] ?? null));
       const done = m.sent.filter(Boolean).length;
-      allIn.textContent = done >= m.each ? "All in! Watch the pile on the TV. You can still change it." : "";
+      allIn.textContent = done >= m.each ? t.allIn : "";
     },
   };
   queueMicrotask(() => {
@@ -816,9 +902,10 @@ function slot(i, each) {
   const input = /** @type {HTMLInputElement} */ (
     h("input", {
       maxlength: MAX_WORD,
-      placeholder: each === 2 ? `Clue ${i + 1}: one word` : "One word",
-      "aria-label": each === 2 ? `Clue ${i + 1}` : "Your clue",
-      autocapitalize: "none",
+      placeholder: each === 2 ? t.cluePlaceholder(i + 1) : t.oneWord,
+      "aria-label": each === 2 ? t.clueN(i + 1) : t.yourClue,
+      autocapitalize: lang === "de" ? "sentences" : "none",
+      lang,
       autocomplete: "off",
       autocorrect: "off",
       spellcheck: "false",
@@ -829,10 +916,10 @@ function slot(i, each) {
   const bold = btn("boldtoggle", () => {
     setBold(bold.getAttribute("aria-pressed") !== "true");
     input.focus({ preventScroll: true });
-  }, icon(FLAME), h("span", {}, "Bold"));
+  }, icon(FLAME), h("span", {}, t.bold));
   bold.setAttribute("aria-pressed", "false");
-  bold.setAttribute("aria-label", "Bold");
-  const send = btn("primary send", () => submit(), "Send");
+  bold.setAttribute("aria-label", t.bold);
+  const send = btn("primary send", () => submit(), t.send);
   const editor = h(
     "form",
     {
@@ -848,7 +935,7 @@ function slot(i, each) {
     send,
   );
   const sentWord = h("span", { class: "word" });
-  const sentCard = h("div", { class: "sent" }, h("span", { class: "mini-back" }, h("span", {}, "J")), h("span", { class: "text" }, "Sent: ", sentWord), btn("ghost small", () => edit(), "Change"));
+  const sentCard = h("div", { class: "sent" }, h("span", { class: "mini-back" }, h("span", {}, "J")), h("span", { class: "text" }, h("span", { class: "lbl" }, t.sent), sentWord), btn("ghost small", () => edit(), t.change));
   const el = h("div", { class: "slot" }, label, editor, sentCard);
   let pending = false;
   let editing = false;
@@ -875,7 +962,7 @@ function slot(i, each) {
     const text = input.value.trim();
     if (pending) return;
     if (!text) {
-      error = "Type a clue first.";
+      error = t.typeFirst;
       update();
       input.focus();
       return;
@@ -889,7 +976,7 @@ function slot(i, each) {
       buzz([25]);
       if (document.activeElement === input) input.blur();
     } catch (e) {
-      error = message(e);
+      error = message(e, "clue");
       buzz([60, 40, 60]);
       input.focus();
     }
@@ -901,9 +988,9 @@ function slot(i, each) {
     editor.hidden = !open;
     sentCard.hidden = open;
     send.disabled = pending;
-    send.textContent = pending ? "…" : sent && editing ? "Swap" : "Send";
+    send.textContent = pending ? "…" : sent && editing ? t.swap : t.send;
     label.classList.toggle("error", !!error);
-    label.textContent = error || (open ? (each === 2 ? `Clue ${i + 1}` : "Your clue") + (sent ? " · change it until the time's up" : "") : "");
+    label.textContent = error || (open ? (each === 2 ? t.clueN(i + 1) : t.yourClue) + (sent ? t.untilTime : "") : "");
     if (sent) {
       sentWord.textContent = sent.text;
       sentCard.classList.toggle("bold", sent.bold);
@@ -939,15 +1026,15 @@ function blind(me) {
         "section",
         { class: "center" },
         h("div", { class: "envelope" }, icon(ENVELOPE)),
-        h("h1", { class: "title" }, "Eyes on the TV"),
-        big("Your friends are writing clues."),
+        h("h1", { class: "title" }, t.eyesOnTv),
+        big(t.friendsWriting),
         dots,
         count,
       ),
     ],
     refresh: (m) => {
       if (m.task !== "blind") return;
-      count.textContent = `${m.done} of ${m.givers} done`;
+      count.textContent = t.doneOf(m.done, m.givers);
       dots.replaceChildren(...Array.from({ length: m.givers }, (_, i) => h("i", { class: i < m.done ? "on" : "" })));
     },
   };
@@ -967,14 +1054,10 @@ function check(me) {
       h(
         "section",
         { class: "center" },
-        h("h1", { class: "title" }, "Jinx check"),
+        h("h1", { class: "title" }, t.jinxCheck),
         backs,
-        big(
-          me.survived === 1 ? "1 clue survived" : `${me.survived} clues survived`,
-          h("br"),
-          h("span", { class: "dim" }, me.jinxed === 1 ? "1 was jinxed" : `${me.jinxed} were jinxed`),
-        ),
-        note(me.survived ? "You pick which card to turn. Get ready." : "Every clue went up in smoke."),
+        big(t.survived(me.survived), h("br"), h("span", { class: "dim" }, t.wereJinxed(me.jinxed))),
+        note(me.survived ? t.pickCard : t.allSmoke),
       ),
     ],
   };
@@ -990,33 +1073,28 @@ function fate(me) {
   const list = h("div", { class: "fates" });
   for (const c of me.cards) {
     const names = c.with.map((w) => person(w)?.name ?? w);
-    const why = c.reason ? reasonText(c.reason) : "";
+    const why = c.reason ? (t.reasons[c.reason] ?? c.reason) : "";
     list.append(
       h(
         "div",
         { class: `fate ${c.fate}` },
         h("div", { class: `card up${c.bold ? " bold" : ""}${c.fate === "jinxed" ? " cracked" : ""}` }, h("span", { class: "paper" }, h("span", { class: "word" }, c.text)), c.bold ? flame() : null),
         c.fate === "alive"
-          ? h("div", { class: "says" }, stamp("Survived", "leaf"), h("p", {}, c.bold ? "Your bold card is still in. Fingers crossed." : "Still in the game."))
+          ? h("div", { class: "says" }, stamp(t.stampSurvived, "leaf"), h("p", {}, c.bold ? t.boldStillIn : t.stillIn))
           : h(
               "div",
               { class: "says" },
-              stamp("Jinxed!", "tomato"),
-              h("p", {}, names.length ? `with ${listNames(names)}` : "with your other clue"),
+              stamp(t.stampJinxed, "tomato"),
+              h("p", {}, names.length ? t.jinxedWith(names) : t.withOwn),
               why ? tape(why) : null,
-              c.bold ? h("p", { class: "minus" }, "Bold: −2") : null,
+              c.bold ? h("p", { class: "minus" }, t.boldMinus) : null,
             ),
       ),
     );
   }
   return {
-    main: [indexCard(me.word), h("h1", { class: "title" }, me.cards.length > 1 ? "Your cards" : "Your card"), list, note("Don't say a word: the guesser hasn't guessed yet.")],
+    main: [indexCard(me.word), h("h1", { class: "title" }, t.yourCards(me.cards.length)), list, note(t.dontSay)],
   };
-}
-
-/** @param {Reason} r */
-function reasonText(r) {
-  return r === "spelling" ? "other spelling" : r;
 }
 
 /**
@@ -1033,27 +1111,28 @@ function guess(me) {
     h("input", {
       class: "tape-field",
       maxlength: MAX_WORD,
-      placeholder: "Your guess (one shot)",
-      "aria-label": "Your guess",
-      autocapitalize: "none",
+      placeholder: t.guessPlaceholder,
+      "aria-label": t.yourGuess,
+      autocapitalize: lang === "de" ? "sentences" : "none",
+      lang,
       autocomplete: "off",
       autocorrect: "off",
       spellcheck: "false",
       enterkeyhint: "done",
     })
   );
-  const go = btn("primary", () => lockIn(), "Guess");
+  const go = btn("primary", () => lockIn(), t.guess);
   let passArmed = false;
   /** @type {ReturnType<typeof setTimeout> | null} */
   let passTimer = null;
   const pass = btn("ghost pass", () => {
     if (!passArmed) {
       passArmed = true;
-      pass.textContent = "Sure? Pass";
+      pass.textContent = t.passSure;
       pass.classList.add("armed");
       passTimer = setTimeout(() => {
         passArmed = false;
-        pass.textContent = "Pass";
+        pass.textContent = t.pass;
         pass.classList.remove("armed");
       }, 3000);
       return;
@@ -1065,7 +1144,7 @@ function guess(me) {
       busy = false;
       sync();
     });
-  }, "Pass");
+  }, t.pass);
   const form = h(
     "form",
     {
@@ -1117,16 +1196,15 @@ function guess(me) {
     const turned = cards.filter((c) => c.turned).length;
     const left = cards.length - turned;
     input.disabled = busy || turned === 0;
-    input.placeholder = turned === 0 ? "Turn a card first" : "Your guess (one shot)";
+    input.placeholder = turned === 0 ? t.turnFirst : t.guessPlaceholder;
     go.disabled = busy || turned === 0 || !input.value.trim();
     pass.disabled = busy || turned === 0;
     grid.querySelectorAll("button").forEach((b) => ((/** @type {HTMLButtonElement} */ (b)).disabled = busy));
-    info.textContent =
-      turned === 0 ? "Whose card do you trust? Tap it to turn it." : left === 0 ? "No cards left: guess or pass." : "Turn another (−2 chips) or guess now.";
+    info.textContent = turned === 0 ? t.whoseCard : left === 0 ? t.noCardsLeft : t.another;
   }
   return {
     tone: "hot",
-    main: [h("div", { class: "head" }, potBox, h("div", { class: "info" }, h("h1", { class: "title" }, "Your turn"), h("p", { class: "dim jinxed" }))), grid],
+    main: [h("div", { class: "head" }, potBox, h("div", { class: "info" }, h("h1", { class: "title" }, t.yourTurn), h("p", { class: "dim jinxed" }))), grid],
     dock: [info, err, form, pass],
     refresh: (m) => {
       if (m.task !== "guess") return;
@@ -1137,14 +1215,14 @@ function guess(me) {
         lastCards = key;
         potBox.replaceChildren(potEl(m.pot));
         const jinx = main.querySelector(".jinxed");
-        if (jinx) jinx.textContent = `${m.cards.length} ${m.cards.length === 1 ? "card" : "cards"} survived · ${m.jinxed} jinxed`;
+        if (jinx) jinx.textContent = t.cardsSurvived(m.cards.length, m.jinxed);
         fitWords(grid);
         grid.replaceChildren(
           ...m.cards.map((c) => {
             const name = nameOf(c.author);
             return c.turned
               ? cardEl(c)
-              : cardEl(c, { tag: "button", onclick: () => pick(c.id), label: `Turn ${possessive(name)} card`, words: false });
+              : cardEl(c, { tag: "button", onclick: () => pick(c.id), label: t.turnCard(name), words: false });
           }),
         );
         if (before) buzz([15]);
@@ -1168,7 +1246,7 @@ function watch(me, room) {
   return {
     main: [
       h("div", { class: "head" }, indexCard(me.word), potBox),
-      h("div", { class: "shh" }, h("b", {}, "SHHH!"), h("span", {}, `No hints! ${g?.name ?? "The guesser"} is guessing.`)),
+      h("div", { class: "shh" }, h("b", {}, t.shhh), h("span", {}, t.noHints(g?.name ?? t.theGuesser))),
       grid,
     ],
     refresh: (m) => {
@@ -1183,16 +1261,6 @@ function watch(me, room) {
   };
 }
 
-/** @type {Record<Payout["why"], string>} */
-const WHY = {
-  pot: "The pot is yours",
-  wrong: "Wrong guess: −2",
-  turned: "Your card was turned: +2",
-  bold: "Your bold card was turned: +4",
-  "bold-jinxed": "Your bold card was jinxed: −2",
-  mvp: "MVP clue: +3",
-};
-
 /**
  * The verdict (and the replay for clue-givers).
  * @param {Task<"result">} me
@@ -1205,21 +1273,15 @@ function result(me, room) {
   /** @type {Kid} */
   let top;
   if (me.guesser) {
-    top =
-      me.result === "right"
-        ? stamp("Right!", "leaf")
-        : me.result === "wrong"
-          ? stamp("Not it", "ink")
-          : me.result === "pass"
-            ? stamp("Pass", "ink")
-            : stamp("All jinxed", "tomato");
+    top = stamp(t.stamps[me.result], me.result === "right" ? "leaf" : me.result === "lost" ? "tomato" : "ink");
     buzz(me.result === "right" ? [40, 40, 40, 40, 140] : me.result === "wrong" ? [300] : [60]);
   } else {
-    const verdict = me.result === "right" ? `${g?.name ?? "The guesser"} got it!` : me.result === "wrong" ? `${g?.name ?? "The guesser"} missed it` : me.result === "pass" ? `${g?.name ?? "The guesser"} passed` : "Every clue was jinxed";
+    const name = g?.name ?? t.theGuesser;
+    const verdict = me.result === "right" ? t.gotIt(name) : me.result === "wrong" ? t.missed(name) : me.result === "pass" ? t.passed(name) : t.allJinxed;
     top = h("h1", { class: "title" }, verdict);
     buzz(me.delta > 0 ? [40, 40, 80] : me.delta < 0 ? [200] : [30]);
   }
-  const why = me.why.map((w) => h("li", {}, WHY[w] ?? w));
+  const why = me.why.map((w) => h("li", {}, t.why[w] ?? w));
   return {
     tone: me.result === "right" ? "good" : "",
     main: [
@@ -1227,15 +1289,15 @@ function result(me, room) {
         "section",
         { class: "center" },
         top,
-        indexCard(me.word, "The word was"),
+        indexCard(me.word, t.theWordWas),
         h("p", { class: `points ${me.delta > 0 ? "plus" : me.delta < 0 ? "minus" : "zero"}` }, signed(me.delta)),
-        why.length ? h("ul", { class: "why" }, ...why) : note(me.guesser ? (me.result === "pass" ? "No points, no loss." : "No points this round.") : "No points for you this round."),
+        why.length ? h("ul", { class: "why" }, ...why) : note(me.guesser ? (me.result === "pass" ? t.noLoss : t.noPoints) : t.noPointsYou),
         replay,
       ),
     ],
     refresh: (m, r) => {
       if (m.task !== "result") return;
-      replay.textContent = r.phase === "replay" && !m.guesser && m.result === "right" ? `${g?.name ?? "The guesser"} is picking the MVP clue…` : r.phase === "replay" ? "Look at the TV: the replay." : "";
+      replay.textContent = r.phase === "replay" && !m.guesser && m.result === "right" ? t.pickingMvp(g?.name ?? t.theGuesser) : r.phase === "replay" ? t.replay : "";
     },
   };
 }
@@ -1257,14 +1319,14 @@ function mvp(me) {
         const b = cardEl(c, {
           tag: "button",
           extra: chosen === c.id ? "chosen" : chosen ? "dim" : "",
-          label: `MVP: ${c.word ?? ""} by ${nameOf(c.author)}`,
+          label: t.mvpLabel(c.word ?? "", nameOf(c.author)),
           onclick: () => {
             if (chosen) return;
             chosen = c.id;
             buzz([30, 30, 60]);
             draw();
             act("mvp", { card: c.id }, err).then(
-              () => (done.textContent = `${nameOf(c.author)} gets +3. Look at the TV!`),
+              () => (done.textContent = t.mvpDone(nameOf(c.author))),
               () => {
                 chosen = null;
                 draw();
@@ -1272,7 +1334,7 @@ function mvp(me) {
             );
           },
         });
-        if (chosen === c.id) b.append(h("span", { class: "rosette" }, "MVP"));
+        if (chosen === c.id) b.append(h("span", { class: "rosette" }, t.mvp));
         return b;
       }),
     );
@@ -1281,7 +1343,7 @@ function mvp(me) {
   fitWords(grid);
   return {
     tone: "good",
-    main: [h("h1", { class: "title" }, "Which clue helped most?"), note("The MVP clue's author gets +3."), grid, done, err],
+    main: [h("h1", { class: "title" }, t.whichHelped), note(t.mvpNote), grid, done, err],
   };
 }
 
@@ -1297,29 +1359,22 @@ function scores(me, room) {
       h(
         "section",
         { class: "center" },
-        room.round && room.rounds ? tape(`After round ${room.round} of ${room.rounds}`) : null,
-        h("div", { class: "pad-note" }, h("p", { class: "rank" }, `#${me.rank}`, h("small", {}, ` of ${me.of}`)), h("p", { class: "total" }, `${me.score} ${me.score === 1 ? "point" : "points"}`)),
-        me.next ? h("div", { class: "next" }, stamp("You're up next!", "gold"), note("You guess the next word. Don't peek at any phone.")) : note("Look at the TV for the scores."),
+        room.round && room.rounds ? tape(t.afterRound(room.round, room.rounds)) : null,
+        rankNote(me.rank, me.of, me.score),
+        me.next ? h("div", { class: "next" }, stamp(t.upNext, "gold"), note(t.upNextNote)) : note(t.scoresOnTv),
       ),
     ],
   };
 }
 
-/** @type {Record<RoomTitle, string>} */
-const TITLES = {
-  telepaths: "Telepaths!",
-  "mind readers": "Mind readers!",
-  "in sync": "In sync!",
-  "mixed signals": "Mixed signals",
-  "total jinx": "Total jinx",
-};
-
-/** @type {Record<Award["kind"], [string, string]>} */
-const AWARDS = {
-  "mind meld": ["Mind meld", "You and your twin brain jinxed each other the most."],
-  "lone wolf": ["Lone wolf", "The most one-of-a-kind clues that got turned."],
-  kamikaze: ["Kamikaze", "The most clues lost to jinxes. And you kept going."],
-};
+/**
+ * The score pad's note: the rank, big, and the points.
+ * @param {number} rank @param {number} of @param {number} score
+ */
+function rankNote(rank, of, score) {
+  const [big, rest] = t.rank(rank, of);
+  return h("div", { class: "pad-note" }, h("p", { class: "rank" }, big, h("small", {}, rest)), h("p", { class: "total" }, t.points(score)));
+}
 
 /**
  * @param {Task<"final">} me
@@ -1330,21 +1385,21 @@ function final(me) {
   const again = btn("primary", () => {
     again.disabled = true;
     act("again", null, err).catch(() => (again.disabled = false));
-  }, "Play again");
+  }, t.playAgain);
   const slip = h("p", { class: "slip" });
-  const award = me.award ? AWARDS[me.award] : null;
-  const words = h("div", { class: "tiles big count" }, ...[String(me.found), "of", String(me.total)].map((t, i) => h("b", { class: i === 1 ? "of" : "", style: `--r:${[-3, 2, 4][i]}deg` }, t)));
+  const award = me.award ? t.awards[me.award] : null;
+  const words = h("div", { class: "tiles big count" }, ...[String(me.found), t.of, String(me.total)].map((x, i) => h("b", { class: i === 1 ? "of" : "", style: `--r:${[-3, 2, 4][i]}deg` }, x)));
   return {
     main: [
       h(
         "section",
         { class: "center" },
-        tape("Game over"),
+        tape(t.gameOver),
         words,
-        note("words found together"),
-        stamp(TITLES[me.title] ?? me.title, me.found * 2 >= me.total ? "leaf" : "tomato"),
-        h("div", { class: "pad-note" }, h("p", { class: "rank" }, `#${me.rank}`, h("small", {}, ` of ${me.of}`)), h("p", { class: "total" }, `${me.score} ${me.score === 1 ? "point" : "points"}`)),
-        award ? h("div", { class: "award" }, h("small", {}, "Your award"), h("b", {}, award[0]), h("p", {}, award[1])) : null,
+        note(t.wordsTogether),
+        stamp(t.titles[me.title] ?? me.title, me.found * 2 >= me.total ? "leaf" : "tomato"),
+        rankNote(me.rank, me.of, me.score),
+        award ? h("div", { class: "award" }, h("small", {}, t.yourAward), h("b", {}, award[0]), h("p", {}, award[1])) : null,
       ),
     ],
     dock: [err, again, slip],
@@ -1353,7 +1408,7 @@ function final(me) {
       again.hidden = !m.canRestart;
       const host = room.people.find((p) => p.vip);
       slip.hidden = m.canRestart;
-      slip.textContent = host ? `${host.name} can start a new game from their phone` : "Thanks for playing!";
+      slip.textContent = host ? t.vipAgain(host.name) : t.thanks;
     },
   };
 }
@@ -1385,7 +1440,7 @@ setInterval(tick, 250);
 client.on("status", (/** @type {string} */ s) => {
   if (s === "reconnecting") {
     banner.hidden = false;
-    banner.textContent = "Connection lost. Reconnecting…";
+    banner.textContent = t.reconnecting;
     app.classList.add("offline");
   } else if (s === "open") {
     banner.hidden = true;
@@ -1393,26 +1448,19 @@ client.on("status", (/** @type {string} */ s) => {
   } else if (s === "closed" && !client.byeReason && shown !== "join") {
     banner.hidden = true;
     app.classList.remove("offline");
-    plain("closed", h("h1", { class: "title" }, "Disconnected"), big("The connection to the game is closed."), btn("primary", () => location.reload(), "Reconnect"));
+    plain("closed", h("h1", { class: "title" }, t.disconnected), big(t.closedText), btn("primary", () => location.reload(), t.reconnect));
   }
 });
 
 client.on("bye", (/** @type {string} */ reason) => {
-  const text =
-    reason === "kicked"
-      ? "You were removed from the table."
-      : reason === "replaced"
-        ? "You opened the game on another device."
-        : reason === "room-closed"
-          ? "The game is over. Thanks for playing!"
-          : null;
+  const text = t.bye[reason];
   if (!text) return;
   banner.hidden = true;
   app.classList.remove("offline");
   timer.hidden = true;
   meBox.replaceChildren();
   if (reason === "kicked") buzz([200]);
-  plain(`bye:${reason}`, logo(true), big(text), reason !== "room-closed" ? note("Scan the code on the TV to join again.") : null);
+  plain(`bye:${reason}`, logo(true), big(text), reason !== "room-closed" ? note(t.scanAgain) : null);
 });
 
 client.on("view", () => {
@@ -1430,11 +1478,12 @@ document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") wake();
 });
 
-plain("connecting", logo(true), big("Connecting…"));
+plain("connecting", logo(true), big(t.connecting));
 if (!client.room || !client.key) {
-  plain("no-room", logo(true), big("Scan the code on the TV to join."));
+  plain("no-room", logo(true), big(t.scanToJoin));
+  showSwitch(true);
 } else if (client.canResume) {
-  client.connect().then(wake, (/** @type {any} */ e) => joinForm(e?.code === "no-player" ? "" : message(e)));
+  client.connect().then(wake, (/** @type {any} */ e) => joinForm(e?.code === "no-player" ? "" : message(e, "join")));
 } else {
   joinForm();
 }

@@ -55,6 +55,10 @@ header {
   min-height: 58px;
 }
 #me { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+#lang {
+  flex: none; font-size: 13px; font-weight: 700; padding: 5px 10px; border-radius: 999px;
+  background: var(--felt-deep); color: var(--cream); box-shadow: 0 0 0 2px var(--felt-print);
+}
 #me .name { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 700; }
 #me .score {
   flex: none; font-family: "Plex Mono", monospace; font-size: 15px; color: var(--ink); background: var(--gold);
@@ -95,6 +99,13 @@ main {
   padding: 6px 16px 18px; display: flex; flex-direction: column;
 }
 main > * { flex: none; }
+/*
+ * German compounds ("Geburtstagskuchen") never run out of the screen; the
+ * running text breaks them with a hyphen where the language allows (`lang`
+ * on the document). Titles and big lines break between words only.
+ */
+main, #dock { overflow-wrap: break-word; }
+.note, .line, .slip, .why, .says p, .award p { hyphens: auto; -webkit-hyphens: auto; }
 #dock {
   flex: none; padding: 10px 14px calc(12px + env(safe-area-inset-bottom));
   background: var(--felt-deep); border-top: 3px solid var(--felt-print);
@@ -440,4 +451,6 @@ ul.why li:nth-child(2n) { transform: rotate(1.2deg); }
 
 @media (max-width: 350px) {
   #me .name { display: none; }
+  /* the sent clue keeps its room: the card and Change say it was sent */
+  .sent .lbl { display: none; }
 }

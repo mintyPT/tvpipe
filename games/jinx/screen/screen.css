@@ -37,6 +37,8 @@ html, body { margin: 0; height: 100%; background: #0d1716; overflow: hidden; }
   background: var(--felt); transform-origin: center center; font-size: 28px; line-height: 1.15;
 }
 .table, .fx, .layers, .layer { position: absolute; inset: 0; }
+/* German compounds ("Geburtstagskuchen") break with a hyphen where text wraps (`lang` on the document); one-line texts are fitted instead. */
+.stage { overflow-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; }
 .fx { pointer-events: none; z-index: 60; }
 .abs { position: absolute; }
 .gold { color: var(--gold); }
@@ -236,7 +238,7 @@ html, body { margin: 0; height: 100%; background: #0d1716; overflow: hidden; }
 .note .line .token { --s: 36px; }
 .note .plus { color: var(--leaf); }
 .note .minus { color: var(--tomato); }
-.note .mvpword { font-size: 34px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.note .mvpword { font-size: 34px; line-height: 1.05; overflow-wrap: anywhere; }
 .rosette { position: absolute; width: 124px; height: 160px; z-index: 30; }
 .rosette-mid { position: absolute; left: 24px; top: 24px; width: 76px; height: 76px; border-radius: 50%; background: var(--paper); box-shadow: 0 0 0 4px var(--ink); display: grid; place-items: center; font-weight: 700; font-size: 30px; color: var(--ink); }
 
@@ -275,7 +277,7 @@ html, body { margin: 0; height: 100%; background: #0d1716; overflow: hidden; }
 .joinline b { font-family: "Plex Mono", monospace; font-weight: 500; color: var(--cream-on-felt); letter-spacing: .12em; }
 
 /* ---------------------------------------------------------------- end */
-.mc { position: absolute; border-radius: 10px; display: grid; place-items: center; font-weight: 700; text-transform: uppercase; box-shadow: 0 0 0 3px var(--ink), 0 6px 0 rgba(0,0,0,.3); white-space: nowrap; overflow: visible; }
+.mc { position: absolute; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-weight: 700; text-transform: uppercase; box-shadow: 0 0 0 3px var(--ink), 0 6px 0 rgba(0,0,0,.3); white-space: nowrap; overflow: visible; }
 .mc span { display: inline-block; }
 .mc.won { background: var(--paper); color: var(--ink); }
 .mc.lost { background: #b9ab93; color: var(--ink); }
@@ -307,6 +309,8 @@ html, body { margin: 0; height: 100%; background: #0d1716; overflow: hidden; }
 .wcard.lost::before { border-color: #a89a80; }
 .wcard .ww { font-weight: 700; font-size: 40px; letter-spacing: .03em; white-space: nowrap; line-height: 1.1; flex: none; }
 .wcard .wc { position: relative; font-size: 28px; line-height: 1.18; font-weight: 600; color: var(--ink-2); text-align: center; max-width: 100%; text-transform: lowercase; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+/* German capitalises nouns: the clues as typed. */
+:lang(de) .wcard .wc { text-transform: none; }
 .wcard.won { background: var(--paper); color: var(--ink); }
 .wcard.lost { background: #b9ab93; color: var(--ink); }
 .wcard .missed { position: absolute; right: -10px; bottom: -16px; font-size: 24px; font-weight: 700; background: var(--tomato); color: var(--paper); padding: 0 8px; border-radius: 6px; transform: rotate(-4deg); }

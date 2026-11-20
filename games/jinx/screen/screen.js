@@ -8,6 +8,7 @@
 
 import { PartyClient, qrSvg } from "/_tvpipe/lib/client.js";
 import { createTv } from "./app.js";
+import { t } from "./strings.js";
 
 const hash = new URLSearchParams(location.hash.slice(1));
 const client = PartyClient.fromLocation({ role: /** @type {any} */ (hash.get("role") ?? "screen") });
@@ -25,7 +26,7 @@ client.on("view", (view) => {
 });
 client.on("status", (s) => {
   status.hidden = s === "open" || s === "idle" || s === "connecting";
-  status.textContent = s === "reconnecting" ? "Reconnecting…" : s === "closed" ? "The game is over." : "";
+  status.textContent = s === "reconnecting" ? t.reconnecting : s === "closed" ? t.over : "";
   // A view after a reconnect is drawn as it is, without replaying.
   if (s === "reconnecting") tv.cold();
 });

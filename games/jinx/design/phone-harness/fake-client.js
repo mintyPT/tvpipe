@@ -109,7 +109,14 @@ function log(kind, data) {
   console.info("[fake]", kind, JSON.stringify(data));
 }
 
-const clone = (v) => JSON.parse(JSON.stringify(v));
+// `lang=de`: the room in German, with German words (long compounds: the fitting).
+const LANG = q.get("lang") ?? "en";
+const GERMAN = { Volcano: "Geburtstagskuchen", VOLCANO: "GEBURTSTAGSKUCHEN", Eruption: "Feuerwehrauto", Mountain: "Weihnachtsbaum", Pompeii: "Kerzen", Magma: "Torte", Lava: "Kerze", lava: "kerze", LAVA: "KERZE", Crater: "Schneemann", Craters: "Schneemänner", Watermelonseeds: "Wassermelonenkerne", Congratulations: "Glückwunschkarte", Beacon: "Leuchtturmwärter", Refrigerator: "Kühlschranktür", Vegetable: "Gemüsesuppe" };
+const clone = (v) => {
+  let json = JSON.stringify(v);
+  if (LANG === "de") json = json.replace(/"([A-Za-z]+)"/g, (m, w) => (GERMAN[w] ? `"${GERMAN[w]}"` : m));
+  return JSON.parse(json);
+};
 
 export class PartyClient {
   static fromLocation() {
@@ -158,7 +165,7 @@ export class PartyClient {
   }
 
   push() {
-    this.view = { roster: [], room: clone(this.state.room), me: clone(this.state.me) };
+    this.view = { roster: [], room: { ...clone(this.state.room), lang: LANG }, me: clone(this.state.me) };
     this.emit("view", this.view);
   }
 

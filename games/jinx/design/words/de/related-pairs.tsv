@@ -1,0 +1,219 @@
+a	b	a_as_clue_for_b	b_as_clue_for_a
+Adventskalender	Kalender	contains the word	part of the word
+Alphorn	Horn	contains the word	part of the word
+Arzt	Tierarzt	part of the word	contains the word
+Arzt	Zahnarzt	part of the word	contains the word
+Auto	Autobahn	part of the word	contains the word
+Auto	Autogramm	part of the word	contains the word
+backen	Bäcker	same family	same family
+backen	Bäckerei	same family	same family
+Bäcker	Bäckerei	same family	same family
+Ball	Basketball	part of the word	contains the word
+Ball	Federball	part of the word	contains the word
+Ball	Fußball	part of the word	contains the word
+Ball	Handball	part of the word	contains the word
+Ball	Schneeballschlacht	part of the word	contains the word
+Ball	Volleyball	part of the word	contains the word
+Bambus	Bus	contains the word	part of the word
+Bär	Waschbär	part of the word	contains the word
+Bauch	Bauchnabel	part of the word	contains the word
+Bauer	Bauernhof	part of the word	contains the word
+Baum	Baumwolle	part of the word	contains the word
+Baum	Purzelbaum	part of the word	contains the word
+Baum	Weihnachtsbaum	part of the word	contains the word
+Baumwolle	Wolle	contains the word	part of the word
+Berg	Eisberg	part of the word	contains the word
+Birne	Glühbirne	part of the word	contains the word
+Blatt	Kleeblatt	part of the word	contains the word
+Blume	Blumenkohl	part of the word	contains the word
+Blume	Sonnenblume	part of the word	contains the word
+Blumenkohl	Kohl	contains the word	part of the word
+Blumenkohl	Kohle	contains the word	
+Boden	Dachboden	part of the word	contains the word
+Bogen	Ellbogen	part of the word	contains the word
+Bogen	Regenbogen	part of the word	contains the word
+Boot	U-Boot	part of the word	contains the word
+Bratwurst	Wurst	contains the word	part of the word
+Brille	Sonnenbrille	part of the word	contains the word
+Brot	Butterbrot	part of the word	contains the word
+Buch	Wörterbuch	part of the word	contains the word
+Bügeleisen	Eis	contains the word	
+Bügeleisen	Eisen	contains the word	part of the word
+Butter	Butterbrot	part of the word	contains the word
+Currywurst	Wurst	contains the word	part of the word
+Dach	Dachboden	part of the word	contains the word
+Edelstein	Stein	contains the word	part of the word
+Eimer	Mülleimer	part of the word	contains the word
+Einhorn	Horn	contains the word	part of the word
+Eis	Eisberg	part of the word	contains the word
+Eis	Eisen	same family	same family
+Eis	Eishockey	part of the word	contains the word
+Eis	Eiszapfen	part of the word	contains the word
+Eis	Hufeisen		contains the word
+Eisen	Eishockey	part of the word	contains the word
+Eisen	Eiszapfen	part of the word	contains the word
+Eisen	Hufeisen	part of the word	contains the word
+Erdbeere	Erde	contains the word	part of the word
+Erde	Erdmännchen	part of the word	contains the word
+Erde	Erdnuss	part of the word	contains the word
+Erdnuss	Nuss	contains the word	part of the word
+Fahrrad	Rad	contains the word	part of the word
+Falle	Fallschirm		contains the word
+Falle	Wasserfall		contains the word
+Feder	Federball	part of the word	contains the word
+Feder	Federmäppchen	part of the word	contains the word
+Fee	Zahnfee	part of the word	contains the word
+Feuer	Feuerwehr	part of the word	contains the word
+Feuer	Feuerwerk	part of the word	contains the word
+Feuer	Lagerfeuer	part of the word	contains the word
+Fisch	Goldfisch	part of the word	contains the word
+Fisch	Thunfisch	part of the word	contains the word
+Flasche	Flaschengeist	part of the word	contains the word
+Floh	Flohmarkt	part of the word	contains the word
+Flohmarkt	Markt	contains the word	part of the word
+Flughafen	Hafen	contains the word	part of the word
+Fuß	Fußabdruck	part of the word	contains the word
+Fuß	Fußball	part of the word	contains the word
+Gans	Gänseblümchen	part of the word	contains the word
+Gans	Gänsehaut	part of the word	contains the word
+Garten	Gartenzwerg	part of the word	contains the word
+Garten	Kindergarten	part of the word	contains the word
+Gartenzwerg	Zwerg	contains the word	part of the word
+Geld	Geldbörse	part of the word	contains the word
+Gold	Goldfisch	part of the word	contains the word
+Golf	Minigolf	part of the word	contains the word
+Hahn	Truthahn	part of the word	contains the word
+Hals	Halskette	part of the word	contains the word
+Halskette	Kette	contains the word	part of the word
+Hand	Handball	part of the word	contains the word
+Hand	Handschuh	part of the word	contains the word
+Hand	Handtuch	part of the word	contains the word
+Handschuh	Schuh	contains the word	part of the word
+Hase	Osterhase	part of the word	contains the word
+Haus	Hausaufgabe	part of the word	contains the word
+Haus	Hausschuh	part of the word	contains the word
+Haus	Krankenhaus	part of the word	contains the word
+Hausschuh	Schuh	contains the word	part of the word
+Held	Superheld	part of the word	contains the word
+Heu	Heuschrecke	part of the word	contains the word
+Hexe	Hexenkessel	part of the word	contains the word
+Holz	Streichholz	part of the word	contains the word
+Horn	Nashorn	part of the word	contains the word
+Hose	Lederhose	part of the word	contains the word
+Jahrmarkt	Markt	contains the word	part of the word
+Käfer	Marienkäfer	part of the word	contains the word
+Kater	Katze	same family	same family
+Kissen	Kissenschlacht	part of the word	contains the word
+Knöchel	Knochen	same family	same family
+Koch	kochen	same family	same family
+Kokosnuss	Nuss	contains the word	part of the word
+König	Königin	same family	same family
+König	Königreich	part of the word	contains the word
+Krankenschwester	Schwester	contains the word	part of the word
+Kreis	Kreisel	same family	same family
+Kreuzworträtsel	Rätsel	contains the word	part of the word
+Kuchen	Lebkuchen	part of the word	contains the word
+Kuckuck	Kuckucksuhr	part of the word	contains the word
+Kuckucksuhr	Uhr	contains the word	part of the word
+Kühlschrank	Schrank	contains the word	part of the word
+Lächeln	lachen	same family	same family
+Lampe	Taschenlampe	part of the word	contains the word
+Leder	Lederhose	part of the word	contains the word
+Lenkrad	Rad	contains the word	part of the word
+Leuchtturm	Turm	contains the word	part of the word
+Lied	Schlaflied	part of the word	contains the word
+Lippe	Lippenstift	part of the word	contains the word
+Löwe	Löwenzahn	part of the word	contains the word
+Löwenzahn	Zahn	contains the word	part of the word
+malen	Maler	same family	same family
+Markt	Supermarkt	part of the word	contains the word
+Markt	Weihnachtsmarkt	part of the word	contains the word
+Meer	Meerjungfrau	part of the word	contains the word
+Meer	Meerschweinchen	part of the word	contains the word
+Melone	Wassermelone	part of the word	contains the word
+Messer	Taschenmesser	part of the word	contains the word
+Mikrowelle	Welle	contains the word	part of the word
+Mond	Vollmond	part of the word	contains the word
+Motorrad	Rad	contains the word	part of the word
+Mund	Mundharmonika	part of the word	contains the word
+Nachtisch	Tisch	contains the word	part of the word
+Nase	Nashorn	part of the word	contains the word
+Nilpferd	Pferd	contains the word	part of the word
+Ohr	Ohrring	part of the word	contains the word
+Ohrring	Ring	contains the word	part of the word
+Pfeife	pfeifen	plural	plural
+Pferd	Pferdeschwanz	part of the word	contains the word
+Prinz	Prinzessin	same family	same family
+Raumschiff	Schiff	contains the word	part of the word
+Regen	Regenbogen	part of the word	contains the word
+Regen	Regenschirm	part of the word	contains the word
+reiten	Ritter	same family	same family
+Richter	Schiedsrichter	part of the word	
+Rollschuh	Schuh	contains the word	part of the word
+Sand	Sandkasten	part of the word	contains the word
+Sand	Sanduhr	part of the word	contains the word
+Sanduhr	Uhr	contains the word	part of the word
+Sänger	singen	same family	same family
+sauer	Sauerkraut	part of the word	contains the word
+Schild	Schildkröte	part of the word	contains the word
+Schlafanzug	schlafen	contains the word	part of the word
+schlafen	Schlaflied	part of the word	contains the word
+schlafen	Schlafzimmer	part of the word	contains the word
+Schlitten	Schlittschuh	part of the word	contains the word
+Schnabel	Schnabeltier	part of the word	contains the word
+Schnee	Schneeballschlacht	part of the word	contains the word
+Schnee	Schneeflocke	part of the word	contains the word
+Schnee	Schneemann	part of the word	contains the word
+Schnitzel	Schnitzeljagd	part of the word	contains the word
+schreiben	Schreibtisch	part of the word	contains the word
+Schreibtisch	Tisch	contains the word	part of the word
+Schuh	Turnschuh	part of the word	contains the word
+Schule	Schüler	same family	same family
+Schule	Schulranzen	part of the word	contains the word
+Schule	Schultüte	part of the word	contains the word
+Schwamm	Schwimmbad	part of the word	contains the word
+Schwamm	schwimmen	verb form	verb form
+Schwein	Sparschwein	part of the word	contains the word
+Schwimmbad	schwimmen	contains the word	part of the word
+See	Seepferdchen	part of the word	contains the word
+Seife	Seifenblase	part of the word	contains the word
+Seil	Seilbahn	part of the word	contains the word
+Sommer	Sommersprosse	part of the word	contains the word
+Sonne	Sonnenaufgang	part of the word	contains the word
+Sonne	Sonnenblume	part of the word	contains the word
+Sonne	Sonnenbrille	part of the word	contains the word
+Sonne	Sonnenfinsternis	part of the word	contains the word
+Sonne	Sonnenuntergang	part of the word	contains the word
+Spiegel	Spiegelei	part of the word	contains the word
+Spinne	Spinnennetz	part of the word	contains the word
+Stein	Steinbock	part of the word	contains the word
+Stein	Steinschleuder	part of the word	contains the word
+Stern	Sternschnuppe	part of the word	contains the word
+Straße	Straßenbahn	part of the word	contains the word
+Streich	Streichholz	part of the word	contains the word
+Tanne	Tannenzapfen	part of the word	contains the word
+tanzen	Tänzer	same family	same family
+Tasche	Taschenlampe	part of the word	contains the word
+Tasche	Taschenmesser	part of the word	contains the word
+Tasche	Taschenrechner	part of the word	contains the word
+Tee	Teenager	part of the word	contains the word
+Tennis	Tischtennis	part of the word	contains the word
+Tisch	Tischtennis	part of the word	contains the word
+Toast	Toaster	same family	same family
+Tor	Torwart	part of the word	contains the word
+Umzug	Zug	contains the word	part of the word
+Wand	Windmühle		contains the word
+Wasser	Wasserfall	part of the word	contains the word
+Wasser	Wasserkocher	part of the word	contains the word
+Wasser	Wassermelone	part of the word	contains the word
+Weihnachten	Weihnachtsmann	part of the word	contains the word
+Welle	Wellensittich	part of the word	contains the word
+Werwolf	Wolf	contains the word	part of the word
+Wind	Windmühle	part of the word	contains the word
+Wolke	Wolkenkratzer	part of the word	contains the word
+Zahn	Zahnarzt	part of the word	contains the word
+Zahn	Zahnbürste	part of the word	contains the word
+Zahn	Zahnfee	part of the word	contains the word
+Zahn	Zahnpasta	part of the word	contains the word
+Zebra	Zebrastreifen	part of the word	contains the word
+Zucker	Zuckerwatte	part of the word	contains the word

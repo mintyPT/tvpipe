@@ -21,6 +21,7 @@ export type Reason =
   | "spelling"
   | "plural"
   | "verb form"
+  | "word form"
   | "same family"
   | "typo"
   | "sounds the same"
@@ -35,6 +36,7 @@ export const REASON_TEXT: Record<Reason, string> = {
   spelling: "other spelling",
   plural: "plural",
   "verb form": "verb form",
+  "word form": "word form",
   "same family": "same family",
   typo: "typo",
   "sounds the same": "sounds the same",
@@ -1088,6 +1090,7 @@ const TOO_CLOSE_TEXT: Record<Reason, string> = {
   spelling: "That's the word, spelled differently",
   plural: "That's the word in the plural",
   "verb form": "That's another form of the word",
+  "word form": "That's another form of the word",
   "same family": "Too close to the word: same family",
   typo: "That's the word with a typo",
   "sounds the same": "Sounds like the word",

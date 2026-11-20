@@ -22,36 +22,37 @@
       </div>
     </section>
     <section>
-      <h2>On the TV</h2>
-      <ul id="tvs" class="tvs"><li class="muted">No TV: open the preview on a screen yourself.</li></ul>
+      <h2 data-t="onTv">On the TV</h2>
+      <ul id="tvs" class="tvs"><li class="muted" data-t="noTv">No TV: open the preview on a screen yourself.</li></ul>
       <div class="row">
-        <button id="change-tv">Change TVs…</button>
-        <button id="cast-again" hidden>Try again</button>
-        <a id="player" href="#" target="_blank" hidden>Open the TV view</a>
+        <button id="change-tv" data-t="changeTv">Change TVs…</button>
+        <button id="cast-again" data-t="tryAgain" hidden>Try again</button>
+        <a id="player" href="#" target="_blank" data-t="openTv" hidden>Open the TV view</a>
       </div>
     </section>
     <section>
-      <h2>Players <span id="count" class="muted"></span></h2>
+      <h2><span data-t="players">Players</span> <span id="count" class="muted"></span></h2>
       <ul id="players" class="players"></ul>
       <div class="row" id="bots" hidden>
-        <button id="bot1">Add a bot</button>
-        <button id="bot3">Add 3 bots</button>
+        <button id="bot1" data-t="addBot">Add a bot</button>
+        <button id="bot3" data-t="addBots">Add 3 bots</button>
       </div>
     </section>
     <section class="settings">
-      <label>Rounds <select id="rounds"><option value="auto" selected>auto (twice up to 5 players)</option><option value="1">everyone guesses once</option><option value="2">everyone guesses twice</option></select></label>
-      <label>Writing time <select id="write"><option value="30">30 s</option><option value="45" selected>45 s</option><option value="60">60 s</option><option value="90">90 s</option></select></label>
-      <label>Words <select id="difficulty"><option value="easy">easy</option><option value="normal" selected>normal</option><option value="hard">hard</option></select></label>
+      <label><span data-t="language">Language</span> <select id="lang"><option value="en" lang="en">English</option><option value="de" lang="de">Deutsch</option></select></label>
+      <label><span data-t="rounds">Rounds</span> <select id="rounds"><option value="auto" data-t="roundsAuto" selected>auto (twice up to 5 players)</option><option value="1" data-t="roundsOnce">everyone guesses once</option><option value="2" data-t="roundsTwice">everyone guesses twice</option></select></label>
+      <label><span data-t="writing">Writing time</span> <select id="write"><option value="30">30 s</option><option value="45" selected>45 s</option><option value="60">60 s</option><option value="90">90 s</option></select></label>
+      <label><span data-t="words">Words</span> <select id="difficulty"><option value="easy" data-t="easy">easy</option><option value="normal" data-t="normal" selected>normal</option><option value="hard" data-t="hard">hard</option></select></label>
     </section>
     <footer>
       <button id="start" class="primary">Start the game</button>
-      <button id="quit" class="quiet">End</button>
+      <button id="quit" class="quiet" data-t="end">End</button>
     </footer>
     <p id="error" class="error" hidden></p>
   </aside>
   <main>
     <div class="preview"><iframe id="preview" title="What the TV shows"></iframe></div>
-    <p class="muted small">What the TV shows (a preview, no sound). The VIP's phone can start the game too.</p>
+    <p class="muted small" data-t="previewNote">What the TV shows (a preview, no sound). The VIP's phone can start the game too.</p>
   </main>
 </div>
 </body>

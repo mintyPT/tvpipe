@@ -20,7 +20,7 @@
       "title": "Jinx",
       "summary": "One word each to make the guesser say the secret word; the same clue twice jinxes both",
       "players": { "min": 3, "max": 8 },
-      "languages": ["en"],
+      "languages": ["en", "de"],
       "source": "gh:mitsuhiko/tvpipe/jinx@jinx-v*",
       "home": "https://github.com/mitsuhiko/tvpipe/tree/main/games/jinx",
       "screenshots": [

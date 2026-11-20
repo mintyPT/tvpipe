@@ -8,11 +8,13 @@
  * clue when one is refused. A bot guesser turns a random number of cards,
  * then guesses: it cheats (`peek`, the host's secret word) to be right
  * most of the time, else guesses a random word or passes. It picks a
- * random MVP clue.
+ * random MVP clue. Bots write in the room's language (`room.lang`): the
+ * category in its words ("Tier" for `animal`), that language's words.
  */
 
 import { memoryStorage, PartyClient, type WebSocketFactory } from "@tvpipe/party/client";
 
+import { pickLang, type Lang } from "./lang.ts";
 import type { WordEntry } from "./match.ts";
 
 export type GuessStyle = "mixed" | "right" | "wrong" | "pass" | "silent";
@@ -35,10 +37,10 @@ export interface BotOptions {
   silent?: boolean | undefined;
   /** The secret word (the host's), for guessing right. */
   peek?: (() => string | undefined) | undefined;
-  /** The word list, for the categories. */
+  /** The word lists (any languages), for the categories. */
   words?: readonly WordEntry[] | undefined;
-  /** Dictionary words for random clues and wrong guesses. */
-  dict?: readonly string[] | undefined;
+  /** Words for random clues and wrong guesses: for every language, or per language. */
+  dict?: readonly string[] | Partial<Record<Lang, readonly string[]>> | undefined;
   /** How this bot guesses (default `mixed`: mostly right, now and then wrong or a pass). */
   guess?: GuessStyle | undefined;
   /** How this bot writes clues (default `mixed`). */
@@ -47,11 +49,45 @@ export interface BotOptions {
   bold?: number | undefined;
 }
 
-/** Words for random clues when no dictionary is given. */
-export const FALLBACK = [
-  "red", "big", "small", "fast", "loud", "home", "summer", "night", "water", "metal", "wood", "round", "soft", "cold", "warm",
-  "old", "new", "happy", "dark", "sweet", "green", "blue", "tall", "fun", "paper", "glass", "kitchen", "school", "garden", "music",
-];
+/** Words for random clues when no dictionary is given, per language. */
+export const FALLBACK: Record<Lang, readonly string[]> = {
+  en: [
+    "red", "big", "small", "fast", "loud", "home", "summer", "night", "water", "metal", "wood", "round", "soft", "cold", "warm",
+    "old", "new", "happy", "dark", "sweet", "green", "blue", "tall", "fun", "paper", "glass", "kitchen", "school", "garden", "music",
+  ],
+  de: [
+    "rot", "groß", "klein", "schnell", "laut", "Zuhause", "Sommer", "Nacht", "Wasser", "Metall", "Holz", "rund", "weich", "kalt", "warm",
+    "alt", "neu", "fröhlich", "dunkel", "süß", "grün", "blau", "hoch", "Spaß", "Papier", "Glas", "Küche", "Schule", "Garten", "Musik",
+  ],
+};
+
+/** The word list's categories (English ids) as a German clue. */
+export const CATEGORY_DE: Record<string, string> = {
+  animal: "Tier",
+  food: "Essen",
+  home: "Haushalt",
+  nature: "Natur",
+  people: "Mensch",
+  place: "Ort",
+  sport: "Sport",
+  fantasy: "Märchen",
+  music: "Musik",
+  transport: "Fahrzeug",
+  body: "Körper",
+  tool: "Werkzeug",
+  clothing: "Kleidung",
+  science: "Wissenschaft",
+  event: "Fest",
+  material: "Material",
+  action: "Bewegung",
+  quality: "Eigenschaft",
+  thing: "Ding",
+};
+
+/** A category as a clue in a language. */
+export function categoryClue(category: string, lang: Lang): string {
+  return lang === "de" ? (CATEGORY_DE[category] ?? "Ding") : category;
+}
 
 export class Bot {
   readonly client: PartyClient;
@@ -94,18 +130,26 @@ export class Bot {
     return xs[Math.floor(this.#rng() * xs.length)];
   }
 
+  /** The room's language (the room view's). */
+  get lang(): Lang {
+    return pickLang(this.client.view?.["room"]?.lang);
+  }
+
   #randomWord(): string {
-    const dict = this.#o.dict && this.#o.dict.length > 0 ? this.#o.dict : FALLBACK;
+    const lang = this.lang;
+    const d = this.#o.dict;
+    const dict = (Array.isArray(d) ? d : (d as Partial<Record<Lang, readonly string[]>> | undefined)?.[lang]) ?? [];
+    const pool = dict.length > 0 ? dict : FALLBACK[lang];
     for (let i = 0; i < 20; i++) {
-      const w = this.#pick(dict)!;
-      if (/^[a-z]{3,10}$/.test(w)) return w;
+      const w = this.#pick(pool)!;
+      if (/^\p{L}{3,12}$/u.test(w)) return w;
     }
-    return this.#pick(FALLBACK)!;
+    return this.#pick(FALLBACK[lang])!;
   }
 
   #clue(word: string, attempt: number): string {
     const style = this.#o.clues ?? "mixed";
-    const cat = this.#category.get(word) ?? "thing";
+    const cat = categoryClue(this.#category.get(word) ?? "thing", this.lang);
     if (attempt > 0) return this.#randomWord();
     if (style === "category") return cat;
     if (style === "random") return this.#randomWord();

@@ -11,6 +11,9 @@
  * (round tab, guesser, the room's tally) and the host line (masking tape
  * under the header). Particles fly in #fx above the table.
  *
+ * The TV speaks the room's language (`screen.lang`, strings.js): a view in
+ * another language draws everything again, without animation.
+ *
  * @typedef {import("../game/views.ts").ScreenView} ScreenView
  * @typedef {import("../game/views.ts").Person} Person
  * @typedef {import("../game/views.ts").Tally} Tally
@@ -23,6 +26,7 @@ import { A, EASE, clamp, h, short } from "./dom.js";
 import { resetShakes, setSurfaces } from "./fx.js";
 import { Pot, chip } from "./pieces.js";
 import { quiet, setMuted, sfx } from "./sound.js";
+import { t, useLang } from "./strings.js";
 
 export class Ctx {
   /**
@@ -125,6 +129,12 @@ class Header {
     this.whoKey = "";
   }
 
+  /** Forgets what is drawn (another language): the next `set` draws it all. */
+  relabel() {
+    this.state = "";
+    this.whoKey = "";
+  }
+
   /**
    * @param {{ tab?: string, guesser?: Person, blind?: boolean, tally?: Tally, round?: number, hideWho?: boolean }} o
    * @param {boolean} anim
@@ -144,34 +154,34 @@ class Header {
       this.whoKey = whoKey;
       this.who.replaceChildren();
       if (o.guesser && !o.hideWho) {
-        const t = chip(o.guesser, 52, { style: "position:relative;flex:none" });
-        if (o.blind) t.append(h("div", { class: "blindfold" }));
-        this.who.append(t, h("span", null, `${short(o.guesser.name, 12)} guesses`));
+        const tok = chip(o.guesser, 52, { style: "position:relative;flex:none" });
+        if (o.blind) tok.append(h("div", { class: "blindfold" }));
+        this.who.append(tok, h("span", null, t.guesses(short(o.guesser.name, 12))));
       }
     }
     this.setTally(o.tally, anim);
   }
 
-  /** @param {Tally | undefined} t @param {boolean} anim */
-  setTally(t, anim) {
-    const key = t ? `${t.found}/${t.played}/${t.total}/${t.history.join(",")}` : "";
+  /** @param {Tally | undefined} tl @param {boolean} anim */
+  setTally(tl, anim) {
+    const key = tl ? `${tl.found}/${tl.played}/${tl.total}/${tl.history.join(",")}` : "";
     if (key === this.state) return;
     const before = this.state;
     this.state = key;
     this.tally.replaceChildren();
-    if (!t) return;
-    const n = Math.max(t.total, t.history.length);
+    if (!tl) return;
+    const n = Math.max(tl.total, tl.history.length);
     const w = n > 12 ? 18 : 24;
     const minis = [];
     for (let i = 0; i < n; i++) {
-      const s = t.history[i];
+      const s = tl.history[i];
       minis.push(h("i", { class: `mini ${s === "found" ? "won" : s === "missed" ? "lost" : "todo"}`, style: `width:${w}px;height:${Math.round(w * 1.42)}px` }));
     }
-    this.tally.append(h("span", { class: "tl" }, `${t.found} of ${t.total}`), ...minis);
+    this.tally.append(h("span", { class: "tl" }, t.tally(tl.found, tl.total)), ...minis);
     // the round that just ended turns over
-    const prevLen = before ? (before.split("/")[3] ?? "").split(",").filter(Boolean).length : t.history.length;
-    if (anim && t.history.length > prevLen) {
-      const m = minis[t.history.length - 1];
+    const prevLen = before ? (before.split("/")[3] ?? "").split(",").filter(Boolean).length : tl.history.length;
+    if (anim && tl.history.length > prevLen) {
+      const m = minis[tl.history.length - 1];
       if (m) {
         A(m, [{ transform: "rotateY(90deg) scale(1.3)" }, { transform: "rotateY(0) scale(1)" }], 300, { easing: EASE.back, delay: 100 });
         setTimeout(sfx.flipTick, 100);
@@ -334,6 +344,13 @@ export class Tv {
     this.join = view.join ?? null;
     if (!v || typeof v !== "object" || !v.phase || !this.scenes[v.phase]) return;
     this.people = new Map((Array.isArray(v.people) ? v.people : []).map((p) => [p.id, p]));
+    if (useLang(v.lang)) {
+      // Another language (between games): everything drawn again as it is.
+      this.sceneKey = "";
+      this.coldNext = true;
+      this.head.relabel();
+      this.pot.relabel();
+    }
     const round = "round" in v ? v.round : 0;
     const key = v.phase === "end" || v.phase === "lobby" ? v.phase : `${v.phase}:${round}`;
     try {

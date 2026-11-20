@@ -14,9 +14,10 @@ import { A, EASE, h, rnd, short } from "./dom.js";
 import { dust, stampAt } from "./fx.js";
 import { PENCIL, cardEl, chip, dial, envelope } from "./pieces.js";
 import { sfx } from "./sound.js";
+import { t as tr } from "./strings.js";
 
 /** @param {{ round: number, rounds: number }} v */
-export const roundTab = (v) => `Round ${v.round} of ${v.rounds}`;
+export const roundTab = (v) => tr.roundTab(v.round, v.rounds);
 
 /**
  * @param {Ctx} ctx
@@ -31,17 +32,20 @@ export function hotseat(ctx, v, prev) {
   const T = (/** @type {number} */ ms) => ms * (pace || 1);
   ctx.head.set({ tab: roundTab(v), tally: v.tally }, !!prev);
   ctx.pot.show(false);
-  ctx.host.say("Everyone else: one word. *Make it count.*", { anim });
+  ctx.host.say(tr.makeItCount, { anim });
   ctx.pool.to(640, 330, 230, anim);
 
   const t = chip(g, 210, { style: "left:535px;top:225px;z-index:3" });
   L.append(t);
   const blind = h("div", { class: "blindfold" });
   const n = short(g?.name, 12).toUpperCase();
-  const a = h("span", null, `${n} IS IN\u00a0`);
-  const b = h("span", { class: "gold" }, "THE HOT SEAT");
+  const [first, second] = tr.hotSeat(n);
+  const a = h("span", null, first);
+  const b = h("span", { class: "gold" }, second);
   const title = h("div", { class: "bigline", style: "top:500px" }, a, b);
   L.append(title);
+  // a long name (or language) shrinks the line to the safe area
+  if (title.scrollWidth > 1152) title.style.fontSize = `${Math.max(36, Math.floor((60 * 1152) / title.scrollWidth))}px`;
   if (!anim) {
     t.append(blind);
     return {};
@@ -90,12 +94,11 @@ export function write(ctx, v, prev) {
   ctx.head.set({ tab: roundTab(v), guesser: g, blind: true, tally: v.tally }, anim);
   ctx.pot.show(false);
   ctx.pool.off(anim);
-  const words = v.each === 2 ? "Two words each." : "One word each.";
-  ctx.host.say(`${words} *Don't think alike.*`, { anim });
+  ctx.host.say(tr.writeLine(v.each), { anim });
 
   const env = envelope(150, 236);
   L.append(env);
-  L.append(h("div", { class: "caption", style: "left:120px;top:436px;width:360px;font-size:26px;color:var(--dim)" }, `${short(g?.name, 10)} can't see the word`));
+  L.append(h("div", { class: "caption", style: "left:120px;top:436px;width:360px;font-size:26px;color:var(--dim)" }, tr.cantSee(short(g?.name, 10))));
   L.append(h("div", { class: "zone", style: "left:490px;top:212px;width:300px;height:210px" }));
   const pile = h("div", { class: "abs", style: "inset:0" });
   L.append(pile);
@@ -161,7 +164,7 @@ export function write(ctx, v, prev) {
       A(count, [{ transform: "translateX(-50%) scale(1.25)" }, { transform: "translateX(-50%) scale(1)" }], 300, { delay: 540 });
     }
     sent = Math.max(sent, Math.min(v.sent, 16));
-    count.textContent = `${v.sent} of ${total} in`;
+    count.textContent = tr.sentOf(v.sent, total);
     for (const [id, t] of chips) {
       const isDone = v.done.includes(id);
       const had = done.has(id);
@@ -184,9 +187,9 @@ export function write(ctx, v, prev) {
     done = new Set(v.done);
     if (!allIn && v.givers.length > 0 && v.done.length >= v.givers.length) {
       allIn = true;
-      ctx.host.say("*Clues locked!*", { anim });
-      if (anim) ctx.later(700, () => stampAt(L, 640, 312, "All in!", { cls: "green", rot: -7, size: 50 }));
-      else stampAt(L, 640, 312, "All in!", { cls: "green", rot: -7, size: 50, anim: false });
+      ctx.host.say(tr.cluesLocked, { anim });
+      if (anim) ctx.later(700, () => stampAt(L, 640, 312, tr.allIn, { cls: "green", rot: -7, size: 50 }));
+      else stampAt(L, 640, 312, tr.allIn, { cls: "green", rot: -7, size: 50, anim: false });
     }
   };
 
@@ -199,7 +202,7 @@ export function write(ctx, v, prev) {
       A(d.el, [{ transform: "rotate(-5deg)" }, { transform: "rotate(5deg)" }, { transform: "rotate(0)" }], 160, { fill: "none" });
       if (!low) {
         low = true;
-        ctx.host.say("*Ten seconds.* Commit to something!");
+        ctx.host.say(tr.tenSeconds);
       }
     }
   };

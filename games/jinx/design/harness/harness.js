@@ -9,7 +9,8 @@
  * Query: n (3 or 8), step (a step name, see script.js; default: play the
  * whole script), mode (`cold`: the step's view as the first one; `warm`:
  * the step before cold, then this step and its updates), jinx, wrong,
- * pass, long, web (few, none), controls, sound.
+ * pass, long, web (few, none), controls, sound, lang (`de`: German, with
+ * German words).
  */
 
 import { createTv } from "../../screen/app.js";
@@ -64,13 +65,21 @@ function qrSvg(qr, o = {}) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n} ${n}" shape-rendering="crispEdges"><rect width="${n}" height="${n}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
 }
 
+// `lang=de`: the room in German, with German words (long compounds: the fitting).
+const LANG = q.get("lang") ?? "en";
+/** @type {Record<string, string>} */
+const GERMAN = { Volcano: "Geburtstagskuchen", VOLCANO: "GEBURTSTAGSKUCHEN", Eruption: "Feuerwehrauto", Mountain: "Weihnachtsbaum", Pompeii: "Kerzen", Magma: "Torte", Lava: "Kerze", lava: "kerze", LAVA: "KERZE", Crater: "Schneemann", Craters: "Schneemänner", Watermelonseeds: "Wassermelonenkerne", Congratulations: "Glückwunschkarte", Beacon: "Leuchtturmwärter", Refrigerator: "Kühlschranktür", Vegetable: "Gemüsesuppe" };
 const join = { code: "KQZM", url: "https://tvp.link/?r=KQZM#k=3f9a2c71d0", qr: fakeQr(), lateJoin: "wait", inProgress: false };
 const root = /** @type {HTMLElement} */ (document.getElementById("viewport"));
 const tv = createTv({ root, now: () => Date.now(), qrSvg, muted: q.get("sound") !== "1" });
 const steps = script({ n: Number(q.get("n") ?? 8), jinx: q.get("jinx") ?? "one", wrong: q.get("wrong") === "1", pass: q.get("pass") === "1", long: q.get("long") === "1", web: q.get("web") ?? "" });
 
 /** @param {import("../../game/views.ts").ScreenView} screen */
-const feed = (screen) => tv.update({ screen: JSON.parse(JSON.stringify(screen)), join });
+const feed = (screen) => {
+  let json = JSON.stringify(screen);
+  if (LANG === "de") json = json.replace(/"([A-Za-z]+)"/g, (m, w) => (GERMAN[w] ? `"${GERMAN[w]}"` : m));
+  tv.update({ screen: { ...JSON.parse(json), lang: LANG }, join });
+};
 
 /** @type {ReturnType<typeof setTimeout>[]} */
 let timers = [];

@@ -1,0 +1,298 @@
+# German candidates cut to keep the list near 1,000 (a reserve: same format as source.txt, lists as they were when cut;
+# re-check also_right/banned against README rules before reusing one).
+Auster | h | | oyster, ostra, huitre, ostrica
+Gürteltier | h | | armadillo
+Kanarienvogel | h | Kanari | canary
+Kralle | m | | claw
+Kobra | h | | cobra
+Gecko | h | |
+Hyäne | h | | hyena
+Stachelschwein | h | | porcupine
+Seestern | m | | starfish
+Vogelspinne | m | Tarantel | tarantula
+Stoßzahn | h | | tusk
+Tausendfüßler | h | Tausendfüßer | centipede, millipede
+Wildschwein | m | Keiler, Wildsau | wild boar, boar
+Dachs | h | | badger
+Hummel | m | | bumblebee
+Zecke | m | | tick
+Kolibri | m | | hummingbird
+Fohlen | m | Füllen | foal
+Kalb | m | | calf
+Ochse | m | Ochs | ox
+Büffel | m | Bison | buffalo, bison
+Antilope | h | Gazelle | antelope
+Hering | m | | herring
+Forelle | h | | trout
+Schwalbe | m | | swallow, golondrina, hirondelle, rondine
+Falke | m | | falcon, hawk, halcon, faucon, falco
+Grille | m | Heimchen | cricket | Grill (barbecue) is another word
+Kröte | m | | toad
+Luchs | h | | lynx
+Alpaka | m | | alpaca
+Schimpanse | m | | chimpanzee, chimp
+Eisbär | e | | polar bear
+Seelöwe | m | | sea lion
+Ameisenbär | h | | anteater
+Kranich | h | | crane
+Mandel | h | | almond, almendra, amande, mandorla | also tonsil
+Karamell | m | Karamel | caramel, caramelo, caramello
+Teig | m | | dough, masa, pate, impasto
+Limette | h | Limone | lime, lima
+Marshmallow | m | Mäusespeck | 
+Milchshake | m | Shake | milkshake
+Minze | m | Pfefferminze, Pfefferminz | mint, menta, menthe
+Smoothie | m | |
+Eintopf | m | | stew, guiso, ragout
+Sirup | m | | syrup, sirop, sciroppo
+Vanille | m | | vanilla, vainilla, vaniglia
+Essig | m | | vinegar, vinagre, vinaigre, aceto
+Walnuss | m | Baumnuss | walnut
+Weizen | h | | wheat, trigo, ble, grano
+Eigelb | m | Dotter, Eidotter | yolk, egg yolk
+Spätzle | h | Spätzli, Knöpfle | | Swabian, known everywhere
+Gulasch | m | Gulyas | goulash
+Apfelstrudel | m | Strudel | apple strudel
+Quark | m | Topfen | curd, quark cheese | Topfen: Austrian
+Stollen | h | Christstollen | | also a mine tunnel
+Lakritze | m | Lakritz, Bärendreck | licorice, liquorice, regaliz, reglisse, liquirizia
+Omelett | m | Omelette | omelet, tortilla
+Zucchini | m | Zucchetti, Zucchino | courgette, zucchine
+Aubergine | h | Melanzani, Melanzane | eggplant, berenjena
+Radieschen | h | | radish, rabano
+Rosenkohl | m | Kohlsprossen | brussels sprouts, sprouts
+Lauch | h | Porree | leek, puerro, poireau, porro
+Pflaume | m | Zwetschge, Zwetschke, Zwetsche | plum, ciruela, prune, prugna
+Mandarine | m | Clementine | tangerine, mandarin
+Feige | h | | fig, higo, figue, fico
+Rosine | m | Sultanine, Weinbeere | raisin, raisins
+Salami | m | |
+Lasagne | m | Lasagna | 
+Wackelpudding | m | Götterspeise, Wackelpeter | jelly, jello
+Donut | m | Doughnut | 
+Sellerie | h | Zeller | celery, apio, celeri, sedano
+Hefe | h | Germ | yeast, levadura, levure, lievito
+Mixer | h | Standmixer, Pürierstab | blender
+Lesezeichen | h | | bookmark
+Schüssel | m | Schale, Schüssel | bowl
+Aktentasche | h | Aktenkoffer | briefcase
+Bürste | m | | brush, cepillo, brosse, spazzola
+Kronleuchter | h | Lüster, Luster, Leuchter | chandelier
+Schornstein | m | Schlot, Rauchfang, Esse | chimney | Kamin (fireplace; chimney in the south) is its own word
+Tagebuch | h | | diary, journal, diario
+Klingel | m | Türklingel, Hausglocke | doorbell, bell, timbre, sonnette
+Briefumschlag | m | Umschlag, Kuvert, Couvert | envelope, sobre, enveloppe, busta
+Gefrierschrank | m | Tiefkühlschrank, Tiefkühltruhe, Gefriertruhe, Tiefkühler | freezer, congelador, congelateur, congelatore
+Knoten | m | | knot, nudo, noeud, nodo
+Wäsche | m | Wäschekorb | laundry, washing, ropa sucia, lessive, bucato
+Vorhängeschloss | h | Schloss | padlock, lock, candado, cadenas, lucchetto | en:lock
+Becher | m | Häferl | mug, beaker | en:mug
+Serviette | m | | napkin, servilleta, serviette, tovagliolo
+Füller | m | Füllfeder, Füllhalter, Füllfederhalter | fountain pen
+Stecker | m | | plug, enchufe, prise, spina
+Postkarte | m | Ansichtskarte, Karte | postcard, postal, carte postale, cartolina
+Teekanne | h | Kanne | teapot, tetera, theiere, teiera
+Tapete | h | | wallpaper, papel pintado, tapisserie, carta da parati
+Wäscheklammer | m | Klammer, Kluppe | clothespin, clothes peg, peg
+Nudelholz | m | Teigroller, Wallholz, Nudelwalker, Rollholz | rolling pin, rodillo, rouleau, mattarello
+Schneebesen | h | Schwingbesen, Quirl | whisk, batidor, fouet, frusta
+Sieb | h | | sieve, strainer, colador, tamis, passoire, colino
+Feuerzeug | m | | lighter, mechero, briquet, accendino
+Wiege | h | | cradle, cuna, berceau, culla
+Kachelofen | h | | tiled stove
+Eichel | m | | acorn, bellota, gland, ghianda
+Bienenstock | m | Bienenkorb, Bienenhaus | beehive, hive, colmena, ruche, alveare | en:hive
+Schneesturm | h | | blizzard, snowstorm, tormenta de nieve, tempete de neige, bufera
+Brise | h | Lüftchen | breeze, brisa, brezza
+Kokon | h | | cocoon, capullo, cocon, bozzolo
+Kontinent | h | Erdteil | continent, continente
+Koralle | m | | coral, corail, corallo
+Frost | h | | frost, helada, gel, gelo
+Hecke | m | | hedge, seto, haie, siepe
+Lavendel | h | | lavender, lavanda, lavande
+Blütenblatt | h | | petal, petalo, petale, petalo
+Pollen | h | Blütenstaub | pollen, polen, polline
+Treibsand | h | | quicksand, arenas movedizas, sables mouvants, sabbie mobili
+Riff | h | Korallenriff | reef, arrecife, recif, scogliera
+Alge | h | Seetang, Tang | seaweed, algae, alga, algue
+Dampf | m | | steam, vapor, vapeur, vapore
+Dorn | m | Stachel | thorn, espina, epine, spina
+Brennnessel | h | Nessel, Brennessel | nettle, stinging nettle, ortiga, ortie, ortica
+Bach | m | Bächlein, Rinnsal | brook, stream, creek, arroyo, ruisseau, ruscello
+Sumpf | m | Moor, Morast | swamp, marsh, pantano, marais, palude
+Ebbe | h | | low tide, ebb, ebb tide, marea baja, maree basse
+Hagel | m | Hagelkorn | hail, granizo, grele, grandine
+Tau | h | Morgentau | dew, rocio, rosee, rugiada | also a rope
+Laub | m | Herbstlaub | foliage, leaves, follaje, feuillage, fogliame
+Polarlicht | h | Nordlicht, Polarlichter | northern lights, aurora, aurora borealis
+Quelle | h | | spring, source, fuente, fonte, sorgente
+Efeu | h | | ivy, hiedra, lierre, edera
+Rinde | h | Borke | bark, corteza, ecorce, corteccia | en:bark (the tree's)
+Hitze | m | | heat, calor, chaleur, caldo
+Tischler | m | Schreiner, Tischlerin, Schreinerin | carpenter, joiner, carpintero, menuisier, falegname
+Butler | m | Diener | mayordomo, majordome, maggiordomo
+Höhlenmensch | h | Steinzeitmensch, Urmensch, Neandertaler | caveman
+Bibliothekar | h | Bibliothekarin | librarian, bibliotecario
+Rettungsschwimmer | h | Bademeister, Rettungsschwimmerin | lifeguard, socorrista, bagnino
+Spitzname | h | Kosename, Übername | nickname, apodo, surnom, soprannome
+Akrobat | h | Akrobatin, Artist | acrobat, acrobata, acrobate
+Gladiator | h | | gladiador, gladiateur, gladiatore
+Jockey | h | Jockei |
+Hausmeister | h | Hauswart, Abwart, Hausmeisterin | janitor, caretaker, conserje, concierge
+Förster | m | Försterin, Jäger | forester, ranger, forest ranger, guardabosques, forestier, guardia forestale
+Bräutigam | h | | groom, bridegroom, novio, marie, sposo
+Erfinder | m | Erfinderin, Tüftler | inventor, inventeur, inventore
+Fotograf | m | Fotografin, Photograph | photographer, fotografo, photographe
+Babysitter | m | Babysitterin, Kindermädchen | 
+Hebamme | h | | midwife, partera, sage-femme, ostetrica
+Kaiser | m | Kaiserin | emperor, emperador, empereur, imperatore
+Busfahrer | m | Busfahrerin, Chauffeur | bus driver, conductor, chauffeur de bus, autista
+Kanal | m | | canal, channel, canale | also a TV channel
+Palast | h | Palais | palace, palacio, palais, palazzo
+Labor | h | Laboratorium | laboratory, lab, laboratorio, laboratoire
+Villa | m | Herrenhaus, Anwesen | mansion
+Baumhaus | m | | treehouse, tree house
+Sauna | h | Schwitzbad |
+Zugbrücke | h | | drawbridge
+Rathaus | h | Gemeindeamt, Stadthaus | town hall, city hall, ayuntamiento, mairie, municipio
+Tankstelle | m | Tanke | gas station, petrol station, gasolinera, station-service, benzinaio
+Gewächshaus | h | Treibhaus, Glashaus | greenhouse, invernadero, serre, serra
+Stall | m | Pferdestall, Kuhstall | stable, barn, establo, etable, stalla
+Wohnzimmer | m | Stube, Stube | living room, sitting room, lounge, salon, salotto
+Oase | h | | oasis
+Kreisverkehr | h | Kreisel, Verkehrskreisel | roundabout, traffic circle, rotonda, rond-point
+Bogenschießen | h | | archery, tiro con arco, tir a l'arc
+Handstand | h | |
+Hürde | h | Hürdenlauf | hurdle, valla, haie, ostacolo
+Kaleidoskop | h | | kaleidoscope, caleidoscopio
+Maskottchen | h | Maskotte | mascot, mascota, mascotte
+Origami | h | Papierfalten |
+Paddel | h | | paddle, remo, pagaie, pagaia
+Flipper | h | Flipperautomat | pinball, pinball machine
+Rugby | h | |
+Laufband | h | | treadmill
+Kegeln | h | Kegelbahn, Kegel | ninepins, skittles, bolos
+Billard | h | Pool, Poolbillard | billiards, pool, billar, biliardo
+Tauziehen | h | | tug of war, tug-of-war
+Hantel | m | Kurzhantel | dumbbell, barbell, pesa, haltere, manubrio
+Turnen | m | Gymnastik, Geräteturnen | gymnastics, gimnasia, gymnastique, ginnastica
+Verlies | h | Kerker, Burgverlies | dungeon, mazmorra, donjon, cachot, segreta
+Hofnarr | h | Narr | jester, bufon, bouffon, buffone
+Dreizack | h | | trident, tridente
+Schatzkarte | m | | treasure map
+Rüstung | h | Ritterrüstung | armor, armour, armadura, armure, armatura
+Glücksbringer | h | Talisman, Amulett | lucky charm, talisman, amuleto
+Trapez | h | | trapeze, trapecio, trapezio
+Banjo | h | |
+Komödie | h | Lustspiel | comedy, comedia, comedie, commedia
+Tamburin | h | Schellentrommel | tambourine, pandereta, tambourin, tamburello
+Seiltänzer | h | Seiltänzerin, Hochseilartist | tightrope walker, tightrope, funambulo, funambule, funambolo | en:tightrope
+Posaune | h | | trombone, trombon
+Ukulele | h | Ukelele |
+Staffelei | h | | easel, caballete, chevalet, cavalletto
+Leinwand | h | | canvas, screen, lienzo, toile, tela
+Walzer | m | | waltz, vals, valse, valzer
+Cello | h | Violoncello |
+Segelflugzeug | h | Segelflieger, Gleitschirm, Gleiter | glider, planeador, planeur, aliante
+Kajak | h | | kayak
+Limousine | h | Stretchlimousine, Limo | limo, limusina, limousine
+Pedal | h | Pedale |
+Landebahn | h | Startbahn, Rollbahn, Piste, Rollfeld | runway, pista
+Einrad | h | | unicycle, monociclo, monocycle
+Sessellift | m | Lift, Skilift, Sesselbahn | chairlift, chair lift, telesilla, telesiege, seggiovia
+Blinker | h | | indicator, turn signal, blinker, intermitente, clignotant, freccia
+Sicherheitsgurt | h | Gurt, Anschnallgurt | seatbelt, seat belt, cinturon, ceinture, cintura
+Kofferraum | h | Gepäckraum | trunk, boot, maletero, coffre, bagagliaio
+Augenbraue | h | Braue | eyebrow, ceja, sourcil, sopracciglio
+Fingerabdruck | h | | fingerprint, huella, empreinte, impronta
+Herzschlag | h | Puls, Herzschlag | heartbeat, pulse, latido, battement, battito
+Magen | m | | stomach, estomago, estomac, stomaco
+Handgelenk | h | | wrist, muneca, poignet, polso
+Schnurrhaar | h | Schnurrhaare, Barthaar, Tasthaar | whisker, whiskers, bigote, moustache, baffi
+Huf | m | Hufe | hoof, hooves, pezuna, sabot, zoccolo
+Kinn | m | | chin, barbilla, menton, mento
+Stirn | m | | forehead, frente, front, fronte
+Ferse | h | Ferse | heel, talon, tallone
+Wimper | h | Wimpern | eyelash, eyelashes, lash, pestana, cil, ciglia
+Locke | m | Locken | curl, curls, rizo, boucle, ricciolo
+Muskelkater | h | | sore muscles, muscle ache, agujetas, courbatures
+Lunge | m | | lung, lungs, pulmon, poumon, polmone
+Handschlag | h | Händedruck, Händeschütteln, Handgeben | handshake, apreton de manos, poignee de main, stretta di mano | en:handshake
+Stoppuhr | h | | stopwatch, cronometro, chronometre
+Amboss | h | | anvil, yunque, enclume, incudine
+Megafon | h | Megaphon, Flüstertüte | megaphone, megafono, megaphone
+Mistgabel | h | Heugabel, Forke | pitchfork, horca, fourche, forcone
+Drucker | m | | printer, impresora, imprimante, stampante
+Rechen | m | Harke | rake, rastrillo, rateau, rastrello
+Tacker | h | Hefter, Heftgerät, Bostitch, Heftmaschine | stapler, grapadora, agrafeuse, cucitrice
+Zange | h | Kneifzange, Beißzange | pliers, tongs, alicates, pince, pinze
+Fernglas | m | Feldstecher, Opernglas | binoculars, prismaticos, jumelles, binocolo
+Spitzer | m | Anspitzer, Bleistiftspitzer, Spitzmaschine | sharpener, pencil sharpener, sacapuntas, taille-crayon, temperamatite
+Wasserwaage | h | | spirit level, level, nivel, niveau, livella
+Maßband | h | Massband, Metermaß, Meterstab, Zollstock | tape measure, measuring tape, metro, metre ruban
+Schürze | m | Kochschürze, Schurz | apron, delantal, tablier, grembiule
+Augenbinde | h | | blindfold, venda
+Armband | m | Armreif | bracelet, pulsera, bracelet, braccialetto
+Ärmel | m | | sleeve, manga, manche, manica
+Diadem | h | Tiara | tiara, diadema, diademe
+Badehose | m | | swimming trunks, trunks, swim shorts, banador, maillot
+Gummistiefel | m | | wellies, wellington boots, rain boots, rubber boots, galochas, bottes de pluie, stivali di gomma
+Sandale | m | Sandalen, Sandalette | sandal, sandals, sandalia, sandalo
+Bademantel | m | Morgenmantel | bathrobe, robe, dressing gown, albornoz, peignoir, accappatoio
+Kapuze | m | | hood, capucha, capuche, cappuccio
+Handtasche | m | | handbag, purse, bolso, sac a main, borsetta
+Lätzchen | h | Latz, Sabberlatz, Lätzli | bib, babero, bavoir, bavaglino
+Ohrenschützer | h | Ohrenwärmer | earmuffs
+Strumpfhose | m | Strumpfhosen, Strumpfhose | tights, pantyhose, medias, collant, collant
+Trikot | m | Leibchen, Dress, Jersey | jersey, shirt, camiseta, maillot, maglia
+Regenmantel | m | Regenjacke, Regenmantel | raincoat, impermeable, chubasquero
+Versteigerung | h | Auktion | auction, subasta, enchere, asta
+Buffet | h | Büfett, Büffet | bufe, buffet
+Zeltlager | m | Ferienlager, Lager, Camp, Pfadilager | camp, summer camp, campamento, campement, campeggio
+Haarschnitt | m | Frisur, Haarschnitt | haircut, corte de pelo, coupe de cheveux, taglio di capelli
+Andenken | h | Souvenir, Mitbringsel, Erinnerungsstück | souvenir, keepsake, recuerdo, souvenir, ricordo
+Eintrittskarte | m | Ticket, Karte, Billett, Eintrittskarte | ticket, entrada, billet, biglietto
+Sonnenbrand | m | | sunburn, quemadura, coup de soleil, scottatura
+Atom | h | |
+Sechseck | h | Hexagon | hexagon, hexagono, hexagone, esagono
+Umlaufbahn | h | Orbit, Erdumlaufbahn | orbit, orbita, orbite
+Marmor | h | | marble, marmol, marbre, marmo
+Keramik | h | Töpferei, Steingut, Porzellan | pottery, ceramics, ceramica, ceramique, ceramica
+Saphir | h | | sapphire, zafiro, saphir, zaffiro
+Kupfer | h | | copper, cobre, cuivre, rame
+Beton | h | Zement | concrete, hormigon, cemento
+Watte | h | Wattebausch | cotton wool, cotton ball, algodon, coton, ovatta
+Wachs | m | Kerzenwachs, Bienenwachs | wax, cera, cire
+Schaum | m | | foam, froth, espuma, mousse, schiuma
+jodeln | h | Jodler | yodel, yodeling, yodelling, jodel | a verb: see action
+erröten | h | rot werden, Röte | blush, sonrojarse, rougir, arrossire
+knurren | m | | growl, grunir, grogner, ringhiare
+schrumpfen | h | | shrink, encoger, retrecir, restringersi
+verschütten | h | ausschütten, kleckern | spill, derramar, renverser, rovesciare
+schleichen | m | | sneak, tiptoe, sneaking, deslizarse, se faufiler, sgattaiolare | en:tiptoe
+watscheln | h | | waddle, anadear, se dandiner, ondeggiare
+putzen | m | saubermachen, reinigen | clean, cleaning, limpiar, nettoyer, pulire
+zwinkern | h | blinzeln | wink, guinar, clin d'oeil, fare l'occhiolino
+pusten | m | blasen | blow, blowing, soplar, souffler, soffiare
+frieren | m | | freeze, be cold, freezing, congelarse, geler, gelare
+schwitzen | m | | sweat, sweating, sudar, transpirer, sudare
+nicken | m | | nod, nodding, asentir, hocher, annuire
+nass | m | | wet, mojado, mouille, bagnato
+laut | m | | loud, noisy, ruidoso, fort, rumoroso
+rund | m | | round, redondo, rond, rotondoPudding | m | | 
+Fischstäbchen | m | | fish fingers, fish sticks
+Kamm | m | | comb, peine, peigne, pettine
+Ventilator | m | | fan, ventilador, ventilatore
+Briefmarke | m | Marke, Postwertzeichen | stamp, sello, timbre, francobollo
+Aufkleber | m | Sticker, Pickerl | sticker, pegatina, autocollant, adesivo
+Strohhalm | m | Trinkhalm, Röhrli, Halm | straw, drinking straw, pajita, paille, cannuccia
+Klebeband | m | Tesa, Tesafilm, Tixo, Klebestreifen | tape, sticky tape, cinta, scotch
+Steckdose | m | Dose | socket, outlet, enchufe, presa
+Gießkanne | m | Spritzkanne, Giesskanne | watering can, regadera, arrosoir, annaffiatoio
+Taschentuch | m | Tempo, Nastuch, Schnäuztuch, Papiertaschentuch | tissue, handkerchief, hanky, panuelo, mouchoir, fazzoletto
+Schmied | m | Hufschmied | blacksmith, smith, herrero, forgeron, fabbro
+Bauarbeiter | m | Bauarbeiterin, Maurer | builder, construction worker, albanil, macon, muratore
+Xylofon | m | Xylophon, Glockenspiel, Metallofon | xylophone, xilofono
+Rolltreppe | m | | escalator, escalera mecanica, escalier roulant, scala mobile
+Hupe | m | Autohupe | car horn, klaxon, bocina, claxon
+Thermometer | m | Fieberthermometer | termometro

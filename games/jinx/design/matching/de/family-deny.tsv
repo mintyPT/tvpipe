@@ -1,0 +1,18 @@
+# Family links the Wiktionary gives (etymology, Wortbildungen) that players
+# would not call one family, or that come from a homograph (Messer the knife
+# is not "der Messende"). derived<TAB>base; build-lexicon.ts drops the link.
+# Found by reading sweep-report.md.
+still	stellen
+bequem	bekommen
+löschen	los
+loser	losen
+lösen	los
+lösen	lose
+zeitung	zeit
+lager	lage
+kündigen	kunde
+ordentlich	orden
+nämlich	name
+üblich	üben
+eigentlich	eigen
+messer	messen

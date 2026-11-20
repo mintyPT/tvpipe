@@ -15,10 +15,11 @@
 
 import { A, EASE, fitText, h, short } from "./dom.js";
 import { confetti, dust, floatText, shake, stampAt, strikeThrough } from "./fx.js";
-import { REASON } from "./jinx.js";
+import { reasonText } from "./jinx.js";
 import { grid } from "./layout.js";
 import { Dymo, cardEl, chip, dial, envelope, setWord, sign, swingIn } from "./pieces.js";
 import { bed, heartbeat, sfx } from "./sound.js";
+import { t as tr } from "./strings.js";
 
 /**
  * @param {Ctx} ctx
@@ -30,7 +31,7 @@ export function reveal(ctx, v, prev) {
   const g = ctx.person(v.guesser);
   const gname = short(g?.name, 12);
   const anim = !!prev;
-  ctx.head.set({ tab: "The reveal", guesser: g, tally: v.tally }, anim);
+  ctx.head.set({ tab: tr.theReveal, guesser: g, tally: v.tally }, anim);
   ctx.pot.show(true, anim && prev?.phase !== "jinx");
   if (prev?.phase !== "jinx" || ctx.pot.n !== v.pot) ctx.pot.set(v.pot);
   ctx.pool.off(false);
@@ -64,7 +65,7 @@ export function reveal(ctx, v, prev) {
   // the guess area
   const gy = two ? 594 : 540;
   const area = h("div", { class: "guess", style: `top:${gy}px` });
-  const lbl = h("div", { class: "lbl" }, `${gname}'s guess`);
+  const lbl = h("div", { class: "lbl" }, tr.guessOf(gname));
   if (!two) area.append(lbl);
   const slot = h("div", { class: "slot", style: `top:${two ? 6 : 40}px` });
   area.append(slot);
@@ -78,10 +79,10 @@ export function reveal(ctx, v, prev) {
   /** @param {RevealScreen} v */
   const idleLine = (v, anim = true) => {
     const n = v.cards.filter((c) => c.turned).length;
-    if (n === 0) ctx.host.say(`${gname}, whose card do you turn *first*?`, { anim });
-    else if (n < v.cards.length) ctx.host.say("Turn another card… *or take a guess.*", { anim });
-    else ctx.host.say("Every card is up. *Guess, or pass.*", { anim });
-    slot.textContent = n === 0 ? `${gname} may guess after any card` : `${gname} may guess now`;
+    if (n === 0) ctx.host.say(tr.whoseFirst(gname), { anim });
+    else if (n < v.cards.length) ctx.host.say(tr.another, { anim });
+    else ctx.host.say(tr.everyUp, { anim });
+    slot.textContent = n === 0 ? tr.mayAfterAny(gname) : tr.mayNow(gname);
   };
 
   /** @param {RevealScreen} v @param {boolean} anim */
@@ -124,7 +125,7 @@ export function reveal(ctx, v, prev) {
     const s = slots.get(c.id);
     if (!el || !s) return;
     const author = ctx.person(c.author);
-    ctx.host.say(`${gname.toUpperCase()} TRUSTS…`, { second: short(author?.name, 12).toUpperCase() });
+    ctx.host.say(tr.trusts(gname.toUpperCase()), { second: short(author?.name, 12).toUpperCase() });
     ctx.pool.to(s.x + s.w / 2, s.y + s.h / 2, Math.max(s.w, s.h) * 0.78);
     el.style.zIndex = "10";
     A(el, [{ transform: "none" }, { transform: "translateY(-14px) scale(1.05)" }], 240);
@@ -149,7 +150,7 @@ export function reveal(ctx, v, prev) {
     A(badge, [{ transform: "scale(0)" }, { transform: "scale(1)" }], 260, { delay: 200, easing: EASE.back });
     if (c.bold) {
       el.querySelectorAll(".front .flame").forEach((f) => A(f, [{ transform: "scale(1)" }, { transform: "scale(1.6) rotate(-12deg)" }, { transform: "scale(1)" }], 500, { delay: 200 }));
-      ctx.later(250, () => floatText(s.x + s.w - 10, s.y - 40, "bold ×2", "plus", 1500));
+      ctx.later(250, () => floatText(s.x + s.w - 10, s.y - 40, tr.boldX2, "plus", 1500));
       ctx.later(250, sfx.sparkle);
     }
     if (!(await ctx.wait(450))) return;
@@ -212,7 +213,7 @@ export function verdict(ctx, v, prev) {
   ctx.pool.off(anim);
   ctx.pot.show(true);
   const prevTally = prev && "tally" in prev ? prev.tally : v.tally;
-  ctx.head.set({ tab: "The verdict", guesser: g, tally: anim ? prevTally : v.tally }, anim);
+  ctx.head.set({ tab: tr.theVerdict, guesser: g, tally: anim ? prevTally : v.tally }, anim);
   if (!fromReveal) {
     ctx.head.who.classList.remove("off");
     ctx.host.hide(false);
@@ -222,11 +223,11 @@ export function verdict(ctx, v, prev) {
   const gt = chip(g, 150, { style: "left:84px;top:236px" });
   L.append(gt, h("div", { class: "seatname", style: "left:84px;top:398px;width:150px;font-size:30px" }, gname));
   const env = envelope(410, 190);
-  const secret = h("div", { class: "secret paper", style: "left:-110px;top:10px;z-index:2;transform:scale(.5)" }, h("small", null, "THE WORD WAS"), h("div", { class: "w" }, v.word.toUpperCase()));
+  const secret = h("div", { class: "secret paper", style: "left:-110px;top:10px;z-index:2;transform:scale(.5)" }, h("small", null, tr.theWordWas), h("div", { class: "w" }, v.word.toUpperCase()));
   env.insertBefore(secret, env.querySelector(".pocket"));
   L.append(env);
   const w = /** @type {HTMLElement} */ (secret.querySelector(".w"));
-  fitText(w, 88, 40, 480, 0.7);
+  fitText(w, 88, 40, 450, 0.6);
   const area = h("div", { class: "guess", style: "top:452px;left:102px" });
   const dymo = new Dymo(84, 660);
   dymo.set(v.guess ?? "", false);
@@ -247,18 +248,19 @@ export function verdict(ctx, v, prev) {
   const mine = v.payouts.filter((p) => p.id === v.guesser).reduce((s, p) => s + p.delta, 0);
 
   const outcome = () => {
-    if (v.result === "right") ctx.host.say(v.near ? `Close enough: *${REASON[v.near] ?? v.near}*.` : "Nailed it!", { second: `+${mine} FOR ${gname.toUpperCase()}`, anim });
-    else if (v.result === "wrong") ctx.host.say("So close.", { second: "SO WRONG.", anim });
-    else if (v.result === "pass") ctx.host.say("No guess.", { second: "NO GLORY.", anim });
-    else ctx.host.say("Every card jinxed. *The pot goes home empty.*", { anim });
+    if (v.result === "right") ctx.host.say(v.near ? tr.closeEnough(reasonText(v.near)) : tr.nailedIt, { second: tr.plusFor(mine, gname), anim });
+    else if (v.result === "wrong") ctx.host.say(tr.soClose, { second: tr.soWrong, anim });
+    else if (v.result === "pass") ctx.host.say(tr.noGuess, { second: tr.noGlory, anim });
+    else ctx.host.say(tr.emptyPot, { anim });
   };
   /** @param {boolean} anim */
   const final = (anim) => {
-    const sc = { x: 560, y: 255 };
-    if (v.result === "right") stampAt(L, sc.x + 340, sc.y + 40, "Right!", { cls: "green", rot: 10, size: 60, anim, shakePx: 8 });
-    else stampAt(L, sc.x + 340, sc.y + 40, v.result === "pass" ? "Pass" : v.result === "lost" ? "Missed" : "Not it", { cls: "ink", rot: 10, size: 60, anim });
+    // the stamp right of the paper: a long word ("GEBURTSTAGSKUCHEN", 450 px) stays readable
+    const sc = { x: 640, y: 255 };
+    if (v.result === "right") stampAt(L, sc.x + 340, sc.y + 40, tr.stamps.right, { cls: "green", rot: 10, size: 60, anim, shakePx: 8 });
+    else stampAt(L, sc.x + 340, sc.y + 40, tr.stamps[v.result], { cls: "ink", rot: 10, size: 60, anim });
     if (v.near) {
-      const tag = h("div", { class: "tape", style: "left:50%;top:-6px;transform:translateX(220px) rotate(4deg);font-size:24px;padding:4px 14px;z-index:5" }, `≈ ${REASON[v.near] ?? v.near}`);
+      const tag = h("div", { class: "tape", style: "left:50%;top:-6px;transform:translateX(220px) rotate(4deg);font-size:24px;padding:4px 14px;z-index:5" }, `≈ ${reasonText(v.near)}`);
       area.append(tag);
     }
   };
@@ -299,7 +301,7 @@ export function verdict(ctx, v, prev) {
     const od = /** @type {HTMLElement | null} */ (old.querySelector(".dymo"));
     if (v.result === "pass" || !v.guess) {
       const slotEl = /** @type {HTMLElement | null} */ (old.querySelector(".guess"));
-      stampAt(old, 522, (slotEl ? parseFloat(slotEl.style.top) : 540) + 80, "Pass", { cls: "ink", rot: -4, size: 54 });
+      stampAt(old, 522, (slotEl ? parseFloat(slotEl.style.top) : 540) + 80, tr.stamps.pass, { cls: "ink", rot: -4, size: 54 });
     } else if (od) {
       od.classList.add("done");
       sfx.snip();
@@ -307,7 +309,7 @@ export function verdict(ctx, v, prev) {
       const area0 = /** @type {HTMLElement | null} */ (old.querySelector(".guess"));
       const top = (area0 ? parseFloat(area0.style.top) : 540) + (parseFloat(od.style.top) || 40);
       // on the tape's right end, a little above it
-      ctx.later(300, () => stampAt(old, Math.min(522 + od.offsetWidth / 2 - 30, 850), top - 6, "Locked in", { cls: "gold", rot: 8, size: 30 }));
+      ctx.later(300, () => stampAt(old, Math.min(522 + od.offsetWidth / 2 - 30, 850), top - 6, tr.lockedIn, { cls: "gold", rot: 8, size: 30 }));
     }
   }
   L.style.visibility = "hidden";
@@ -319,7 +321,7 @@ export function verdict(ctx, v, prev) {
     A(L, [{ opacity: 0, transform: "translateY(40px)" }, { opacity: 1, transform: "none" }], 300);
     ctx.head.who.classList.remove("off");
     ctx.host.hide(false);
-    ctx.host.say("The word was…");
+    ctx.host.say(tr.wordWas);
     if (!(await ctx.wait(T(300)))) return;
     sfx.drumroll(T(1100));
     A(env, [{ transform: "rotate(0)" }, { transform: "rotate(-2.5deg)" }, { transform: "rotate(2.5deg)" }, { transform: "rotate(0)" }], 120, { iterations: Math.max(3, Math.round(T(1100) / 120)), fill: "none", easing: EASE.lin });

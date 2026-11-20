@@ -18,6 +18,7 @@ import { dust, floatText, shake } from "./fx.js";
 import { groupReason } from "./jinx.js";
 import { cardEl, chip, rosette } from "./pieces.js";
 import { sfx } from "./sound.js";
+import { t as tr } from "./strings.js";
 
 const CRACK = `<svg viewBox="0 0 196 132" width="100%" height="100%" preserveAspectRatio="none"><path d="M0 50 L42 58 L66 38 L104 70 L140 55 L196 82" fill="none" stroke="#8a7b65" stroke-width="3"/><path d="M104 70 L97 132" fill="none" stroke="#8a7b65" stroke-width="3"/></svg>`;
 
@@ -34,11 +35,11 @@ export function replay(ctx, v, prev) {
   const g = ctx.person(v.guesser);
   const gname = short(g?.name, 12);
   const anim = !!prev;
-  ctx.head.set({ tab: `Round ${v.round} · replay`, guesser: g, tally: v.tally }, anim);
+  ctx.head.set({ tab: tr.replayTab(v.round), guesser: g, tally: v.tally }, anim);
   ctx.pot.show(false);
   ctx.pool.off(anim);
   const mark = v.result === "right" ? " ✓" : " ✗";
-  ctx.host.say(`How we got to *${v.word.toUpperCase()}*${mark}`, { anim });
+  ctx.host.say(tr.howWeGot(v.word.toUpperCase(), mark), { anim });
 
   // units: the survivors in turn order, then each jinx group as a taped stack
   const byId = new Map(v.cards.map((c) => [c.id, c]));
@@ -52,13 +53,13 @@ export function replay(ctx, v, prev) {
     const words = new Set(cs.map((c) => clean(c.word)));
     const authors = new Set(cs.map((c) => c.author));
     let caption;
-    if (authors.size === 1) caption = `${short(ctx.person(cs[0]?.author)?.name, 10)} jinxed ${short(ctx.person(cs[0]?.author)?.name, 10)}`;
-    else if (words.size === 1) caption = `${cs.length === 2 ? "Two" : cs.length} of you wrote ${(cs[0]?.word ?? "").toUpperCase()}`;
+    if (authors.size === 1) caption = tr.selfJinxed(short(ctx.person(cs[0]?.author)?.name, 10));
+    else if (words.size === 1) caption = tr.ofYouWrote(cs.length, (cs[0]?.word ?? "").toUpperCase());
     else caption = groupReason(grp);
     units.push({ cards: cs, stack: true, caption });
   }
   // jinxed without a group: too close to the word (the matcher's invalid clues)
-  for (const c of v.cards) if (c.fate === "jinxed" && !inGroup.has(c.id)) units.push({ cards: [c], stack: true, caption: "too close to the word" });
+  for (const c of v.cards) if (c.fate === "jinxed" && !inGroup.has(c.id)) units.push({ cards: [c], stack: true, caption: tr.tooCloseTape });
 
   let W = 196;
   let H = 132;
@@ -104,7 +105,7 @@ export function replay(ctx, v, prev) {
         const c = /** @type {Card} */ (u.cards[0]);
         const el = cardEl(c, ctx.person(c.author), { parent: L, x, y, w: W, h: H, font: 40 });
         els.set(c.id, { el, x, y });
-        if (!c.turned && v.result !== "lost") el.append(h("div", { class: "tape small", style: "left:50%;bottom:2px;transform:translateX(-50%) rotate(-3deg);z-index:6;letter-spacing:.02em" }, "not turned"));
+        if (!c.turned && v.result !== "lost") el.append(h("div", { class: "tape small", style: "left:50%;bottom:2px;transform:translateX(-50%) rotate(-3deg);z-index:6;letter-spacing:.02em" }, tr.notTurned));
         if (anim) {
           A(el, [{ transform: `translateY(500px) rotate(${rnd(-30, 30)}deg)` }, { transform: "none" }], 520, { delay: k * 110 });
           ctx.later(k * 110, sfx.slide);
@@ -162,7 +163,7 @@ export function replay(ctx, v, prev) {
     const lineEls = list.map(([id, d]) =>
       h("div", { class: "line" }, chip(ctx.person(id), 40, { style: "position:relative;flex:none;box-shadow:0 0 0 3px #1d1a2b" }), h("span", { class: "n" }, short(ctx.person(id)?.name, 12)), h("span", { class: d > 0 ? "plus" : "minus" }, d > 0 ? `+${d}` : `−${-d}`)),
     );
-    note.replaceChildren(h("div", { class: "k" }, "THIS ROUND"), ...(lineEls.length ? lineEls : [h("div", { class: "line" }, "Nobody scored")]));
+    note.replaceChildren(h("div", { class: "k" }, tr.thisRound), ...(lineEls.length ? lineEls : [h("div", { class: "line" }, tr.nobodyScored)]));
     // names fit the note: smaller, then condensed (never cut)
     note.querySelectorAll(".line .n").forEach((n) => fitText(/** @type {HTMLElement} */ (n), 26, 24, 104, 0.6));
     if (anim && first) A(note, [{ transform: "translateX(300px) rotate(8deg)" }, { transform: "rotate(1.5deg)" }], 500, { delay: 600 });
@@ -181,15 +182,15 @@ export function replay(ctx, v, prev) {
     mvpNote.hidden = v.result !== "right";
     if (v.picking) {
       const s = v.deadline ? Math.max(0, Math.ceil((v.deadline - ctx.now()) / 1000)) : 0;
-      mvpNote.replaceChildren(`${gname} picks the `, h("span", { style: "color:#df4a3c" }, "MVP clue"), s ? `… ${s}` : "…");
-    } else mvpNote.replaceChildren("No MVP clue this round");
+      mvpNote.replaceChildren(tr.picksThe(gname), h("span", { style: "color:#df4a3c" }, tr.mvpClue), s ? `… ${s}` : "…");
+    } else mvpNote.replaceChildren(tr.noMvp);
   };
 
   /** @param {ReplayScreen} v @param {boolean} anim */
   const render = (v, anim) => {
     if (v.picking && !picking && !v.mvp) {
       picking = true;
-      ctx.host.say(`${gname}, which clue *cracked it*?`, { anim });
+      ctx.host.say(tr.whichCracked(gname), { anim });
     }
     noteText(v);
     if (v.mvp && v.mvp !== mvpShown) {
@@ -207,9 +208,13 @@ export function replay(ctx, v, prev) {
       r.style.transform = "rotate(32deg) scale(.65)";
       L.append(r);
       mvpNote.hidden = false;
-      mvpNote.replaceChildren(h("div", { class: "k" }, "MVP CLUE"), h("div", { class: "mvpword" }, (c.word ?? "").toUpperCase()), h("div", { class: "plus" }, `${short(author?.name, 9)} +3`));
+      // "MVP-HINWEIS" on one line; a long clue ("GEBURTSTAGSKUCHEN") smaller, hyphenated if need be
+      const k = h("div", { class: "k", style: "white-space:nowrap;letter-spacing:.04em" }, tr.mvpClueK);
+      const word = (c.word ?? "").toUpperCase();
+      const wordEl = h("div", { class: "mvpword", style: [...word].length > 10 ? "font-size:28px" : "" }, word);
+      mvpNote.replaceChildren(k, wordEl, h("div", { class: "plus" }, `${short(author?.name, 9)} +3`));
       ctx.pool.to(at.x + W / 2, at.y + H / 2, 200, anim);
-      ctx.host.say("MVP CLUE…", { second: (c.word ?? "").toUpperCase(), anim });
+      ctx.host.say(tr.mvpClueHit, { second: (c.word ?? "").toUpperCase(), anim });
       if (!anim) return;
       sfx.whoosh();
       A(r, [{ transform: "translate(420px,-380px) rotate(80deg) scale(2.4)", opacity: 0 }, { offset: 0.2, opacity: 1 }, { transform: "rotate(32deg) scale(.65)", opacity: 1 }], 520, { easing: EASE.in, delay: 650 });
@@ -226,7 +231,7 @@ export function replay(ctx, v, prev) {
       });
     } else if (!v.mvp && !v.picking && picking) {
       picking = false;
-      ctx.host.say("No MVP clue this round.", { anim });
+      ctx.host.say(tr.noMvpLine, { anim });
     }
   };
   render(v, anim);
@@ -263,7 +268,7 @@ export function scores(ctx, v, prev) {
   const pad = h("div", { class: "pad paper" },
     h("div", { class: "binding" }, ...Array.from({ length: 9 }, (_, i) => h("i", { style: `left:${40 + i * 68}px` }))),
     h("div", { class: "margin" }),
-    h("h2", null, "SCORES", h("span", null, `after round ${v.round} of ${v.rounds}`)));
+    h("h2", null, tr.scores, h("span", null, tr.afterRound(v.round, v.rounds))));
   L.append(pad);
   const order = anim ? before : lines;
   /** @type {Map<string, { r: HTMLElement, i: number, t: HTMLElement, d: HTMLElement, rank: HTMLElement }>} */
@@ -289,20 +294,20 @@ export function scores(ctx, v, prev) {
   }
   const nextP = v.next ? ctx.person(v.next) : undefined;
   const ratio = t.played ? t.found / t.played : 0;
-  const quip = t.played && t.found === t.played ? `${t.found} for ${t.played}. The room is on fire.` : ratio >= 0.5 ? "The room is in sync." : t.found === 0 ? "Nothing yet. Think harder, together." : "Mixed signals. Keep going.";
+  const quip = t.played && t.found === t.played ? tr.onFire(t.found, t.played) : ratio >= 0.5 ? tr.inSync : t.found === 0 ? tr.nothingYet : tr.mixed;
   const room = h("div", { class: "room" },
-    h("div", { class: "k" }, "THE ROOM, TOGETHER"),
-    h("div", { class: "big" }, String(t.found), h("span", null, ` of ${t.played}`)),
+    h("div", { class: "k" }, tr.together),
+    h("div", { class: "big" }, String(t.found), h("span", null, tr.ofN(t.played))),
     h("div", { class: "sub" }, quip),
     slots,
     v.next
-      ? h("div", { class: "next" }, h("span", { class: "dim" }, "Next up:"), chip(nextP, 72, { style: "position:relative" }), `${short(nextP?.name, 10)} guesses`)
-      : h("div", { class: "next" }, "That's the game!"));
+      ? h("div", { class: "next" }, h("span", { class: "dim" }, tr.nextUp), chip(nextP, 72, { style: "position:relative" }), tr.guesses(short(nextP?.name, 10)))
+      : h("div", { class: "next" }, tr.thatsTheGame));
   L.append(room);
   // newcomers may join for the next round
   const j = ctx.join;
   const link = joinText(j);
-  if (v.next && link && j?.lateJoin && j.lateJoin !== "closed") room.append(h("div", { class: "joinline" }, "Joining late? Go to ", h("b", null, link)));
+  if (v.next && link && j?.lateJoin && j.lateJoin !== "closed") room.append(h("div", { class: "joinline" }, tr.joiningLate, h("b", null, link)));
   if (!anim) return {};
 
   A(pad, [{ transform: "translateY(760px) rotate(6deg)" }, { transform: "rotate(-1deg)" }], T(620), { easing: EASE.back });

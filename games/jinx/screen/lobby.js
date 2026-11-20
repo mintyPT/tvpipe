@@ -13,16 +13,10 @@ import { A, EASE, fitText, h, short } from "./dom.js";
 import { dust } from "./fx.js";
 import { chip } from "./pieces.js";
 import { sfx } from "./sound.js";
+import { t as tr } from "./strings.js";
 
 /** @param {number} i */
 const seatPos = (i) => ({ x: 588 + (i % 4) * 157, y: 158 + Math.floor(i / 4) * 214 });
-
-const GREET = [
-  (/** @type {string} */ n) => `Welcome, *${n}*. Mind your words.`,
-  (/** @type {string} */ n) => `*${n}* is in. The plot thickens.`,
-  (/** @type {string} */ n) => `Here comes *${n}*!`,
-  (/** @type {string} */ n) => `*${n}* pulls up a chair.`,
-];
 
 /**
  * @param {Ctx} ctx
@@ -46,17 +40,20 @@ export function lobby(ctx, v, prev) {
     [...logo.children].forEach((t, i) => A(t, [{ transform: "translateY(-200px) rotate(30deg)", opacity: 0 }, { transform: /** @type {HTMLElement} */ (t).style.transform, opacity: 1 }], 420, { delay: 100 + i * 110, easing: EASE.back }));
     [0, 1, 2, 3].forEach((i) => ctx.later(240 + i * 110, sfx.thunk));
   }
-  L.append(h("div", { class: "tagline", style: "left:66px;top:174px" }, "One word each. ", h("b", null, "Don't think alike.")));
+  const tagline = h("div", { class: "tagline", style: "left:66px;top:174px;white-space:nowrap;transform-origin:left center" }, tr.tagline[0], h("b", null, tr.tagline[1]));
+  L.append(tagline);
+  // up to the seats (x 588)
+  fitText(tagline, 30, 24, 500, 0.8);
 
   const qrBox = h("div", { class: "qrbox" });
-  L.append(h("div", { class: "qrcard paper", style: "left:96px;top:236px;transform:rotate(-2deg)" }, qrBox, h("div", { class: "roomlbl" }, "SCAN TO JOIN")));
+  L.append(h("div", { class: "qrcard paper", style: "left:96px;top:236px;transform:rotate(-2deg)" }, qrBox, h("div", { class: "roomlbl" }, tr.scanToJoin)));
   L.append(h("div", { class: "tapebit", style: "left:70px;top:226px;transform:rotate(-38deg)" }));
   L.append(h("div", { class: "tapebit", style: "left:342px;top:226px;transform:rotate(34deg)" }));
   const url = h("div", { class: "url", style: "left:64px;top:640px;width:460px" });
   L.append(url);
 
   const count = h("span", { class: "count" });
-  L.append(h("div", { class: "abs", style: "left:588px;top:52px;font-size:32px;font-weight:700;letter-spacing:.12em" }, "AT THE TABLE ", count));
+  L.append(h("div", { class: "abs", style: "left:588px;top:52px;font-size:32px;font-weight:700;letter-spacing:.12em" }, tr.atTable, count));
   const sub = h("div", { class: "abs", style: "left:588px;top:94px;font-size:24px;color:#a8d3cd;font-weight:600" });
   L.append(sub);
   const seats = h("div", { class: "abs", style: "inset:0" });
@@ -95,7 +92,7 @@ export function lobby(ctx, v, prev) {
     const max = Math.min(8, v.maxPlayers || 8);
     const people = v.people.filter((p) => !p.left).slice(0, 8);
     count.textContent = `${people.length} / ${max}`;
-    sub.textContent = `${v.minPlayers} to ${max} players · draw your face on your phone`;
+    sub.textContent = tr.lobbySub(v.minPlayers, max);
     const ids = people.map((p) => `${p.id}:${p.name}:${JSON.stringify(p.face)}:${p.vip}:${p.connected}:${p.color}:${!!p.bot}`);
     if (ids.join("|") !== shown.join("|")) {
       const before = new Set(shown.map((s) => s.split(":")[0]));
@@ -130,11 +127,11 @@ export function lobby(ctx, v, prev) {
       });
       for (let i = people.length; i < max; i++) {
         const pos = seatPos(i);
-        seats.append(h("div", { class: "seat empty", style: `left:${pos.x}px;top:${pos.y}px` }, h("div", { class: "token ghost", style: "--s:100px;left:25px;top:0" }), h("div", { class: "placecard" }, "open seat")));
+        seats.append(h("div", { class: "seat empty", style: `left:${pos.x}px;top:${pos.y}px` }, h("div", { class: "token ghost", style: "--s:100px;left:25px;top:0" }), h("div", { class: "placecard" }, tr.openSeat)));
       }
       shown = ids;
       if (newcomer) {
-        setSlip((GREET[greetN++ % GREET.length] ?? GREET[0])?.(short(newcomer, 12)) ?? "", true);
+        setSlip((tr.greet[greetN++ % tr.greet.length] ?? tr.greet[0])?.(short(newcomer, 12)) ?? "", true);
         greetUntil = Date.now() + 2600;
         ctx.later(2700, () => render(/** @type {any} */ (ctx.tv.prev ?? v), true));
       }
@@ -142,9 +139,9 @@ export function lobby(ctx, v, prev) {
     if (Date.now() < greetUntil) return;
     const ready = people.filter((p) => p.connected).length;
     const vip = people.find((p) => p.vip);
-    if (people.length === 0) setSlip("Phones out. Scan in. *No word is safe.*");
-    else if (ready < v.minPlayers) setSlip(`Waiting for *${v.minPlayers - ready} more* to play`);
-    else setSlip(vip ? `*${short(vip.name, 12)}* starts the game from their phone` : "Start the game from a phone");
+    if (people.length === 0) setSlip(tr.phonesOut);
+    else if (ready < v.minPlayers) setSlip(tr.waitingMore(v.minPlayers - ready));
+    else setSlip(vip ? tr.vipStarts(short(vip.name, 12)) : tr.startFromPhone);
   };
 
   render(v, anim);

@@ -5,7 +5,8 @@
  * (§6), ranks. No party, no timers: game.ts drives them.
  */
 
-import { clean, invalidClue, type Clue, type MatchOptions, type WordEntry } from "./match.ts";
+import { matcher, type Matcher } from "./lang.ts";
+import type { Clue, MatchOptions, WordEntry } from "./match.ts";
 import type { Award, Payout, RoomTitle, ScoreLine, Web } from "./views.ts";
 
 // ---------------------------------------------------------------------------
@@ -87,39 +88,43 @@ export const MIX: Record<Difficulty, Record<string, number>> = {
   hard: { medium: 0.5, hard: 0.5 },
 };
 
-/** The clue form of a word (for matching), or undefined if it does not clean. */
-export function wordClue(word: string): Clue | undefined {
-  const c = clean(word);
+/** The clue form of a word (for matching, by the word's language), or undefined if it does not clean. */
+export function wordClue(word: string, m: Matcher = matcher("en")): Clue | undefined {
+  const c = m.clean(word);
   return c.ok ? c.clue : undefined;
 }
 
 /**
  * Two secret words too close for one game: one is an invalid clue for the
- * other (fire and firework, cat and cats, a banned translation).
+ * other (fire and firework, cat and cats, a banned translation), by the
+ * words' language.
  */
-export function related(a: WordEntry, b: WordEntry, opt: MatchOptions = {}): boolean {
-  const ca = wordClue(a.word);
-  const cb = wordClue(b.word);
+export function related(a: WordEntry, b: WordEntry, opt: MatchOptions = {}, m: Matcher = matcher("en")): boolean {
+  const ca = wordClue(a.word, m);
+  const cb = wordClue(b.word, m);
   if (!ca || !cb) return a.word === b.word;
-  return invalidClue(ca, cb, opt, b.banned) !== null || invalidClue(cb, ca, opt, a.banned) !== null;
+  return m.invalidClue(ca, cb, opt, b.banned) !== null || m.invalidClue(cb, ca, opt, a.banned) !== null;
 }
 
 /**
- * The room's words: deals no word twice until it dealt them all (per
- * difficulty, across games: `used` comes from and goes to the host page's
- * `localStorage`), never two related words in one game.
+ * The room's words in one language: deals no word twice until it dealt
+ * them all (per difficulty, across games: `used` comes from and goes to
+ * the host page's `localStorage`), never two related words in one game
+ * (by the language's matcher, `m`).
  */
 export class WordDeck {
   readonly words: readonly WordEntry[];
   readonly #rng: () => number;
   readonly #opt: MatchOptions;
+  readonly #m: Matcher;
   readonly #used: Set<string>;
 
-  constructor(words: readonly WordEntry[], rng: () => number = Math.random, used: Iterable<string> = [], opt: MatchOptions = {}) {
+  constructor(words: readonly WordEntry[], rng: () => number = Math.random, used: Iterable<string> = [], opt: MatchOptions = {}, m: Matcher = matcher("en")) {
     if (words.length === 0) throw new Error("jinx: no words");
     this.words = words;
     this.#rng = rng;
     this.#opt = opt;
+    this.#m = m;
     const known = new Set(words.map((w) => w.word));
     this.#used = new Set([...used].filter((w) => known.has(w)));
   }
@@ -143,7 +148,7 @@ export class WordDeck {
       }
     }
     const inGame = new Set(game.map((w) => w.word));
-    const fits = (w: WordEntry) => !inGame.has(w.word) && !game.some((g) => related(w, g, this.#opt));
+    const fits = (w: WordEntry) => !inGame.has(w.word) && !game.some((g) => related(w, g, this.#opt, this.#m));
     // This tier's unused words, else (a new pass of the tier) its used ones,
     // else any tier of the setting, else any word.
     const pools: (readonly WordEntry[])[] = [];

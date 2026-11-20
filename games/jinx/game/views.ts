@@ -11,7 +11,16 @@
  * the `verdict` phase on, and in a `player.state` only for clue-givers.
  * Clue words are on the TV only once turned (reveal) or from the verdict on.
  * Nothing on the TV or a phone tells who jinxed with whom before `jinx`.
+ *
+ * Language: `lang` in the screen view and the room view is the room's
+ * language (`en`, `de`; the host page's setting, changed only between
+ * games). The TV, the phones and the host page say everything in it (a
+ * phone may pick its own); the words and the clues are in it.
  */
+
+import type { Lang } from "./lang.ts";
+
+export type { Lang };
 
 // ---------------------------------------------------------------------------
 // People
@@ -60,6 +69,7 @@ export type Reason =
   | "spelling"
   | "plural"
   | "verb form"
+  | "word form"
   | "same family"
   | "typo"
   | "sounds the same"
@@ -129,6 +139,8 @@ export interface Payout {
 // ---------------------------------------------------------------------------
 
 interface Base {
+  /** The room's language. */
+  lang: Lang;
   people: People;
 }
 
@@ -301,6 +313,8 @@ export type ScreenView =
 /** Every phone: the phase and the people (for faces and names). */
 export interface RoomView {
   phase: ScreenView["phase"];
+  /** The room's language. */
+  lang: Lang;
   people: People;
   round?: number;
   rounds?: number;
@@ -358,8 +372,10 @@ export type PlayerState =
   | { task: "final"; score: number; rank: number; of: number; award?: Award["kind"]; canRestart: boolean; found: number; total: number; title: RoomTitle };
 
 // ---------------------------------------------------------------------------
-// Actions (phone → host), `client.act(type, data)`; refusals are PartyErrors
-// with a message to show.
+// Actions (phone → host), `client.act(type, data)`; refusals are PartyErrors.
+// Phones show them by code in their language (the messages are English,
+// except a refused clue's, which is the matcher's wording in the room's
+// language).
 // ---------------------------------------------------------------------------
 
 export interface Actions {
@@ -373,9 +389,10 @@ export interface Actions {
   kick: { id: string };
   /**
    * A clue-giver, write phase: send (or replace) the clue in `slot` (0, or 1
-   * with 3 players). Refused with code `too-close`, `own-clue`, `empty`,
-   * `too-long`, `too-many-words`, `not-english` (the message says why) or
-   * `late`.
+   * with 3 players). Refused with code `too-close:REASON`, `own-clue:REASON`
+   * (`REASON` a {@link Reason}: "too-close:plural"), `empty`, `too-long`,
+   * `too-many-words`, `not-english` (or the matcher's other input codes;
+   * the message says why, in the room's language) or `late`.
    */
   clue: { text: string; bold: boolean; slot: number };
   /** The guesser, reveal: turn this card. */

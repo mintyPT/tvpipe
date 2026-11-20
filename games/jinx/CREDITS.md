@@ -50,3 +50,21 @@ often children meet them, part of speech, spelling). We thank their authors.
 
 Changes: none of these datasets is redistributed; values were used as
 filters and rankings, followed by manual curation.
+
+# German
+
+The German secret word list (`words.de.txt`) was written by the Jinx
+authors; no data is included from the dictionaries it was spell-checked
+against (igerman98 Hunspell dictionaries for Germany, Austria and
+Switzerland).
+
+The German lexicon (`dict.de.txt`), which the game uses to tell whether
+two clues are the same word, **is** included. It is derived from the
+**German Wiktionary** (https://de.wiktionary.org/, extracted by
+wiktextract, https://kaikki.org/dewiktionary/) and licensed under
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), like the
+Wiktionary; its authors are listed in the history of each entry. See
+`dict.de-LICENSE.txt`. Which words it holds was chosen with word
+frequencies from OpenSubtitles 2018 (Hermit Dave's FrequencyWords,
+https://github.com/hermitdave/FrequencyWords, CC BY-SA 4.0), which are not
+included.

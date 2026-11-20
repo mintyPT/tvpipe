@@ -12,6 +12,7 @@
 import { COLORS, FLAME, INK, faceSvg } from "../phone/faces.js";
 import { A, EASE, clamp, h, hm, removeLater, short } from "./dom.js";
 import { sfx } from "./sound.js";
+import { t } from "./strings.js";
 
 export { INK };
 
@@ -116,7 +117,13 @@ export class Pot {
     this.n = 0;
     this.chips = h("div", { class: "chips" });
     this.num = h("b", null, "0");
-    this.el = h("div", { class: "pot", hidden: true }, h("div", { class: "base" }), this.chips, h("div", { class: "label paper" }, h("small", null, "THE POT"), this.num));
+    this.label = h("small", null, t.thePot);
+    this.el = h("div", { class: "pot", hidden: true }, h("div", { class: "base" }), this.chips, h("div", { class: "label paper" }, this.label, this.num));
+  }
+
+  /** The label in the TV's language. */
+  relabel() {
+    this.label.textContent = t.thePot;
   }
 
   /** @param {number} n @param {boolean} [anim] chips dropped on one by one */
@@ -254,14 +261,14 @@ export function rosette() {
       h("i", { style: "position:absolute;right:0;top:0;width:36px;height:88px;background:#df4a3c;transform:rotate(-14deg);clip-path:polygon(0 0,100% 0,100% 100%,50% 80%,0 100%)" })),
     h("div", { style: `position:absolute;left:0;top:0;width:124px;height:124px;background:${INK};clip-path:polygon(${poly})` }),
     h("div", { style: `position:absolute;left:5px;top:5px;width:114px;height:114px;background:#f6b93b;clip-path:polygon(${poly})` }),
-    h("div", { class: "rosette-mid" }, "MVP"));
+    h("div", { class: "rosette-mid" }, t.mvp));
 }
 
 /** The SHHH! sign on two strings. @param {number} x centre @param {string} name */
 export function sign(x, name) {
   return h("div", { class: "sign", style: `left:${x}px` },
     hm("div", { class: "strings" }, `<svg viewBox="0 0 220 60" width="220" height="60"><path d="M110 0 L20 56 M110 0 L200 56" stroke="${INK}" stroke-width="4" fill="none"/><circle cx="110" cy="4" r="7" fill="#df4a3c" stroke="${INK}" stroke-width="3"/></svg>`),
-    h("div", { class: "board" }, h("b", null, "SHHH!"), h("span", null, `${short(name, 12)} is guessing`)));
+    h("div", { class: "board" }, h("b", null, t.shhh), h("span", null, t.isGuessing(short(name, 12)))));
 }
 
 /** @param {HTMLElement} el */

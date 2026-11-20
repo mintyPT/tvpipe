@@ -1,0 +1,46 @@
+# Natural clues for short secrets (most "contains the word" hits in the sweep), checked by short-secrets.ts --plausible.
+# secret<TAB>clues (comma-separated)
+Eis	kalt, Waffel, Kugel, Sommer, Gletscher, Winter, Schlittschuh, Pinguin, Vanille, Eisdiele, Eisbär, Eiswürfel, Eiszeit, Reise, leise, Kreis, weiß, Gefrierfach, schmelzen, Stiel
+Zug	Bahnhof, Gleis, Lokomotive, Schaffner, Waggon, Eisenbahn, Schiene, Fahrkarte, Verspätung, Anzug, Abteil, Tunnel, Dampflok, Bahn, ICE, zügig, Zugbrücke
+Ton	Lehm, töpfern, Vase, Keramik, Klang, Musik, Laut, Karton, Beton, Ton-Art, Krug, Topf, Erde, Ziegel, Tonne, Station, Anton, Baton
+Tisch	Stuhl, Holz, Esstisch, Tischdecke, Nachttisch, Schreibtisch, Möbel, Tischtennis, Platte, Bein, Essen, romantisch, praktisch, Teller
+Falle	Maus, Mausefalle, Käse, Fuchs, Jäger, gefallen, fallen, Hinterhalt, Netz, Fall, Fallschirm, Köder, Trick
+Stern	Himmel, Nacht, Sternschnuppe, Weihnachten, gestern, Seestern, Sonne, funkeln, Sternzeichen, Polarstern, glitzern, Galaxie, Sheriff, Star
+Wand	Mauer, Tapete, Haus, Zimmer, Bild, Nagel, wandern, Leinwand, Wandtafel, Gewand, Felswand, Regal, Farbe, Spiegel
+Decke	warm, Bett, Kissen, kuscheln, Wolldecke, Bettdecke, Zimmerdecke, Lampe, entdecken, Tischdecke, Picknick, Dach, Plafond
+Regen	nass, Wolke, Schirm, Regenschirm, Regenbogen, Pfütze, Tropfen, Wetter, Gummistiefel, aufregend, regnen, Gewitter, Herbst, Regenwurm
+Tor	Fußball, Torwart, Netz, Goal, Treffer, Elfmeter, Garagentor, Burgtor, Tür, Pforte, Tornado, Motor, Doktor, Traktor, Stadion, Eingang
+Tee	Kanne, Tasse, Teebeutel, Pfefferminz, Kamille, heiß, Teenager, Eistee, Kräuter, England, Teelöffel, Zucker, Honig, krank, Teekanne
+rot	Rose, Erdbeere, Ampel, Feuerwehr, Blut, Herz, Kirsche, Tomate, Farbe, Brot, Butterbrot, Rotkäppchen, Rotwein, rötlich, erröten, Liebe, Rothaarige
+Rad	Fahrrad, Reifen, Speiche, rund, Auto, Riesenrad, Lenkrad, Radio, Kamerad, Mühlrad, Rolle, drehen, Achse, Rad fahren
+Arm	Hand, Ellbogen, Muskel, Schulter, Armband, warm, Armee, Arena, Unterarm, Ärmel, Armbanduhr, Gips, arm, Bein
+Rose	Blume, rot, Dornen, Valentinstag, Liebe, Matrose, Rosenkohl, Strauß, Garten, Rosenkranz, Prosecco, Dornröschen
+Ring	Hochzeit, Finger, Gold, Diamant, Ehering, Verlobung, gering, Boxring, Herr der Ringe, Kreis, Schmuck, Ohrring, Ringelnatter, Bring
+Bank	Geld, Park, sitzen, Parkbank, Sparkasse, Konto, Bankräuber, Holz, Sitzbank, Tresor, Kredit, Bankomat, Sandbank
+Ball	Fußball, rund, werfen, Tennis, Basketball, Spiel, kicken, Ballett, Ballkleid, Schneeball, Luftballon, Kugel, Tanz, Cinderella
+Hand	Finger, Handschuh, Daumen, winken, Handy, Handtasche, Handball, Handstand, Handtuch, Hände, handeln, Pfote, Arm, Hand-Schlag
+See	Wasser, Boot, schwimmen, Ufer, Bodensee, Teich, Seerose, Meer, Segeln, Seepferdchen, Seele, Seemann, Ostsee, Fisch, Insel
+Reis	Sushi, China, Risotto, Korn, Reiskorn, Stäbchen, Reise, Milchreis, Paella, Reisfeld, weiß, Curry, Kreis, Preis
+Hut	Kopf, Zylinder, Sonnenhut, Cowboy, Strohhut, Hütte, Schutz, Mütze, Zauberer, Kappe, Behutsam, Hutmacher, Hutschnur
+Ohr	hören, Ohrring, Ohrenschützer, Hase, Elefant, Lauscher, Rohr, Kopfhörer, Ohrwurm, Musik, Ohrfeige, taub, Trommelfell
+Reh	Wald, Bambi, Hirsch, Kitz, Rehkitz, scheu, drehen, Geweih, Jäger, Rehbraun, Lichtung, Wild
+Kuh	Milch, Weide, Alm, Glocke, Kuhglocke, muh, Stall, Bauernhof, Kalb, Euter, Stier, Rind, Kuhfladen, Kuchen
+Bär	Honig, Teddy, Teddybär, Wald, Eisbär, Braunbär, brummen, Höhle, Winterschlaf, Pandabär, Gummibär, gebären, Bart
+Mais	Popcorn, Kolben, gelb, Maiskolben, Feld, Mai, Tortilla, Maisfeld, Mais-Chips, Korn, Kukuruz, Cornflakes, Mais
+Rock	Kleid, Mini, Minirock, Schottenrock, Rockmusik, Gitarre, Jeans, Hose, Faltenrock, Bluse, Rocker, Brock, Frack
+Uhr	Zeit, Wecker, Armbanduhr, Zeiger, ticken, Kuckucksuhr, Stunde, Minute, Sanduhr, Sekunde, Turmuhr, Uhrzeit, Schweiz, Uhu, Fuhre
+Gold	Schatz, gelb, Medaille, Goldmedaille, Ring, Barren, Goldfisch, Pirat, Silber, glänzen, Goldlöckchen, golden, Gulden, Goldgräber
+Sand	Strand, Wüste, Sandburg, Sandkasten, Kamel, Sanduhr, Körner, Sandale, Sandmann, Düne, Schaufel, Sandwich, Versand
+Wal	Meer, groß, Ozean, Blauwal, Fontäne, Moby Dick, Walfisch, Wald, Wahl, Walross, Delfin, Plankton, Schwertwal, Qualle
+Fee	Flügel, Zauberstab, Zahnfee, Märchen, Wunsch, Feen, Elfe, Glitzer, Kaffee, Tinkerbell, Feenstaub, klein, Elf
+Bus	Haltestelle, Fahrer, Busfahrer, Schulbus, gelb, Linie, Fahrschein, Bushaltestelle, Omnibus, Reisebus, Doppeldecker, Bussi, Busch
+Bett	schlafen, Kissen, Decke, Matratze, müde, Bettdecke, Doppelbett, Hochbett, Etagenbett, Nacht, Schlafzimmer, Gute Nacht, Bettler
+Hai	Zähne, Meer, Flosse, Weißer Hai, Haifisch, gefährlich, Ozean, Fisch, Heiland, Hainbuche, Haiti, Jaws
+Herz	Liebe, rot, Valentinstag, schlagen, Puls, Organ, Herzschlag, Herzlich, Brust, Herzog, Spielkarte, Lebkuchenherz, Herzinfarkt
+Mund	Lippen, Zähne, Zunge, Kuss, essen, sprechen, Mundharmonika, Mundwasser, Vormund, Gesicht, Lächeln, Mundgeruch
+Nest	Vogel, Eier, Baum, Küken, Ast, brüten, Vogelnest, Osternest, nisten, Stroh, Storch, Nesthocker, Nestbeschmutzer
+Bein	laufen, Knie, Fuß, Hose, Oberschenkel, Beinbruch, Wade, Gips, Tischbein, Holzbein, Bein-Arbeit, Beine, Gebein
+Ast	Baum, Zweig, Holz, Blatt, Stamm, Rinde, Vogel, Palast, Last, Gast, Fast, Ast-Gabel, Knorren
+Tal	Berg, Fluss, Schlucht, Hügel, Talsperre, Dal, Total, Metall, Kristall, Bergtal, Alpen
+Arzt	Doktor, Krankenhaus, krank, Spritze, Stethoskop, Zahnarzt, Tierarzt, Praxis, Rezept, weißer Kittel, Fieber, Notarzt
+Hahn	Henne, Huhn, Kikeriki, Morgen, krähen, Wasserhahn, Gockel, Bauernhof, Feder, Kamm, Wetterhahn, Hähnchen

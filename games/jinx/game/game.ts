@@ -6,11 +6,19 @@
  * (the room, the MVP of the night, the awards, the word web). The host is
  * the only authority: phones and the TV only get views (`views.ts`, the
  * contract) and send actions.
+ *
+ * The room has a language (`lang`, the host page's setting, changed only
+ * between games): its words, its clue matcher (`lang.ts`) and its bots'
+ * clues; the room and screen views carry it, so every phone and the TV
+ * speak it. Refusals are PartyErrors whose codes the phones translate
+ * (views.ts `Actions`); only a refused clue's message is the matcher's own
+ * wording, in the room's language.
  */
 
 import { Emitter, PartyError, type Json, type Party, type Player } from "@tvpipe/party";
 
-import { checkSubmit, clean, groupClues, judgeGuess, type Clue, type MatchOptions, type WordEntry } from "./match.ts";
+import { LANGS, matcher, type Lang, type Matcher } from "./lang.ts";
+import type { Clue, MatchOptions, WordEntry } from "./match.ts";
 import {
   addLate,
   awards,
@@ -95,12 +103,20 @@ export const WRITE_TIMES = [30, 45, 60, 90] as const;
 export const MAX_DRAFT = 24;
 
 export interface JinxOptions {
-  /** The secret words (`data/words.txt` through `parseWordList`). */
-  words: readonly WordEntry[];
-  /** The dictionary (`data/dict.txt` through `dictionary`): typo matching. */
+  /** The room's language (default `en`; the host page's setting, see {@link Jinx.configure}). */
+  lang?: Lang | undefined;
+  /**
+   * The secret words (the language's `data/words*.txt` through the
+   * matcher's `parseWordList`): for `lang`, or per language (the languages
+   * the room can switch to).
+   */
+  words: readonly WordEntry[] | Partial<Record<Lang, readonly WordEntry[]>>;
+  /** `lang`'s dictionary as a lookup (English: `dict.txt` through match.ts `dictionary`): typo matching. */
   known?: ((word: string) => boolean) | undefined;
-  /** Words this room dealt before (the host page's `localStorage`); see the `dealt` event. */
-  dealt?: readonly string[] | undefined;
+  /** Match options per language (the matcher's `dictionary(text)` of its `dict*.txt`): typo matching, word forms. */
+  match?: Partial<Record<Lang, MatchOptions>> | undefined;
+  /** Words this room dealt before (the host page's `localStorage`), for `lang` or per language; see the `dealt` event. */
+  dealt?: readonly string[] | Partial<Record<Lang, readonly string[]>> | undefined;
   rounds?: RoundsSetting | undefined;
   difficulty?: Difficulty | undefined;
   timings?: Partial<Timings> | undefined;
@@ -112,8 +128,8 @@ export type Phase = ScreenView["phase"];
 
 export interface JinxEvents {
   phase: [phase: Phase];
-  /** A word was dealt: the room's dealt words so far (to keep). */
-  dealt: [used: string[]];
+  /** A word was dealt: the room's dealt words so far in that language (to keep). */
+  dealt: [used: string[], lang: Lang];
   end: [lines: ScoreLine[]];
 }
 
@@ -187,8 +203,9 @@ export class Jinx extends Emitter<JinxEvents> {
   difficulty: Difficulty;
   timings: Timings;
   readonly #rng: () => number;
-  readonly #opt: MatchOptions;
-  readonly #deck: WordDeck;
+  /** Per language: its matcher, match options and the room's deck (kept from game to game). */
+  readonly #langs = new Map<Lang, { m: Matcher; opt: MatchOptions; deck: WordDeck }>();
+  #lang: Lang;
   readonly #profiles = new Map<string, Profile>();
   /** Players who left during this game (kept in `people`). */
   #left: Person[] = [];
@@ -220,8 +237,33 @@ export class Jinx extends Emitter<JinxEvents> {
     this.difficulty = options.difficulty ?? "normal";
     this.timings = { ...DEFAULT_TIMINGS, ...options.timings };
     this.#rng = options.rng ?? Math.random;
-    this.#opt = options.known ? { known: options.known } : {};
-    this.#deck = new WordDeck(options.words, this.#rng, options.dealt ?? [], this.#opt);
+    this.#lang = options.lang ?? "en";
+    const words: Partial<Record<Lang, readonly WordEntry[]>> = Array.isArray(options.words) ? { [this.#lang]: options.words } : (options.words as Partial<Record<Lang, readonly WordEntry[]>>);
+    const dealt: Partial<Record<Lang, readonly string[]>> = Array.isArray(options.dealt) ? { [this.#lang]: options.dealt } : ((options.dealt ?? {}) as Partial<Record<Lang, readonly string[]>>);
+    for (const l of LANGS) {
+      const list = words[l];
+      if (!list || list.length === 0) continue;
+      const opt: MatchOptions = { ...options.match?.[l] };
+      if (l === this.#lang && options.known) opt.known = options.known;
+      const m = matcher(l);
+      this.#langs.set(l, { m, opt, deck: new WordDeck(list, this.#rng, dealt[l] ?? [], opt, m) });
+    }
+    if (!this.#langs.has(this.#lang)) throw new Error(`jinx: no words in ${this.#lang}`);
+  }
+
+  /** The room's language. */
+  get lang(): Lang {
+    return this.#lang;
+  }
+
+  /** The languages there are words for. */
+  get langs(): Lang[] {
+    return [...this.#langs.keys()];
+  }
+
+  /** The room's language's matcher, options and deck. */
+  get #here(): { m: Matcher; opt: MatchOptions; deck: WordDeck } {
+    return this.#langs.get(this.#lang)!;
   }
 
   get phase(): Phase {
@@ -237,9 +279,9 @@ export class Jinx extends Emitter<JinxEvents> {
     return this.#round?.entry.word;
   }
 
-  /** The room's dealt words (to keep in `localStorage`). */
+  /** The room's dealt words in its language (to keep in `localStorage`). */
   get dealt(): string[] {
-    return this.#deck.used;
+    return this.#here.deck.used;
   }
 
   /** Marks a player as a bot (the TV draws a dashed rim). */
@@ -249,9 +291,25 @@ export class Jinx extends Emitter<JinxEvents> {
     this.#peopleChanged();
   }
 
-  /** Changes the settings between games. */
-  configure(o: { rounds?: RoundsSetting | undefined; difficulty?: Difficulty | undefined; write?: number | undefined; timings?: Partial<Timings> | undefined }): void {
+  /**
+   * Changes the settings between games. A new language (one with words)
+   * goes to every phone and the TV at once.
+   */
+  configure(o: {
+    rounds?: RoundsSetting | undefined;
+    difficulty?: Difficulty | undefined;
+    write?: number | undefined;
+    timings?: Partial<Timings> | undefined;
+    lang?: Lang | undefined;
+  }): void {
     if (this.#running) throw new PartyError("running", "Not during a game");
+    if (o.lang !== undefined && !this.#langs.has(o.lang)) throw new PartyError("bad-lang", `No words in ${o.lang}`);
+    if (o.lang !== undefined && o.lang !== this.#lang) {
+      this.#lang = o.lang;
+      this.#view["lang"] = o.lang;
+      this.party.room.set({ lang: o.lang });
+      this.party.screen.set({ lang: o.lang });
+    }
     if (o.rounds !== undefined) this.rounds = o.rounds;
     if (o.difficulty !== undefined) this.difficulty = o.difficulty;
     if (o.timings) this.timings = { ...this.timings, ...o.timings };
@@ -400,8 +458,8 @@ export class Jinx extends Emitter<JinxEvents> {
   }
 
   #screen(view: Record<string, unknown>): void {
-    this.#view = view;
-    this.party.screen.replace({ ...view, people: this.#people() });
+    this.#view = { ...view, lang: this.#lang };
+    this.party.screen.replace({ ...this.#view, people: this.#people() });
   }
 
   #screenSet(fields: Record<string, unknown>): void {
@@ -412,7 +470,7 @@ export class Jinx extends Emitter<JinxEvents> {
 
   #roomView(fields: Partial<RoomView>): void {
     const r = this.#round;
-    const base: Record<string, unknown> = { people: this.#people(), minPlayers: this.minPlayers, maxPlayers: this.party.maxPlayers };
+    const base: Record<string, unknown> = { lang: this.#lang, people: this.#people(), minPlayers: this.minPlayers, maxPlayers: this.party.maxPlayers };
     if (this.#running && r) Object.assign(base, { round: r.n, rounds: this.#total(), guesser: r.guesser.id });
     this.party.room.replace({ ...base, ...fields });
   }
@@ -563,12 +621,13 @@ export class Jinx extends Emitter<JinxEvents> {
   async #playRound(n: number, guesser: Player, gameSignal: AbortSignal): Promise<void> {
     const party = this.party;
     const givers = this.#inGame().filter((p) => p !== guesser);
-    const entry = this.#deck.deal(
+    const here = this.#here;
+    const entry = here.deck.deal(
       this.difficulty,
       this.#played.map((x) => x.entry),
     );
-    this.emit("dealt", this.#deck.used);
-    const secret = wordClue(entry.word) ?? { display: entry.word, key: entry.word, parts: [entry.word], kind: "word" as const };
+    this.emit("dealt", here.deck.used, this.#lang);
+    const secret = wordClue(entry.word, here.m) ?? { display: entry.word, key: entry.word, parts: [entry.word], kind: "word" as const };
     const abort = new AbortController();
     const r: Round = {
       n,
@@ -683,8 +742,11 @@ export class Jinx extends Emitter<JinxEvents> {
     if (typeof slot !== "number" || !Number.isInteger(slot) || slot < 0 || slot >= r.each) throw new PartyError("bad-slot", "No such clue slot");
     const bold = o["bold"] === true;
     const own = slots.filter((s, i): s is Slot => s !== null && i !== slot).map((s) => s.clue);
-    const res = checkSubmit(text, r.secret, { ...this.#opt, banned: r.entry.banned, alsoRight: r.entry.alsoRight, own });
-    if (!res.ok) throw new PartyError(res.code, res.message);
+    const { m, opt } = this.#here;
+    const res = m.checkSubmit(text, r.secret, { ...opt, banned: r.entry.banned, alsoRight: r.entry.alsoRight, own });
+    // The reason rides in the code ("too-close:plural"): a phone in another
+    // language than the room's says it in its own words.
+    if (!res.ok) throw new PartyError(res.reason ? `${res.code}:${res.reason}` : res.code, res.message);
     slots[slot] = { clue: res.clue, bold };
     from.state.replace(this.#s(this.#writeState(r, from)));
     const v = this.#writeView(r);
@@ -699,10 +761,11 @@ export class Jinx extends Emitter<JinxEvents> {
 
   async #jinx(r: Round): Promise<void> {
     const party = this.party;
-    const res = groupClues(
+    const { m, opt } = this.#here;
+    const res = m.groupClues(
       r.cards.map((c) => c.clue),
       r.secret,
-      this.#opt,
+      opt,
       [...r.entry.banned, ...r.entry.alsoRight],
     );
     for (const x of res.invalid) r.cards[x.index]!.fate = "jinxed";
@@ -784,7 +847,7 @@ export class Jinx extends Emitter<JinxEvents> {
   /** A decision ran out: the draft as the guess, else a random card, else a pass. */
   #timeout(r: Round): void {
     if (r.typing && r.turns > 0) {
-      const c = clean(r.draft);
+      const c = this.#here.m.clean(r.draft);
       if (c.ok) return this.#judge(r, c.clue);
       return this.#finish(r, { result: "pass" });
     }
@@ -812,7 +875,8 @@ export class Jinx extends Emitter<JinxEvents> {
   }
 
   #judge(r: Round, guess: Clue): void {
-    const near = judgeGuess(guess, r.secret, this.#opt, r.entry.alsoRight);
+    const { m, opt } = this.#here;
+    const near = m.judgeGuess(guess, r.secret, opt, r.entry.alsoRight);
     const o: Outcome = { result: near ? "right" : "wrong", guess: guess.display };
     if (near && near !== "same word") o.near = near;
     this.#finish(r, o);
@@ -839,7 +903,7 @@ export class Jinx extends Emitter<JinxEvents> {
     const r = this.#revealTurn(from);
     if (r.turns === 0) throw new PartyError("no-card", "Turn a card first");
     const text = obj(d)["text"];
-    const c = clean(typeof text === "string" ? text.slice(0, 200) : "");
+    const c = this.#here.m.clean(typeof text === "string" ? text.slice(0, 200) : "");
     if (!c.ok) throw new PartyError(c.error, c.error === "empty" ? "Type a guess" : c.message);
     r.draft = [...c.clue.display].slice(0, MAX_DRAFT).join("");
     this.#judge(r, c.clue);
