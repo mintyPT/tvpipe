@@ -17,7 +17,7 @@ json = {"type":"log","level":"trace","module":"cast::rtcp","message":"quoted \"t
 
 name = receiver connected
 type = receiver
-json = {"type":"receiver","name":"Living Room","protocol":"airplay","state":"connected"}
+json = {"type":"receiver","name":"Living Room","protocol":"airplay","state":"connected","delay_ms":100}
 
 name = receiver failed while connecting
 type = receiver

@@ -45,6 +45,11 @@ export interface ReceiverEvent {
   error?: string;
   /** A stable code, e.g. `pairing-required`. */
   code?: string;
+  /**
+   * On `connected`: the playout delay the receiver shows video with, ms
+   * after the frame's instant (the TV's own display lag comes on top).
+   */
+  delay_ms?: number;
 }
 
 export interface PlayerEvent {

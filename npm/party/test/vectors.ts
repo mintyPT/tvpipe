@@ -24,7 +24,9 @@
  *     `screen.set JSON`, `me ID JSON` (a player's own state, merged),
  *     `lock`, `unlock`, `kick ID`, `close`, `send ID TYPE JSON`,
  *     `broadcast TYPE JSON`, `late-join MODE` (`closed`, `wait`,
- *     `open`), `in-progress true|false`, `activate ID`.
+ *     `open`), `in-progress true|false`, `activate ID`, `tv-delay MS`
+ *     (sets `party.tvDelay`), `with-tv VERB …` (a verb inside
+ *     `party.withTv`). `now` and `at` fields match anything.
  *   Strings `"$NAME"` in JSON are variables: `ROOM`, `JOIN`, `SCREEN`,
  *   `WATCH` are the party's; others are bound by the first expected
  *   message that has them (resume tokens: `R1`, `R2`, …); `"$_"` matches
@@ -454,6 +456,24 @@ export const SCENARIOS: Scenario[] = [
     ],
   },
   {
+    name: "the TV's delay: clients learn it, changes synced with the TV carry their time",
+    steps: [
+      "c1 open",
+      `c1 > ${hello("Ann")}`,
+      "c2 open",
+      `c2 > {"t":"hello","v":1,"room":"$ROOM","role":"screen","key":"$SCREEN"}`,
+      "host tv-delay 250",
+      'host room.set {"phase":"lobby"}',
+      'host with-tv room.set {"phase":"vote"}',
+      'host with-tv screen.set {"phase":"vote"}',
+      "host with-tv broadcast buzz null",
+      "c3 open",
+      `c3 > ${hello("Bob")}`,
+      `c1 > {"t":"act","id":1,"type":"echo","data":"pressed","at":1}`,
+      "host tv-delay 0",
+    ],
+  },
+  {
     name: "screens are limited",
     options: { limits: { screens: 1 } },
     steps: [
@@ -615,7 +635,7 @@ export function matches(expected: Json, actual: Json, vars: Map<string, Json>): 
 
 /** A received message with the party's secrets and fresh tokens replaced by variables. */
 function scrub(v: Json, vars: Map<string, Json>, key?: string): Json {
-  if (key === "now" && typeof v === "number") return "$_";
+  if ((key === "now" || key === "at") && typeof v === "number") return "$_";
   if (typeof v === "string") {
     for (const [name, value] of vars) if (value === v) return `$${name}`;
     if (key === "resume") {
@@ -827,6 +847,13 @@ function hostStep(party: Party, verb: string, rest: string): void {
     case "broadcast": {
       const [type, ...data] = rest.split(" ");
       return party.broadcast(type!, json(data.join(" ")), "all");
+    }
+    case "tv-delay":
+      party.tvDelay = Number(rest);
+      return;
+    case "with-tv": {
+      const sp = rest.indexOf(" ");
+      return party.withTv(() => hostStep(party, rest.slice(0, sp), rest.slice(sp + 1)));
     }
     default:
       throw new Error(`bad host step ${verb}`);

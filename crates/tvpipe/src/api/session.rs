@@ -44,6 +44,9 @@ pub struct ReceiverInfo {
     pub error: Option<String>,
     /// A stable code for the error, e.g. `pairing-required`.
     pub code: Option<String>,
+    /// The playout delay it shows video with, ms after a frame's
+    /// instant (known once connected; the display's own lag comes on top).
+    pub delay_ms: Option<u32>,
 }
 
 /// A view of a session's state for writers on other threads.
@@ -96,9 +99,9 @@ impl Shared {
                 if !st.receivers.contains_key(&r.name) {
                     st.order.push(r.name.clone());
                 }
-                let protocol = r
-                    .protocol
-                    .or_else(|| st.receivers.get(&r.name).and_then(|i| i.protocol));
+                let prev = st.receivers.get(&r.name);
+                let protocol = r.protocol.or_else(|| prev.and_then(|i| i.protocol));
+                let delay_ms = r.delay_ms.or_else(|| prev.and_then(|i| i.delay_ms));
                 st.receivers.insert(
                     r.name.clone(),
                     ReceiverInfo {
@@ -107,6 +110,7 @@ impl Shared {
                         state: r.state,
                         error: r.error.clone(),
                         code: r.code.clone(),
+                        delay_ms,
                     },
                 );
             }

@@ -57,11 +57,13 @@ party.handle("start", (data, from) => {
 
 async function round() {
   party.inProgress = true;
-  const deadline = party.now() + 60_000;
-  party.room.set({ phase: "answer", deadline });
-  party.screen.set({ phase: "answer", deadline });
+  const deadline = party.deadline(60_000);   // 60 s from when the TV shows it
+  party.withTv(() => {                       // phones switch when the TV does
+    party.room.set({ phase: "answer", deadline });
+    party.screen.set({ phase: "answer", deadline });
+  });
   const answers = await party.collect("answer", { until: deadline });
-  party.screen.set({ phase: "results", answers: [...answers.values()] });
+  party.withTv(() => party.screen.set({ phase: "results", answers: [...answers.values()] }));
 }
 ```
 
@@ -90,13 +92,15 @@ type, and the room code alone lets nobody in.
 
 `await tvpipe.party(options)`: options `maxPlayers` (default: the
 manifest's `players.max`), `lateJoin`, `moderate`, `limits`, `grace`,
-`log`, `code`.
+`log`, `code`, `tvDelay` (fixed; default: follow the TVs).
 
 | | |
 |---|---|
 | `party.room`, `party.screen`, `player.state` | `StateBox`es: `set(partial)` (`undefined` removes a field), `replace(value)`, `update(draft => …)`, `value`. Changes in one tick reach each client as one diff. |
-| `party.handle(type, (data, from) => result)` | Actions of a type; throw `PartyError(code, message)` to refuse. `from` is a `Player` or a screen (`from.role`). |
+| `party.handle(type, (data, from, info) => result)` | Actions of a type; throw `PartyError(code, message)` to refuse. `from` is a `Player` or a screen (`from.role`); `info.sentAt`: when the phone sent it (host clock, the phone's word within the last second). |
 | `party.collect(type, { from, until, validate, replace, skipAway, reply, onAnswer, signal })` | One action per player, until all answered or the deadline (+ `grace`, 500 ms). Resolves with `Map<Player, value>`. |
+| `party.withTv(() => { … })` | What changes inside (views, `send`, `broadcast`) reaches phones and watchers when the TV shows it (the TV page at once). For phases, reveals, results; not for replies to a phone's action. |
+| `party.deadline(ms)`, `party.tvDelay`, `party.screenNow()` | A deadline `ms` after the TV shows what changes now; how far the TV is behind (ms, from the casts and surfaces; set it to fix it; `tv` event); the time a picture drawn now is on the TV (surfaces). |
 | `party.send(player, type, data)`, `party.broadcast(type, data, role)` | Transient messages (`msg` events on phones). |
 | `party.players`, `connectedPlayers`, `vip`, `player(id)` | Players in join order; `player.id`, `name`, `vip`, `connected`, `waiting`, `data` (yours). |
 | `party.lock()`, `unlock()`, `kick(player)`, `close()` | No new players (resumes still work), remove one, end the party. |
@@ -105,7 +109,7 @@ manifest's `players.max`), `lateJoin`, `moderate`, `limits`, `grace`,
 | `party.links` | `join` (in the QR code), `tv` (the TV page with the screen key), `watch` (a read-only screen on this computer, e.g. an `<iframe>` preview). |
 | `party.cast(to?)`, `party.stopCast()` | The TV page on receivers (default: the launcher's choice); `tvpipe.on("cast", status)` follows it. |
 | `party.stats`, `party.screenView()` | What the views cost; what screens see. |
-| events | `join`, `reconnect`, `away`, `leave`, `vip`, `active`, `screen`, `screen-view`, `input` |
+| events | `join`, `reconnect`, `away`, `leave`, `vip`, `active`, `screen`, `screen-view`, `input`, `tv` |
 
 `Tvpipe`: `info()`, `watchDevices(on)` and the `devices` event,
 `select(names)`, `selection()`, `pair(device)`, `pairPin(device, pin)`,
@@ -147,11 +151,19 @@ HTML-in-Canvas (Drawbluff's "TV picture: drawn here").
 `PartyClient.fromLocation()` or `new PartyClient({ url, room, key, role,
 storage, WebSocket })`; `join(name)`, `connect()`, `act(type, data)`
 (rejects with `PartyActionError`: `code`, `message`), `input(data)`,
-`on("view" | "msg" | "status" | "bye" | "welcome", fn)`, `view`, `you`,
-`status`, `now()`, `leave()`, `close()`; `qrSvg(qr)`, `drawQr(ctx, qr, x,
+`on("view" | "msg" | "status" | "bye" | "welcome" | "tv", fn)`, `view`, `you`,
+`status`, `now()`, `hostNow()`, `tvDelay`, `leave()`, `close()`; `qrSvg(qr)`, `drawQr(ctx, qr, x,
 y, size)`, `joinText(join)`, `memoryStorage()`. It reconnects by itself
 (and when the page becomes visible again), keeps the player's identity in
 `localStorage`, and resends unacknowledged actions.
+
+**The TV is behind** (render, capture, the receivers' playout delay, the
+TV's own lag: ~0.25 s on an Apple TV, ~0.45 s on Cast). Changes the host
+made in `party.withTv` wait on phones and watchers until the TV shows
+them (in order: what comes after waits too). `now()`, what countdowns
+use, is the host's clock on phones and on a TV page the time its picture
+is on the TV (`hostNow() + tvDelay`), so the TV's countdown and the
+phones' end together. Games need nothing else on the client.
 
 ## Tests
 

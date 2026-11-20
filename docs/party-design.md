@@ -381,13 +381,54 @@ second, and deadlines are fair.
 
 Consequences: phones draw and type locally and submit once; the host
 judges order and deadlines by its own clock (never by what the TV
-shows); a deadline gets 500 ms of grace (tunnel p95 + the TV being
-behind) before `collect` closes; countdowns on phones and the TV run off
-the synced clock to the same instant. Fast-reaction games (buzzers) work
-the same way, by host arrival time; they should not ask people to react
-to the TV picture within 300 ms. A LAN mode (the server also on the LAN
+shows); a deadline gets 500 ms of grace (tunnel p95) before `collect`
+closes. A LAN mode (the server also on the LAN
 address, phones on the same Wi-Fi, ~5 ms) is a later option; it trades
 the tunnel's https and reachability from mobile data for latency.
+
+### 8.1 Keeping phones with the TV
+
+The table's "phone tap → TV" is also how far the TV is behind every
+change the host makes, while phones see it after one tunnel hop. Left
+alone, phones run ahead of the picture: the vote is on the phone before
+the drawing is on the TV, a phone gives away the result the TV is about
+to reveal, the TV's countdown ends a quarter to half a second after the
+phones'. The library closes the gap with one number and two rules
+(protocol: `docs/party-protocol.md` §7.1):
+
+- **The TV's delay** (`party.tvDelay`): tvpipe reports each receiver's
+  playout delay (`delayMs` in the `cast` and `surface` statuses; Cast's
+  target delay, AirPlay's video lead, the player page's delay); a
+  `HostedParty` takes the slowest connected receiver of any picture and
+  adds the TV's own lag (`TV_DISPLAY_MS`, 120 ms: the Apple TV measured
+  ~250 ms glass to glass at a 100 ms lead) and a frame of rendering
+  (`TV_RENDER_MS`, 30 ms); the `browser` receiver gets no TV lag. Clients
+  learn it in `welcome` and `tv` messages. A game can set its own
+  (`tvDelay` option or setter, e.g. from a calibration screen): then the
+  casts no longer change it.
+- **What the TV shows, phones show with it**: changes made in
+  `party.withTv(fn)` go out at once, stamped with `at` = now + delay;
+  phones and watchers apply them then, TV pages at once. Phones get them
+  early (the tunnel's jitter is absorbed) and hold them; later messages
+  wait behind so the order never changes. Only what the game wraps waits:
+  a phone's own feedback (an action's `done: true`) stays instant.
+- **The TV draws ahead**: a TV page's `now()` is the host's clock plus
+  the delay, the time its picture will be seen, so countdowns to the
+  same deadline end on the TV and the phones together; deadlines come
+  from `party.deadline(ms)` (now + delay + ms), so every player gets the
+  whole time from when they see the question. A surface drawn in the
+  host page uses `party.screenNow()`.
+
+For fast-reaction games, actions carry `at` (when the phone sent them,
+on the synced clock): `info.sentAt` orders presses by when people
+pressed rather than by their tunnels, bounded to the second before
+arrival (a phone's word, not proof). Since phones are with the TV,
+reaction times can be measured from what the TV showed.
+
+Not done: measuring the TV's own lag (a calibration step, e.g. a phone's
+microphone hearing a chirp the TV plays, stored per receiver); one
+delay serves every TV (the slowest), as tvpipe gives every receiver the
+same budget anyway.
 
 ## 9. A game author's view
 

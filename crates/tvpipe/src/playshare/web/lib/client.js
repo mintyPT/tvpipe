@@ -157,6 +157,8 @@ export function drawQr(ctx, qr, x, y, size, opts = {}) {
         }
     });
 }
+/** Messages that keep their order behind one held for the TV (`at`). */
+const HELD = new Set(["state", "msg", "ack"]);
 /** The default socket path on the page's origin. */
 export const SOCKET_PATH = "/_tvpipe/ws";
 export class PartyClient {
@@ -206,6 +208,10 @@ export class PartyClient {
     #bestRtt = Infinity;
     #samples = [];
     #waiting = null;
+    #tvDelay = 0;
+    /** Messages waiting for their time (`at`), and what came after them. */
+    #held = [];
+    #heldTimer = null;
     #onVisible = () => {
         if (globalThis.document?.visibilityState !== "visible")
             return;
@@ -245,7 +251,7 @@ export class PartyClient {
     get canResume() {
         return this.role !== "player" || typeof this.saved?.resume === "string";
     }
-    /** Events: `view`, `welcome`, `msg`, `status`, `bye`, `ack`. */
+    /** Events: `view`, `welcome`, `msg`, `status`, `bye`, `ack`, `tv` (the {@link tvDelay}). */
     on(event, fn) {
         let set = this.#listeners.get(event);
         if (!set)
@@ -381,10 +387,49 @@ export class PartyClient {
         this.status = s;
         this.#emit("status", s);
     }
+    /**
+     * A message from the host. One with an `at` (a change the host synced
+     * with the TV: `party.withTv`) waits until the picture with it is on
+     * the TV, and everything after it waits behind it, in order.
+     */
     #onMessage(msg) {
+        if (HELD.has(msg["t"]) && (this.#held.length > 0 || (typeof msg["at"] === "number" && msg["at"] > this.now()))) {
+            this.#held.push(msg);
+            this.#release();
+            return;
+        }
+        this.#handle(msg);
+    }
+    /** Handles the held messages that are due, and waits for the next. */
+    #release() {
+        if (this.#heldTimer)
+            clearTimeout(this.#heldTimer);
+        this.#heldTimer = null;
+        while (this.#held.length > 0) {
+            const at = this.#held[0]["at"];
+            const wait = typeof at === "number" ? at - this.now() : 0;
+            if (wait > 0) {
+                this.#heldTimer = setTimeout(() => this.#release(), Math.min(wait, 10_000));
+                return;
+            }
+            this.#handle(this.#held.shift());
+        }
+    }
+    #dropHeld() {
+        this.#held = [];
+        if (this.#heldTimer)
+            clearTimeout(this.#heldTimer);
+        this.#heldTimer = null;
+    }
+    #handle(msg) {
         switch (msg["t"]) {
             case "welcome": {
                 const first = this.you === null;
+                // A whole view: what was held is in it (or older than it).
+                this.#dropHeld();
+                const tv = typeof msg["tv"]?.delay === "number" ? msg["tv"].delay : 0;
+                const tvChanged = tv !== this.#tvDelay;
+                this.#tvDelay = tv;
                 this.you = msg["you"];
                 this.view = msg["view"] ?? {};
                 this.#rev = msg["rev"] ?? 0;
@@ -409,8 +454,10 @@ export class PartyClient {
                         this.#pending.set(this.#nextAct++, p);
                 }
                 for (const [id, p] of this.#pending)
-                    this.#send({ t: "act", id, type: p.type, data: p.data });
+                    this.#send({ t: "act", id, type: p.type, data: p.data, at: p.at });
                 this.#startPing();
+                if (tvChanged)
+                    this.#emit("tv", tv);
                 this.#emit("welcome", msg);
                 this.#emit("view", this.view, null);
                 if (this.#waiting) {
@@ -451,6 +498,13 @@ export class PartyClient {
                 return;
             case "pong":
                 this.#sample(msg["c"], msg["now"]);
+                return;
+            case "tv":
+                if (typeof msg["delay"] !== "number" || msg["delay"] === this.#tvDelay)
+                    return;
+                this.#tvDelay = msg["delay"];
+                this.#emit("tv", this.#tvDelay);
+                this.#release();
                 return;
             case "bye":
                 this.byeReason = String(msg["reason"]);
@@ -493,9 +547,27 @@ export class PartyClient {
             clearInterval(this.#pinger);
         this.#pinger = null;
     }
-    /** The host's clock (ms since the epoch): deadlines in views use it. */
+    /**
+     * The clock to show things by (ms since the epoch): the host's clock,
+     * on a TV page ahead by {@link tvDelay}: the time at which what the
+     * page draws now is on the TV. Deadlines in views use it, so a
+     * countdown on the TV and on the phones reach zero together.
+     */
     now() {
+        return Date.now() + this.#offset + (this.role === "screen" ? this.#tvDelay : 0);
+    }
+    /** The host's clock (ms since the epoch), on every page. */
+    hostNow() {
         return Date.now() + this.#offset;
+    }
+    /**
+     * How far the TV picture is behind the host, ms (0 without a TV).
+     * Phones get the host's TV-synced changes when the TV shows them by
+     * themselves; this is for anything else timed to the TV picture (a
+     * sound on the phone with a flash on the TV: at `hostNow() + tvDelay`).
+     */
+    get tvDelay() {
+        return this.#tvDelay;
     }
     /** The fastest recent round trip to the host, ms. */
     get rtt() {
@@ -552,9 +624,10 @@ export class PartyClient {
         if (this.#pending.size >= MAX_PENDING)
             return Promise.reject(new PartyActionError("busy", "Too many actions waiting"));
         const id = this.#nextAct++;
+        const at = Math.round(this.hostNow());
         return new Promise((resolve, reject) => {
-            this.#pending.set(id, { type, data, resolve, reject });
-            this.#send({ t: "act", id, type, data });
+            this.#pending.set(id, { type, data, at, resolve, reject });
+            this.#send({ t: "act", id, type, data, at });
         });
     }
     /** Leaves the party for good (the identity is forgotten). */
@@ -567,6 +640,7 @@ export class PartyClient {
     /** Closes the connection (no reconnect). */
     close() {
         this.#setStatus("closed");
+        this.#dropHeld();
         if (this.#retry)
             clearTimeout(this.#retry);
         this.#stopPing();

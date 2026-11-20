@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 
 import { memoryStorage, PartyActionError, PartyClient } from "../src/client.ts";
 import { PartyError } from "../src/party.ts";
-import { Tvpipe } from "../src/tvpipe.ts";
+import { Tvpipe, TV_RENDER_MS } from "../src/tvpipe.ts";
 import { until } from "./helpers.ts";
 
 const repo = fileURLToPath(new URL("../../../", import.meta.url));
@@ -110,6 +110,16 @@ test("playshare: Node as the host page, phones and a TV page through tvpipe", { 
       ["Ann", "Bob"],
     );
     assert.equal(tv.view["join"].url, party.links.join);
+
+    // A picture on a receiver: the party learns how far it is behind
+    // (the player page's delay and a frame; no TV lag).
+    assert.equal(party.tvDelay, 0);
+    const surface = await tvpipe.openSurface({ width: 320, height: 180, fps: 30, to: ["browser"] });
+    await until(() => party.tvDelay > 0, 5000);
+    assert.equal(party.tvDelay, 100 + TV_RENDER_MS);
+    await until(() => ann.c.tvDelay === party.tvDelay && tv.tvDelay === party.tvDelay);
+    await tvpipe.closeSurface(surface.id);
+    await until(() => party.tvDelay === 0, 5000);
 
     // The page asks tvpipe to quit: phones hear the room closed.
     await tvpipe.quit();

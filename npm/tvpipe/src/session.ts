@@ -38,6 +38,8 @@ export interface ReceiverInfo {
   state: ReceiverState;
   error: string | undefined;
   code: string | undefined;
+  /** The playout delay it shows video with, ms (once connected). */
+  delayMs: number | undefined;
 }
 
 /** The plan once streaming started. */
@@ -144,6 +146,7 @@ export class Session extends EventEmitter<SessionEvents> implements AsyncDisposa
           state: ev.state,
           error: ev.error,
           code: ev.code,
+          delayMs: ev.delay_ms ?? prev?.delayMs,
         });
         this.emit("receiver", ev);
         break;

@@ -633,8 +633,22 @@ export class Drawbluff extends Emitter<GameEvents> {
     return this.party.players.filter((p) => this.scores.has(p.id));
   }
 
+  /**
+   * A deadline `ms` after the phase shows on the TV (and with
+   * {@link #withTv} on the phones): everybody gets the whole time.
+   */
   #deadline(ms: number): number {
-    return this.party.now() + ms;
+    return this.party.now() + (this.party.tvDelay ?? 0) + ms;
+  }
+
+  /**
+   * What the TV shows (a phase, a reveal step): phones and watchers get
+   * it when the TV picture with it is up (`party.withTv`; a tvpipe
+   * before 0.3.1 has no `withTv` and sends it at once).
+   */
+  #withTv(fn: () => void): void {
+    if (typeof this.party.withTv === "function") this.party.withTv(fn);
+    else fn();
   }
 
   #room(fields: Record<string, unknown>): void {
@@ -650,13 +664,15 @@ export class Drawbluff extends Emitter<GameEvents> {
     const pens = new Map(players.map((p) => [p, this.#pens(p).palette]));
     const deadline = this.#deadline(this.timings.draw);
     const undo = this.#settings.undo;
-    this.#room({ phase: "draw", deadline });
     this.#ink = new Map(players.map((p) => [p.id, 0]));
-    this.#screen({ phase: "draw", round, rounds: this.rounds, deadline, waiting: players.map((p) => p.id), done: [], ink: {} });
-    for (const [p, prompt] of prompts) {
-      p.state.replace({ task: "draw", prompt: displayTitle(prompt.text), undo, deadline, done: false, ...this.#rank(p), ...this.#pens(p) });
-    }
-    for (const p of party.players) if (!prompts.has(p)) p.state.replace(this.#waitState(p));
+    this.#withTv(() => {
+      this.#room({ phase: "draw", deadline });
+      this.#screen({ phase: "draw", round, rounds: this.rounds, deadline, waiting: players.map((p) => p.id), done: [], ink: {} });
+      for (const [p, prompt] of prompts) {
+        p.state.replace({ task: "draw", prompt: displayTitle(prompt.text), undo, deadline, done: false, ...this.#rank(p), ...this.#pens(p) });
+      }
+      for (const p of party.players) if (!prompts.has(p)) p.state.replace(this.#waitState(p));
+    });
     const got = await party.collect<Drawing>("draw", {
       from: players,
       until: deadline,
@@ -786,30 +802,32 @@ export class Drawbluff extends Emitter<GameEvents> {
     const page = (n: number) =>
       gallery.slice(n * GALLERY_PAGE, (n + 1) * GALLERY_PAGE).map((e) => ({ id: e.artist.id, name: e.artist.name, prompt: displayTitle(e.prompt), drawing: e.drawing }));
     const busy = new Set(lies?.liars ?? []);
-    this.#room({ phase: "gallery", count: gallery.length });
-    this.#screen({
-      phase: "gallery",
-      round,
-      rounds: this.rounds,
-      page: 1,
-      pages,
-      count: gallery.length,
-      items: page(0),
-      liars: lies?.liars.map((l) => l.id) ?? [],
-      done: lies ? [...lies.answers.keys()].map((l) => l.id) : [],
-      artist: lies ? { id: lies.spot.artist.id, name: lies.spot.artist.name } : null,
-      typing: this.#typing(lies),
+    this.#withTv(() => {
+      this.#room({ phase: "gallery", count: gallery.length });
+      this.#screen({
+        phase: "gallery",
+        round,
+        rounds: this.rounds,
+        page: 1,
+        pages,
+        count: gallery.length,
+        items: page(0),
+        liars: lies?.liars.map((l) => l.id) ?? [],
+        done: lies ? [...lies.answers.keys()].map((l) => l.id) : [],
+        artist: lies ? { id: lies.spot.artist.id, name: lies.spot.artist.name } : null,
+        typing: this.#typing(lies),
+      });
+      for (const p of party.players) {
+        if (busy.has(p)) continue;
+        const mine = gallery.findIndex((e) => e.artist === p);
+        if (!this.scores.has(p.id)) p.state.replace(this.#waitState(p));
+        else p.state.replace({ task: "watch", note: "gallery", mine: mine >= 0 ? Math.floor(mine / GALLERY_PAGE) + 1 : null, ...this.#rank(p) });
+      }
     });
-    for (const p of party.players) {
-      if (busy.has(p)) continue;
-      const mine = gallery.findIndex((e) => e.artist === p);
-      if (!this.scores.has(p.id)) p.state.replace(this.#waitState(p));
-      else p.state.replace({ task: "watch", note: "gallery", mine: mine >= 0 ? Math.floor(mine / GALLERY_PAGE) + 1 : null, ...this.#rank(p) });
-    }
     const stop = this.#watchTyping(lies);
     try {
       for (let n = 1; n <= pages; n++) {
-        if (n > 1) party.screen.set({ page: n, items: page(n - 1) });
+        if (n > 1) this.#withTv(() => party.screen.set({ page: n, items: page(n - 1) }));
         await this.#sleep(this.timings.gallery);
         if (this.#abort.signal.aborted) return;
       }
@@ -827,26 +845,28 @@ export class Drawbluff extends Emitter<GameEvents> {
     this.#onScreen = lies;
     const art = { id: spot.artist.id, name: spot.artist.name };
     const deadline = lies.deadline;
-    this.#room({ phase: "lie", spot: i + 1, spots, deadline, artist: art });
-    this.#screen({
-      phase: "lie",
-      round,
-      spot: i + 1,
-      spots,
-      deadline,
-      drawing: spot.drawing,
-      artist: art,
-      waiting: lies.liars.map((p) => p.id),
-      done: [...lies.answers.keys()].map((p) => p.id),
-      typing: this.#typing(lies),
-    });
     const busy = new Set(lies.liars);
-    for (const p of party.players) {
-      if (busy.has(p)) continue;
-      if (p === spot.artist) p.state.replace({ task: "artist", key: lies.key, ...this.#rank(p) });
-      else if (!this.scores.has(p.id)) p.state.replace(this.#waitState(p));
-      else p.state.replace({ task: "watch", note: "rest", artist: art, ...this.#rank(p) });
-    }
+    this.#withTv(() => {
+      this.#room({ phase: "lie", spot: i + 1, spots, deadline, artist: art });
+      this.#screen({
+        phase: "lie",
+        round,
+        spot: i + 1,
+        spots,
+        deadline,
+        drawing: spot.drawing,
+        artist: art,
+        waiting: lies.liars.map((p) => p.id),
+        done: [...lies.answers.keys()].map((p) => p.id),
+        typing: this.#typing(lies),
+      });
+      for (const p of party.players) {
+        if (busy.has(p)) continue;
+        if (p === spot.artist) p.state.replace({ task: "artist", key: lies.key, ...this.#rank(p) });
+        else if (!this.scores.has(p.id)) p.state.replace(this.#waitState(p));
+        else p.state.replace({ task: "watch", note: "rest", artist: art, ...this.#rank(p) });
+      }
+    });
     const stop = this.#watchTyping(lies);
     try {
       await lies.done;
@@ -887,25 +907,27 @@ export class Drawbluff extends Emitter<GameEvents> {
     this.#onScreen = undefined;
     const deadline = this.#deadline(this.timings.vote);
     const key = lies.key;
-    this.#room({ phase: "vote", spot: i + 1, spots, deadline, drawing: spot.drawing, artist: art });
-    this.#screen({
-      phase: "vote",
-      round,
-      spot: i + 1,
-      spots,
-      deadline,
-      drawing: spot.drawing,
-      artist: art,
-      options: options.map((o) => ({ id: o.id, text: o.text })),
-      waiting: voters.map((p) => p.id),
-      done: [],
-      writing: writing.size,
+    this.#withTv(() => {
+      this.#room({ phase: "vote", spot: i + 1, spots, deadline, drawing: spot.drawing, artist: art });
+      this.#screen({
+        phase: "vote",
+        round,
+        spot: i + 1,
+        spots,
+        deadline,
+        drawing: spot.drawing,
+        artist: art,
+        options: options.map((o) => ({ id: o.id, text: o.text })),
+        waiting: voters.map((p) => p.id),
+        done: [],
+        writing: writing.size,
+      });
+      for (const p of voters) p.state.replace({ task: "vote", key, options: mine(p), deadline, done: false, ...this.#rank(p) });
+      if (!writing.has(artist)) artist.state.replace({ task: "artist", key, ...this.#rank(artist) });
+      for (const p of party.players) {
+        if (!this.scores.has(p.id) && !writing.has(p)) p.state.replace(this.#waitState(p));
+      }
     });
-    for (const p of voters) p.state.replace({ task: "vote", key, options: mine(p), deadline, done: false, ...this.#rank(p) });
-    if (!writing.has(artist)) artist.state.replace({ task: "artist", key, ...this.#rank(artist) });
-    for (const p of party.players) {
-      if (!this.scores.has(p.id) && !writing.has(p)) p.state.replace(this.#waitState(p));
-    }
     const votes = await party.collect<string>("vote", {
       from: voters,
       until: deadline,
@@ -974,32 +996,34 @@ export class Drawbluff extends Emitter<GameEvents> {
       };
     });
     const art = { id: spot.artist.id, name: spot.artist.name };
-    this.#room({ phase: "reveal", spot: i + 1, spots, drawing: spot.drawing, artist: art });
-    this.#screen({
-      phase: "reveal",
-      round,
-      spot: i + 1,
-      spots,
-      drawing: spot.drawing,
-      artist: art,
-      prompt: displayTitle(spot.prompt),
-      items,
-      step: 0,
-      stepMs: this.timings.revealStep,
-      endMs: this.timings.revealEnd,
-    });
     const writing = new Set(next && !next.finished ? next.liars.filter((p) => !next.answers.has(p)) : []);
-    for (const p of party.players) {
-      if (writing.has(p)) continue;
-      if (!this.scores.has(p.id)) {
-        p.state.replace(this.#waitState(p));
-        continue;
+    this.#withTv(() => {
+      this.#room({ phase: "reveal", spot: i + 1, spots, drawing: spot.drawing, artist: art });
+      this.#screen({
+        phase: "reveal",
+        round,
+        spot: i + 1,
+        spots,
+        drawing: spot.drawing,
+        artist: art,
+        prompt: displayTitle(spot.prompt),
+        items,
+        step: 0,
+        stepMs: this.timings.revealStep,
+        endMs: this.timings.revealEnd,
+      });
+      for (const p of party.players) {
+        if (writing.has(p)) continue;
+        if (!this.scores.has(p.id)) {
+          p.state.replace(this.#waitState(p));
+          continue;
+        }
+        p.state.replace({ task: "watch", note: "reveal", result: this.#result(p, spot, options, scoring, votes), ...this.#rank(p) });
       }
-      p.state.replace({ task: "watch", note: "reveal", result: this.#result(p, spot, options, scoring, votes), ...this.#rank(p) });
-    }
+    });
     for (let step = 1; step <= items.length; step++) {
       await this.#sleep(this.timings.revealStep);
-      party.screen.set({ step });
+      this.#withTv(() => party.screen.set({ step }));
     }
     await this.#sleep(this.timings.revealEnd);
   }
@@ -1060,17 +1084,19 @@ export class Drawbluff extends Emitter<GameEvents> {
     const party = this.party;
     this.#setPhase("scores");
     const table = this.#table(before);
-    this.#room({ phase: "scores" });
-    this.#screen({
-      phase: "scores",
-      round,
-      rounds: this.rounds,
-      scores: table.slice(0, BOARD_LINES),
-      total: table.length,
-      highlights: this.#highlights(),
-      last: round === this.rounds,
+    this.#withTv(() => {
+      this.#room({ phase: "scores" });
+      this.#screen({
+        phase: "scores",
+        round,
+        rounds: this.rounds,
+        scores: table.slice(0, BOARD_LINES),
+        total: table.length,
+        highlights: this.#highlights(),
+        last: round === this.rounds,
+      });
+      for (const p of party.players) p.state.replace(this.scores.has(p.id) ? { task: "scores", ...this.#rank(p) } : this.#waitState(p));
     });
-    for (const p of party.players) p.state.replace(this.scores.has(p.id) ? { task: "scores", ...this.#rank(p) } : this.#waitState(p));
     await this.#sleep(this.timings.scores);
   }
 
@@ -1078,9 +1104,11 @@ export class Drawbluff extends Emitter<GameEvents> {
     const party = this.party;
     this.#setPhase("final");
     const table = this.#table();
-    party.room.replace({ phase: "final", lang: this.#lang, minPlayers: this.minPlayers, lateJoin: party.lateJoin, ...this.#settingsView(), ...this.#colorView() });
-    party.screen.replace({ phase: "final", lang: this.#lang, scores: table.slice(0, BOARD_LINES), total: table.length, colors: this.#screenColors() });
-    for (const p of party.players) p.state.replace({ task: "final", ...this.#rank(this.scores.has(p.id) ? p : undefined), ...this.#pens(p) });
+    this.#withTv(() => {
+      party.room.replace({ phase: "final", lang: this.#lang, minPlayers: this.minPlayers, lateJoin: party.lateJoin, ...this.#settingsView(), ...this.#colorView() });
+      party.screen.replace({ phase: "final", lang: this.#lang, scores: table.slice(0, BOARD_LINES), total: table.length, colors: this.#screenColors() });
+      for (const p of party.players) p.state.replace({ task: "final", ...this.#rank(this.scores.has(p.id) ? p : undefined), ...this.#pens(p) });
+    });
     this.emit("end", table);
     return table;
   }

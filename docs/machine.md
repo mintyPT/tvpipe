@@ -42,7 +42,7 @@ broke), by an `error`.
 |---|---|---|
 | `hello` | first | `protocol` (1), `version`, `command` (`play` also for `preview`; `share`, `screen`, `discover`, `pair`, `unpair`; the `debug` commands keep their old names: `test-pattern` for `debug pattern`, `tunnel` for `debug tunnel`, `debug-pipeline`) |
 | `log` | each log line at the active level (`-v`: debug, `--debug`: trace) | `level` (`error`, `warn`, `info`, `debug`, `trace`), `module`, `message` |
-| `receiver` | a receiver changes state | `name`, `protocol` (`cast`, `airplay`, `browser`; on `connected`/`failed` while connecting), `state`, `error` and `code` (with `failed`, `lost`, `gave-up`) |
+| `receiver` | a receiver changes state | `name`, `protocol` (`cast`, `airplay`, `browser`; on `connected`/`failed` while connecting), `state`, `error` and `code` (with `failed`, `lost`, `gave-up`), `delay_ms` (with `connected`: the playout delay it shows video with, ms after the frame's instant; the TV's own lag comes on top) |
 | `player` | a `--to browser` page listens | `name`, `url` |
 | `viewer` | a tab connects to or leaves the page | `name`, `tab` (number), `state` (`connected`, `disconnected`), `public` (it came over the tunnel); optional: `address` (over the tunnel, the visitor's address when the tunnel knows it), `country` (over a Cloudflare tunnel, two letters from `cf-ipcountry`), `browser` (from the user agent: "Safari 18 on iPhone") |
 | `share-page` | `share` without URL listens | `url` (open it, press Share) |

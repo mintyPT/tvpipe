@@ -161,7 +161,7 @@ ignored, or `unknown-method`.
 | `pair.start` | `{device}` → `{}` | AirPlay PIN pairing; `pair` events `{device, state: connecting\|pin\|done\|failed, error?}` |
 | `pair.pin` | `{device, pin}` | the PIN the TV shows |
 | `pair.cancel` | `{device}` | |
-| `cast.start` | `{page, to?, resolution?}` → `{}` | `page`: a path on the local origin with its fragment (the TV page and its screen key); `to`: device names (default: the selection), `"browser"` for a tab on this computer; `resolution` (default: the selection's; ignored when fixed). Replaces a running cast (the TVs restart the picture). `cast` events `{state: starting\|streaming\|failed\|stopped, receivers: [{name, state}], player?, resolution?, error?}` |
+| `cast.start` | `{page, to?, resolution?}` → `{}` | `page`: a path on the local origin with its fragment (the TV page and its screen key); `to`: device names (default: the selection), `"browser"` for a tab on this computer; `resolution` (default: the selection's; ignored when fixed). Replaces a running cast (the TVs restart the picture). `cast` events `{state: starting\|streaming\|failed\|stopped, receivers: [{name, protocol?, state, delayMs?, error?, code?}], player?, resolution?, error?}` (`delayMs`: the receiver's playout delay once connected, which the library's `tvDelay` follows: docs/party-design.md §8.1) |
 | `cast.stop` | | the TVs get TEARDOWN; the headless browser quits |
 | `qr` | `{text}` → `{size, rows}` | tvpipe's QR encoder (`util::qr`): `rows` of `"0"`/`"1"` |
 | `relay.attach` | `{}` → `{public, local}` | this socket becomes the relay host (§6); a newer attach replaces it |

@@ -87,6 +87,7 @@ fn receivers_value(list: &[crate::api::ReceiverInfo]) -> Value {
                     .with("state", r.state.as_str())
                     .with_opt("error", r.error.as_deref())
                     .with_opt("code", r.code.as_deref())
+                    .with_opt("delayMs", r.delay_ms)
             })
             .collect::<Vec<_>>(),
     )

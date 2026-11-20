@@ -87,6 +87,39 @@ export interface ReceiverStatus {
   state: string;
   error?: string;
   code?: string;
+  /**
+   * Once connected: the playout delay it shows video with, ms after the
+   * frame was drawn (Cast's target delay, AirPlay's video lead, the
+   * player page's delay); the TV's own lag comes on top.
+   */
+  delayMs?: number;
+}
+
+/**
+ * What a TV adds to its receiver's playout delay, ms: its own picture
+ * processing (not in game mode) and the receiver's output. Measured: an
+ * Apple TV 4K at a 100 ms lead showed frames ~250 ms after they were
+ * made (docs/measurements.md).
+ */
+export const TV_DISPLAY_MS = 120;
+/** From a change in the host to the frame that shows it: a page renders, the frame is captured, ms. */
+export const TV_RENDER_MS = 30;
+
+/**
+ * How far the picture of a cast or surface is behind the host, ms: the
+ * slowest connected receiver's delay, with the TV's lag and a frame of
+ * rendering ({@link TV_DISPLAY_MS}, {@link TV_RENDER_MS}; the `browser`
+ * receiver has no TV). `undefined` when no receiver is connected.
+ */
+export function tvDelayOf(status: CastStatus): number | undefined {
+  if (status.state === "stopped" || status.state === "failed") return undefined;
+  let max: number | undefined;
+  for (const r of status.receivers ?? []) {
+    if ((r.state !== "connected" && r.state !== "reconnected") || typeof r.delayMs !== "number") continue;
+    const d = r.delayMs + TV_RENDER_MS + (r.protocol === "browser" ? 0 : TV_DISPLAY_MS);
+    max = Math.max(max ?? 0, d);
+  }
+  return max;
 }
 
 export interface CastStatus {
@@ -463,6 +496,8 @@ export class HostedParty extends Party {
   readonly info: Info;
   readonly relay: TvpipeRelay;
   links: PartyLinks;
+  /** The delay of each picture on TVs (`cast`, `surface:ID`), for `tvDelay`. */
+  readonly #pictures = new Map<string, number>();
 
   constructor(tvpipe: Tvpipe, info: Info, relay: TvpipeRelay, options: PartyOptions) {
     super({ maxPlayers: info.players.max, ...options });
@@ -482,6 +517,19 @@ export class HostedParty extends Party {
         void this.refreshJoin();
       }
     });
+    tvpipe.on("cast", (s) => this.#picture("cast", s));
+    tvpipe.on("surface", (s) => this.#picture(`surface:${s.id}`, s));
+  }
+
+  /**
+   * A picture's status: `tvDelay` follows the slowest picture on a TV
+   * (kept while one restarts; gone when it stops).
+   */
+  #picture(key: string, s: CastStatus): void {
+    const d = tvDelayOf(s);
+    if (d !== undefined) this.#pictures.set(key, d);
+    else if (s.state !== "starting") this.#pictures.delete(key);
+    this.followTv(Math.max(0, ...this.#pictures.values()));
   }
 
   #joinUrl(base: string): string {

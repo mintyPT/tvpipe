@@ -158,6 +158,8 @@ export class Client {
     lastAct = 0;
     /** The last `in` sequence number on this connection. */
     inSeq = 0;
+    /** While `waiting`: the latest `at` of a TV-synced change it has not got. */
+    heldAt;
     constructor(conn, role, id, address, rate, burst) {
         this.conn = conn;
         this.role = role;
@@ -179,6 +181,10 @@ export class Client {
         bye(this.conn, reason, message);
     }
 }
+/** The most a TV may be behind, ms (larger values are taken as this). */
+export const MAX_TV_DELAY = 5000;
+/** How far back an action's `at` may claim it was sent, ms. */
+const MAX_ACT_AGE = 1000;
 let partySeq = 0;
 export class Party extends Emitter {
     code;
@@ -203,6 +209,10 @@ export class Party extends Emitter {
     #seq = 0;
     #screenSeq = 0;
     #flushQueued = false;
+    #tvDelay = 0;
+    #tvFixed = false;
+    /** Inside {@link Party.withTv}: when the changes are to show. */
+    #at;
     #stats = { flushes: 0, states: 0, stateBytes: 0, flushMs: 0 };
     #screenView;
     #rosterSection = { version: 0, value: [] };
@@ -226,10 +236,84 @@ export class Party extends Emitter {
         this.room = new StateBox(() => this.#changed());
         this.screen = new StateBox(() => this.#changed());
         this.#join = { code: this.code, url: "", qr: null };
+        if (options.tvDelay !== undefined) {
+            this.#tvFixed = true;
+            this.#tvDelay = clampDelay(options.tvDelay);
+        }
     }
     /** The server's clock (ms since the epoch): deadlines in views use it. */
     now() {
         return Date.now();
+    }
+    /**
+     * How far the TV picture is behind the host, ms: from a change here to
+     * the TV showing it (render, capture, the receivers' playout delay,
+     * the TV's own lag). 0 without a TV. A party in a host page follows
+     * its casts and surfaces (`HostedParty`); setting it fixes it (a
+     * game's own calibration, a fake TV in tests).
+     */
+    get tvDelay() {
+        return this.#tvDelay;
+    }
+    set tvDelay(ms) {
+        this.#tvFixed = true;
+        this.#setTvDelay(ms);
+    }
+    /** The measured delay, unless the game fixed it. @internal */
+    followTv(ms) {
+        if (!this.#tvFixed)
+            this.#setTvDelay(ms);
+    }
+    #setTvDelay(ms) {
+        const d = clampDelay(ms);
+        if (d === this.#tvDelay)
+            return;
+        this.#tvDelay = d;
+        this.#log("info", `party ${this.code}: the TV is ${d} ms behind`);
+        const msg = JSON.stringify({ t: "tv", delay: d });
+        for (const c of this.#clients)
+            if (c.sent)
+                c.sendText(msg);
+        this.emit("tv", d);
+    }
+    /**
+     * A deadline `ms` after what is changed now shows on the TV (and,
+     * with {@link withTv}, on the phones): `now() + tvDelay + ms`. Players
+     * get the whole `ms`, counted from when they see the question.
+     */
+    deadline(ms) {
+        return this.now() + this.#tvDelay + ms;
+    }
+    /**
+     * The time a TV picture drawn now is shown at: `now() + tvDelay`. A
+     * surface or video screen drawn in the host page counts down with it
+     * (TV pages have it as their client's `now()`).
+     */
+    screenNow() {
+        return this.now() + this.#tvDelay;
+    }
+    /**
+     * Runs `fn` (synchronously) and has what it changes reach phones when
+     * the TV shows it: the views (`room`, `me`, `screen`) and messages
+     * (`send`, `broadcast`) carry the time the TV picture with them comes
+     * up, and phones and watchers apply them then (TV pages at once).
+     * For what the TV shows: a new phase, results, a buzz with a flash.
+     * Changes from before `fn` go out at once, as usual; replies to a
+     * phone's own action belong outside. Without a TV (`tvDelay` 0) it
+     * only runs `fn`. Returns what `fn` returns.
+     */
+    withTv(fn) {
+        if (this.#at !== undefined || this.#tvDelay === 0)
+            return fn();
+        this.#flushNow();
+        this.#at = this.now() + this.#tvDelay;
+        try {
+            return fn();
+        }
+        finally {
+            this.#flushNow();
+            this.#at = undefined;
+        }
     }
     /** Players in join order (away ones included). */
     get players() {
@@ -346,14 +430,20 @@ export class Party extends Emitter {
     }
     /** A transient message to one player (lost when the phone is away). */
     send(to, type, data = null) {
-        to.client?.send({ t: "msg", type, data: toJson(data) });
+        to.client?.send(this.#msg(type, data));
     }
     /** A transient message to every connected client of a role (default: players). */
     broadcast(type, data = null, role = "player") {
-        const msg = { t: "msg", type, data: toJson(data) };
+        const msg = this.#msg(type, data);
         for (const c of this.#clients)
             if (role === "all" || c.role === role)
                 c.send(msg);
+    }
+    #msg(type, data) {
+        const msg = { t: "msg", type, data: toJson(data) };
+        if (this.#at !== undefined)
+            msg["at"] = this.#at;
+        return msg;
     }
     /** Removes a player for good, telling their phone. */
     kick(player, reason = "kicked") {
@@ -430,14 +520,14 @@ export class Party extends Emitter {
                 from.delete(p);
                 check();
             };
-            const off = this.handle(type, (data, sender) => {
+            const off = this.handle(type, (data, sender, info) => {
                 if (sender.role !== "player" || !from.has(sender))
                     throw new PartyError("not-asked", "Not your turn");
                 if (answers.has(sender) && !options.replace)
                     throw new PartyError("already-answered", "Already sent");
-                const value = options.validate ? options.validate(data, sender) : data;
+                const value = options.validate ? options.validate(data, sender, info) : data;
                 answers.set(sender, value);
-                options.onAnswer?.(sender, value, answers);
+                options.onAnswer?.(sender, value, answers, info);
                 queueMicrotask(check);
                 return options.reply ? options.reply(value, sender) : null;
             });
@@ -592,7 +682,9 @@ export class Party extends Emitter {
         c.conn.ondrain = () => {
             if (c.waiting) {
                 this.#refreshRoster();
-                this.#flushClient(c, new Map());
+                const at = c.heldAt !== undefined && c.heldAt > this.now() ? c.heldAt : undefined;
+                c.heldAt = undefined;
+                this.#flushClient(c, new Map(), at);
             }
         };
     }
@@ -643,7 +735,10 @@ export class Party extends Emitter {
             you["resume"] = c.player.resume;
             you["lastAct"] = c.player.lastAct;
         }
-        c.send({ t: "welcome", v: PROTOCOL, room: { code: this.code }, you, now: this.now(), view, rev: 0 });
+        const welcome = { t: "welcome", v: PROTOCOL, room: { code: this.code }, you, now: this.now(), view, rev: 0 };
+        if (this.#tvDelay > 0)
+            welcome["tv"] = { delay: this.#tvDelay };
+        c.send(welcome);
     }
     #onClose(c) {
         this.#clients.delete(c);
@@ -739,6 +834,11 @@ export class Party extends Emitter {
             return c.bye("protocol", "bad act");
         }
         const data = msg["data"] ?? null;
+        const received = this.now();
+        const at = msg["at"];
+        const info = {
+            sentAt: typeof at === "number" && Number.isFinite(at) ? Math.min(received, Math.max(received - MAX_ACT_AGE, at)) : received,
+        };
         if (c.role === "watch") {
             c.send({ t: "ack", id, ok: false, error: { code: "read-only", message: "Watchers cannot act" } });
             return;
@@ -748,7 +848,7 @@ export class Party extends Emitter {
             if (id <= c.lastAct)
                 return;
             c.lastAct = id;
-            const ack = await this.#run(id, type, data, { role: c.role, id: c.id });
+            const ack = await this.#run(id, type, data, { role: c.role, id: c.id }, info);
             c.send(ack);
             return;
         }
@@ -759,7 +859,7 @@ export class Party extends Emitter {
             return;
         }
         p.lastAct = id;
-        const pending = this.#run(id, type, data, p);
+        const pending = this.#run(id, type, data, p, info);
         p.results.set(id, pending);
         const ack = await pending;
         p.results.set(id, ack);
@@ -768,12 +868,12 @@ export class Party extends Emitter {
         // The player's current socket: it may have reconnected meanwhile.
         p.client?.send(ack);
     }
-    async #run(id, type, data, from) {
+    async #run(id, type, data, from, info) {
         const handler = this.#handlers.get(type);
         if (!handler)
             return { t: "ack", id, ok: false, error: { code: "unknown-action", message: `No ${type} now` } };
         try {
-            const result = await handler(data, from);
+            const result = await handler(data, from, info);
             const ack = { t: "ack", id, ok: true };
             if (result !== undefined && result !== null)
                 ack.result = toJson(result);
@@ -793,18 +893,22 @@ export class Party extends Emitter {
         if (this.#flushQueued)
             return;
         this.#flushQueued = true;
-        queueMicrotask(() => {
-            this.#flushQueued = false;
-            const t0 = performance.now();
-            this.#refreshRoster();
-            const diffs = new Map();
-            for (const c of this.#clients)
-                this.#flushClient(c, diffs);
-            this.#stats.flushes++;
-            this.#stats.flushMs += performance.now() - t0;
-            if (this.listenerCount("screen-view") > 0)
-                this.emit("screen-view", this.screenView());
-        });
+        queueMicrotask(() => this.#flushNow());
+    }
+    /** Sends the changes so far (if any) now; inside `withTv` stamped with its time. */
+    #flushNow() {
+        if (!this.#flushQueued)
+            return;
+        this.#flushQueued = false;
+        const t0 = performance.now();
+        this.#refreshRoster();
+        const diffs = new Map();
+        for (const c of this.#clients)
+            this.#flushClient(c, diffs, this.#at);
+        this.#stats.flushes++;
+        this.#stats.flushMs += performance.now() - t0;
+        if (this.listenerCount("screen-view") > 0)
+            this.emit("screen-view", this.screenView());
     }
     /**
      * Sends a client the diff of its view: only the sections whose version
@@ -813,12 +917,14 @@ export class Party extends Emitter {
      * what `JSON.stringify({t, rev, set, del})` of the whole view's diff
      * gives.
      */
-    #flushClient(c, diffs) {
+    #flushClient(c, diffs, at) {
         if (c.conn.closed || !c.sent || (c.role === "player" && !c.player))
             return;
         if (c.conn.busy) {
             // Latest wins: one diff against what it has once the socket drains.
             c.waiting = true;
+            if (at !== undefined)
+                c.heldAt = Math.max(c.heldAt ?? 0, at);
             return;
         }
         c.waiting = false;
@@ -857,6 +963,8 @@ export class Party extends Emitter {
         if (set.length === 0 && del.length === 0)
             return;
         let text = `{"t":"state","rev":${++c.rev}`;
+        if (at !== undefined)
+            text += `,"at":${at}`;
         if (set.length > 0)
             text += `,"set":{${set.join(",")}}`;
         if (del.length > 0)
@@ -866,6 +974,9 @@ export class Party extends Emitter {
         this.#stats.stateBytes += utf8Length(text);
         c.sendText(text);
     }
+}
+function clampDelay(ms) {
+    return Number.isFinite(ms) ? Math.round(Math.min(MAX_TV_DELAY, Math.max(0, ms))) : 0;
 }
 function bye(conn, reason, message) {
     if (conn.closed)

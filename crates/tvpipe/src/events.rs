@@ -299,6 +299,11 @@ pub struct ReceiverEvent {
     pub error: Option<String>,
     /// A stable code for the error, e.g. `pairing-required`.
     pub code: Option<String>,
+    /// On `connected`: the playout delay the receiver presents video
+    /// with, ms after a frame's instant on the session clock (Cast's
+    /// target delay, AirPlay's video lead, the player page's delay). The
+    /// receiver's own display adds its lag on top.
+    pub delay_ms: Option<u32>,
 }
 
 impl ReceiverEvent {
@@ -314,7 +319,14 @@ impl ReceiverEvent {
             state,
             error: error.map(|e| e.to_string()),
             code: error.and_then(|e| e.code()).map(str::to_owned),
+            delay_ms: None,
         }
+    }
+
+    /// The same event with the receiver's playout delay.
+    pub(crate) fn with_delay(mut self, ms: u32) -> ReceiverEvent {
+        self.delay_ms = Some(ms);
+        self
     }
 }
 
@@ -766,7 +778,8 @@ impl Event {
                 .with_opt("protocol", r.protocol.map(Protocol::as_str))
                 .with("state", r.state.as_str())
                 .with_opt("error", r.error.as_deref())
-                .with_opt("code", r.code.as_deref()),
+                .with_opt("code", r.code.as_deref())
+                .with_opt("delay_ms", r.delay_ms),
             Event::Player(p) => v.with("name", p.name.as_str()).with("url", p.url.as_str()),
             Event::Viewer(w) => v
                 .with("name", w.name.as_str())
@@ -886,6 +899,10 @@ impl Event {
                 state: wire(v, "state", ReceiverState::from_wire)?,
                 error: opt_str(v, "error"),
                 code: opt_str(v, "code"),
+                delay_ms: match v.get("delay_ms") {
+                    Some(_) => Some(v.require_u32("delay_ms")?),
+                    None => None,
+                },
             }),
             "player" => Event::Player(PlayerEvent {
                 name: v.require_str("name")?.to_owned(),

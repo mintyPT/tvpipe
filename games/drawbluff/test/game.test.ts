@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { Party, type LateJoin } from "@tvpipe/party";
+import { memoryStorage, PartyClient } from "@tvpipe/party/client";
 import { MemoryRelay } from "@tvpipe/party/testing";
 
 async function until(cond: () => boolean, ms = 3000): Promise<void> {
@@ -19,9 +20,9 @@ import { ADULT_BY_LANG, PROMPT_LIST, PROMPTS_BY_LANG } from "./prompts.ts";
 
 const fast = { draw: 1500, lie: 1200, vote: 1200, revealStep: 20, revealEnd: 20, scores: 20, gallery: 20 };
 
-async function game(n: number, opts: { silent?: number; drop?: number; rounds?: number; think?: number; lateJoin?: LateJoin; lang?: Lang; adult?: boolean } = {}) {
+async function game(n: number, opts: { silent?: number; drop?: number; rounds?: number; think?: number; lateJoin?: LateJoin; lang?: Lang; adult?: boolean; tvDelay?: number } = {}) {
   const relay = new MemoryRelay();
-  const party = new Party({ grace: 100, maxPlayers: Math.max(8, n + 2) }).listen(relay);
+  const party = new Party({ grace: 100, maxPlayers: Math.max(8, n + 2), tvDelay: opts.tvDelay }).listen(relay);
   const server = { relay, close: async () => party.close() };
   const g = new Drawbluff(party, {
     rounds: opts.rounds ?? 2,
@@ -66,6 +67,41 @@ test("a whole game with 3 players", async () => {
     assert.equal((party.screenView()["screen"] as { phase: string }).phase, "final");
     assert.equal(party.locked, false);
   } finally {
+    for (const b of players) b.close();
+    await server.close();
+  }
+});
+
+test("with a TV behind: phones get each phase when the TV shows it, with the whole time to answer", async () => {
+  const { server, party, g, players } = await game(3, { rounds: 1, tvDelay: 150 });
+  const tv = new PartyClient({ url: "ws://party.test/_tvpipe/ws", room: party.code, key: party.screenKey, role: "screen", storage: memoryStorage(), WebSocket: server.relay.WebSocket });
+  try {
+    await tv.connect();
+    const phone = players[0]!.client;
+    await until(() => phone.rtt < 1000 && tv.rtt < 1000);
+    const seen: Record<string, number> = {};
+    let deadline = 0;
+    tv.on("view", (v) => v.screen?.phase === "draw" && (seen["tv"] ??= Date.now()));
+    phone.on("view", (v) => {
+      if (v.room?.phase !== "draw" || seen["phone"]) return;
+      seen["phone"] = Date.now();
+      deadline = v.me.deadline;
+    });
+    const end = new Promise((r) => g.once("end", r));
+    await phone.act("start");
+    await until(() => seen["tv"] !== undefined && seen["phone"] !== undefined);
+    assert.ok(seen["phone"]! - seen["tv"]! >= 100, `the phone ${seen["phone"]! - seen["tv"]!} ms after the TV`);
+    // The countdown starts with the phase on the phone and the TV alike.
+    const left = deadline - phone.now();
+    assert.ok(left > fast.draw - 100 && left <= fast.draw + 20, `${left} ms left to draw`);
+    assert.ok(Math.abs(tv.now() - phone.now() - 150) < 30, "the TV counts by its picture");
+    await end;
+    assert.deepEqual(
+      players.map((b) => b.errors),
+      [[], [], []],
+    );
+  } finally {
+    tv.close();
     for (const b of players) b.close();
     await server.close();
   }

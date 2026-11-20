@@ -46,7 +46,7 @@ so they never reach request lines or logs. Keys and resume tokens are
 | `t` | Fields | |
 |---|---|---|
 | `hello` | `v` (1), `room`, `role`, `key`, `name` (a new player), `resume` (a token from an earlier `welcome`), `agent` | first message, within 5 s |
-| `act` | `id` (integer 1…2⁵³−1, increasing per player), `type`, `data` | answered by `ack` |
+| `act` | `id` (integer 1…2⁵³−1, increasing per player), `type`, `data`, `at` (when it was first sent, the host's clock as the client knows it; optional) | answered by `ack` |
 | `in` | `s` (integer ≥ 1), `data` | continuous input, never answered (§8) |
 | `ping` | `c` (the client's clock, ms) | answered by `pong` |
 | `resync` | | asks for the full view (after a gap in `rev`) |
@@ -59,10 +59,11 @@ of the Rust host; hosts ignore both, as any unknown field and type.)
 
 | `t` | Fields | |
 |---|---|---|
-| `welcome` | `v`, `room` (`code`), `you` (`id`, `role`; players: `name`, `vip`, `resume`, `lastAct`), `now` (the host's clock, ms since the epoch), `view` (the full view), `rev` (0) | after a good `hello` |
-| `state` | `rev`, and `set` / `del` (a diff) or `full` (the whole view) | §5 |
+| `welcome` | `v`, `room` (`code`), `you` (`id`, `role`; players: `name`, `vip`, `resume`, `lastAct`), `now` (the host's clock, ms since the epoch), `view` (the full view), `rev` (0), `tv` (`delay`; only when there is one) | after a good `hello` |
+| `state` | `rev`, and `set` / `del` (a diff) or `full` (the whole view); `at` (§7.1) | §5 |
 | `ack` | `id`, `ok`; `result` (if any) or `error` (`code`, `message`); `dup` (a replay of an id the host has no result for any more) | §6 |
-| `msg` | `type`, `data` | transient: a sound cue, a toast; lost when away |
+| `msg` | `type`, `data`, `at` (§7.1) | transient: a sound cue, a toast; lost when away |
+| `tv` | `delay` | how far the TV picture is behind the host, ms (§7.1); sent when it changes |
 | `pong` | `c` (echoed), `now` | |
 | `bye` | `reason`, optional `message` | then the host closes the socket |
 
@@ -151,6 +152,31 @@ TV can say "join anytime" under the QR code.
 the offset of the fastest of the last 16 round trips. Deadlines in views
 are host times (`now()` on both sides), so a phone and the TV count down
 to the same instant.
+
+### 7.1 The TV's delay
+
+The TV shows the host's changes late: its page is drawn, captured and
+encoded, the receivers present each frame a playout delay after it was
+made, and the TV adds its own picture processing. The host knows the
+sum as `delay` (ms, 0 to 5000; `welcome.tv`, then `tv` messages; 0
+without a TV) and stamps changes it wants seen with the TV
+(`party.withTv`) with `at`: the host time at which the TV shows them,
+the time of the change plus `delay`.
+
+- A client handles a `state`, `msg` or `ack` with an `at` later than
+  its `now()` when `now()` reaches it, and every `state`, `msg` and `ack`
+  that arrives meanwhile after it, in order (so §6's "state before ack"
+  and `rev` order hold). `pong`, `tv` and `bye` never wait. A `welcome`
+  drops what waits (its view is newer).
+- A client's `now()` is the host's clock plus its **lead**: `delay` on a
+  `screen` (the TV page: what it draws now is shown `delay` later, so it
+  shows a change at once and counts down to the same instant as the
+  phones), 0 on players and watchers (they wait for `at`).
+- `act.at` is when the phone sent the action (kept from the first
+  attempt when it is resent). The host takes it as the action's
+  `sentAt`, within the second before the action arrived (else the
+  bound), or the arrival time without one: for ordering reactions
+  fairly, not as proof.
 
 ## 8. Continuous input (`in`)
 

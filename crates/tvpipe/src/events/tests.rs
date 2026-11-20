@@ -59,6 +59,7 @@ fn examples() -> Vec<(&'static str, Event)> {
             state,
             error: error.map(s),
             code: code.map(s),
+            delay_ms: None,
         })
     };
     let device = DeviceInfo {
@@ -132,12 +133,15 @@ fn examples() -> Vec<(&'static str, Event)> {
         ),
         (
             "receiver connected",
-            receiver(
+            match receiver(
                 ReceiverState::Connected,
                 Some(Protocol::AirPlay),
                 None,
                 None,
-            ),
+            ) {
+                Event::Receiver(r) => Event::Receiver(r.with_delay(100)),
+                e => e,
+            },
         ),
         (
             "receiver failed while connecting",

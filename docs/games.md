@@ -171,10 +171,13 @@ party.handle("start", (data, from) => {
 
 async function round() {
   party.inProgress = true;
-  const deadline = party.now() + 60_000;
-  party.room.set({ phase: "answer", deadline });          // every phone's view.room
+  const deadline = party.deadline(60_000);   // 60 s from when the question is on the TV
+  party.withTv(() => {                       // phones switch when the TV does
+    party.room.set({ phase: "answer", deadline });        // every phone's view.room
+    party.screen.set({ phase: "answer", deadline });      // the TV's view.screen
+  });
   const answers = await party.collect("answer", { until: deadline });
-  party.screen.set({ phase: "results", answers: [...answers.values()] });
+  party.withTv(() => party.screen.set({ phase: "results", answers: [...answers.values()] }));
 }
 endButton.onclick = () => tvpipe.quit();     // ends tvpipe: TVs stop, phones are told
 ```
@@ -211,6 +214,37 @@ The rules of thumb: the host **sets views** (`party.room`, `party.screen`,
 **send actions** (acknowledged, resent after a reconnect, applied once);
 render everything players type as text (`textContent`), never as HTML.
 The full API is in [`npm/party/README.md`](../npm/party/README.md).
+
+**The TV is behind the phones.** A phone shows a change some 20–50 ms
+after the host makes it; the TV shows it after its page is drawn,
+captured and encoded and the receiver's playout delay has passed, plus
+the TV's own picture processing: about a quarter of a second on an Apple
+TV, half a second on Cast (`party.tvDelay` has tvpipe's figure for the
+TVs that show the game, 0 without one). Without help, phones show the
+vote before the TV shows the drawing, give away a result the TV is about
+to reveal, and countdowns on the TV run behind the phones'. Three things
+keep them together:
+
+- **`party.withTv(() => { … })`** around what the TV shows: a new phase,
+  a reveal, a result. Views changed inside it (`room`, `screen`,
+  `player.state`) and messages sent inside it reach phones and watchers
+  when the TV picture with them is up (the TV page at once). Replies to
+  a phone's own action (`done: true`, "sent") stay outside: they should
+  be instant.
+- **`party.deadline(ms)`** for deadlines: `ms` from when the phase is on
+  the TV, so nobody loses the TV's delay off their time.
+- **Countdowns use `client.now()`**, on the TV page and on phones: on a
+  TV page it runs ahead by the delay (it is the time the picture being
+  drawn will be on screen), so both reach zero at the same moment. A
+  canvas drawn in the host page (a surface) counts with
+  `party.screenNow()`.
+
+For games where speed counts (a buzzer: who reacted first to what the
+TV showed), an action's handler gets `info.sentAt` (`party.handle(type,
+(data, from, info) => …)`): when the phone sent it on the host's clock,
+the phone's word kept within the second before it arrived; ordering by
+it is fairer than by arrival (tunnels differ by tens of ms). A phone can
+time its own sounds to the TV with `client.hostNow() + client.tvDelay`.
 
 **TypeScript and bundlers.** Install the package for its types
 (`npm install --save-dev @tvpipe/party`), then make the built files

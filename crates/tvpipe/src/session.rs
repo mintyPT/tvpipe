@@ -45,8 +45,8 @@ use crate::ctx::Ctx;
 use crate::error::{Error, Result};
 use crate::events::{
     self, AudioStarted, CaptureEvent, ConnectedEvent, EndInfo, Event, Events, Progress,
-    ReceiverEnd, ReceiverEndInfo, ReceiverState, ReceiverStats, SharePageEvent, Started, Stats,
-    Step, VideoStarted,
+    ReceiverEnd, ReceiverEndInfo, ReceiverEvent, ReceiverState, ReceiverStats, SharePageEvent,
+    Started, Stats, Step, VideoStarted,
 };
 #[cfg(feature = "h264")]
 use crate::media::builtin::{BuiltinInput, BuiltinOptions, VideoOut};
@@ -834,12 +834,15 @@ fn connect_all(
                     .unwrap_or_else(|_| Err(Error::process("connect thread panicked")));
                 let name = target_name(t).to_owned();
                 match &r {
-                    Ok(_) => events.receiver(
-                        &name,
-                        Some(target_protocol(t)),
-                        ReceiverState::Connected,
-                        None,
-                    ),
+                    Ok(_) => events.emit(Event::Receiver(
+                        ReceiverEvent::new(
+                            &name,
+                            Some(target_protocol(t)),
+                            ReceiverState::Connected,
+                            None,
+                        )
+                        .with_delay(target_delay_ms(t, opts, mirror)),
+                    )),
                     Err(e) => events.receiver(
                         &name,
                         Some(target_protocol(t)),
@@ -856,6 +859,17 @@ fn connect_all(
         receivers: sinks.iter().map(|s| s.name().to_owned()).collect(),
     }));
     Ok(sinks)
+}
+
+/// The playout delay a target shows video with (the `connected`
+/// event's `delay_ms`): Cast's target delay, AirPlay's video lead, the
+/// player page's delay.
+fn target_delay_ms(t: &Target, opts: &CastOptions, mirror: &crate::airplay::MirrorOptions) -> u32 {
+    match t {
+        Target::Cast { .. } => opts.latency_ms,
+        Target::AirPlay { .. } => crate::airplay::policy::Leads::new(mirror.latency_ms).video_ms,
+        Target::Browser(o) => o.latency_ms,
+    }
 }
 
 /// The receiver's protocol in events.
@@ -2519,6 +2533,37 @@ mod tests {
         assert_eq!(t("Living Room"), None);
         assert_eq!(t("cast:Living Room"), None);
         assert_eq!(parse_target("cast:"), (None, "cast:"));
+    }
+
+    #[test]
+    fn target_delays() {
+        let cast = Target::Cast {
+            addr: "10.0.0.5:8009".parse().unwrap(),
+            name: "Den".into(),
+        };
+        let airplay = Target::AirPlay {
+            name: "Kitchen".into(),
+            addr: "10.0.0.6:7000".parse().unwrap(),
+            device: None,
+        };
+        let browser = Target::Browser(Box::new(PlayerOptions {
+            latency_ms: 140,
+            ..PlayerOptions::default()
+        }));
+        let opts = CastOptions {
+            latency_ms: 300,
+            ..CastOptions::default()
+        };
+        let auto = crate::airplay::MirrorOptions::default();
+        assert_eq!(target_delay_ms(&cast, &opts, &auto), 300);
+        // The automatic ("wireless") profile's video lead.
+        assert_eq!(target_delay_ms(&airplay, &opts, &auto), 100);
+        let given = crate::airplay::MirrorOptions {
+            latency_ms: Some(250),
+            ..crate::airplay::MirrorOptions::default()
+        };
+        assert_eq!(target_delay_ms(&airplay, &opts, &given), 250);
+        assert_eq!(target_delay_ms(&browser, &opts, &auto), 140);
     }
 
     #[test]
