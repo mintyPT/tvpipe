@@ -1,24 +1,25 @@
 // @ts-check
 /**
- * Garble's phone page: joining, the lobby, the round's secret card, the
- * drawing pad (black ink; undo only when the room allows it), guessing
- * (with the round's twist), passing on, reactions during the reveal,
- * judging your own chain, accusing the Wrecker, scores. Everything it
- * shows comes from the party's view (`{ roster, room, me }`); everything
- * it does is an action. The secret word is shown only while a finger
- * holds it, and looks the same on every phone until then.
+ * Garble's phone page: joining, the lobby (the VIP's settings), picking
+ * the first word, guessing what a picture is now, drawing the dealt word
+ * on top of it (the old ink a shade lighter; undo for your own strokes
+ * when the room allows it), passing on, reactions during the reveal, the
+ * vote for the best move, scores. Everything it shows comes from the
+ * party's view (`{ roster, room, me }`); everything it does is an action.
  */
 
 import { PartyClient } from "/_tvpipe/lib/client.js";
 import { browserLang, num, pickLang } from "./i18n.js";
-import { drawInk, fit, GRID, Live, replay, replayTime } from "./ink.js";
+import { drawInk, drawLayers, fit, GRID, INK, Live, OLD_INK } from "./ink.js";
 import { strings } from "./strings.js";
 
 const WIDTHS = [7, 16, 38];
 const DOTS = [7, 13, 22];
 const MAX_STROKES = 400;
 const MAX_POINTS = 16000;
-const MAX_GUESS = 40;
+const MAX_GUESS = 28;
+/** The earlier layers of a best-move candidate, under its own in colour. */
+const FADED = "#cdc6b6";
 
 // A controller, not a document: no pinch or double-tap zoom, no selection.
 for (const type of ["gesturestart", "gesturechange", "gestureend"]) document.addEventListener(type, (e) => e.preventDefault(), { passive: false });
@@ -44,8 +45,6 @@ const app = /** @type {HTMLElement} */ (document.getElementById("app"));
 const banner = /** @type {HTMLElement} */ (document.getElementById("banner"));
 const who = /** @type {HTMLElement} */ (document.getElementById("who"));
 const langButton = /** @type {HTMLButtonElement} */ (document.getElementById("lang"));
-const headerPeek = /** @type {HTMLButtonElement} */ (document.getElementById("peek"));
-const peeked = /** @type {HTMLElement} */ (document.getElementById("peeked"));
 
 // ---------------------------------------------------------------------------
 // The language: the phone's own choice, else the room's, else the browser's.
@@ -141,7 +140,6 @@ function icon(d) {
 }
 const TRASH = "M4 7h16|M9 7V4h6v3|M6 7l1 13h10l1-13";
 const UNDO = "M9 14L4 9l5-5|M4 9h10a6 6 0 0 1 0 12h-3";
-const EYE = "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z|M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z";
 const PENCIL = "M4 20l1-5L16 4l4 4L9 19z|M14 6l4 4";
 
 /** A player's colour from the room (`colors` by id). */
@@ -154,50 +152,6 @@ function avatar(p) {
   const c = typeof p?.color === "string" ? p.color : colorOf(p?.id);
   return h("span", { class: "avatar", style: { "--c": c } }, [...(p?.name ?? "?")][0]?.toUpperCase() ?? "?");
 }
-
-// ---------------------------------------------------------------------------
-// The secret word: held to read.
-
-/** @param {any} me */
-function peekContent(me) {
-  const out = [h("div", { class: "lbl" }, t.secretWord), h("div", { class: "word" }, me.word ?? "")];
-  if (me.wrecker) out.push(h("div", { class: "role" }, t.youWrecker));
-  return out;
-}
-/**
- * Makes an element show the secret while pressed.
- * @param {HTMLElement} el
- * @param {(on: boolean) => void} [onChange]
- */
-function holdable(el, onChange) {
-  let on = false;
-  const set = (/** @type {boolean} */ v) => {
-    if (on === v) return;
-    on = v;
-    onChange?.(v);
-  };
-  el.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    try {
-      el.setPointerCapture(e.pointerId);
-    } catch {}
-    set(true);
-  });
-  for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) el.addEventListener(type, () => set(false));
-  el.addEventListener("contextmenu", (e) => e.preventDefault());
-}
-/** A slip that shows the secret word while held. */
-function peekButton(compact = false) {
-  const b = h("button", { class: "peek", type: "button", "aria-label": t.myWord }, icon(EYE), compact ? t.holdShort : t.myWord);
-  holdable(b, (on) => {
-    b.classList.toggle("on", on);
-    peeked.hidden = !on;
-    if (on) peeked.replaceChildren(...peekContent(client.view?.me ?? {}));
-  });
-  return b;
-}
-headerPeek.replaceWith(peekButton());
-const peekSlot = /** @type {HTMLElement} */ (document.querySelector("#bar .peek"));
 
 // ---------------------------------------------------------------------------
 // Joining
@@ -289,12 +243,10 @@ function keyOf(me, room) {
     case "draw":
     case "guess":
       return `${me.task}:${room.round}:${me.step}:${d}`;
-    case "judge":
-      return `judge:${room.round}:${me.chain?.id}:${d}`;
     case "watch":
       return `watch:${room.round}:${me.index}`;
-    case "accuse":
-      return `accuse:${room.round}:${d}`;
+    case "vote":
+      return `vote:${room.round}:${d}`;
     default:
       return `${me.task}:${room.round ?? ""}`;
   }
@@ -308,7 +260,6 @@ function render(view) {
   if (useLang()) shown = "";
   const scoreText = typeof me.score === "number" && me.task !== "lobby" && me.of > 0 ? ` · ${num(lang, me.score)}` : "";
   who.replaceChildren(...(mine ? [h("span", { class: "dot", style: { "--c": colorOf(mine.id) } }), h("b", {}, `${mine.vip ? "★ " : ""}${mine.name}`), scoreText] : []));
-  peekSlot.hidden = !me.word;
   const key = keyOf(me, room);
   if (key !== shown) {
     shown = key;
@@ -316,7 +267,6 @@ function render(view) {
     autoSubmit = null;
     for (const c of cleanups) c();
     cleanups = [];
-    peeked.hidden = true;
     langButton.hidden = !(me.task === "lobby" || me.task === "final");
     langButton.textContent = t.otherLang;
     document.body.classList.toggle("full", (me.task === "draw" || me.task === "guess") && !me.done);
@@ -329,27 +279,24 @@ function render(view) {
 /** @param {Record<string, any>} view */
 function build(view) {
   const me = view.me ?? {};
+  const room = view.room ?? {};
   switch (me.task) {
     case "lobby":
       return lobby();
     case "wait":
       return show(h("section", { class: "card" }, h("p", { class: "big" }, me.note === "game" ? t.waitGame : t.waitRound)));
-    case "secret":
-      return secret(me, view.room ?? {});
     case "draw":
-      return me.done ? passed(me, "draw") : draw(me);
+      return me.done ? passed(me) : draw(me);
     case "guess":
-      return me.done ? passed(me, "guess") : guess(me);
+      return me.done ? passed(me) : guess(me);
     case "watch":
       return watch(me);
-    case "judge":
-      return me.done ? show(h("section", { class: "card" }, h("p", { class: "big" }, t.verdictSent))) : judge(me);
-    case "accuse":
-      return accuse(me);
-    case "unmask":
-      return unmask(me);
+    case "vote":
+      return me.done ? votedCard() : vote(me, room);
+    case "best":
+      return best(me);
     case "scores":
-      return scoreCard(me, view.room ?? {});
+      return scoreCard(me, room);
     case "final":
       return final();
     default:
@@ -375,27 +322,26 @@ const isVip = () => !!(client.view?.roster ?? []).find((/** @type {any} */ r) =>
 
 /** @param {HTMLElement} err */
 function settings(err) {
-  /** @type {{ key: string, row: HTMLElement, buttons: HTMLButtonElement[], values: any[], line: HTMLElement | null }[]} */
+  /** @type {{ key: string, buttons: HTMLButtonElement[], values: any[], line: HTMLElement | null }[]} */
   const items = [];
-  const box = h("div", {});
-  const add = (/** @type {string} */ key, /** @type {any[]} */ values, /** @type {string[]} */ labels, /** @type {string | null} */ title, /** @type {boolean} */ withLine) => {
+  const box = h("div", {}, h("h2", {}, t.settings));
+  const add = (/** @type {string} */ key, /** @type {any[]} */ values, /** @type {string[]} */ labels, /** @type {string} */ title, /** @type {boolean} */ withLine) => {
     const buttons = values.map((v, i) => /** @type {HTMLButtonElement} */ (h("button", { type: "button", onclick: () => act("settings", { [key]: v }, err).catch(() => {}) }, labels[i])));
-    const row = h("div", { class: "seg" }, ...buttons);
     const line = withLine ? h("p", { class: "line" }) : null;
-    box.append(h("div", { class: "setting" }, title ? h("label", {}, title) : null, row, line));
-    items.push({ key, row, buttons, values, line });
+    box.append(h("div", { class: "setting" }, h("label", {}, title), h("div", { class: "seg" }, ...buttons), line));
+    items.push({ key, buttons, values, line });
   };
+  add("rounds", [1, 2, 3, 4], ["1", "2", "3", "4"], t.roundsLabel, false);
+  add("length", [3, 5, 7], ["3", "5", "7"], t.lengthLabel, true);
   add("undo", [false, true], [t.off, t.on], t.undoLabel, true);
-  add("twists", [false, true], [t.off, t.on], t.twistsLabel, true);
-  add("length", [4, 6, 8], ["4", "6", "8"], t.chainLength, false);
   const update = () => {
     const room = client.view?.room ?? {};
     box.hidden = !isVip();
     for (const it of items) {
       const cur = room[it.key];
       it.buttons.forEach((b, i) => b.classList.toggle("on", it.values[i] === cur));
-      if (it.key === "undo" && it.line) it.line.textContent = t.undo[cur ? 1 : 0];
-      if (it.key === "twists" && it.line) it.line.textContent = t.twists[cur ? 1 : 0];
+      if (it.key === "undo" && it.line) it.line.textContent = t.undoLine[cur ? 1 : 0];
+      if (it.key === "length" && it.line) it.line.textContent = t.lengthLine(cur ?? 5);
     }
   };
   return { box, update };
@@ -407,9 +353,9 @@ function lobby() {
   const hint = h("p", { class: "muted small" });
   const start = /** @type {HTMLButtonElement} */ (h("button", { class: "btn", id: "start", onclick: () => act("start", null, err).catch(() => {}) }, t.start));
   const set = settings(err);
-  const rulesLine = h("p", { class: "small muted" });
+  const rulesLine = h("p", { class: "small muted typed" });
   show(
-    h("section", { class: "card tilt lobby" }, h("h1", {}, t.youreIn), h("h2", {}, t.players), list, start, err, hint, h("h2", {}, t.rules), rulesLine, set.box),
+    h("section", { class: "card tilt lobby" }, h("h1", {}, t.youreIn), h("h2", {}, t.players), list, start, err, hint, rulesLine, set.box),
     h("section", { class: "card dark" }, h("h2", { style: { "margin-top": "0" } }, t.howTitle), h("ol", { class: "how" }, ...t.how.map((x) => h("li", {}, x)))),
   );
   refresh = () => {
@@ -426,7 +372,7 @@ function lobby() {
           h("span", { class: "dot", style: { "--c": colorOf(r.id) } }),
           r.name,
           r.vip ? h("small", {}, t.vip) : null,
-          vip && r.id !== client.you?.id ? h("button", { type: "button", onclick: () => act("kick", { id: r.id }, err).catch(() => {}) }, "✕") : null,
+          vip && r.id !== client.you?.id ? h("button", { type: "button", "aria-label": `✕ ${r.name}`, onclick: () => act("kick", { id: r.id }, err).catch(() => {}) }, "✕") : null,
         ),
       ),
     );
@@ -434,7 +380,7 @@ function lobby() {
     start.disabled = ready < min;
     hint.textContent = vip ? (ready < min ? t.vipWait(min - ready) : t.vipReady) : t.waitVip;
     const room = v.room ?? {};
-    rulesLine.textContent = `${t.length(room.length ?? 6)} · ${t.undo[room.undo ? 1 : 0]} · ${t.twists[room.twists ? 1 : 0]}`;
+    rulesLine.textContent = t.rulesLine(room.rounds ?? 2, room.length ?? 5, !!room.undo);
     rulesLine.hidden = vip;
     set.update();
   };
@@ -449,7 +395,7 @@ function final() {
     h(
       "section",
       { class: "card tilt" },
-      h("h1", {}, me.rank === 1 ? t.won : t.gameOver),
+      h("h1", {}, me.rank === 1 && me.of > 0 ? t.won : t.gameOver),
       h("p", { class: "score" }, num(lang, me.score ?? 0), h("small", {}, t.points)),
       h("p", { class: "typed" }, me.of ? t.rank(me.rank ?? 0, me.of) : ""),
       again,
@@ -461,30 +407,6 @@ function final() {
     again.hidden = !isVip();
     set.update();
   };
-}
-
-// ---------------------------------------------------------------------------
-// The round's secret: one card, the same on every phone until held.
-
-/** @param {any} me @param {any} room */
-function secret(me, room) {
-  const env = h(
-    "div",
-    { class: "envelope" },
-    h("div", { class: "face outside" }, h("span", { class: "stampish" }, "top secret"), h("span", { class: "hold" }, t.hold)),
-    h(
-      "div",
-      { class: "face inside" },
-      h("span", { class: "lbl" }, t.secretWord),
-      h("span", { class: "word" }, me.word ?? ""),
-      h("p", {}, t.smuggle),
-      h("span", { class: `role${me.wrecker ? " wreck" : ""}` }, me.wrecker ? t.youWrecker : ""),
-      h("p", {}, me.wrecker ? t.wreckerJob : t.notWrecker),
-    ),
-  );
-  holdable(env, (on) => env.classList.toggle("open", on));
-  const tw = t.twist[/** @type {"clear" | "glimpse" | "peephole"} */ (me.twist)] ?? "";
-  show(h("section", { class: "secret" }, h("div", { class: "title" }, t.roundN(room.round ?? 1)), env, tw ? h("p", { class: "twistline" }, tw) : null));
 }
 
 // ---------------------------------------------------------------------------
@@ -514,13 +436,23 @@ function clock(deadline) {
   return { bar, secs };
 }
 
+/** The step's place: `2/4`, and a dot per step. @param {any} me */
+function stepDots(me) {
+  const n = Math.max(1, me.steps ?? 1);
+  return h("span", { class: "steps", "aria-label": `${me.step}/${n}` }, ...Array.from({ length: n }, (_, i) => h("i", { class: i + 1 < me.step ? "past" : i + 1 === me.step ? "now" : "" })));
+}
+
 // ---------------------------------------------------------------------------
-// Drawing: black ink, three pens, undo only when the room allows it.
+// Drawing: on top of the old ink (a shade lighter), three pens, undo of your own strokes.
 
 class Pad {
-  /** @param {HTMLCanvasElement} canvas */
-  constructor(canvas) {
+  /**
+   * @param {HTMLCanvasElement} canvas
+   * @param {{ strokes?: number[][] }} base the old ink (it cannot be touched)
+   */
+  constructor(canvas, base) {
     this.canvas = canvas;
+    this.base = base;
     /** @type {number[][]} */
     this.strokes = [];
     this.points = 0;
@@ -549,7 +481,7 @@ class Pad {
     this.redraw();
   }
   redraw() {
-    drawInk(this.ctx, { strokes: this.strokes }, 0, 0, this.size);
+    drawLayers(this.ctx, [{ drawing: this.base, color: OLD_INK }, { drawing: { strokes: this.strokes }, color: INK }], 0, 0, this.size);
   }
   /** @param {PointerEvent} e */
   at(e) {
@@ -568,7 +500,7 @@ class Pad {
     const s = [this.width, x, y];
     this.strokes.push(s);
     this.points++;
-    this.live = new Live(this.ctx, s, this.size / GRID);
+    this.live = new Live(this.ctx, s, this.size / GRID, INK);
     this.onchange();
   }
   /** @param {PointerEvent} e */
@@ -590,6 +522,7 @@ class Pad {
     this.live?.end();
     this.live = null;
   }
+  /** Your own strokes go; the old ink stays. */
   clear() {
     this.strokes = [];
     this.points = 0;
@@ -611,14 +544,16 @@ function draw(me) {
   const { bar, secs } = clock(me.deadline ?? 0);
   const canvas = /** @type {HTMLCanvasElement} */ (h("canvas", { class: "pad" }));
   const err = h("p", { class: "error" });
-  const textEl = h("span", { class: `text${me.choices ? " prompt" : ""}` }, me.text ?? "");
-  const labelEl = h("span", { class: "label" }, me.choices ? t.draw : me.from ? `${t.draw} · ${t.fromName(me.from)}` : t.draw);
-  const paper = h("div", { class: "paperbox" }, canvas);
+  const first = Array.isArray(me.choices);
+  const wordEl = h("span", { class: "word" }, first ? "…" : (me.word ?? ""));
+  const tag = h("div", { class: "wordtag" }, h("span", { class: "label" }, first ? t.drawA : t.makeIt), wordEl);
+  const hint = first ? null : h("p", { class: "ontop" }, t.onTop);
+  const paper = h("div", { class: "paperbox" }, canvas, hint);
   const done = /** @type {HTMLButtonElement} */ (h("button", { class: "btn", id: "done", type: "button" }, t.done));
   const sizes = h("div", { class: "sizes" });
   const tools = h("div", { class: "tools" }, sizes);
-  show(h("section", { class: "full-grid" }, bar, h("div", { class: "top" }, h("div", { class: "what" }, labelEl, textEl), peekButton(true), secs), h("div", { class: "padbox" }, paper), tools), err);
-  const pad = new Pad(canvas);
+  show(h("section", { class: "full-grid drawing" }, bar, h("div", { class: "top" }, tag, h("div", { class: "side" }, stepDots(me), secs)), h("div", { class: "padbox" }, paper), tools), err);
+  const pad = new Pad(canvas, me.picture ?? { strokes: [] });
   const widthButtons = WIDTHS.map((w, i) =>
     h("button", { type: "button", "aria-label": t.sizes[i], onclick: () => pickWidth(i) }, h("i", { style: { width: `${DOTS[i]}px`, height: `${DOTS[i]}px` } })),
   );
@@ -654,14 +589,17 @@ function draw(me) {
     const changed = () => {
       undo.disabled = clear.disabled = pad.strokes.length === 0;
     };
-    pad.onchange = changed;
+    pad.onchange = () => {
+      changed();
+      hint?.classList.add("gone");
+    };
     changed();
-  }
+  } else pad.onchange = () => hint?.classList.add("gone");
   tools.append(done);
-  // The first step: pick one of two prompts, then draw.
+  // The first step: pick one of two words, then draw.
   /** @type {number | undefined} */
   let choice;
-  if (Array.isArray(me.choices)) {
+  if (first) {
     pad.locked = true;
     done.disabled = true;
     const box = h(
@@ -675,7 +613,7 @@ function draw(me) {
             type: "button",
             onclick: () => {
               choice = i;
-              textEl.textContent = c;
+              wordEl.textContent = c;
               box.remove();
               pad.locked = false;
               done.disabled = false;
@@ -694,7 +632,7 @@ function draw(me) {
     done.disabled = true;
     pad.up();
     try {
-      await act("draw", { strokes: pad.strokes, ...(me.choices ? { choice: choice ?? 0 } : {}) }, err);
+      await act("draw", { strokes: pad.strokes, ...(first ? { choice: choice ?? 0 } : {}) }, err);
     } catch {
       sent = false;
       done.disabled = false;
@@ -705,150 +643,40 @@ function draw(me) {
 }
 
 // ---------------------------------------------------------------------------
-// Guessing, with the round's twist.
+// Guessing: the picture as it is now, all in one ink.
 
 /** @param {any} me */
 function guess(me) {
   const { bar, secs } = clock(me.deadline ?? 0);
   const canvas = /** @type {HTMLCanvasElement} */ (h("canvas", { class: "view" }));
-  const overlay = h("div", { class: "overlay" });
-  const paper = h("div", { class: "paperbox" }, canvas, overlay);
+  const picture = me.picture ?? { strokes: [] };
+  const empty = !(picture.strokes?.length > 0);
+  const paper = h("div", { class: "paperbox" }, canvas, empty ? h("div", { class: "overlay" }, t.blank) : null);
   const input = /** @type {HTMLInputElement} */ (
-    h("input", { maxlength: MAX_GUESS, placeholder: t.guessPlaceholder, enterkeyhint: "send", autocapitalize: "none", autocomplete: "off", spellcheck: "true", lang })
+    h("input", { maxlength: MAX_GUESS, placeholder: t.guessPlaceholder, enterkeyhint: "send", autocapitalize: "none", autocomplete: "off", spellcheck: "true", lang, "aria-label": t.whatNow })
   );
   const err = h("p", { class: "error" });
   const send = /** @type {HTMLButtonElement} */ (h("button", { class: "btn", type: "submit" }, t.send));
   const form = h("form", { class: "guess-form", autocomplete: "off" }, input, send);
-  const twistName = t.twistName[/** @type {"clear" | "glimpse" | "peephole"} */ (me.twist ?? "clear")] ?? "";
+  const label = [me.from ? t.from(me.from) : "", me.last ? t.lastGuess : ""].filter(Boolean).join(" · ");
   show(
     h(
       "section",
       { class: "full-grid guessing" },
       bar,
-      h(
-        "div",
-        { class: "top" },
-        h("div", { class: "what" }, h("span", { class: "label" }, me.from ? t.drawnBy(me.from) : "", twistName ? h("b", { class: "twist" }, twistName) : null), h("span", { class: "text" }, t.whatIsIt)),
-        peekButton(true),
-        secs,
-      ),
+      h("div", { class: "top" }, h("div", { class: "what" }, h("span", { class: "label" }, label), h("span", { class: "text" }, t.whatNow)), h("div", { class: "side" }, stepDots(me), secs)),
       h("div", { class: "padbox" }, paper),
       h("div", {}, form, err),
     ),
   );
-  const drawing = me.drawing ?? { strokes: [] };
-  const twist = me.twist ?? "clear";
-  const signal = { aborted: false };
-  cleanups.push(() => (signal.aborted = true));
-  let size = 0;
-  /** @type {CanvasRenderingContext2D} */
-  let ctx;
-  /** 'replay' while drawing itself, then 'shown', 'gone' (glimpse) or 'peep' */
-  let mode = "replay";
-  /** @type {[number, number] | null} the peephole, grid units */
-  let hole = null;
-  const sizeUp = () => {
-    const f = fit(canvas);
-    ctx = f.ctx;
-    size = f.size;
-  };
   const paint = () => {
-    if (mode === "shown") drawInk(ctx, drawing, 0, 0, size);
-    else if (mode === "peep") {
-      ctx.fillStyle = "#3a3f4b";
-      ctx.fillRect(0, 0, size, size);
-      if (hole) {
-        const k = size / GRID;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(hole[0] * k, hole[1] * k, size * 0.2, 0, Math.PI * 2);
-        ctx.clip();
-        drawInk(ctx, drawing, 0, 0, size);
-        ctx.restore();
-        ctx.strokeStyle = "rgba(255,225,74,.9)";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(hole[0] * k, hole[1] * k, size * 0.2, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-    } else if (mode === "gone") {
-      ctx.fillStyle = "#fbf8f1";
-      ctx.fillRect(0, 0, size, size);
-    }
+    const f = fit(canvas);
+    drawInk(f.ctx, picture, 0, 0, f.size);
   };
-  sizeUp();
-  const ro = new ResizeObserver(() => {
-    sizeUp();
-    if (mode !== "replay") paint();
-  });
+  paint();
+  const ro = new ResizeObserver(paint);
   ro.observe(canvas);
   cleanups.push(() => ro.disconnect());
-  const run = async () => {
-    mode = "replay";
-    overlay.replaceChildren();
-    await replay(ctx, drawing, size, replayTime(drawing, 900, 2200), signal);
-    if (signal.aborted) return;
-    if (twist === "glimpse") {
-      mode = "shown";
-      paint();
-      setTimeout(() => {
-        if (signal.aborted) return;
-        canvas.classList.add("gone");
-        setTimeout(() => {
-          if (signal.aborted) return;
-          mode = "gone";
-          canvas.classList.remove("gone");
-          paint();
-          overlay.replaceChildren(h("span", {}, h("b", {}, t.glimpseGone)));
-        }, 650);
-      }, 3200);
-    } else {
-      mode = "shown";
-      paint();
-      if (!(drawing.strokes?.length > 0)) return;
-      paper.append(
-        h(
-          "button",
-          {
-            class: "replay",
-            type: "button",
-            onclick: (/** @type {Event} */ e) => {
-              /** @type {HTMLElement} */ (e.currentTarget).remove();
-              void run();
-            },
-          },
-          `↻ ${t.replay}`,
-        ),
-      );
-    }
-  };
-  if (twist === "peephole") {
-    paper.classList.add("peep");
-    mode = "peep";
-    paint();
-    overlay.replaceChildren(h("span", {}, t.peepHint));
-    const at = (/** @type {PointerEvent} */ e) => {
-      const r = canvas.getBoundingClientRect();
-      hole = [((e.clientX - r.left) / r.width) * GRID, ((e.clientY - r.top) / r.height) * GRID];
-      overlay.replaceChildren();
-      paint();
-    };
-    canvas.addEventListener("pointerdown", (e) => {
-      try {
-        canvas.setPointerCapture(e.pointerId);
-      } catch {}
-      at(e);
-    });
-    canvas.addEventListener("pointermove", (e) => {
-      if (e.buttons || e.pointerType === "touch") at(e);
-    });
-    canvas.addEventListener("pointerup", () => {
-      hole = null;
-      paint();
-    });
-    for (const type of ["touchstart", "touchmove"]) canvas.addEventListener(type, (e) => e.preventDefault(), { passive: false });
-  } else void run();
-
   let sent = false;
   const submit = async (/** @type {boolean} */ auto) => {
     const text = input.value.trim();
@@ -870,17 +698,17 @@ function guess(me) {
 }
 
 // ---------------------------------------------------------------------------
-// Passed on: the slip flies to the next player.
+// Passed on: the page flies to the next player.
 
-/** @param {any} me @param {"draw" | "guess"} kind */
-function passed(me, kind) {
-  const slip = h("div", { class: `slip${me.next ? "" : " stay"}` }, kind === "draw" ? icon(PENCIL) : h("span", { class: "hand", style: { "font-size": "64px", color: "#17161c" } }, "?"));
+/** @param {any} me */
+function passed(me) {
+  const slip = h("div", { class: `slip${me.next ? "" : " stay"}` }, icon(PENCIL));
   show(
     h(
       "section",
       { class: "passed" },
       slip,
-      h("div", { class: "to" }, me.next ? fragment(t.passedTo("\u0000"), me.next) : t.lastDone),
+      h("div", { class: "to" }, me.next && me.task === "draw" ? fragment(t.passedTo("\u0000"), me.next) : t.lastDone),
       h("p", { class: "tip" }, t.waitOthers),
     ),
   );
@@ -895,11 +723,10 @@ function fragment(text, name) {
 }
 
 // ---------------------------------------------------------------------------
-// The reveal: reactions, judging your own chain.
+// The reveal: reactions.
 
-/** @param {any} me */
-function watch(me) {
-  const reacts = h(
+function reactButtons() {
+  return h(
     "div",
     { class: "reacts" },
     ...t.reactions.map((r, i) =>
@@ -916,69 +743,77 @@ function watch(me) {
       ),
     ),
   );
+}
+
+/** @param {any} me */
+function watch(me) {
   show(
     h(
       "section",
       { class: "card tilt" },
-      h("div", { class: "watching" }, avatar({ name: me.author, color: undefined }), h("div", {}, h("div", { class: "t" }, t.chainOf(me.author ?? "")), h("div", { class: "typed small muted" }, `${me.index ?? 1} / ${me.of ?? 1}`))),
-      h("p", { class: "big" }, me.mine ? t.yourChain : t.lookTv),
+      h("div", { class: "watching" }, avatar({ name: me.starter, color: undefined }), h("div", {}, h("div", { class: "t" }, t.pictureOf(me.starter ?? "")), h("div", { class: "typed small muted" }, `${me.index ?? 1} / ${me.of ?? 1}`))),
+      h("p", { class: "big" }, me.mine ? t.youDrewHere : t.lookTv),
     ),
     h("h2", {}, t.react),
-    reacts,
+    reactButtons(),
   );
 }
 
-/** @param {any} me */
-function judge(me) {
-  const chain = me.chain ?? { links: [] };
-  const links = /** @type {any[]} */ (chain.links ?? []);
-  /** @type {number | null | undefined} undefined: nothing picked yet */
-  let died;
+// ---------------------------------------------------------------------------
+// The best move: every layer of the round, its new strokes in colour.
+
+/** @param {any} me @param {any} room */
+function vote(me, room) {
+  const gallery = /** @type {any[]} */ (room.gallery ?? []);
+  const own = new Set(/** @type {string[]} */ (me.mine ?? []));
   const err = h("p", { class: "error" });
-  const confirm = /** @type {HTMLButtonElement} */ (h("button", { class: "btn", type: "button", disabled: true }, t.sendVerdict));
-  const survived = /** @type {HTMLButtonElement} */ (h("button", { class: "btn ghost", type: "button" }, t.survived));
-  /** @type {{ el: HTMLElement, g: number, by: string }[]} */
-  const rows = [];
-  const list = h("div", { class: "links" });
-  let g = 0;
-  for (let i = 0; i < links.length; i++) {
-    const l = links[i];
-    if (l.kind !== "guess") continue;
-    const d = links[i - 1];
-    const c = /** @type {HTMLCanvasElement} */ (h("canvas"));
-    const idx = g++;
-    const el = h(
-      "button",
-      { class: "link", type: "button", onclick: () => pick(idx) },
-      c,
-      h("span", { class: "g" }, l.text || t.noGuess, h("small", {}, `${l.by?.name ?? ""}`)),
-    );
-    rows.push({ el, g: idx, by: l.by?.name ?? "" });
-    list.append(el);
-    requestAnimationFrame(() => {
-      const f = fit(c);
-      drawInk(f.ctx, d?.drawing, 0, 0, f.size);
+  /** @type {string | null} */
+  let pick = null;
+  const confirm = /** @type {HTMLButtonElement} */ (h("button", { class: "btn", type: "button", disabled: true }, t.vote));
+  /** @type {{ id: string, el: HTMLElement }[]} */
+  const cards = [];
+  /** @type {(() => void)[]} */
+  const paints = [];
+  const groups = gallery.map((p, pi) => {
+    const layers = /** @type {any[]} */ (p.layers ?? []);
+    const row = h("div", { class: "cands" });
+    layers.forEach((l, k) => {
+      if (!(l.drawing?.strokes?.length > 0)) return;
+      const id = `${p.id}:${k}`;
+      const mine = own.has(id);
+      const c = /** @type {HTMLCanvasElement} */ (h("canvas"));
+      const el = h(
+        "button",
+        {
+          class: `cand${mine ? " mine" : ""}`,
+          type: "button",
+          disabled: mine,
+          "data-layer": id,
+          onclick: () => {
+            pick = id;
+            for (const x of cards) x.el.classList.toggle("on", x.id === id);
+            confirm.disabled = false;
+            confirm.textContent = t.voteFor(`${l.word} · ${l.by?.name ?? ""}`);
+          },
+        },
+        c,
+        h("span", { class: "w" }, k > 0 ? h("s", {}, layers[k - 1]?.word ?? "") : null, k > 0 ? " → " : null, l.word ?? ""),
+        h("span", { class: "by" }, h("span", { class: "dot", style: { "--c": l.by?.color ?? colorOf(l.by?.id) } }), mine ? t.mineTag : (l.by?.name ?? "")),
+      );
+      cards.push({ id, el });
+      row.append(el);
+      paints.push(() => {
+        const f = fit(c);
+        drawLayers(f.ctx, [{ drawing: { strokes: layers.slice(0, k).flatMap((x) => x.drawing?.strokes ?? []) }, color: FADED }, { drawing: l.drawing, color: l.by?.color ?? INK }], 0, 0, f.size);
+      });
     });
-  }
-  const pick = (/** @type {number | null} */ v) => {
-    died = v;
-    for (const r of rows) {
-      const dead = v !== null && r.g >= v;
-      r.el.classList.toggle("dead", dead);
-      r.el.classList.toggle("first", dead && r.g === v);
-      r.el.classList.toggle("ok", !dead);
-    }
-    survived.classList.toggle("on", v === null);
-    confirm.disabled = false;
-    confirm.textContent = v === null ? t.survived : t.diedAt(rows[v]?.by ?? "");
-    confirm.classList.toggle("red", v !== null);
-  };
-  survived.addEventListener("click", () => pick(null));
+    return h("div", { class: "group" }, h("h2", {}, t.pictureN(pi + 1, p.starter?.name ?? "")), row);
+  });
   confirm.addEventListener("click", async () => {
-    if (died === undefined) return;
+    if (!pick) return;
     confirm.disabled = true;
     try {
-      await act("judge", { died }, err);
+      await act("vote", { layer: pick }, err);
     } catch {
       confirm.disabled = false;
     }
@@ -987,82 +822,36 @@ function judge(me) {
   show(
     h(
       "section",
-      { class: "judge" },
+      { class: "voting" },
       bar,
-      h("div", { class: "top" }, h("div", { class: "what" }, h("h1", { style: { margin: "6px 0 2px" } }, t.judgeTitle)), secs),
-      h("p", { class: "small muted", style: { margin: "0 0 12px" } }, t.judgeHelp),
-      h("div", { class: "tag" }, h("small", {}, t.prompt), chain.prompt ?? ""),
-      list,
-      survived,
+      h("div", { class: "top" }, h("div", { class: "what" }, h("h1", { style: { margin: "6px 0 0" } }, t.bestTitle)), secs),
+      h("p", { class: "small muted", style: { margin: "0 0 4px" } }, t.bestHelp),
+      ...groups,
       h("div", { class: "verdict-bar" }, confirm, err),
     ),
   );
-}
-
-// ---------------------------------------------------------------------------
-// The hunt
-
-/** @param {any} me */
-function accuse(me) {
-  const suspects = /** @type {any[]} */ (me.suspects ?? []);
-  if (me.done) {
-    const s = suspects.find((x) => x.id === me.choice);
-    return show(h("section", { class: "card tilt" }, h("h1", {}, t.whoWrecker), h("p", { class: "big" }, t.accused(s?.name ?? "")), h("p", { class: "muted" }, t.lookTv)));
-  }
-  const err = h("p", { class: "error" });
-  /** @type {string | null} */
-  let pick = null;
-  const confirm = /** @type {HTMLButtonElement} */ (h("button", { class: "btn red", type: "button", disabled: true }, t.accuse("…")));
-  const buttons = suspects.map((s) =>
-    h(
-      "button",
-      {
-        class: "suspect",
-        type: "button",
-        onclick: () => {
-          pick = s.id;
-          buttons.forEach((b, i) => b.classList.toggle("on", suspects[i].id === s.id));
-          confirm.disabled = false;
-          confirm.textContent = t.accuse(s.name);
-        },
-      },
-      avatar(s),
-      h("span", {}, h("span", { class: "nm" }, s.name), s.breaks > 0 ? h("small", {}, t.atDeaths(s.breaks)) : null),
-    ),
-  );
-  confirm.addEventListener("click", async () => {
-    if (!pick) return;
-    confirm.disabled = true;
-    try {
-      await act("accuse", { suspect: pick }, err);
-    } catch {
-      confirm.disabled = false;
-    }
+  requestAnimationFrame(() => {
+    for (const p of paints) p();
   });
-  const { bar, secs } = clock(me.deadline ?? 0);
-  show(
-    bar,
-    h("div", { class: "top" }, h("div", { class: "what" }, h("h1", { style: { margin: "6px 0 0" } }, t.whoWrecker)), secs),
-    h("p", { class: "small muted", style: { margin: "0" } }, me.wrecker ? t.huntHelpWrecker : t.huntHelp),
-    h("div", { class: "suspects" }, ...buttons),
-    h("div", { class: "verdict-bar" }, confirm, err),
-  );
+}
+
+function votedCard() {
+  show(h("section", { class: "card tilt" }, h("h1", {}, t.bestTitle), h("p", { class: "big" }, t.voted)));
 }
 
 /** @param {any} me */
-function unmask(me) {
-  const card = h("section", { class: "card tilt" }, h("p", { class: "big" }, t.drumroll));
-  show(card);
-  // The TV unmasks first: the phone follows a few seconds later.
-  const timer = setTimeout(() => {
-    const good = me.you ? !me.caught : me.caught;
-    card.replaceChildren(
-      h("p", { class: "big" }, me.you ? t.youWere : me.wreckerName ? t.wreckerWas(me.wreckerName) : ""),
-      h("p", { class: `outcome ${good ? "good" : "bad"}` }, me.caught ? t.caught : t.gotAway),
-    );
-    if (!me.you) card.append(h("p", { class: "big" }, me.right ? t.rightGuess : t.wrongGuess));
-  }, 5200);
-  cleanups.push(() => clearTimeout(timer));
+function best(me) {
+  show(
+    h(
+      "section",
+      { class: "card tilt" },
+      h("h1", {}, t.bestTitle),
+      me.won ? h("p", { class: "score" }, `+${num(lang, me.points ?? 0)}`) : null,
+      h("p", { class: "big" }, me.won ? t.bestWon : me.picked ? t.bestPicked : t.bestNot),
+    ),
+    h("h2", {}, t.react),
+    reactButtons(),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -1071,7 +860,7 @@ function unmask(me) {
 /** @param {any} me @param {any} room */
 function scoreCard(me, room) {
   const e = me.earned ?? {};
-  const kinds = /** @type {const} */ (["links", "smuggles", "wrecks", "spot", "escape"]);
+  const kinds = /** @type {const} */ (["drawn", "read", "best"]);
   show(
     h(
       "section",
@@ -1079,7 +868,7 @@ function scoreCard(me, room) {
       h("h2", { style: { "margin-top": "0" } }, `${t.roundN(room.round ?? 1)} · ${t.thisRound}`),
       h("p", { class: "score" }, `+${num(lang, me.delta ?? 0)}`),
       h("ul", { class: "gains" }, ...kinds.filter((k) => e[k] > 0).map((k) => h("li", {}, h("span", {}, t.kinds[k]), h("b", {}, `+${num(lang, e[k])}`)))),
-      me.word ? h("p", { class: "wordline" }, t.yourWord(""), h("mark", {}, me.word), ` · ${t.smuggledN(me.smuggled ?? 0)}`) : null,
+      me.counts ? h("p", { class: "wordline" }, t.counts(me.counts)) : null,
       h("p", { class: "typed", style: { "margin-top": "14px" } }, `${num(lang, me.score ?? 0)} ${t.points} · ${me.of ? t.rank(me.rank ?? 0, me.of) : ""}`),
     ),
   );

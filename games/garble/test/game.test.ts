@@ -7,27 +7,20 @@ import { MemoryRelay } from "@tvpipe/party/testing";
 
 import { Bot, bots } from "../game/bots.ts";
 import { Garble, type Timings } from "../game/game.ts";
-import { parseList, says, seeded } from "../game/rules.ts";
+import { bestMove, earnedTotal, flatten, judge, parseWords, pictureAt, scoreRound, seeded, type Picture, type Word } from "../game/rules.ts";
 
-const data = (f: string) => parseList(readFileSync(new URL(`../data/${f}`, import.meta.url), "utf8"));
-const PROMPTS = { en: data("prompts.txt"), de: data("prompts.de.txt") };
+const data = (f: string) => parseWords(readFileSync(new URL(`../data/${f}`, import.meta.url), "utf8"));
 const WORDS = { en: data("words.txt"), de: data("words.de.txt") };
 
 const fast: Timings = {
-  intro: 20,
   firstDraw: 1500,
+  guess: 800,
   draw: 1200,
-  guess: 1200,
-  showPrompt: 5,
-  showDrawing: 5,
-  showGuess: 5,
-  overview: 5,
-  judge: 1000,
-  verdictBase: 5,
-  verdictStep: 1,
-  verdictSmuggle: 1,
-  accuse: 1200,
-  unmask: 5,
+  layer: 3,
+  read: 3,
+  legend: 3,
+  vote: 1000,
+  best: 5,
   scores: 5,
 };
 
@@ -39,10 +32,10 @@ async function until(cond: () => boolean, ms = 3000): Promise<void> {
   }
 }
 
-async function game(n: number, opts: { rounds?: number; silent?: number; length?: number; oracle?: boolean; lang?: "en" | "de" } = {}) {
+async function game(n: number, opts: { rounds?: number; silent?: number; length?: number; oracle?: boolean; lang?: "en" | "de"; voter?: boolean } = {}) {
   const relay = new MemoryRelay();
   const party = new Party({ grace: 100, maxPlayers: 12 }).listen(relay);
-  const g = new Garble(party, { prompts: PROMPTS, words: WORDS, rounds: opts.rounds ?? 1, timings: fast, rng: seeded(11), length: opts.length, lang: opts.lang });
+  const g = new Garble(party, { words: WORDS, rounds: opts.rounds ?? 1, timings: fast, rng: seeded(11), length: opts.length, lang: opts.lang });
   g.open();
   const phases: string[] = [];
   g.on("phase", (p) => phases.push(p));
@@ -63,32 +56,43 @@ async function game(n: number, opts: { rounds?: number; silent?: number; length?
     await b.join();
     players.push(b);
   }
-  return { party, g, players, phases, close: () => party.close() };
+  // A player who votes by hand (the test's).
+  if (opts.voter) {
+    const b = new Bot({ ...o, name: "Voter", skip: ["vote"] });
+    await b.join();
+    players.push(b);
+  }
+  /** The round's pictures, seats and words once it is revealed (the game forgets them at the end). */
+  const rounds: { pictures: Picture[]; seats: string[]; deals: { choices: Word[]; words: Word[] }[] }[] = [];
+  g.on("phase", (p) => {
+    if (p === "reveal") rounds.push(structuredClone({ pictures: g.round!.pictures, seats: g.round!.seats.map((x) => x.id), deals: g.round!.deals }));
+  });
+  return { party, g, players, phases, rounds, close: () => party.close() };
 }
 
 test("a whole game with 4 players", async () => {
-  const { party, g, players, phases, close } = await game(4, { rounds: 2 });
+  const { party, g, players, phases, rounds, close } = await game(4, { rounds: 2 });
   try {
-    const seen: { words: Map<string, string>; wrecker: string | undefined; steps: number }[] = [];
-    g.on("phase", (p) => {
-      if (p === "intro") seen.push({ words: new Map(g.round!.words), wrecker: g.round!.wrecker?.id, steps: g.round!.steps });
-    });
     const end = new Promise<{ score: number }[]>((r) => g.once("end", r));
     await players[0]!.client.act("start");
     const table = await end;
     assert.equal(table.length, 4);
-    assert.equal(phases.filter((p) => p === "intro").length, 2);
-    assert.equal(phases.filter((p) => p === "play").length, 8, "4 steps per round with 4 players");
-    assert.equal(phases.filter((p) => p === "reveal").length, 2);
+    assert.equal(phases.filter((p) => p === "play").length, 8, "4 players: 3 layers, then the last guess: 4 steps a round");
+    for (const p of ["reveal", "vote", "best", "scores"]) assert.equal(phases.filter((x) => x === p).length, 2, p);
     assert.equal(phases.at(-1), "final");
     assert.ok(table.reduce((s, l) => s + l.score, 0) > 0, "someone scored");
-    assert.deepEqual(players.map((b) => b.errors), [[], [], [], []]);
-    // Everyone had a word of their own, one Wrecker per round, and two different Wreckers.
-    for (const r of seen) {
-      assert.equal(new Set(r.words.values()).size, 4);
-      assert.ok(r.wrecker);
+    assert.deepEqual(
+      players.map((b) => b.errors),
+      [[], [], [], []],
+    );
+    assert.equal(rounds.length, 2);
+    for (const r of rounds) {
+      assert.equal(r.pictures.length, 4);
+      for (const p of r.pictures) {
+        assert.equal(p.layers.length, 3);
+        assert.ok(p.layers.every((l) => l.guess !== null && l.drawing.strokes.length > 0));
+      }
     }
-    assert.notEqual(seen[0]!.wrecker, seen[1]!.wrecker);
     await until(() => players.every((b) => b.client.view["me"].task === "final"));
     assert.equal((party.screenView()["screen"] as { phase: string }).phase, "final");
   } finally {
@@ -97,62 +101,181 @@ test("a whole game with 4 players", async () => {
   }
 });
 
-test("secrets stay on their own phone until the unmasking", async () => {
-  const { party, g, players, close } = await game(5);
+test("pictures: who draws and guesses which layer, the words, the verdicts", async () => {
+  const { g, players, rounds, close } = await game(7, { length: 7 });
   try {
-    const leaks: string[] = [];
-    let words = new Map<string, string>();
-    let wrecker = "";
-    g.on("phase", (p) => {
-      if (p === "intro") {
-        words = new Map(g.round!.words);
-        wrecker = g.round!.wrecker!.id;
-      }
-    });
-    // Every view of every phone and of the TV, until the unmasking.
-    const check = (who: string, view: Record<string, any>, me: string | undefined) => {
-      const phase = view["screen"]?.phase ?? view["room"]?.phase;
-      if (phase === "unmask" || phase === "scores" || phase === "final" || words.size === 0) return;
-      // Smuggled words are public from their verdict on.
-      const text = JSON.stringify({ ...view, roster: undefined }, (k, v) => (k === "smuggles" ? undefined : v));
-      for (const [id, w] of words) {
-        if (id === me) continue;
-        // A word may show up in a guess (smuggled or by chance): only its own field counts as a leak.
-        if (new RegExp(`"word":"${w}"`).test(text)) leaks.push(`${who} sees ${id}'s word`);
-      }
-      if (me !== wrecker && /"wrecker":true/.test(text)) leaks.push(`${who} sees the Wrecker`);
-      if (/"wrecked"/.test(text)) leaks.push(`${who} sees a wreck`);
-    };
-    for (const b of players) b.client.on("view", (v) => check(b.name, v, b.client.you?.id));
-    const tick = setInterval(() => check("TV", party.screenView(), undefined), 2);
     const end = new Promise((r) => g.once("end", r));
     await players[0]!.client.act("start");
     await end;
-    clearInterval(tick);
-    assert.deepEqual([...new Set(leaks)], []);
+    const { pictures, seats, deals } = rounds[0]!;
+    const n = seats.length;
+    assert.equal(pictures.length, 7);
+    let right = 0;
+    for (const p of pictures) {
+      assert.equal(p.layers.length, 6, "7 players: 6 layers (at most one less than the players)");
+      const deal = deals[p.id]!;
+      assert.ok(deal.choices.some((w) => w.word === p.layers[0]!.word.word), "the first layer is a word picked from two");
+      p.layers.slice(1).forEach((l, i) => assert.equal(l.word.word, deal.words[i]!.word, "then the dealt words"));
+      assert.equal(new Set(p.layers.map((l) => l.word.word)).size, 6, "no word twice in a picture");
+      // Layer k by seat p + k; its guess by seat p + k + 1: seven different players.
+      p.layers.forEach((l, k) => {
+        assert.equal(l.by, seats[(p.id + k) % n]);
+        assert.equal(l.guess!.by, seats[(p.id + k + 1) % n]);
+        assert.equal(l.guess!.right, judge(l.guess!.text, l.word));
+        if (l.guess!.right) right++;
+      });
+      assert.equal(new Set([...p.layers.map((l) => l.by), p.layers.at(-1)!.guess!.by]).size, 7);
+    }
+    // The bots read the layer's word most of the time (the host page's oracle).
+    assert.ok(right >= 42 * 0.5, `${right} of 42 read right`);
   } finally {
     for (const b of players) b.close();
     close();
   }
 });
 
-test("chains: lengths, prompts, the drawer reads the guess before", async () => {
-  const { g, players, close } = await game(7, { length: 8 });
+test("privacy: a layer's word, a guess and a step's picture reach only their player until the reveal", async () => {
+  const { party, g, players, rounds, close } = await game(5);
   try {
-    let chains: { prompt: string; links: { kind: string; by: string; text?: string }[]; author: string }[] = [];
+    const seen: { who: string; id: string | undefined; view: Record<string, any> }[] = [];
+    for (const b of players) b.client.on("view", (v) => seen.push({ who: b.name, id: b.client.you?.id, view: structuredClone(v) }));
+    const tv: Record<string, any>[] = [];
+    party.on("screen-view", (v) => tv.push(structuredClone(v)));
+    const end = new Promise((r) => g.once("end", r));
+    await players[0]!.client.act("start");
+    await end;
+    const { pictures, seats, deals } = rounds[0]!;
+    const n = seats.length;
+    const SECRET = new Set(["word", "choices", "picture", "drawing", "strokes", "text", "guess", "gallery", "layers"]);
+    /** The keys of a JSON value, deep. */
+    const keys = (v: unknown, out: string[] = []): string[] => {
+      if (Array.isArray(v)) for (const x of v) keys(x, out);
+      else if (v && typeof v === "object")
+        for (const [k, x] of Object.entries(v)) {
+          out.push(k);
+          keys(x, out);
+        }
+      return out;
+    };
+    const before = (phase: unknown) => phase === "lobby" || phase === "play";
+    const leaks: string[] = [];
+    let checked = 0;
+    for (const v of tv) {
+      if (!before((v["screen"] as { phase?: string })?.phase)) continue;
+      for (const k of keys(v["screen"])) if (SECRET.has(k)) leaks.push(`the TV sees ${k}`);
+    }
+    for (const { who, id, view } of seen) {
+      if (!before(view["room"]?.phase)) continue;
+      for (const k of keys(view["room"])) if (SECRET.has(k)) leaks.push(`${who}: the room has ${k}`);
+      for (const k of keys(view["roster"])) if (SECRET.has(k)) leaks.push(`${who}: the roster has ${k}`);
+      const me = view["me"] ?? {};
+      if (me.task !== "draw" && me.task !== "guess") {
+        for (const k of keys(me)) if (SECRET.has(k)) leaks.push(`${who}: ${me.task} has ${k}`);
+        continue;
+      }
+      if (keys(me).includes("text") || keys(me).includes("guess")) leaks.push(`${who}: a guess in their view`);
+      // Step k (0-based) of the player at seat s: picture s − k, as it was after k layers.
+      const k = me.step - 1;
+      const s = seats.indexOf(id!);
+      const c = pictureAt(s, k, n);
+      const p = pictures[c]!;
+      checked++;
+      if (JSON.stringify(me.picture) !== JSON.stringify(flatten(p.layers.slice(0, k)))) leaks.push(`${who}: step ${k + 1} shows another picture`);
+      if (me.task === "draw") {
+        if (k === 0 && JSON.stringify(me.choices) !== JSON.stringify(deals[c]!.choices.map((w) => w.word))) leaks.push(`${who}: someone else's choices`);
+        if (k > 0 && me.word !== p.layers[k]!.word.word) leaks.push(`${who}: someone else's word`);
+        if (k > 0 && p.layers[k]!.by !== id) leaks.push(`${who}: a word for a layer they do not draw`);
+      } else if (keys(me).includes("word") || keys(me).includes("choices")) leaks.push(`${who}: a word while guessing`);
+    }
+    assert.deepEqual([...new Set(leaks)], []);
+    assert.ok(checked > 20, `${checked} views checked`);
+  } finally {
+    for (const b of players) b.close();
+    close();
+  }
+});
+
+test("silent players: blank layers, no guesses (wrong), the game goes on", async () => {
+  const { g, players, rounds, close } = await game(4, { silent: 2 });
+  try {
+    const end = new Promise<{ id: string; score: number }[]>((r) => g.once("end", r));
+    await players[0]!.client.act("start");
+    const table = await end;
+    const mute = new Set(players.filter((b) => b.name.startsWith("Mute")).map((b) => b.client.you!.id));
+    for (const p of rounds[0]!.pictures) {
+      for (const l of p.layers) {
+        if (mute.has(l.by)) assert.deepEqual(l.drawing.strokes, [], "a silent player's layer is blank");
+        if (mute.has(l.guess!.by)) assert.deepEqual([l.guess!.text, l.guess!.right], ["", false]);
+      }
+    }
+    for (const id of mute) assert.equal(table.find((l) => l.id === id)!.score, 0);
+  } finally {
+    for (const b of players) b.close();
+    close();
+  }
+});
+
+test("in German: German words, judged in German", async () => {
+  const { g, players, rounds, close } = await game(5, { lang: "de" });
+  try {
+    const end = new Promise((r) => g.once("end", r));
+    await players[0]!.client.act("start");
+    await end;
+    assert.equal(g.lang, "de");
+    const german = new Set(WORDS.de.map((w) => w.word));
+    const layers = rounds[0]!.pictures.flatMap((p) => p.layers);
+    assert.ok(layers.every((l) => german.has(l.word.word)));
+    assert.ok(layers.some((l) => l.guess!.right));
+    for (const l of layers) assert.equal(l.guess!.right, !!l.guess!.text && judge(l.guess!.text, l.word, "de"));
+  } finally {
+    for (const b of players) b.close();
+    close();
+  }
+});
+
+test("the best move: others' layers only, 200 to the most votes", async () => {
+  const { g, players, close } = await game(4, { voter: true });
+  try {
+    const mute = players.find((b) => b.name === "Voter")!;
+    let before = new Map<string, number>();
+    let votes = new Map<string, string>();
+    let pictures: Picture[] = [];
+    const checks: Promise<void>[] = [];
     g.on("phase", (p) => {
-      if (p === "accuse") chains = structuredClone(g.round!.chains);
+      if (p === "vote") {
+        before = new Map(g.scores);
+        // The silent player tries their own layer and one that is not there, then votes.
+        checks.push(
+          until(() => mute.client.view["me"]?.task === "vote").then(async () => {
+            const mine = mute.client.view["me"].mine as string[];
+            assert.ok(mine.length > 0);
+            await assert.rejects(mute.client.act("vote", { layer: mine[0] }), /own/i);
+            await assert.rejects(mute.client.act("vote", { layer: "99:0" }), /layer/i);
+            const other = (mute.client.view["room"].gallery as { id: number; layers: unknown[] }[]).flatMap((x) => x.layers.map((_, k) => `${x.id}:${k}`)).find((id) => !mine.includes(id))!;
+            await mute.client.act("vote", { layer: other });
+          }),
+        );
+      }
+      if (p === "best") {
+        votes = new Map(g.round!.votes);
+        pictures = structuredClone(g.round!.pictures);
+      }
     });
     const end = new Promise((r) => g.once("end", r));
     await players[0]!.client.act("start");
     await end;
-    assert.equal(chains.length, 7);
-    for (const c of chains) {
-      assert.equal(c.links.length, 6, "7 players: 6 steps (even, at most the players)");
-      assert.ok(c.prompt.length > 0);
-      assert.equal(c.links[0]!.by, c.author);
-      assert.deepEqual(c.links.map((l) => l.kind), ["draw", "guess", "draw", "guess", "draw", "guess"]);
-      assert.equal(new Set(c.links.map((l) => l.by)).size, 6, "nobody twice in a chain");
+    await Promise.all(checks);
+    assert.equal(votes.size, 5, "everyone voted");
+    for (const [voter, id] of votes) {
+      const [pi, li] = id.split(":").map(Number);
+      assert.notEqual(pictures[pi!]!.layers[li!]!.by, voter, "never your own layer");
+    }
+    const best = bestMove(votes);
+    const earned = scoreRound(pictures, votes);
+    for (const [id, e] of earned) assert.equal(g.scores.get(id)! - (before.get(id) ?? 0), earnedTotal(e), "the round's points");
+    for (const id of best.ids) {
+      const [pi, li] = id.split(":").map(Number);
+      assert.ok(earned.get(pictures[pi!]!.layers[li!]!.by)!.best >= best.points);
     }
   } finally {
     for (const b of players) b.close();
@@ -160,37 +283,35 @@ test("chains: lengths, prompts, the drawer reads the guess before", async () => 
   }
 });
 
-test("silent players: empty drawings, skipped guesses, the machine judges", async () => {
-  const { g, players, close } = await game(4, { silent: 2 });
+test("a scripted first round: the seats and the words as written", async () => {
+  const { g, players, rounds, close } = await game(4);
   try {
-    let judged = 0;
-    const end = new Promise<{ score: number }[]>((r) => g.once("end", r));
-    g.on("phase", (p) => {
-      if (p === "accuse") judged = g.round!.died.size;
-    });
-    await players[0]!.client.act("start");
-    await end;
-    assert.equal(judged, 4, "every chain has a verdict");
-  } finally {
-    for (const b of players) b.close();
-    close();
-  }
-});
-
-test("secret words never appear in the round's prompts (German too)", async () => {
-  const { g, players, close } = await game(6, { lang: "de" });
-  try {
-    let ok = true;
-    g.on("phase", (p) => {
-      if (p !== "intro") return;
-      const r = g.round!;
-      for (const w of r.words.values()) for (const [a, b] of r.choices) if (says(a, w) || says(b, w)) ok = false;
-    });
+    const names = ["Cy", "Ada", "Dot", "Bea"];
+    g.script = {
+      seats: names,
+      pictures: [
+        { choices: ["cat", "owl"], words: ["submarine", "hedgehog"] },
+        { choices: ["sun", "key"], words: ["lion", "clock"] },
+        { choices: ["fish", "hat"], words: ["rocket", "car"] },
+        { choices: ["house", "tree"], words: ["robot", "zebra"] },
+      ],
+    };
     const end = new Promise((r) => g.once("end", r));
     await players[0]!.client.act("start");
     await end;
-    assert.ok(ok);
-    assert.equal(g.lang, "de");
+    const { seats, pictures } = rounds[0]!;
+    const byId = new Map(players.map((b) => [b.client.you!.id, b.name]));
+    assert.deepEqual(
+      seats.map((id) => byId.get(id)),
+      names,
+    );
+    assert.deepEqual(
+      pictures[0]!.layers.slice(1).map((l) => l.word.word),
+      ["submarine", "hedgehog"],
+    );
+    assert.deepEqual(pictures[0]!.layers[1]!.word.also, ["sub"], "the list's synonyms");
+    assert.ok(["cat", "owl"].includes(pictures[0]!.layers[0]!.word.word));
+    assert.equal(g.script, undefined, "for one round only");
   } finally {
     for (const b of players) b.close();
     close();
@@ -204,7 +325,7 @@ test("the host page removes players and moves the VIP during a game: it plays on
     const removed: string[] = [];
     // One player removed in each kind of phase, the first time it comes.
     g.on("phase", (p) => {
-      if (removed.includes(p) || !["intro", "play", "reveal", "accuse", "unmask", "scores"].includes(p)) return;
+      if (removed.includes(p) || !["play", "reveal", "vote", "best", "scores"].includes(p)) return;
       removed.push(p);
       setTimeout(() => {
         const victim = party.players.find((x) => !x.vip);
@@ -215,9 +336,9 @@ test("the host page removes players and moves the VIP during a game: it plays on
     });
     await players[0]!.client.act("start");
     await end;
-    assert.equal(removed.length, 6, "every kind of phase came");
+    assert.equal(removed.length, 5, "every kind of phase came");
     assert.equal(g.phase, "final");
-    assert.equal(party.players.length, 3);
+    assert.equal(party.players.length, 4);
     assert.equal(party.players.filter((p) => p.vip).length, 1);
   } finally {
     for (const b of players) b.close();
@@ -228,11 +349,14 @@ test("the host page removes players and moves the VIP during a game: it plays on
 test("settings: the VIP only, before a game", async () => {
   const { g, players, close } = await game(4);
   try {
-    await players[0]!.client.act("settings", { undo: true, twists: false, length: 4 });
-    assert.deepEqual(g.settings, { undo: true, twists: false, length: 4 });
-    await assert.rejects(players[1]!.client.act("settings", { undo: false }), /VIP/);
-    await assert.rejects(players[0]!.client.act("settings", { length: 5 }), /length/);
-    await until(() => players[2]!.client.view["room"].undo === true);
+    assert.deepEqual(g.settings, { undo: true, length: 5 }, "undo is on by default");
+    await players[0]!.client.act("settings", { undo: false, length: 3, rounds: 3 });
+    assert.deepEqual(g.settings, { undo: false, length: 3 });
+    assert.equal(g.rounds, 3);
+    await assert.rejects(players[1]!.client.act("settings", { undo: true }), /VIP/);
+    await assert.rejects(players[0]!.client.act("settings", { length: 4 }), /length/);
+    await assert.rejects(players[0]!.client.act("settings", { rounds: 9 }), /rounds/);
+    await until(() => players[2]!.client.view["room"].undo === false && players[2]!.client.view["room"].rounds === 3);
   } finally {
     for (const b of players) b.close();
     close();

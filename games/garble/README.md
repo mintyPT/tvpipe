@@ -1,32 +1,35 @@
 # Garble
 
-A telephone drawing game (our own rules, names and look) on
-[`@tvpipe/party`](../../npm/party), for 4–12 players. Everyone draws a
-prompt on their phone; the drawing goes to the next player, who guesses
-it; the guess goes to the next, who draws it; and so on, seat to seat,
-until every chain ends with a guess. You only ever see the step right
-before yours. Then the TV unrolls each chain on a red thread, and its
-author judges where it died.
+A drawing game (our own rules, names and look) on
+[`@tvpipe/party`](../../npm/party), for 4–12 players. One picture per
+player goes round the table, and everyone has to turn it into something
+else by drawing **on top** of it. Nothing is ever erased: a cat becomes
+a submarine becomes a hedgehog, and the TV replays how.
 
-Two secrets pull against keeping the chains alive:
+- **Layer 1.** Your phone deals you two words; pick one and draw it.
+- **Then, each step,** you get the next player's picture (every layer so
+  far, all in one black ink). Write what you think it is **now**, then
+  you are dealt a word ("Make it: submarine") and draw it on top. Your
+  own strokes can be undone; the old ink cannot be touched (the pad
+  shows it a shade lighter).
+- **The last player** only guesses.
+- **The machine judges**: a guess is right when it says the latest
+  layer's word, a plural or inflection of it, a compound with it inside
+  (`Piratenschiff` for `Pirat`), or one of its synonyms from the word
+  list (`cat|kitten|kitty`).
+- **Points**: a layer read right pays its drawer and its reader
+  `50 + 50·k` each (layer 1: 100, layer 5: 300); later layers are harder.
+- **The reveal**: the TV rebuilds each picture layer by layer, each layer
+  in its drawer's colour, with its word, its drawer and the next player's
+  guess, ✓ or ✗.
+- **Best move**: after the reveal, everyone votes on their phone for the
+  cleverest layer of the round (not their own); the most votes (at least
+  two) win 200, ties split it.
 
-- **A secret word for everyone**, new each round. Smuggle it into the
-  chains: a later guess by someone else that says it pays you (300).
-- **One Wrecker** per round, who scores for every chain that dies right
-  at their drawing or guess (300 each), unless the room names them at
-  the end of the round (then they lose it, and everyone who named them
-  gets 200; if they get away, 400).
-
-Every link that survives (a drawing and the guess after it) pays its
-drawer and guesser 100 each. The rules, the numbers and why:
-[`docs/garble-design.md`](../../docs/garble-design.md).
-
-Drawing is in black ink only, with three pens. By default there is no
-undo (every stroke counts); the room can turn on undo and clear. With
-twists on (the default), round 2 is **Glimpse** (a drawing vanishes a few
-seconds after it drew itself) and round 3 **Peephole** (you only see the
-drawing under your finger). Chains are 4, 6 or 8 steps long (at most the
-players). English and German.
+The rules, the numbers and why: [`docs/garble-design.md`](../../docs/garble-design.md).
+Each picture gets 3, 5 or 7 layers (at most one less than the players);
+rounds 1–4; undo of your own strokes on (or off: every stroke counts).
+English and German.
 
 It is a web app for [`tvpipe game play`](../../docs/playshare-design.md):
 tvpipe serves it, the game runs in its host page (a window on the
@@ -36,11 +39,11 @@ phones join with the QR code.
 | | | |
 |---|---|---|
 | `tvpipe.json` | the manifest | pages, 4–12 players, the TV's size; `root: dist` |
-| `game/` | the rules (`rules.ts`: drawings, seating, the word matcher, points), the game (`game.ts`), bots (`bots.ts`) | TypeScript on `@tvpipe/party`, tested in Node |
+| `game/` | the rules (`rules.ts`: drawings, the word lists and the matcher, seating, decks, points), the game (`game.ts`), bots (`bots.ts`) | TypeScript on `@tvpipe/party`, tested in Node |
 | `host/` | the host page | the party, the TVs, the players, settings, a preview of the TV; `strings.ts` |
-| `screen/` | the TV page | the lobby, the round's secrets, the ring of players passing slips, each chain on its thread and its verdict, the hunt, the ledger, the podium; `strings.js` |
-| `phone/` | the phone page | joining, the lobby (the VIP's settings), the secret card, the pad, guessing with the twist, judging, accusing, reactions; `strings.js`, `ink.js` (the strokes, shared with the TV) |
-| `data/` | prompts and secret words, English and German | fetched by the host page |
+| `screen/` | the TV page | the lobby, the ring of players passing their pages, the reveal, the gallery and the best move, the ledger, the podium; `strings.js` |
+| `phone/` | the phone page | joining, the lobby (the VIP's settings), picking a word, guessing, the pad on top of the old ink, reactions, the best-move vote; `strings.js`, `ink.js` (the strokes, shared with the TV) |
+| `data/` | the word lists, English and German: `word\|synonym\|…` per line | fetched by the host page |
 
 ## Running it
 
@@ -56,14 +59,17 @@ Pick the TVs (or "A browser tab on this computer"), then Start.
 ## Checking it
 
 ```sh
-npm run check && npm test          # types; the rules and whole games with bots in Node
+npm run check && npm test          # types; the rules, the word lists, whole games with bots in Node (privacy included)
 node test/live/play.ts             # a live game: tvpipe, headless Chrome, a phone, bots; screenshots in /tmp/garble-play
-node test/live/play.ts --lang de --length 8 --undo
+node test/live/play.ts --lang de --length 7 --undo off
+node test/live/play.ts --bots 3 --shots ../../site/static/games/garble   # the games list's pictures (test/live/scenario.ts)
+node test/live/scenario.ts --preview /tmp/garble-scenario                # the scripted round's layers as one PNG
 ```
 
 Bots are for tests: the host page's bot buttons show only with `?bots`
 in its URL, and the live check adds them through `garble.addBots`. They
-cannot see drawings: the host page tells them what a drawing was meant
-to be, and they still get it wrong now and then, or fall for a smuggled
-word. The live check needs Chrome and a built tvpipe; it also checks every phone
+cannot see drawings: the host page tells them what the latest layer with
+ink was meant to be, and they read it right most of the time. The live
+check needs Chrome and a built tvpipe (`TVPIPE_BINARY`, else
+`target/release`, else `target/debug`); it also checks every phone
 screen for text running out of its box at 390 and 320 px.

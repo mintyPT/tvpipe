@@ -3,14 +3,16 @@
  * Garble's TV page: tvpipe casts it with its own browser, or anyone opens
  * the watch link (the host page's preview, muted). It shows the screen
  * view (`{ roster, screen, join }`) in the room's language and animates
- * it: the lobby, the round's secrets, the ring of players passing their
- * slips, each chain unrolled on a red thread and judged, the hunt for
- * the Wrecker, the ledger, the podium. Players' texts are always text.
+ * it: the lobby, the ring of players passing their pages, the reveal
+ * (each picture rebuilt layer by layer, every layer in its drawer's
+ * colour, with its word and the next player's guess), the gallery for
+ * the best move and its winner, the ledger, the podium. Players' texts
+ * are always text.
  */
 
 import { joinText, PartyClient, qrSvg } from "/_tvpipe/lib/client.js";
 import { num, pickLang } from "../phone/i18n.js";
-import { drawInk, fit, replay, replayTime } from "../phone/ink.js";
+import { drawLayers, fit, replay, replayTime } from "../phone/ink.js";
 import { strings } from "./strings.js";
 
 const params = new URLSearchParams(location.hash.slice(1));
@@ -62,26 +64,14 @@ function initial(/** @type {string} */ name) {
 }
 
 /**
- * @param {{ id: string, name: string } | null | undefined} who
+ * @param {{ id: string, name: string, color?: string } | null | undefined} who
  * @param {string} [size] CSS length
  */
 function avatar(who, size) {
-  return h("span", { class: "avatar", style: { "--c": colorOf(who?.id), ...(size ? { "--s": size } : {}) } }, initial(who?.name ?? "?"));
+  return h("span", { class: "avatar", style: { "--c": inkOf(who), ...(size ? { "--s": size } : {}) } }, initial(who?.name ?? "?"));
 }
 
 const SVG_NS = "http://www.w3.org/2000/svg";
-/** @param {string} d paths, `|`-separated (24×24, stroked) */
-function icon(d) {
-  const svg = document.createElementNS(SVG_NS, "svg");
-  svg.setAttribute("viewBox", "0 0 24 24");
-  for (const part of d.split("|")) {
-    const p = document.createElementNS(SVG_NS, "path");
-    p.setAttribute("d", part);
-    svg.append(p);
-  }
-  return svg;
-}
-const PENCIL = "M4 20l1-5L16 4l4 4L9 19z|M14 6l4 4|M4 20l5-1";
 
 /** The time left until a deadline (host clock), ms. */
 function left(/** @type {number} */ deadline) {
@@ -194,7 +184,9 @@ const sfx = {
   phase: () => chime([523, 659, 784]),
   stamp: () => noise(180, 0.18, 0.9),
   light: () => noise(420, 0.08, 0.35),
-  snip: () => (noise(4000, 0.06, 0.5), setTimeout(() => noise(3000, 0.07, 0.4), 90)),
+  scratch: () => noise(2600, 0.5, 0.08),
+  right: () => chime([660, 990], 0.1, "triangle", 0.16),
+  wrong: () => chime([300, 220], 0.12, "sawtooth", 0.06),
   swish: () => noise(1800, 0.35, 0.18),
   win: () => chime([523, 659, 784, 1047], 0.16),
   drum: () => {
@@ -204,7 +196,7 @@ const sfx = {
 };
 
 // ---------------------------------------------------------------------------
-// Scenes: built when the phase (or the chain) changes, updated on every view.
+// Scenes: built when the phase (or the picture) changes, updated on every view.
 
 /**
  * @typedef {{ el: HTMLElement, update?: (view: any) => void, frame?: () => void, dispose?: () => void }} Scene
@@ -217,6 +209,9 @@ let timers = [];
 function later(/** @type {number} */ ms, /** @type {() => void} */ fn) {
   timers.push(setTimeout(fn, ms));
 }
+
+/** The pictures of a round this TV has shown, by `round:id` (the reveal's thumbnails). */
+const seen = new Map();
 
 client.on("view", (view) => render(view));
 client.on("status", (s) => {
@@ -269,7 +264,7 @@ function render(view) {
   scene?.update?.(view);
   // The join code in a corner: between rounds, for latecomers.
   const late = view.join?.lateJoin ?? "wait";
-  corner.hidden = !["intro", "scores", "final"].includes(s.phase) || !view.join?.qr || late === "closed";
+  corner.hidden = !["scores", "final"].includes(s.phase) || !view.join?.qr || late === "closed";
   if (!corner.hidden && corner.dataset["url"] !== view.join.url) {
     corner.dataset["url"] = view.join.url;
     /** @type {HTMLElement} */ (document.getElementById("corner-qr")).innerHTML = qrSvg(view.join.qr, { quiet: 2 });
@@ -290,17 +285,15 @@ function build(view) {
   const s = view.screen ?? {};
   switch (s.phase) {
     case "lobby":
-      return lobby(view);
-    case "intro":
-      return intro(s);
+      return lobby();
     case "play":
       return play(s);
     case "reveal":
       return reveal(s);
-    case "accuse":
-      return accuse(s);
-    case "unmask":
-      return unmask(s);
+    case "vote":
+      return vote(s);
+    case "best":
+      return best(s);
     case "scores":
       return scores(s);
     case "final":
@@ -320,11 +313,25 @@ function logo(small = false) {
   );
 }
 
+/** The ink of a player (their colour; grey for someone unknown). @param {{ id?: string, color?: string } | null | undefined} who */
+function inkOf(who) {
+  return typeof who?.color === "string" && /^#[0-9a-f]{6}$/i.test(who.color) ? who.color : colorOf(who?.id);
+}
+
+/** A picture's layers in their drawers' colours, up to layer `upTo` (exclusive). @param {any} picture @param {number} [upTo] */
+function inked(picture, upTo) {
+  const layers = /** @type {any[]} */ (picture?.layers ?? []);
+  return layers.slice(0, upTo ?? layers.length).map((l) => ({ drawing: l.drawing, color: inkOf(l.by) }));
+}
+
+/** The earlier layers faded under one in colour (the best move). */
+const FADED = "#cfc8b8";
+
 // ---------------------------------------------------------------------------
 // The lobby
 
-/** @param {any} view @returns {Scene} */
-function lobby(view) {
+/** @returns {Scene} */
+function lobby() {
   const tags = h("div", { class: "tags" });
   const count = h("small");
   const hint = h("p", { class: "hint" });
@@ -347,7 +354,7 @@ function lobby(view) {
       h("p", { class: "tagline typed" }, t.tagline),
       h("div", { class: "joinbox" }, h("div", { class: "paper qrcard tape" }, qr), h("div", { class: "joininfo" }, h("div", { class: "big" }, t.scanToJoin), short)),
     ),
-    h("div", { class: "right" }, h("h2", {}, t.players, count), tags, hint, h("div", { style: { "margin-top": "auto" } }, how, h("p", { class: "secretline" }, t.howSecret), badges)),
+    h("div", { class: "right" }, h("h2", {}, t.players, count), tags, hint, h("div", { style: { "margin-top": "auto" } }, how, h("p", { class: "howline" }, t.howLine), badges)),
   );
   /** @type {Map<string, HTMLElement>} */
   const shown = new Map();
@@ -395,39 +402,26 @@ function lobby(view) {
       const ready = roster.filter((r) => r.connected).length;
       hint.textContent = ready < min ? t.needed(min - ready) : t.vipStarts(roster.find((r) => r.vip)?.name);
       hint.classList.toggle("ready", ready >= min);
-      const b = [t.rounds(s.rounds ?? 2), t.steps(s.length ?? 6), s.undo ? t.undoOn : t.undoOff];
-      if (s.twists) b.push(t.twistsOn);
+      const b = [t.rounds(s.rounds ?? 2), t.layers(s.length ?? 5), s.undo ? t.undoOn : t.undoOff];
       badges.replaceChildren(...b.map((x) => h("span", { class: "badge" }, x)));
     },
   };
 }
 
 // ---------------------------------------------------------------------------
-// The round's secrets
+// Playing: the ring of players, their pages passing on
 
-/** @param {any} s @returns {Scene} */
-function intro(s) {
-  const twist = s.twist && s.twist !== "clear" ? t.twists[/** @type {"glimpse" | "peephole"} */ (s.twist)] : null;
-  const el = h(
-    "div",
-    { class: "scene intro" },
-    h("div", { class: "roundtitle" }, t.round(s.round ?? 1, s.rounds ?? 1)),
-    h(
-      "div",
-      { class: "cards" },
-      h("div", { class: "paper card tape", style: { "--r": "-2.5deg", "--d": ".35s" } }, h("h3", {}, t.secretTitle), h("div", { class: "secret" }, "pirate"), h("p", {}, t.secretText)),
-      h("div", { class: "paper card wreck tape", style: { "--r": "2deg", "--d": ".65s" } }, h("h3", {}, t.wreckerTitle), h("p", {}, t.wreckerText), h("span", { class: "stamp" }, t.wrecker)),
-    ),
-    twist ? h("div", { class: "paper twist" }, h("b", {}, `${t.twistTitle}: ${twist[0]}`), h("span", {}, twist[1])) : null,
-    h("div", { class: "phonehint" }, t.checkPhone),
-    s.deadline ? deadlineBar(s.deadline, s.duration) : null,
-  );
-  later(1350, sfx.stamp);
-  return { el };
-}
-
-// ---------------------------------------------------------------------------
-// Playing: the ring of players, their slips passing on
+/** Doodles on the pages going round (40 × 40): one more shows each step, nothing readable. */
+const SCRIBBLES = [
+  "M9 23c3-8 12-10 15-4s-2 11-8 9",
+  "M26 7l6 7m-4-8l2 4",
+  "M8 32c6-2 13-2 22 1",
+  "M31 21a4 4 0 1 1-.1 0",
+  "M6 9c2 0 4 2 5 4",
+  "M17 11c2 2 5 2 7 0",
+  "M13 27l3 5m4-6l1 6",
+  "M22 30c3-3 6-3 9 0",
+];
 
 /** @param {any} s @returns {Scene} */
 function play(s) {
@@ -443,16 +437,9 @@ function play(s) {
   clock.innerHTML = `<circle class="track" cx="18" cy="18" r="15.9155"/><circle class="left" cx="18" cy="18" r="15.9155" stroke-dasharray="100 100"/>`;
   const arc = /** @type {SVGCircleElement} */ (clock.querySelector(".left"));
   const roundChip = h("span", { class: "chip" });
-  const twistChip = h("span", { class: "chip red" });
+  const stepChip = h("span", { class: "chip dark" });
   const waitline = h("div", { class: "waitline" });
-  const el = h(
-    "div",
-    { class: "scene play" },
-    ring,
-    h("div", { class: "center" }, clock, h("div", { class: "what" }, verb, sub, secs)),
-    h("div", { class: "topline" }, roundChip, twistChip),
-    waitline,
-  );
+  const el = h("div", { class: "scene play" }, ring, h("div", { class: "center" }, clock, h("div", { class: "what" }, verb, sub, secs)), h("div", { class: "topline" }, roundChip, stepChip), waitline);
   const W = () => window.innerWidth;
   const H = () => window.innerHeight;
   /** A seat's place on the ellipse (`f`: towards the centre). */
@@ -460,7 +447,7 @@ function play(s) {
   const angleOf = (/** @type {number} */ seat) => -Math.PI / 2 + (seat / n) * Math.PI * 2;
   const seatEls = seats.map((p, i) => {
     const pos = at(angleOf(i));
-    // Upper seats wear their name above (the slips sit below them).
+    // Upper seats wear their name above (the pages sit below them).
     const e = h(
       "div",
       { class: `seat${Math.sin(angleOf(i)) < -0.3 ? " up" : ""}`, style: { left: `${pos.x}px`, top: `${pos.y}px` } },
@@ -471,68 +458,93 @@ function play(s) {
     ring.append(e);
     return e;
   });
-  // One slip per chain; at step k (1-based) chain c is at seat c + k - 1.
-  const slips = seats.map((_, c) => {
-    const e = h("div", { class: "paper slip", style: { "--r": `${(jitter(`slip${c}`) * 8).toFixed(1)}deg` } });
+  // One page per picture, a scribble fuller each step; at step k (1-based) picture c is at seat c + k - 1.
+  const pages = seats.map((_, c) => {
+    const ink = document.createElementNS(SVG_NS, "svg");
+    ink.setAttribute("viewBox", "0 0 40 40");
+    ink.classList.add("ink");
+    // The same scribbles in another order on each page.
+    const order = SCRIBBLES.map((d, i) => ({ d, k: jitter(`scr${c}:${i}`) })).sort((a, b) => a.k - b.k);
+    for (const { d } of order) {
+      const p = document.createElementNS(SVG_NS, "path");
+      p.setAttribute("d", d);
+      ink.append(p);
+    }
+    const e = h("div", { class: "paper page", style: { "--r": `${(jitter(`page${c}`) * 8).toFixed(1)}deg` } }, ink, h("span", { class: "q" }, "?"));
     ring.append(e);
     return e;
   });
-  /** Where each slip is, as an angle (animated between steps). */
-  const angles = slips.map(() => 0);
+  /** Where each page is, as an angle (animated between steps). */
+  const angles = pages.map(() => 0);
   /** @type {{ from: number[], to: number[], t0: number } | null} */
   let move = null;
   let step = 0;
+  let kind = "first";
   let deadline = 0;
+  let guessUntil = 0;
   let duration = 1;
+  let guessing = false;
+  let guessed = new Set();
   const place = () => {
-    slips.forEach((e, c) => {
+    pages.forEach((e, c) => {
       const p = at(angles[c] ?? 0, 0.7);
       e.style.left = `${p.x}px`;
       e.style.top = `${p.y}px`;
     });
+  };
+  /** The big word: guess (until all guessed or time is up), then draw on top. */
+  const label = () => {
+    const g = kind !== "first" && guessing;
+    const text = kind === "first" ? t.draw : kind === "last" ? t.lastGuess : g ? t.guess : t.onTop;
+    if (verb.textContent !== text) {
+      verb.textContent = text;
+      verb.style.animation = "none";
+      void verb.offsetWidth;
+      verb.style.animation = "";
+    }
+    sub.textContent = kind === "first" ? t.firstStep : kind === "last" ? t.lastStep : g ? t.turnGuess : t.turnDraw;
+    el.classList.toggle("guessing", g || kind === "last");
   };
   return {
     el,
     update(v) {
       const s = v.screen ?? {};
       deadline = s.deadline ?? 0;
+      guessUntil = s.guessUntil ?? 0;
       duration = s.duration ?? 1;
+      kind = s.kind ?? "first";
+      guessed = new Set(/** @type {string[]} */ (s.guessed ?? []));
       if (s.step !== step) {
         const first = step === 0;
         step = s.step;
-        const to = slips.map((_, c) => angleOf((c + step - 1) % n));
+        const to = pages.map((_, c) => angleOf((c + step - 1) % n));
         if (first) {
           to.forEach((a, c) => (angles[c] = a));
           place();
         } else {
-          // Forward round the ring (the last seat's slip goes on to the first).
+          // Forward round the ring (the last seat's page goes on to the first).
           const from = [...angles];
           for (let c = 0; c < to.length; c++) while (to[c] < from[c]) to[c] += Math.PI * 2;
           move = { from, to, t0: performance.now() };
           sfx.swish();
         }
-        const kind = s.kind === "guess" ? "guess" : "draw";
-        verb.textContent = kind === "guess" ? t.guess : t.draw;
-        verb.style.animation = "none";
-        void verb.offsetWidth;
-        verb.style.animation = "";
-        sub.textContent = `${t.stepOf(step, s.steps ?? 0)} · ${step === 1 ? t.firstStep : step === s.steps ? t.lastStep : t.passOn}`;
-        for (const e of slips) e.replaceChildren(kind === "draw" ? icon(PENCIL) : h("span", { class: "q" }, "?"));
+        for (const e of pages) e.querySelectorAll("path").forEach((p, i) => p.classList.toggle("on", i < step));
         roundChip.textContent = t.round(s.round ?? 1, s.rounds ?? 1);
-        const tw = s.twist && s.twist !== "clear" ? t.twists[/** @type {"glimpse" | "peephole"} */ (s.twist)] : null;
-        twistChip.hidden = !tw;
-        if (tw) twistChip.textContent = `${t.twistTitle}: ${tw[0]}`;
+        stepChip.textContent = t.stepOf(step, s.steps ?? 0);
       }
+      guessing = kind !== "first" && guessed.size < seats.length && left(guessUntil) > 0;
+      label();
       const done = new Set(/** @type {string[]} */ (s.done ?? []));
       seats.forEach((p, i) => {
-        const d = done.has(p.id);
+        const d = kind === "last" ? guessed.has(p.id) : done.has(p.id);
         seatEls[i]?.classList.toggle("done", d);
-        // The chain this seat works on: seat - (step - 1).
+        // The picture this seat works on: seat - (step - 1).
         const c = (((i - (step - 1)) % n) + n) % n;
-        slips[c]?.classList.toggle("done", d);
-        slips[c]?.classList.toggle("busy", !d);
+        pages[c]?.classList.toggle("done", d);
+        pages[c]?.classList.toggle("busy", !d);
+        pages[c]?.classList.toggle("asking", !d && (kind === "last" || (kind !== "first" && !guessed.has(p.id))));
       });
-      const missing = seats.filter((p) => !done.has(p.id)).map((p) => p.name);
+      const missing = seats.filter((p) => !(kind === "last" ? guessed.has(p.id) : done.has(p.id))).map((p) => p.name);
       waitline.textContent = missing.length > 0 && missing.length <= Math.max(2, Math.floor(n / 3)) ? t.waitingFor(missing) : "";
     },
     frame() {
@@ -541,6 +553,10 @@ function play(s) {
       arc.setAttribute("stroke-dasharray", `${(f * 100).toFixed(2)} 100`);
       clock.classList.toggle("low", ms < 10_000);
       secs.textContent = String(Math.ceil(ms / 1000));
+      if (guessing && left(guessUntil) <= 0) {
+        guessing = false;
+        label();
+      }
       if (move) {
         const p = Math.min(1, (performance.now() - move.t0) / 1100);
         const e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
@@ -556,317 +572,302 @@ function play(s) {
 }
 
 // ---------------------------------------------------------------------------
-// The reveal: one chain on its thread, then the verdict
+// The reveal: one picture rebuilt layer by layer, its story beside it
 
-/**
- * A guess's text with the smuggled words marked.
- * @param {string} text
- * @param {[number, number][]} ranges
- */
-function marked(text, ranges) {
-  const out = [];
-  let at = 0;
-  for (const [a, b] of [...ranges].sort((x, y) => x[0] - y[0])) {
-    if (a < at) continue;
-    out.push(text.slice(at, a), h("mark", {}, text.slice(a, b)));
-    at = b;
-  }
-  out.push(text.slice(at));
-  return out;
+/** A small paper with a finished picture (the reveal's gallery, the vote). @param {any} picture @param {string} cls */
+function thumb(picture, cls = "thumb") {
+  const c = /** @type {HTMLCanvasElement} */ (h("canvas"));
+  const el = h("div", { class: `paper ${cls}` }, c);
+  requestAnimationFrame(() => {
+    const f = fit(c);
+    drawLayers(f.ctx, inked(picture), 0, 0, f.size);
+  });
+  return el;
 }
 
 /** @param {any} s @returns {Scene} */
 function reveal(s) {
-  const chain = s.chain ?? { links: [], prompt: "" };
-  const links = /** @type {any[]} */ (chain.links ?? []);
-  const view = h("div", { class: "view" });
-  const strip = h("div", { class: "strip" });
-  view.append(strip);
-  const caption = h("div", { class: "paper caption", hidden: true });
+  // A copy: the client patches its view in place, and the next picture would overwrite this one.
+  const picture = structuredClone(s.picture ?? { layers: [] });
+  const layers = /** @type {any[]} */ (picture.layers ?? []);
+  const times = { layer: 3000, read: 2200, legend: 3600, ...(s.times ?? {}) };
+  seen.set(`${s.round}:${picture.id}`, picture);
+  const base = /** @type {HTMLCanvasElement} */ (h("canvas", { class: "base" }));
+  const top = /** @type {HTMLCanvasElement} */ (h("canvas", { class: "top" }));
+  const sheet = h("div", { class: "paper sheet tape", style: { "--r": `${(jitter(`sheet${s.round}:${picture.id}`) * 1.6).toFixed(1)}deg` } }, base, top);
+  const story = h("div", { class: "story", style: { "--rows": String(Math.max(3, layers.length)) } });
+  // The round's pictures as slots: those shown already, this one, those to come.
+  const shown = /** @type {number[]} */ (s.shown ?? []);
+  const slots = Array.from({ length: s.of ?? 1 }, (_, i) => {
+    const p = i < shown.length ? seen.get(`${s.round}:${shown[i]}`) : undefined;
+    return p ? thumb(p) : h("div", { class: `paper thumb empty${i === shown.length ? " now" : ""}` });
+  });
   const el = h(
     "div",
     { class: "scene reveal" },
     h(
       "div",
       { class: "revealhead" },
-      h("span", { class: "chip" }, t.chainCount(s.index ?? 1, s.of ?? 1)),
-      h("div", { class: "who" }, avatar(chain.author, "6vh"), t.chainOf(chain.author?.name ?? "")),
+      h("span", { class: "chip" }, t.pictureCount(s.index ?? 1, s.of ?? 1)),
+      h("div", { class: "who" }, avatar(picture.starter, "6vh"), t.pictureOf(picture.starter?.name ?? "")),
       h("div", { class: "grow" }),
-      h("span", { class: "chip" }, t.round(s.round ?? 1, s.rounds ?? 1)),
+      h("div", { class: `thumbs${slots.length > 8 ? " many" : ""}` }, ...slots),
     ),
-    view,
-    caption,
+    h("div", { class: "sheetwrap" }, sheet),
+    story,
   );
-
-  // The cards: the prompt (a tag), then drawings (sheets) and guesses (index cards).
-  /** @type {{ el: HTMLElement, card: HTMLElement, kind: string, link?: any, canvas?: HTMLCanvasElement, text?: HTMLElement, shown: boolean }[]} */
-  const items = [];
-  const promptCard = h("div", { class: "paper manila prompt" }, h("div", { class: "what" }, t.thePrompt), h("div", { class: "text" }, chain.prompt ?? ""));
-  items.push({ el: h("div", { class: "item" }, promptCard, h("div", { class: "label" }, avatar(chain.author), t.picked(chain.author?.name ?? ""))), card: promptCard, kind: "prompt", shown: false });
-  links.forEach((l, i) => {
-    const r = `${(jitter(`${chain.id}:${i}`) * 2.2).toFixed(1)}deg`;
-    if (l.kind === "draw") {
-      const canvas = /** @type {HTMLCanvasElement} */ (h("canvas"));
-      const empty = !(l.drawing?.strokes?.length > 0);
-      const card = h("div", { class: "paper sheet tape", style: { "--r": r, "--tape-tilt": `${(jitter(`t${i}`) * 5).toFixed(1)}deg` } }, canvas, empty ? h("div", { class: "blank" }, t.blank) : null);
-      items.push({ el: h("div", { class: "item" }, card, h("div", { class: "label" }, avatar(l.by), t.drewIt(l.by?.name ?? ""))), card, kind: "draw", link: l, canvas, shown: false });
-    } else {
-      const text = h("div", { class: `text${l.text ? ([...l.text].length > 22 ? " long" : "") : " none"}` }, l.text || t.noGuess);
-      const card = h("div", { class: "paper note", style: { "--r": r } }, text);
-      items.push({ el: h("div", { class: "item" }, card, h("div", { class: "label" }, avatar(l.by), t.guessedIt(l.by?.name ?? ""))), card, kind: "guess", link: l, text, shown: false });
-    }
-  });
-  /** @type {HTMLElement[]} the thread between item i and i + 1 */
-  const threads = [];
-  for (let i = 0; i + 1 < items.length; i++) {
-    const th = h("div", { class: "thread off" }, h("i"), h("i"));
-    threads.push(th);
-    strip.append(th);
-  }
-  for (const it of items) strip.append(it.el);
-
-  /** A card's centre in the strip's own coordinates. */
-  const centre = (/** @type {typeof items[number]} */ it) => ({
-    x: it.el.offsetLeft + it.card.offsetLeft + it.card.offsetWidth / 2,
-    y: it.el.offsetTop + it.card.offsetTop + it.card.offsetHeight / 2,
-  });
-  /** The thread between each two cards: from centre to centre (also down a row). */
-  const layoutThreads = () => {
-    for (let i = 0; i < threads.length; i++) {
-      const a = centre(items[i]);
-      const b = centre(items[i + 1]);
-      const th = threads[i];
-      th.style.left = `${a.x}px`;
-      th.style.top = `${a.y}px`;
-      th.style.width = `${Math.hypot(b.x - a.x, b.y - a.y)}px`;
-      th.style.rotate = `${Math.atan2(b.y - a.y, b.x - a.x)}rad`;
-    }
+  /** @type {{ abort: boolean }[]} */
+  const signals = [];
+  /** @type {HTMLElement[]} */
+  const rows = [];
+  let size = 0;
+  /** @type {CanvasRenderingContext2D | null} */
+  let baseCtx = null;
+  /** @type {CanvasRenderingContext2D | null} */
+  let topCtx = null;
+  /** Layers drawn on the base so far. */
+  let committed = 0;
+  const sizeUp = () => {
+    const a = fit(base);
+    const b = fit(top);
+    baseCtx = a.ctx;
+    topCtx = b.ctx;
+    size = a.size;
   };
-  /** The camera: centre item `i` at `scale`, or everything (`i` < 0). */
-  const camera = (/** @type {number} */ i, z = 1) => {
-    const vw = view.clientWidth;
-    // The cards' extent (not the threads': they may still have the old layout).
-    const sw = Math.max(...items.map((it) => it.el.offsetLeft + it.el.offsetWidth)) + items[0].el.offsetLeft;
-    let tx;
-    if (i < 0) {
-      z = Math.min(1, (vw * 0.95) / sw, (view.clientHeight * (strip.classList.contains("snake") ? 0.94 : 1.05)) / strip.offsetHeight);
-      tx = (vw - sw * z) / 2;
-    } else {
-      const it = items[i].el;
-      tx = vw / 2 - (it.offsetLeft + it.offsetWidth / 2) * z;
-    }
-    strip.style.transform = `translate(${tx}px, -50%) scale(${z})`;
-    strip.style.setProperty("--inv", String(Math.min(1.5, 1 / z)));
-    strip.style.setProperty("--sinv", String(Math.min(2.4, 1 / z)));
+  const commit = (/** @type {number} */ upTo) => {
+    if (!baseCtx) sizeUp();
+    committed = upTo;
+    drawLayers(/** @type {CanvasRenderingContext2D} */ (baseCtx), inked(picture, upTo), 0, 0, size);
+    topCtx?.clearRect(0, 0, size, size);
   };
 
-  /** Draws a drawing card: replayed, or at once. */
-  const paint = (/** @type {typeof items[number]} */ it, animate = false) => {
-    if (!it.canvas) return;
-    const { ctx, size } = fit(it.canvas);
-    if (!animate) return drawInk(ctx, it.link.drawing, 0, 0, size);
-    const ms = Math.min(replayTime(it.link.drawing, 900, 2600), 2600);
+  /** Row `k`: the layer's tag (number, word, drawer); its guess card comes later. */
+  const row = (/** @type {number} */ k, /** @type {boolean} */ animate) => {
+    const l = layers[k];
+    const c = inkOf(l.by);
+    const tag = h(
+      "div",
+      { class: "paper manila ltag", style: { "--c": c, "--r": `${(jitter(`tag${k}`) * 1.4).toFixed(1)}deg` } },
+      h("span", { class: "n" }, String(k + 1)),
+      h("span", { class: "word" }, l.word ?? ""),
+      h("span", { class: "by" }, h("i", { style: { "--c": c } }), t.drewIt(l.by?.name ?? "")),
+      l.drawing?.strokes?.length > 0 ? null : h("span", { class: "blank" }, t.blank),
+    );
+    const card = h("div", { class: "slot" });
+    const r = h("div", { class: `row${animate ? " enter" : ""}` }, tag, h("span", { class: "arrow" }, "→"), card);
+    rows[k] = r;
+    story.append(r);
+    return r;
+  };
+  /** The guess card of row `k`, with its verdict. */
+  const guessCard = (/** @type {number} */ k, /** @type {boolean} */ animate) => {
+    const l = layers[k];
+    const r = rows[k];
+    if (!r || r.querySelector(".gcard")) return;
+    const g = l.guess;
+    const text = h("span", { class: `text${g?.text ? "" : " none"}` }, g?.text || t.noGuess);
+    const card = h(
+      "div",
+      { class: `paper gcard${animate ? " fly" : ""}`, style: { "--r": `${(jitter(`g${k}`) * 2.4).toFixed(1)}deg` } },
+      text,
+      g ? h("span", { class: "by" }, avatar(g.by, "2.6vh"), t.read(g.by?.name ?? "")) : null,
+    );
+    /** @type {HTMLElement} */ (r.querySelector(".slot")).replaceChildren(card);
+    const verdict = () => {
+      if (!g) return;
+      card.append(h("span", { class: `mark ${g.right ? "ok" : "no"}` }, g.right ? "✓" : "✗"));
+      if (g.right) card.append(h("span", { class: "pts" }, t.each(l.points ?? 0)));
+      r.classList.add(g.right ? "right" : "wrong");
+      if (animate) (g.right ? sfx.right : sfx.wrong)();
+    };
+    if (animate) {
+      text.classList.add("writing");
+      later(900, verdict);
+    } else verdict();
+  };
+  /** Shows layers before `k` at once, then layer `k` drawing itself. */
+  const showLayer = (/** @type {number} */ k, /** @type {boolean} */ animate) => {
+    for (let i = 0; i < k; i++) {
+      if (!rows[i]) row(i, false);
+      guessCard(i, false);
+      rows[i]?.classList.remove("now");
+    }
+    if (committed < k) commit(k);
+    const l = layers[k];
+    if (!l) return;
+    if (!rows[k]) row(k, animate);
+    rows[k]?.classList.add("now");
+    if (!animate) {
+      commit(k + 1);
+      guessCard(k, false);
+      return;
+    }
+    sfx.scratch();
+    const ms = Math.min(replayTime(l.drawing, 900, 2400), Math.max(600, times.layer - 500));
     const signal = { aborted: false };
-    disposers.push(() => (signal.aborted = true));
-    return replay(ctx, it.link.drawing, size, ms, signal);
+    signals.push(/** @type {any} */ (signal));
+    later(250, () => {
+      if (!topCtx) sizeUp();
+      void replay(/** @type {CanvasRenderingContext2D} */ (topCtx), l.drawing, size, ms, signal, undefined, { paper: null, color: inkOf(l.by) }).then(() => {
+        if (!signal.aborted) commit(k + 1);
+      });
+    });
+    later(times.layer, () => guessCard(k, true));
   };
-  /** @type {(() => void)[]} */
-  const disposers = [];
+  /** The end: every row, then the picture shrinks into its slot. */
+  const legend = (/** @type {boolean} */ animate) => {
+    for (let i = 0; i < layers.length; i++) {
+      if (!rows[i]) row(i, false);
+      guessCard(i, false);
+      rows[i]?.classList.remove("now");
+    }
+    commit(layers.length);
+    el.classList.add("legend");
+    if (!animate) return;
+    later(Math.max(400, times.legend - 1100), () => {
+      const slot = slots[shown.length];
+      if (!slot) return;
+      const a = sheet.getBoundingClientRect();
+      const b = slot.getBoundingClientRect();
+      sheet.style.transition = "transform .8s cubic-bezier(.6, 0, .3, 1), opacity .8s";
+      sheet.style.transformOrigin = "0 0";
+      sheet.style.transform = `translate(${b.left - a.left}px, ${b.top - a.top}px) scale(${b.width / a.width})`;
+      sfx.swish();
+      later(800, () => {
+        const filled = thumb(picture);
+        slot.replaceWith(filled);
+        slots[shown.length] = filled;
+        sheet.style.opacity = "0";
+      });
+    });
+  };
 
   let cursor = -1;
   let stageNow = "";
-  /** Shows the cards up to `c`, the camera on `c`. */
-  const show = (/** @type {number} */ c, /** @type {boolean} */ animate) => {
-    threads.forEach((th, i) => th.classList.toggle("off", i + 1 > c));
-    items.forEach((it, i) => {
-      it.el.classList.toggle("future", i > c);
-      it.el.classList.toggle("dim", i < c);
-      if (i <= c && !it.shown) {
-        it.shown = true;
-        const now = animate && i === c;
-        if (it.kind === "draw") {
-          if (now) later(500, () => void paint(it, true));
-          else paint(it);
-        } else if (it.kind === "guess" && now) {
-          later(380, () => {
-            it.text?.classList.add("writing");
-            sfx.light();
-          });
-        }
-      }
-    });
-    camera(c, 1);
-  };
-  /**
-   * Everything at once, for the judging and the verdict. Long chains
-   * (more than five cards) snake over two rows, the second running back
-   * right to left, so the thread just drops down a row; the cards fly
-   * from the row to their places (FLIP).
-   */
-  let overviewed = false;
-  const overview = () => {
-    if (overviewed) return;
-    overviewed = true;
-    const before = items.map((it) => it.el.getBoundingClientRect());
-    for (const it of items) {
-      it.el.classList.remove("future", "dim");
-      if (!it.shown) {
-        it.shown = true;
-        if (it.kind === "draw") paint(it);
-      }
-    }
-    if (items.length > 5) {
-      const top = Math.ceil(items.length / 2);
-      strip.classList.add("snake");
-      items.forEach((it, i) => {
-        const row = i < top ? 1 : 2;
-        const col = i < top ? i + 1 : top - (i - top);
-        it.el.style.gridRow = String(row);
-        it.el.style.gridColumn = String(col);
-      });
-    }
-    strip.style.transition = "none";
-    camera(-1);
-    layoutThreads();
-    void strip.offsetWidth;
-    const z = strip.getBoundingClientRect().width / Math.max(1, strip.offsetWidth);
-    items.forEach((it, i) => {
-      const now = it.el.getBoundingClientRect();
-      const b = before[i];
-      if (!b || b.width === 0) return;
-      it.el.style.transition = "none";
-      it.el.style.translate = `${(b.left + b.width / 2 - (now.left + now.width / 2)) / z}px ${(b.top + b.height / 2 - (now.top + now.height / 2)) / z}px`;
-      it.el.style.scale = String(b.width / Math.max(1, now.width));
-    });
-    for (const th of threads) th.classList.add("off");
-    void strip.offsetWidth;
-    items.forEach((it, i) => {
-      it.el.style.transition = `translate .9s cubic-bezier(.5, 0, .2, 1) ${i * 40}ms, scale .9s cubic-bezier(.5, 0, .2, 1) ${i * 40}ms, opacity .6s, transform .8s, filter .6s`;
-      it.el.style.translate = "";
-      it.el.style.scale = "";
-    });
-    strip.style.transition = "";
-    later(700, () => threads.forEach((th, i) => later(i * 70, () => th.classList.remove("off"))));
-  };
-
-  /** The verdict, step by step: stamps, the cut, smuggled words, the caption. */
-  const verdict = (/** @type {any} */ v) => {
-    overview();
-    const gi = items.map((it, i) => (it.kind === "guess" ? i : -1)).filter((i) => i >= 0);
-    const died = v.died;
-    const alive = died === null || died === undefined ? gi.length : died;
-    const stamp = (/** @type {number} */ i, /** @type {string} */ text, /** @type {boolean} */ good) => {
-      const it = items[i];
-      const st = h("span", { class: `stamp${good ? " blue" : ""}`, style: { "--rot": `${(-6 + jitter(`st${i}`) * 7).toFixed(1)}deg`, "--fs": `calc(${good ? 3.4 : 5}vh * var(--sinv, 1))` } }, text);
-      it.card.append(st);
-      it.card.classList.remove("thump");
-      void it.card.offsetWidth;
-      it.card.classList.add("thump");
-    };
-    for (let g = 0; g < alive; g++) {
-      later(350 + g * 650, () => {
-        stamp(gi[g], t.alive, true);
-        sfx.light();
-      });
-    }
-    const tEnd = 350 + alive * 650 + 150;
-    later(tEnd, () => {
-      if (died === null || died === undefined) {
-        el.append(h("span", { class: "stamp blue bigstamp", style: { "--rot": "-8deg" } }, t.survived), confetti());
-        sfx.win();
-        return;
-      }
-      const g = gi[died];
-      if (g === undefined) return;
-      stamp(g, t.dead, false);
-      sfx.stamp();
-      later(250, () => {
-        const th = threads[g - 1];
-        if (th) {
-          th.classList.add("cut");
-          const a = centre(items[g - 1]);
-          const b = centre(items[g]);
-          strip.append(h("span", { class: "snip", style: { left: `${(a.x + b.x) / 2}px`, top: `${(a.y + b.y) / 2}px` } }, "✂"));
-        }
-        sfx.snip();
-        for (let i = g; i < items.length; i++) {
-          items[i].el.classList.add(i === g ? "killed" : "dead");
-          items[i].el.style.setProperty("--fall", `${(jitter(`f${i}`) * 5).toFixed(1)}deg`);
-        }
-        for (let i = g; i < threads.length; i++) threads[i]?.classList.add("gone");
-      });
-    });
-    // The caption: where it died (or that it lived).
-    later(tEnd + 900, () => {
-      caption.hidden = false;
-      caption.classList.toggle("good", died === null || died === undefined);
-      const br = v.break;
-      const kids = [];
-      if (br) {
-        const [a, x, b, y, c] = died === 0 ? t.diedAtOnce(br.drawer.name, br.guesser.name) : t.diedBetween(br.drawer.name, br.guesser.name);
-        kids.push(avatar(br.drawer), avatar(br.guesser), h("span", {}, a, h("b", {}, x), b, h("b", {}, y), c, v.judged ? "" : h("small", {}, t.byMachine)));
-      } else kids.push(h("span", {}, h("b", {}, t.survivedLine), v.judged ? "" : h("small", {}, t.byMachine)));
-      caption.replaceChildren(...kids);
-    });
-    // Smuggled words: the highlighter, whose word it was.
-    /** @type {any[]} */ (v.smuggles ?? []).forEach((sm, j) => {
-      later(tEnd + 1700 + j * 2000, () => {
-        const it = items[sm.at + 1];
-        if (!it?.text) return;
-        it.text.classList.remove("writing");
-        it.text.replaceChildren(...marked(it.link.text, sm.marks ?? []));
-        it.el.append(h("div", { class: "smugtag" }, h("b", {}, sm.word), " · ", t.smuggled(sm.by?.name ?? "")));
-        requestAnimationFrame(() => requestAnimationFrame(() => it.text?.querySelectorAll("mark").forEach((m) => m.classList.add("on"))));
-        sfx.pop();
-      });
-    });
-  };
-
   return {
     el,
     update(v) {
       const s = v.screen ?? {};
-      if (cursor < 0) requestAnimationFrame(layoutThreads);
-      if (s.stage === "show" && s.cursor !== cursor) {
-        const first = cursor < 0;
+      const first = cursor < 0;
+      if (s.stage === "layers" && s.cursor !== cursor) {
         cursor = s.cursor ?? 0;
         // A TV that joins late shows what was shown already at once.
-        if (first) {
-          requestAnimationFrame(() => {
-            layoutThreads();
-            strip.style.transition = "none";
-            show(cursor, true);
-            void strip.offsetWidth;
-            strip.style.transition = "";
-          });
-        } else show(cursor, true);
+        if (first) requestAnimationFrame(() => showLayer(cursor, true));
+        else showLayer(cursor, true);
       }
-      if (s.stage !== stageNow) {
-        const was = stageNow;
-        stageNow = s.stage;
-        if (s.stage === "judge") {
-          if (cursor < 0) requestAnimationFrame(layoutThreads);
-          cursor = items.length - 1;
-          requestAnimationFrame(overview);
-          const who = s.chain?.author;
-          caption.hidden = false;
-          caption.classList.remove("good");
-          const bar = deadlineBar(s.deadline ?? 0, s.duration ?? 0, "tick");
-          caption.replaceChildren(avatar(who), h("span", {}, who && v.roster?.some((/** @type {any} */ r) => r.id === who.id) ? t.judging(who.name) : t.judgingMachine), h("span", { class: "dots" }, h("i"), h("i"), h("i")), bar);
-        }
-        if (s.stage === "verdict") {
-          caption.hidden = true;
-          requestAnimationFrame(() => {
-            if (!was) layoutThreads();
-            verdict(s.verdict ?? {});
-          });
-        }
+      if (s.stage === "legend" && stageNow !== "legend") {
+        const late = first;
+        cursor = layers.length;
+        requestAnimationFrame(() => legend(!late));
       }
+      stageNow = s.stage;
     },
     dispose() {
-      for (const d of disposers) d();
+      for (const x of signals) /** @type {any} */ (x).aborted = true;
     },
   };
+}
+
+// ---------------------------------------------------------------------------
+// The best move: the gallery, the vote, the winner
+
+/**
+ * Tiles for `n` pictures in a box (px): the largest square that fits.
+ * @param {number} n @param {number} w @param {number} hgt @param {number} gap @param {number} extra the label under each
+ */
+function tiles(n, w, hgt, gap, extra) {
+  let best = { cols: 1, size: 0 };
+  for (let cols = 1; cols <= n; cols++) {
+    const rows = Math.ceil(n / cols);
+    const size = Math.min((w - gap * (cols - 1)) / cols, (hgt - (gap + extra) * rows) / rows);
+    if (size > best.size) best = { cols, size };
+  }
+  return best;
+}
+
+/** @param {any} s @returns {Scene} */
+function vote(s) {
+  const gallery = /** @type {any[]} */ (s.gallery ?? []);
+  const voters = /** @type {any[]} */ (s.voters ?? []);
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  const { cols, size } = tiles(gallery.length, W * 0.92, H * 0.66, H * 0.03, H * 0.065);
+  const grid = h(
+    "div",
+    { class: "gallery", style: { "grid-template-columns": `repeat(${cols}, ${Math.floor(size)}px)` } },
+    ...gallery.map((p, i) =>
+      h(
+        "div",
+        { class: "tile", style: { "--d": `${i * 0.06}s` } },
+        thumb(p, "art"),
+        // What it began as and what it ended as.
+        h(
+          "div",
+          { class: "chain typed" },
+          ...((/** @type {any[]} */ ls) => {
+            const word = (/** @type {any} */ l) => h("span", { style: { color: inkOf(l.by) } }, l.word ?? "");
+            if (ls.length <= 2) return ls.flatMap((l, k) => [k > 0 ? " → " : "", word(l)]);
+            return [word(ls[0]), " → … → ", word(ls.at(-1))];
+          })(p.layers ?? []),
+        ),
+      ),
+    ),
+  );
+  const dots = h("div", { class: "voters" }, ...voters.map((p) => h("span", { class: "voter", "data-id": p.id }, avatar(p, "4.4vh"), h("span", { class: "check" }, "✓"))));
+  const count = h("div", { class: "sub" });
+  const el = h("div", { class: "scene vote" }, h("h1", {}, t.bestTitle), h("p", { class: "help typed" }, t.bestHelp), grid, h("div", { class: "foot" }, dots, count), deadlineBar(s.deadline ?? 0, s.duration ?? 0));
+  return {
+    el,
+    update(v) {
+      const done = new Set(/** @type {string[]} */ (v.screen?.done ?? []));
+      for (const d of dots.querySelectorAll(".voter")) d.classList.toggle("done", done.has(/** @type {HTMLElement} */ (d).dataset["id"] ?? ""));
+      count.textContent = t.voted(done.size, voters.length);
+    },
+  };
+}
+
+/** @param {any} s @returns {Scene} */
+function best(s) {
+  const gallery = /** @type {any[]} */ (s.gallery ?? []);
+  const all = /** @type {any[]} */ (s.best ?? []);
+  const winners = all.slice(0, 3);
+  const el = h("div", { class: "scene best" }, h("h1", {}, t.bestTitle));
+  if (winners.length === 0) {
+    el.append(h("p", { class: "help typed" }, t.noVotes));
+    return { el };
+  }
+  const row = h("div", { class: `winners n${winners.length}` });
+  winners.forEach((w, i) => {
+    const p = gallery.find((x) => x.id === w.picture);
+    const l = p?.layers?.[w.layer];
+    if (!p || !l) return;
+    const c = /** @type {HTMLCanvasElement} */ (h("canvas"));
+    const prev = p.layers[w.layer - 1];
+    const card = h(
+      "div",
+      { class: "winner", style: { "--d": `${0.3 + i * 0.25}s` } },
+      h("div", { class: "paper sheet tape" }, c, h("span", { class: "stamp blue", style: { "--rot": "-8deg", "--fs": "4.4vh" } }, t.votes(w.votes ?? 0))),
+      h("div", { class: "paper manila ltag", style: { "--c": inkOf(l.by) } }, prev ? h("span", { class: "was" }, `${prev.word ?? ""} →`) : null, h("span", { class: "word" }, l.word ?? "")),
+      h("div", { class: "by" }, avatar(l.by, "5vh"), h("span", {}, t.bestBy(l.by?.name ?? "")), h("b", {}, `+${num(lang, w.points ?? 0)}`)),
+    );
+    row.append(card);
+    // The earlier layers faded, this one drawing itself in its colour.
+    requestAnimationFrame(() => {
+      const f = fit(c);
+      const under = { strokes: p.layers.slice(0, w.layer).flatMap((/** @type {any} */ x) => x.drawing?.strokes ?? []) };
+      drawLayers(f.ctx, [{ drawing: under, color: FADED }], 0, 0, f.size);
+      const top = document.createElement("canvas");
+      top.className = "top";
+      c.parentElement?.insertBefore(top, c.nextSibling);
+      const g = fit(top);
+      later(700 + i * 300, () => void replay(g.ctx, l.drawing, g.size, Math.min(2400, replayTime(l.drawing)), undefined, undefined, { paper: null, color: inkOf(l.by) }));
+    });
+  });
+  el.append(row);
+  if (all.length > 1) el.append(h("p", { class: "help typed" }, all.length > winners.length ? t.sharedMore(all.length - winners.length) : t.shared));
+  el.append(confetti(60));
+  later(400, sfx.win);
+  return { el };
 }
 
 /** Paper confetti. */
@@ -888,102 +889,6 @@ function confetti(n = 70) {
     );
   }
   return box;
-}
-
-// ---------------------------------------------------------------------------
-// The hunt
-
-/**
- * The suspects as polaroids.
- * @param {any[]} suspects
- * @param {boolean} enter animate them in
- */
-function polaroids(suspects, enter) {
-  return suspects.map((p, i) => {
-    const r = `${(jitter(`p${p.id}`) * 3.5).toFixed(1)}deg`;
-    const front = h(
-      "div",
-      { class: "paper polaroid", style: { "--r": r } },
-      h("div", { class: "photo", style: { "--c": colorOf(p.id) } }, avatar(p)),
-      h("div", { class: "nm" }, p.name),
-      p.breaks > 0 ? h("span", { class: "deaths" }, t.atDeaths(p.breaks)) : null,
-    );
-    const back = h("div", { class: "paper polaroid back", style: { "--r": r } }, h("span", { class: "stamp" }, t.wrecker), h("div", { class: "nm" }, p.name));
-    const votes = h("div", { class: "votes" });
-    const el = h("div", { class: "suspect", style: { "--d": `${enter ? i * 0.07 : 0}s`, ...(enter ? {} : { animation: "none" }) } }, h("div", { class: "flip" }, front, back), votes);
-    return { id: p.id, p, el, votes, front };
-  });
-}
-
-/** @param {any} s @returns {Scene} */
-function accuse(s) {
-  const cards = polaroids(s.suspects ?? [], true);
-  const count = h("div", { class: "sub" });
-  const el = h("div", { class: `scene hunt${cards.length > 6 ? " many" : ""}` }, h("h1", {}, t.whoWrecker), count, h("div", { class: "suspects" }, ...cards.map((c) => c.el)), deadlineBar(s.deadline ?? 0, s.duration ?? 0));
-  return {
-    el,
-    update(v) {
-      const done = new Set(/** @type {string[]} */ (v.screen?.done ?? []));
-      for (const c of cards) c.el.classList.toggle("voted", done.has(c.id));
-      count.textContent = t.voted(done.size, cards.length);
-    },
-  };
-}
-
-/** @param {any} s @returns {Scene} */
-function unmask(s) {
-  const suspects = /** @type {any[]} */ (s.suspects ?? []);
-  const cards = polaroids(suspects, false);
-  const title = h("h1", {}, t.theVotes);
-  const el = h("div", { class: `scene hunt${cards.length > 6 ? " many" : ""}` }, title, h("div", { class: "sub" }, "\u00a0"), h("div", { class: "suspects" }, ...cards.map((c) => c.el)));
-  let at = 300;
-  for (const c of cards) {
-    const n = c.p.votes ?? 0;
-    for (let k = 0; k < n; k++) {
-      later(at, () => {
-        c.votes.append(h("span", { class: "pin", style: { left: `${18 + ((k * 23) % 64)}%`, top: `${(k % 2) * 1.2}vh`, "--c": "var(--red)" } }));
-        sfx.pop();
-      });
-      at += 200;
-    }
-    if (n > 0) later(at, () => c.front.append(h("span", { class: "count" }, String(n))));
-  }
-  const top = Math.max(0, ...suspects.map((p) => p.votes ?? 0));
-  const tops = cards.filter((c) => top > 0 && c.p.votes === top);
-  at += 500;
-  later(at, () => {
-    for (const c of tops) c.el.classList.add("top");
-    title.textContent = s.wrecker ? t.wreckerWas : t.noWrecker;
-    title.style.animation = "none";
-    void title.offsetWidth;
-    title.style.animation = "";
-    if (s.wrecker) sfx.drum();
-  });
-  at += 1500;
-  if (s.wrecker) {
-    later(at, () => {
-      for (const c of cards) {
-        if (c.id === s.wrecker.id) c.el.classList.add("flipped");
-        else c.el.classList.add("out");
-      }
-      sfx.stamp();
-    });
-    later(at + 1000, () => {
-      el.append(
-        h(
-          "div",
-          { class: "outcome" },
-          h("span", { class: `stamp${s.caught ? " blue" : ""}`, style: { "--rot": "-6deg" } }, s.caught ? t.caught : t.gotAway),
-          h("div", { class: "line" }, t.broke(s.wrecker.name, s.wrecks ?? 0)),
-        ),
-      );
-      if (s.caught) {
-        el.append(confetti(50));
-        sfx.win();
-      } else sfx.stamp();
-    });
-  }
-  return { el };
 }
 
 // ---------------------------------------------------------------------------
@@ -1013,11 +918,8 @@ function scores(s) {
     if (l.score !== last) rank = i + 1;
     last = l.score;
     const pts = h("span");
-    const gains = [];
     const e = l.earned ?? {};
-    for (const k of /** @type {const} */ (["links", "smuggles", "wrecks", "spot", "escape"])) {
-      if (e[k] > 0) gains.push(h("span", { class: `gain${k === "wrecks" || k === "escape" ? " red" : ""}` }, `+${num(lang, e[k])} ${t.kinds[k]}`));
-    }
+    const gains = /** @type {const} */ (["drawn", "read", "best"]).filter((k) => e[k] > 0).map((k) => h("span", { class: `gain ${k}` }, `+${num(lang, e[k])} ${t.kinds[k]}`));
     ledger.append(
       h(
         "div",
@@ -1025,13 +927,7 @@ function scores(s) {
         h("span", { class: "rk" }, String(rank)),
         avatar(l),
         h("span", { class: "nm" }, l.name),
-        h(
-          "span",
-          { class: "mid" },
-          l.word ? h("span", { class: `word${l.smuggled > 0 ? " hit" : ""}` }, `${t.wordWas}: ${l.word}${l.smuggled > 0 ? ` ✓${l.smuggled > 1 ? `×${l.smuggled}` : ""}` : ""}`) : null,
-          l.wrecker ? h("span", { class: "w" }, t.wrecker) : null,
-          ...gains,
-        ),
+        h("span", { class: "mid" }, ...gains),
         h("span", { class: "pts" }, pts, l.delta ? h("small", {}, `+${num(lang, l.delta)}`) : null),
       ),
     );

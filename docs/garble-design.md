@@ -1,149 +1,152 @@
 # Garble (design)
 
-A telephone drawing game for 4–12 players in `games/garble`: a web app on
-`@tvpipe/party`, like `games/drawbluff`. Draw, guess, pass it on; every
-player only sees the step right before theirs. On top of the telephone
-game sit two secrets that pull against the shared goal of keeping chains
-alive: a word each player tries to smuggle in, and one Wrecker who wants
-chains to die. People judge; the machine only checks facts.
+A drawing game for 4–12 players in `games/garble`: a web app on
+`@tvpipe/party`, like `games/drawbluff`. One picture per player goes
+round the table, and everyone has to turn it into something else by
+drawing **on top** of it. Nothing is ever erased: a cat becomes a
+submarine becomes a hedgehog, and the TV replays how.
+
+0.1 was a telephone game with secret words, a Wrecker, a hunt and a
+judge; its incentives fought its fun (points for chains that survive
+punished the drift that makes telephone funny, and a Wrecker could not
+be told from a bad drawer). 0.2 replaces it with this.
 
 ## 1. Why it is fun
 
-- **Drift is funny by itself.** "A peacock showing off" becomes "a
-  sneaky pancake" in four steps. Bad drawers make it better, not worse,
-  which is the opposite of Drawbluff, where a good drawing matters.
-- **Nobody waits.** Every step, every player works on one chain at the
-  same time, so a step takes as long as its timer at most, whatever the
-  room's size.
-- **The reveal is a story**, told on the TV card by card, and judged by
-  the one person who knows how it started.
-- **Contradicting desires.** Everybody wants chains to survive (it pays
-  everyone in them) but also wants their own word in them (which bends
-  them), and one player wants them dead. Every bend is suspicious: an
-  honest bad drawing, a smuggled word, or the Wrecker?
-- **Progressive disclosure** on three levels: you see one step of a
-  chain; the TV shows a chain one card at a time; secrets come out in
-  order (smuggled words at their verdict, the Wrecker at the end of the
-  round, everyone's word on the ledger).
+- **Making the most of what is there.** The cat's body becomes the
+  hull, an ear the periscope. Every step is a small puzzle with a
+  creative answer, and the cleverer it is, the better the next player
+  can read it.
+- **The picture fills up.** Late layers are hard: the page is full of
+  someone else's ink. Bad drawings make it funnier, not worse.
+- **The reveal is a story**: the TV rebuilds each picture layer by
+  layer, every layer in its drawer's colour, with what it was meant to
+  be and what the next player saw.
+- **Nobody waits.** Every step, every player works on a different
+  picture at the same time.
+- **One clear goal.** You score when the next player reads your layer
+  right, and so does the reader. Everybody wants clear, clever
+  transformations; nobody plays against the table.
 
 ## 2. A round
 
 ```
-secrets ─▶ step 1 (draw) ─▶ step 2 (guess) ─▶ … ─▶ step S (guess) ─▶ reveal (per chain) ─▶ hunt ─▶ unmask ─▶ scores
- 11 s        80 s              30 s                    30 s             show, judge, verdict    35 s     ~9 s     12 s
+start ─▶ layer 1 (draw) ─▶ step 2 (see, guess, draw on top) ─▶ … ─▶ last guess ─▶ reveal (per picture) ─▶ best move ─▶ scores
+          60 s               20 s guess + 60 s draw                    20 s         ~5 s a layer, ✓/✗        30 s vote     11 s
 ```
 
-- **Secrets.** Every phone shows the same face-down card ("top secret");
-  held, it shows the player's word, and for one player also "You are the
-  Wrecker". The TV explains both (and the round's twist).
-- **Steps.** Seats are shuffled each round. Chain `c` starts at seat `c`;
-  step `k` of chain `c` is done by seat `(c + k) % n`, so each step is a
-  permutation (everyone busy) and no chain visits a player twice. Chains
-  have `S = min(length, n)` steps rounded down to even (4, 6 or 8 by the
-  room's setting), always ending with a guess. The first step deals two
-  prompts to pick from, then draw. A drawer reads the latest guess of
-  the chain (a skipped guess passes the one before on); a guesser sees
-  the latest drawing. Missing answers count as an empty page or a skipped
-  guess; the chain goes on.
-- **Reveal.** Each chain in turn: the prompt, then each drawing (it
-  draws itself, stroke by stroke) and each guess (written in), the camera
-  following along the thread. Then everything at once (chains over five
-  cards snake over two rows) while the chain's **author** judges on their
-  phone: tap the first guess that no longer says it (everything after it
-  dies with it), or "it survived". The TV stamps ALIVE on each guess up
-  to the death, DEAD on the one that killed it, cuts the thread there,
-  and names the drawer and guesser of that link. Smuggled words get a
-  highlighter and a tag ("zebra · Gizmo's secret word"). Phones can
-  react meanwhile (four bubbles that float up the TV).
-- **Hunt.** Everyone names a suspect (not themselves). The TV and the
-  phones show how many deaths each player was at, the only evidence there
-  is besides what everyone saw.
-- **Unmask.** The votes land as pins, the most-voted card shakes, the
-  Wrecker's card flips: caught or got away.
+(The host page's "fast" timers: 45, 15 + 40, 15 s, the vote 20 s.) A
+step is one deadline for both its parts: whoever guesses early has
+longer to draw; at the guess's deadline a phone without a guess moves on
+to drawing (the guess counts as wrong). The word to draw arrives only
+after the guess.
 
-Several rounds make a game (default 2). The Wrecker rotates (the fewest
-times Wrecker so far); words and prompts are dealt from decks the room
-keeps from game to game (no repeats until all were dealt).
+- **Seats** are shuffled each round. Picture `c` starts at seat `c`;
+  step `k` of picture `c` is done by seat `(c + k) % n`, so each step
+  everyone is busy and no picture visits a player twice.
+- **Layer 1.** Every phone deals two words; you pick one and draw it on
+  a blank page.
+- **Steps 2 … L.** You get the next picture: every layer so far, all in
+  the same black ink (during play the ink does not tell you which
+  strokes are new). First you write what you think it is now (a word or
+  two). Then the phone deals your word ("Make it a **submarine**") and
+  you draw on top. Your own strokes can be undone; the old ink cannot be
+  touched. While you draw, the old ink is a shade lighter than yours so
+  you see what is yours.
+- **The last guess.** After layer `L`, the next player only guesses.
+- **Length.** `L = min(setting, n − 1)` layers (setting 3, 5 or 7;
+  default 5), so every picture visits `L + 1` different players.
+- **Settings** (the host page, or the VIP's phone in the lobby): rounds
+  1–4 (default 2), the length, undo (default on: your own strokes; off:
+  every stroke counts), the language (host page).
+- Missing answers: no guess counts as wrong; no drawing leaves the page
+  as it was (the next guesser still sees something). A blank layer pays
+  nobody, even if its word is guessed by luck.
 
-## 3. Judging: people for taste, the machine for facts
+A guess is about the **latest** layer: "what is it now?". It is right
+when it says that layer's word (§3).
 
-- **Where a chain died** is taste ("is 'skateboarding granny' still
-  'grandma on a skateboard'?"), so a person decides: the author, who drew
-  the prompt and is the only one who knew it. It is quick (one tap), and
-  the author's verdict is itself evidence: a Wrecker judging their own
-  chain dishonestly is visible to the room. The verdict is monotonic (the
-  first dead guess; no revival). Without an answer (the author left, is
-  away, or the timer ran out) the machine judges: a guess still says the
-  prompt when they share a meaningful word (`alike` in `game/rules.ts`).
-- **Whether a word was smuggled** is a fact the machine checks
-  (`says`): the same word folded (case, accents, `ß`), the same stem
-  (plural and inflection endings, English and German), or for stems of
-  four letters and more, inside a longer word (`Piratenoma`,
-  `rocketship`). A player's word counts where it **first** shows up in a
-  guess written by **someone else**, **after** the player's own step, and
-  not in the prompt. Writing your own word into your own guess counts for
-  nobody (and blocks it for later). Secret words are dealt so that none is
-  in the round's prompts, and none contains another.
+## 3. Judging
+
+The machine checks; there are no judges. A guess (a word or two, at
+most 28 characters) says a word when it contains it folded (case,
+accents, `ß`), with the same stem, inside a longer word for stems of
+four letters and more (`Piratenschiff` says `Pirat`, `Kätzchen`
+`Katze`), or as one of the word's listed synonyms (`data/words.txt`:
+`cat|kitten|kitty`). Stems follow the room's language: English takes
+off plurals only (`-s`, `-es`, `-ies`; not `-ss`, `-us`, `-is`), German
+`-en`, `-er`, `-e`, `-s` and `-n` after `-el`/`-er` (`Gabeln`; not
+`Stern`), so English `tower` keeps its `-er` and `toast` does not say
+`toaster`. A word of several (`ice cream`) is said by its words in a
+row or written as one (`icecream`).
+
+The word lists are concrete, drawable nouns, each with the synonyms and
+irregular plurals people actually write, and no word or synonym says
+another entry's (`test/rules.test.ts` checks every pair). That costs a
+few: German has no `Fledermaus` (a `Maus`), no `Spiegel` (an `Igel`),
+no `Haifisch` (a `Fisch`), English no `pineapple` next to `apple`.
 
 ## 4. Points
 
 | | |
 |---|---|
-| Each link that survived (a drawing and the guess after it) | 100 to its drawer, 100 to its guesser |
-| Your word smuggled into a chain | 300 (once per chain) |
-| The Wrecker: a chain that died at their drawing or guess | 300 each, **void if caught** |
-| Naming the Wrecker | 200 each |
-| The Wrecker, not caught | 400 |
+| Layer `k` read right by the next player | `50 + 50·k` to its drawer and to the reader (layer 1: 100, layer 5: 300) |
+| Best move (most votes, at least two; ties split it, in tens) | 200 to its drawer |
 
-The Wrecker is caught when they alone have the most votes (a tie lets
-them go). A 6-player round with 6 steps has 3 links per chain and every
-player in 6 chains: about 600 a round for keeping everything alive, so a
-smuggled word is worth half a round of survival, and the Wrecker breaking
-three chains and getting away (1300) beats any honest player, which is
-why catching them matters.
+Later layers pay more because they are harder: more ink to work
+around. Several rounds make a game (default 2); words are dealt from a
+deck the room keeps from game to game (no repeats until all were
+dealt), never twice in one picture.
 
-## 5. Twists (progressive disclosure on the guesses)
+## 5. The reveal
 
-With twists on (the default) the rounds rotate: 1 **clear** (the drawing
-draws itself, then stays; replay), 2 **Glimpse** (it draws itself, stays
-three seconds, then fades: guess from memory), 3 **Peephole** (covered;
-only a circle under the finger shows it), then clear again.
+Each picture in turn, on the TV: a blank page; layer 1 draws itself
+stroke by stroke in its drawer's colour, its tag says the word and the
+drawer; the next player's guess card flies in with ✓ or ✗; then the
+next layer draws on top in its drawer's colour, and so on. At the end
+the whole picture stands with a legend (each colour, its word, its
+drawer), then shrinks into the gallery. Phones can react meanwhile
+(four bubbles that float up the TV).
+
+**Best move.** After the last picture, the gallery: every layer of the
+round with ink is a candidate (on the phone: the picture up to that
+layer, the earlier layers faded and its new strokes in its drawer's
+colour, with "cat → submarine" and the drawer); each phone taps the
+cleverest one (not their own). The TV shows the finished pictures and
+who voted, then the winner: the layer drawing itself over the faded
+picture, its word, its drawer, its votes. One vote alone wins nothing
+(a taste, not a verdict): in a small room everyone may pick something
+else.
 
 ## 6. The look
 
-Paper and ink on a dark cutting mat. Drawings are black ink only, on
-off-white paper with tape. Prompts are typed (Special Elite) on manila
-tags, guesses handwritten (Caveat) on index cards, headings and rubber
-stamps in Anton. Red is the thread, death and the Wrecker; blue is life;
-a highlighter marks smuggled words; each player's colour appears only on
-their pin and avatar. Everything moves: the logo's paper letters bob,
-name tags drop in, cards are dealt, slips travel round the ring of
-players between steps, drawings replay, stamps thump, threads get cut,
-votes land as pins, polaroids flip, scores count up. Short synthesized
-sounds on the TV only (the host's preview is muted).
+Paper and ink on a dark cutting mat, as 0.1: off-white paper with tape,
+words typed (Special Elite) on manila tags, guesses handwritten
+(Caveat) on index cards, headings in Anton. During play the ink is
+black; in the reveal each layer is in its drawer's colour (the player
+colours, dark enough to read on paper). Short synthesized sounds on the
+TV only.
 
-The phone is made for thumbs: the pad as large as the screen allows with
-the tools under the thumb, the keyboard-aware guess screen, big tiles
-for the judge, the suspects and reactions; secrets show only while a
-finger holds them.
+The phone is made for thumbs: the pad as large as the screen allows,
+the word to draw above it, the tools under the thumb; the guess screen
+keyboard-aware, the picture as large as fits above the field.
 
 ## 7. Views and privacy
 
-The host is the only authority (docs/party-design.md §5). A player's
-word reaches only their own phone, and the Wrecker's role only the
-Wrecker's, until the unmasking; a word becomes public on the TV when it
-is smuggled, all of them on the ledger. `test/game.test.ts` watches every
-view of a whole game for leaks.
+The host is the only authority (docs/party-design.md §5). A layer's
+word reaches only its drawer until the reveal; a guess only its writer;
+the picture of a step only the player at that step. `test/game.test.ts`
+watches every view of a whole game for leaks.
 
 ## 8. Not done (yet)
 
-- More than 12 players: the reveal shows every chain, about 30–45 s
-  each; past 12 it would need Drawbluff's spotlights and a gallery.
-- Joining mid-game: newcomers wait for the next round (`wait`) or the
-  next game (`closed`); a chain cannot take a player in mid-round.
-- The machine's verdict is a simple word match; synonyms ("granny" for
-  "grandma") count as dead. It only matters when the author does not
-  judge.
-- Bots cannot see drawings: the host page gives them what a drawing was
-  meant to be (and the drawer's word now and then), so games with bots
-  survive, drift and smuggle.
+- More than 12 players (the reveal would need spotlights).
+- Joining mid-game: newcomers wait for the next round.
+- An ink limit per layer, and rounds where the picture is only shown
+  for a few seconds.
+- Bots cannot see drawings: the host page gives them what the latest
+  layer with ink was meant to be, so games with bots read right most of
+  the time.
+- The live check's screenshots play a scripted first round
+  (`game.script`: the seats and the words; `test/live/scenario.ts` has
+  every layer and guess).

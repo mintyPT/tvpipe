@@ -1,17 +1,18 @@
 /**
- * Fake players: clients that play Garble by themselves (doodles, guesses
- * in the room's language, random verdicts and suspects). For the tests
- * (in Node), and for trying the game alone: the host page's "Add a bot"
- * runs them in the window, connected through tvpipe like a phone.
+ * Fake players: clients that play Garble by themselves (doodles on top,
+ * guesses in the room's language, a vote for the best move). For the
+ * tests (in Node) and the live check: the host page's bot buttons (only
+ * with `?bots`) run them in the window, connected through tvpipe like a
+ * phone.
  *
- * A bot cannot read a drawing. With an `oracle` (the host page's, which
- * knows the chains) it guesses what the drawing was meant to be, more or
- * less, so a game with bots has chains that survive, drift and die.
+ * A bot cannot see a drawing. With an `oracle` (the host page's, which
+ * knows what each layer was meant to be) it reads it right most of the
+ * time, sometimes with a synonym or a plural, and now and then not.
  */
 
 import { memoryStorage, PartyClient, type WebSocketFactory } from "@tvpipe/party/client";
 
-import { pickLang, type Drawing, type Lang } from "./rules.ts";
+import { pickLang, type Drawing, type Lang, type Word } from "./rules.ts";
 
 export interface BotOptions {
   /** The WebSocket URL (`ws://127.0.0.1:PORT/_tvpipe/ws`). */
@@ -27,21 +28,23 @@ export interface BotOptions {
   think?: () => number;
   /** Never answer (to test deadlines). */
   silent?: boolean;
-  /** What the drawing this bot guesses was meant to show (its player id), if known. */
-  oracle?: ((id: string) => { text: string; word?: string | undefined } | undefined) | undefined;
+  /** Tasks it leaves to the test (`vote`, …). */
+  skip?: string[];
+  /** What the picture this bot guesses was meant to be now (its player id), if known. */
+  oracle?: ((id: string) => Word | undefined) | undefined;
 }
 
 /** Guesses when a bot has no idea, per language. */
 export const GUESSES: Record<Lang, readonly string[]> = {
-  en: ["a sad potato", "my uncle on monday", "a confused banana", "a dancing lamp", "abstract art", "a sneaky pancake", "an angry cloud", "a very tired frog", "a pirate ship", "a haunted toaster"],
-  de: ["eine traurige Kartoffel", "mein Onkel am Montag", "eine verwirrte Banane", "eine tanzende Lampe", "moderne Kunst", "ein frecher Pfannkuchen", "eine wütende Wolke", "ein müder Frosch", "ein Piratenschiff", "ein Toaster, in dem es spukt"],
+  en: ["a potato", "my uncle", "a lamp", "abstract art", "a pancake", "a cloud", "a tired frog", "a toaster", "spaghetti", "a mess"],
+  de: ["eine Kartoffel", "mein Onkel", "eine Lampe", "moderne Kunst", "ein Pfannkuchen", "eine Wolke", "ein müder Frosch", "ein Toaster", "Spaghetti", "Chaos"],
 };
 
-/** A doodle in black ink: a face, a house, a sun or a cat, in a random spot. */
+/** A doodle: a face, a house, a sun or a cat, in a random spot (bots draw it on top of whatever is there). */
 export function doodle(rng: () => number): Drawing {
   const cx = 300 + Math.floor(rng() * 400);
   const cy = 300 + Math.floor(rng() * 400);
-  const r = 110 + Math.floor(rng() * 90);
+  const r = 90 + Math.floor(rng() * 80);
   const clamp = (v: number) => Math.max(0, Math.min(1000, Math.round(v)));
   const circle = (x: number, y: number, rad: number, width: number) => {
     const s = [width];
@@ -79,8 +82,6 @@ export function doodle(rng: () => number): Drawing {
           line(14, cx + r * 0.6, cy - r * 0.35, cx + r * 0.55, cy - r * 1.05, cx + r * 0.2, cy - r * 0.68),
           [22, clamp(cx - r * 0.25), clamp(cy - r * 0.1)],
           [22, clamp(cx + r * 0.25), clamp(cy - r * 0.1)],
-          line(7, cx - r * 0.9, cy + r * 0.1, cx - r * 0.3, cy + r * 0.2),
-          line(7, cx + r * 0.9, cy + r * 0.1, cx + r * 0.3, cy + r * 0.2),
         ],
       };
   }
@@ -116,30 +117,25 @@ export class Bot {
     }, delay);
   }
 
-  /** A guess: what the oracle says (often), a part of it, or nonsense. */
+  /** A guess: the word (mostly), one of its synonyms or its plural, or nonsense. */
   #guess(lang: Lang): string {
     const known = this.client.you ? this.#o.oracle?.(this.client.you.id) : undefined;
     const silly = GUESSES[lang];
     const any = silly[Math.floor(this.#rng() * silly.length)]!;
     if (!known) return any;
-    const truth = known.text;
     const x = this.#rng();
-    // The drawer smuggled their word in, and the bot fell for it.
-    if (known.word && x < 0.2) return `${truth.split(" ").slice(0, 3).join(" ")} ${lang === "de" ? "mit" : "with"} ${known.word}`.slice(0, 40);
-    if (x < 0.65) return truth;
-    if (x < 0.85) {
-      const words = truth.split(" ");
-      return words.slice(0, Math.max(1, words.length - 1)).join(" ") + (lang === "de" ? " mit Hut" : " with a hat");
-    }
+    if (x < 0.5) return known.word;
+    if (x < 0.65 && known.also.length > 0) return known.also[Math.floor(this.#rng() * known.also.length)]!;
+    if (x < 0.75) return lang === "de" ? `viele ${known.word}` : `${known.word}s`;
     return any;
   }
 
   #onView(view: Record<string, any>): void {
-    if (this.#o.silent) return;
     const me = view["me"] ?? {};
+    if (this.#o.silent || this.#o.skip?.includes(me.task)) return;
     const room = view["room"] ?? {};
     const c = this.client;
-    const turn = `${room.round}:${room.step ?? ""}:${me.deadline ?? ""}`;
+    const turn = `${room.round}:${me.step ?? ""}`;
     switch (me.task) {
       case "lobby":
       case "final": {
@@ -158,17 +154,13 @@ export class Bot {
       case "guess":
         if (!me.done) this.#once(`guess:${turn}`, () => c.act("guess", { text: this.#guess(pickLang(room.lang)) }));
         return;
-      case "judge":
+      case "vote":
         if (!me.done) {
-          const n = (me.chain?.links ?? []).filter((l: { kind: string }) => l.kind === "guess").length;
-          const died = this.#rng() < 0.3 ? null : Math.floor(this.#rng() * Math.max(1, n));
-          this.#once(`judge:${turn}:${me.chain?.id}`, () => c.act("judge", { died }));
-        }
-        return;
-      case "accuse":
-        if (!me.done && Array.isArray(me.suspects) && me.suspects.length > 0) {
-          const s = me.suspects[Math.floor(this.#rng() * me.suspects.length)];
-          this.#once(`accuse:${turn}`, () => c.act("accuse", { suspect: s.id }));
+          const mine = new Set<string>(me.mine ?? []);
+          const ids: string[] = [];
+          for (const p of room.gallery ?? []) (p.layers ?? []).forEach((l: { drawing?: Drawing }, k: number) => (l.drawing?.strokes?.length ?? 0) > 0 && ids.push(`${p.id}:${k}`));
+          const pool = ids.filter((id) => !mine.has(id));
+          if (pool.length > 0) this.#once(`vote:${room.round}`, () => c.act("vote", { layer: pool[Math.floor(this.#rng() * pool.length)] }));
         }
         return;
     }

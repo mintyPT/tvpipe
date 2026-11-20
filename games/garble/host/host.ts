@@ -11,7 +11,7 @@ import { qrSvg, Tvpipe, type CastStatus, type HostedParty, type Player, type Lat
 
 import { bots, type Bot } from "../game/bots.ts";
 import { DEFAULT_TIMINGS, FAST_TIMINGS, Garble } from "../game/game.ts";
-import { LANGS, parseList, pickLang, type Lang } from "../game/rules.ts";
+import { LANGS, parseWords, pickLang, type Lang, type Word } from "../game/rules.ts";
 import { strings } from "./strings.ts";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -123,7 +123,7 @@ function renderPlayers(): void {
   const short = party.connectedPlayers.length < game.minPlayers;
   $<HTMLButtonElement>("start").disabled = running || short;
   $("start").textContent = running ? t.playing : short ? t.waitingMore(game.minPlayers - party.connectedPlayers.length) : t.start;
-  for (const id of ["rounds", "length", "timers", "twists", "undo", "late", "lang"]) $<HTMLSelectElement>(id).disabled = running;
+  for (const id of ["rounds", "length", "timers", "undo", "late", "lang"]) $<HTMLSelectElement>(id).disabled = running;
   renderSettings();
 }
 
@@ -131,8 +131,8 @@ function renderPlayers(): void {
 function renderSettings(): void {
   const s = game.settings;
   $<HTMLSelectElement>("undo").value = s.undo ? "on" : "off";
-  $<HTMLSelectElement>("twists").value = s.twists ? "on" : "off";
   $<HTMLSelectElement>("length").value = String(s.length);
+  $<HTMLSelectElement>("rounds").value = String(game.rounds);
   $<HTMLSelectElement>("late").value = party.lateJoin === "closed" ? "closed" : "wait";
 }
 
@@ -203,7 +203,7 @@ async function addBots(n: number): Promise<void> {
       key: party.joinKey,
       names: names.map((x) => `${x}${robots.length + 1}`),
       think: () => 1500 + Math.random() * 5000,
-      // Bots cannot see drawings: the game tells them what it was meant to be (they still get it wrong now and then).
+      // Bots cannot see drawings: the game tells them what a layer was meant to be (they still get it wrong now and then).
       oracle: (id) => game.meant(id),
     });
     robots.push(...added);
@@ -220,22 +220,19 @@ async function main(): Promise<void> {
     showError(t.noTvpipe((err as Error).message));
     return;
   }
-  const prompts: Partial<Record<Lang, string[]>> = {};
-  const words: Partial<Record<Lang, string[]>> = {};
+  const words: Partial<Record<Lang, Word[]>> = {};
   await Promise.all(
-    LANGS.flatMap((l) =>
-      (["prompts", "words"] as const).map(async (kind) => {
-        const res = await fetch(new URL(`../data/${kind}${l === "en" ? "" : `.${l}`}.txt`, import.meta.url));
-        if (res.ok) (kind === "prompts" ? prompts : words)[l] = parseList(await res.text());
-      }),
-    ),
+    LANGS.map(async (l) => {
+      const res = await fetch(new URL(`../data/words${l === "en" ? "" : `.${l}`}.txt`, import.meta.url));
+      if (res.ok) words[l] = parseWords(await res.text());
+    }),
   );
-  if (!prompts[lang] || !words[lang]) lang = "en";
-  for (const o of $<HTMLSelectElement>("lang").options) o.disabled = !prompts[pickLang(o.value)];
+  if (!words[lang]?.length) lang = "en";
+  for (const o of $<HTMLSelectElement>("lang").options) o.disabled = !words[pickLang(o.value)]?.length;
   t = strings(lang);
   renderLang();
   party = await tvpipe.party({ lateJoin: "wait" });
-  game = new Garble(party, { prompts, words, lang, rounds: 2 });
+  game = new Garble(party, { words, lang, rounds: 2 });
   game.open();
   renderJoin();
   renderPlayers();
@@ -280,7 +277,6 @@ async function main(): Promise<void> {
   $<HTMLSelectElement>("rounds").onchange = (e) => game.configure({ rounds: Number((e.target as HTMLSelectElement).value) });
   $<HTMLSelectElement>("length").onchange = (e) => game.configure({ length: Number((e.target as HTMLSelectElement).value) });
   $<HTMLSelectElement>("timers").onchange = (e) => game.configure({ timings: (e.target as HTMLSelectElement).value === "fast" ? FAST_TIMINGS : DEFAULT_TIMINGS });
-  $<HTMLSelectElement>("twists").onchange = (e) => game.configure({ twists: (e.target as HTMLSelectElement).value === "on" });
   $<HTMLSelectElement>("undo").onchange = (e) => game.configure({ undo: (e.target as HTMLSelectElement).value === "on" });
   $<HTMLSelectElement>("late").onchange = (e) => {
     party.lateJoin = (e.target as HTMLSelectElement).value as LateJoin;
