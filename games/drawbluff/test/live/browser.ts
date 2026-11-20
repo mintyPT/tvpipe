@@ -22,11 +22,16 @@ export class Tab {
   readonly #ws: WebSocket;
   #id = 0;
   readonly #pending = new Map<number, { resolve: (v: any) => void; reject: (e: Error) => void }>();
+  readonly #events = new Map<string, (params: any) => void>();
 
   constructor(ws: WebSocket) {
     this.#ws = ws;
     ws.onmessage = (e) => {
       const msg = JSON.parse(String(e.data));
+      if (msg.method) {
+        this.#events.get(msg.method)?.(msg.params);
+        return;
+      }
       const p = this.#pending.get(msg.id);
       if (!p) return;
       this.#pending.delete(msg.id);
@@ -39,6 +44,30 @@ export class Tab {
     const id = ++this.#id;
     this.#ws.send(JSON.stringify({ id, method, params }));
     return new Promise((resolve, reject) => this.#pending.set(id, { resolve, reject }));
+  }
+
+  /** Handles a DevTools event of the tab (`Fetch.requestPaused`, …); one handler per event. */
+  on(method: string, fn: (params: any) => void): void {
+    this.#events.set(method, fn);
+  }
+
+  /**
+   * Answers the page's requests for URLs matching `pattern` (DevTools
+   * wildcards, `*` and `?`) with `body` instead of the server's file.
+   */
+  async serve(pattern: string, body: string, type = "text/plain; charset=utf-8"): Promise<void> {
+    this.on("Fetch.requestPaused", (p: { requestId: string }) => {
+      void this.send("Fetch.fulfillRequest", {
+        requestId: p.requestId,
+        responseCode: 200,
+        responseHeaders: [
+          { name: "Content-Type", value: type },
+          { name: "Cache-Control", value: "no-store" },
+        ],
+        body: Buffer.from(body).toString("base64"),
+      }).catch(() => {});
+    });
+    await this.send("Fetch.enable", { patterns: [{ urlPattern: pattern, requestStage: "Request" }] });
   }
 
   /** Evaluates an expression (awaiting promises) as a user gesture. */

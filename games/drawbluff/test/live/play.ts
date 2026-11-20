@@ -1,5 +1,5 @@
 /**
- * A live check of drawbluff on `tvpipe game play` (not part of `npm
+ * A live check of Drawbluff on `tvpipe game play` (not part of `npm
  * test`): tvpipe serves the bundle (`dist/`, or `drawbluff.zip` with
  * `--zip`); a headless Chrome plays the window (the launcher, then the
  * host page), a phone (joining, drawing with touch events, lying,
@@ -23,10 +23,16 @@
  *
  * `--shots DIR`: the pictures for the games list (docs/game-catalog.md)
  * into DIR: `tv-vote` (the TV page), `phone-draw` and `phone-vote`. The
- * other players then have people's names and draw and lie like people
- * (`actors.ts`); Phil draws a cat. With `--bots 6` the room looks alive:
+ * round is then the one of `scenario.ts`: the host page gets its seven
+ * prompts as `data/prompts.txt` (so the game deals exactly those and has
+ * no decoys), the six others (`actors.ts`, people's names instead of
+ * bots) and Phil draw the drawing made for their prompt and write the
+ * fake titles made for each drawing; normal timers. The host page's
+ * `Math.random` is seeded (`--seed`, default `SEED` in `scenario.ts`), so
+ * who draws what and which drawing comes first are the same every time
+ * (and the alt texts in site/static/games.json stay true).
  *
- *   node test/live/play.ts --bots 6 --shots ../../site/static/games/drawbluff
+ *   node test/live/play.ts --shots ../../site/static/games/drawbluff
  *
  * Needs Chrome and tvpipe built (target/release, else target/debug, or
  * TVPIPE_BINARY).
@@ -39,20 +45,22 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
 import { bots } from "../../game/bots.ts";
-import { actors, picture } from "./actors.ts";
+import { actors, NAMES } from "./actors.ts";
 import { Browser, type Tab } from "./browser.ts";
+import { dealt, LAST_TOUCHES, lieFor, promptsFile, scene, SEED } from "./scenario.ts";
 import { keep } from "./shots.ts";
 
 const { values: args } = parseArgs({
   options: {
     zip: { type: "boolean", default: false },
-    bots: { type: "string", default: "2" },
+    bots: { type: "string" },
     rounds: { type: "string", default: "1" },
     tunnel: { type: "string" },
     out: { type: "string" },
     tv: { type: "string", default: "page" },
     lang: { type: "string", default: "en" },
     shots: { type: "string" },
+    seed: { type: "string", default: String(SEED) },
   },
 });
 
@@ -65,6 +73,10 @@ const binary =
 if (!binary) throw new Error("build tvpipe first (cargo build --release -p tvpipe-cli)");
 const bundle = fileURLToPath(args.zip ? new URL("drawbluff.zip", here) : here);
 const lang = args.lang === "de" ? "de" : "en";
+if (args.shots && (lang !== "en" || (args.bots !== undefined && Number(args.bots) !== NAMES.length))) {
+  throw new Error(`--shots plays scenario.ts: in English, with ${NAMES.length} others`);
+}
+const nBots = args.shots ? NAMES.length : Number(args.bots ?? 2);
 const out = `${args.out ?? (lang === "de" ? "/tmp/drawbluff-de" : "/tmp/drawbluff-play")}${args.zip ? "-zip" : ""}${args.tv === "canvas" ? "-canvas" : ""}`;
 mkdirSync(out, { recursive: true });
 if (args.shots) mkdirSync(args.shots, { recursive: true });
@@ -99,10 +111,19 @@ try {
   // Only the browser receiver (no real TV without asking).
   await win.eval(`document.querySelector('#devices .device[data-name="browser"]').click(); true`);
   await win.until(`!document.getElementById("start").disabled`);
+  if (args.shots) {
+    // The scenario's prompts, as the host page fetches data/prompts.txt.
+    await win.serve("*/data/prompts.txt*", promptsFile());
+    // The host page's Math.random seeded (mulberry32, as `seeded` in
+    // game/rules.ts): the same deal and the same first drawing every time.
+    await win.send("Page.addScriptToEvaluateOnNewDocument", {
+      source: `(() => { let a = ${Number(args.seed) >>> 0}; Math.random = () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; })();`,
+    });
+  }
   await win.eval(`document.getElementById("start").click(); true`);
   await win.until(`location.pathname.endsWith("/host/index.html") && !!globalThis.drawbluff`, 20_000);
   log("the host page runs the game");
-  await win.eval(`(() => { const r = document.getElementById("rounds"); r.value = ${JSON.stringify(args.rounds)}; r.dispatchEvent(new Event("change")); const t = document.getElementById("timers"); t.value = "fast"; t.dispatchEvent(new Event("change")); return true; })()`);
+  await win.eval(`(() => { const r = document.getElementById("rounds"); r.value = ${JSON.stringify(args.rounds)}; r.dispatchEvent(new Event("change")); const t = document.getElementById("timers"); t.value = ${JSON.stringify(args.shots ? "normal" : "fast")}; t.dispatchEvent(new Event("change")); return true; })()`);
   // The room's language, as the host page sets it.
   await win.eval(`(() => { const l = document.getElementById("lang"); l.value = ${JSON.stringify(lang)}; l.dispatchEvent(new Event("change")); return true; })()`);
   await win.until(`drawbluff.game.lang === ${JSON.stringify(lang)} && document.documentElement.lang === ${JSON.stringify(lang)}`);
@@ -147,7 +168,7 @@ try {
     key: new URLSearchParams(u.hash.slice(1)).get("k")!,
     think: () => 1200 + Math.random() * 2000,
   };
-  const robots: { errors?: string[]; close(): void }[] = args.shots ? await actors(Number(args.bots), joinAs) : await bots(Number(args.bots), joinAs);
+  const robots: { errors?: string[]; close(): void }[] = args.shots ? await actors(joinAs) : await bots(nBots, joinAs);
   log(`${robots.length} ${args.shots ? "players" : "bots"} joined through the phones' listener`);
 
   const shots: string[] = [];
@@ -231,28 +252,45 @@ try {
 
   const phase = () => win.eval<string>(`drawbluff.game.phase`);
   const key = () => win.eval<string>(`drawbluff.game.phase + ":" + JSON.stringify([drawbluff.party.room.peek().round, drawbluff.party.room.peek().spot])`);
-  const draw = async (tab: Tab) => {
+  /** Phil's state on the host (his task, prompt, the drawing he lies about). */
+  const phil = () => win.eval<Record<string, any>>(`drawbluff.party.players.find((p) => p.name === "Phil")?.state.peek() ?? {}`);
+  const padBox = (tab: Tab) =>
+    tab.eval<{ x: number; y: number; w: number }>(`(() => { const r = document.querySelector("canvas.pad").getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width }; })()`);
+  /** Strokes of the 1000 grid with the pad's pens and sizes (the phone's widths: 8, 20, 48). */
+  const strokes = async (tab: Tab, list: readonly number[][]) => {
+    const box = await padBox(tab);
+    let pen = -1;
+    let width = -1;
+    for (const [p, w, ...xy] of list) {
+      if (p !== pen) await tab.eval(`document.querySelectorAll(".swatches button")[${(pen = p!)}].click(); true`);
+      if (w !== width) await tab.eval(`document.querySelectorAll(".sizes button")[${[8, 20, 48].indexOf((width = w!))}].click(); true`);
+      const pts: [number, number][] = [];
+      for (let i = 0; i < xy.length; i += 2) pts.push([box.x + (xy[i]! / 1000) * box.w, box.y + (xy[i + 1]! / 1000) * box.w]);
+      await tab.drag(pts);
+    }
+  };
+  /** Phil draws, `shoot` before he is done (in shots: his prompt's drawing, shot before its last touches). */
+  const draw = async (tab: Tab, shoot: () => Promise<void>) => {
     await tab.until(`!!document.querySelector("canvas.pad")`, 30_000);
-    const box = await tab.eval<{ x: number; y: number; w: number }>(
-      `(() => { const r = document.querySelector("canvas.pad").getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width }; })()`,
-    );
-    const pt = (a: number, b: number): [number, number] => [box.x + a * box.w, box.y + b * box.w];
     if (args.shots) {
-      // A cat, stroke by stroke, with the pens it names.
-      let pen = -1;
-      for (const [p, , ...xy] of picture(() => 0.5, 2, 0).strokes) {
-        if (p !== pen) await tab.eval(`document.querySelectorAll(".swatches button")[${(pen = p!)}].click(); true`);
-        const pts: [number, number][] = [];
-        for (let i = 0; i < xy.length; i += 2) pts.push(pt(xy[i]! / 1000, xy[i + 1]! / 1000));
-        await tab.drag(pts);
-      }
+      const prompt = String((await phil())["prompt"] ?? "");
+      dealt.set("Phil", prompt);
+      const all = scene(prompt).strokes;
+      const upTo = all.length - LAST_TOUCHES;
+      log(`phone: draws "${prompt}"`);
+      await strokes(tab, all.slice(0, upTo));
+      await shoot();
+      await strokes(tab, all.slice(upTo));
       return;
     }
+    const box = await padBox(tab);
+    const pt = (a: number, b: number): [number, number] => [box.x + a * box.w, box.y + b * box.w];
     await tab.drag(Array.from({ length: 30 }, (_, i) => pt(0.5 + 0.3 * Math.cos((i / 29) * 2 * Math.PI), 0.5 + 0.3 * Math.sin((i / 29) * 2 * Math.PI))));
     await tab.eval(`document.querySelectorAll(".swatches button")[1].click(); true`);
     await tab.drag([pt(0.38, 0.4), pt(0.4, 0.42)]);
     await tab.drag([pt(0.6, 0.4), pt(0.62, 0.42)]);
     await tab.drag(Array.from({ length: 12 }, (_, i) => pt(0.35 + (0.3 * i) / 11, 0.6 + 0.08 * Math.sin((i / 11) * Math.PI))));
+    await shoot();
   };
   const tasks = new Set<string>();
   const drivePhone = async () => {
@@ -263,8 +301,10 @@ try {
       .catch(() => ({ lie: false, vote: 0, key: "" }));
     if (t.lie && !tasks.has(`lie:${t.key}`)) {
       tasks.add(`lie:${t.key}`);
-      await phone.eval(`(() => { const i = document.querySelector("form input"); i.value = ${JSON.stringify(lang === "de" ? "ein verdächtiger Streuselkuchen" : "a suspicious muffin")}; i.form.requestSubmit(); return true; })()`);
-      log("phone: lied");
+      const artist = args.shots ? String((await phil())["artist"]?.name ?? "") : "";
+      const text = args.shots ? lieFor("Phil", artist) : lang === "de" ? "ein verdächtiger Streuselkuchen" : "a suspicious muffin";
+      await phone.eval(`(() => { const i = document.querySelector("form input"); i.value = ${JSON.stringify(text)}; i.form.requestSubmit(); return true; })()`);
+      log(`phone: lied${args.shots ? ` about ${artist}'s drawing: "${text}"` : ""}`);
     } else if (t.vote > 0 && !tasks.has(`vote:${t.key}`)) {
       tasks.add(`vote:${t.key}`);
       await phone.eval(`(() => { const o = document.querySelectorAll(".options button"); o[0].click(); return true; })()`);
@@ -286,16 +326,21 @@ try {
     const p = k.split(":")[0]!;
     const at = String(++n).padStart(2, "0");
     if (p === "draw") {
-      await draw(phone);
-      await shot(`${at}-draw`);
-      await pic(phone, "phone-draw", "phone");
+      await draw(phone, async () => {
+        await shot(`${at}-draw`);
+        await pic(phone, "phone-draw", "phone");
+      });
       await phone.eval(`document.getElementById("done").click(); true`);
     } else if (p === "lie" || p === "vote" || p === "scores" || p === "gallery") {
       // The phone's input or options first, then its answer.
       await new Promise((r) => setTimeout(r, 400));
       await shot(`${at}-${p}`);
       if (p === "vote" && screen) {
-        await pic(screen, "tv-vote", "tv", 2500); // the TV draws the drawing again first
+        if (!kept.some((f) => f.startsWith("tv-vote."))) {
+          const artist = await win.eval<string>(`drawbluff.party.room.peek().artist?.name ?? ""`);
+          log(`the TV's first vote: ${artist}'s "${dealt.get(artist) ?? "?"}"`);
+        }
+        await pic(screen, "tv-vote", "tv", 4500); // the TV draws the drawing again first (up to 3.5 s)
         if (await phone.eval<boolean>(`document.querySelectorAll(".options button").length > 3`)) await pic(phone, "phone-vote", "phone");
       }
       await drivePhone();
