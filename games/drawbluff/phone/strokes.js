@@ -5,12 +5,28 @@
  * drawing looks the same everywhere. A drawing is `{ strokes }`, each
  * stroke `[colour, width, x0, y0, x1, y1, …]` on a 1000×1000 grid,
  * `colour` an index into the drawing's `palette` (the artist's pens, see
- * `palette` in game/rules.ts), else into {@link PALETTE}.
+ * `palette` in game/rules.ts), else into {@link PALETTE}. An animation
+ * has `frames` too, the frames after the first (`strokes`), shown in turn
+ * for {@link FRAME_MS} each.
  */
 
 export const PALETTE = ["#1d1d1f", "#ffffff", "#e5383b", "#f9a620", "#ffd60a", "#2a9d8f", "#3a86ff", "#8338ec"];
 export const GRID = 1000;
 export const PAPER = "#fffdf6";
+/** How long each frame of an animation shows, ms (`FRAME_MS` in game/rules.ts). */
+export const FRAME_MS = 400;
+
+/**
+ * A drawing's frames: its strokes, then its further frames (one for a
+ * still drawing).
+ * @param {{ strokes?: any[], frames?: any[] } | null | undefined} drawing
+ * @returns {any[][]}
+ */
+export function framesOf(drawing) {
+  const first = Array.isArray(drawing?.strokes) ? drawing.strokes : [];
+  const more = Array.isArray(drawing?.frames) ? drawing.frames.filter(Array.isArray) : [];
+  return [first, ...more];
+}
 
 /**
  * One stroke into a 2D context (scaled: `size` px for the 1000 grid).
@@ -42,14 +58,15 @@ export function drawStroke(ctx, s, x, y, size, palette = PALETTE) {
 }
 
 /**
- * A whole drawing on paper, `size` px square at (x, y); `upTo` limits the
- * strokes (animating the drawing in).
+ * A whole drawing on paper, `size` px square at (x, y): its frame number
+ * `frame` (the first by default; counted round, so a still drawing shows
+ * its one frame); `upTo` limits the strokes (animating the drawing in).
  * @param {any} ctx
- * @param {{ strokes: any[], palette?: string[] } | null | undefined} drawing
+ * @param {{ strokes: any[], frames?: any[], palette?: string[] } | null | undefined} drawing
  * @param {number} x
  * @param {number} y
  * @param {number} size
- * @param {{ paper?: string | null, upTo?: number }} [opts]
+ * @param {{ paper?: string | null, upTo?: number, frame?: number }} [opts]
  */
 export function drawDrawing(ctx, drawing, x, y, size, opts = {}) {
   ctx.save();
@@ -60,7 +77,8 @@ export function drawDrawing(ctx, drawing, x, y, size, opts = {}) {
   ctx.beginPath();
   ctx.rect(x, y, size, size);
   ctx.clip();
-  const strokes = drawing?.strokes ?? [];
+  const frames = framesOf(drawing);
+  const strokes = frames[(opts.frame ?? 0) % frames.length] ?? [];
   const n = Math.min(strokes.length, opts.upTo ?? Infinity);
   const palette = Array.isArray(drawing?.palette) ? drawing.palette : PALETTE;
   for (let i = 0; i < n; i++) drawStroke(ctx, strokes[i], x, y, size, palette);

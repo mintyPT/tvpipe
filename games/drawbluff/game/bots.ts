@@ -54,10 +54,19 @@ export const LIES: Record<Lang, readonly string[]> = {
   ],
 };
 
-/** A recognisable doodle: a face, a house or a sun, in a random spot, with `pens` colours. */
-export function doodle(rng: () => number, pens = 8): Drawing {
+/**
+ * A recognisable doodle: a face, a house or a sun, in a random spot, with
+ * `pens` colours; with `frames` > 1 an animation, the doodle hopping
+ * (each further frame moved a little).
+ */
+export function doodle(rng: () => number, pens = 8, frames = 1): Drawing {
   const d = sketch(rng);
-  return { strokes: d.strokes.map(([c, ...rest]) => [c! % Math.max(1, pens), ...rest]) };
+  const strokes = d.strokes.map(([c, ...rest]) => [c! % Math.max(1, pens), ...rest]);
+  if (frames <= 1) return { strokes };
+  const dx = Math.round((rng() - 0.5) * 60);
+  const dy = -20 - Math.floor(rng() * 40);
+  const moved = (k: number) => strokes.map(([c, w, ...xy]) => [c!, w!, ...xy.map((v, i) => Math.max(0, Math.min(1000, v + k * (i % 2 === 0 ? dx : dy))))]);
+  return { strokes, frames: Array.from({ length: frames - 1 }, (_, k) => moved(k + 1)) };
 }
 
 function sketch(rng: () => number): Drawing {
@@ -153,7 +162,7 @@ export class Bot {
         if (!me.done) {
           // The TV's progress first (how much is drawn), then the drawing.
           if (!this.#handled.has(`draw:${turn}`)) c.input({ ink: 50 + Math.floor(this.#rng() * 300) });
-          this.#once(`draw:${turn}`, () => c.act("draw", doodle(this.#rng, Array.isArray(me.palette) ? me.palette.length : 8)));
+          this.#once(`draw:${turn}`, () => c.act("draw", doodle(this.#rng, Array.isArray(me.palette) ? me.palette.length : 8, typeof me.frames === "number" ? me.frames : 1)));
         }
         return;
       case "lie":

@@ -10,10 +10,13 @@
 import { PartyClient } from "/_tvpipe/lib/client.js";
 import { browserLang, pickLang } from "./i18n.js";
 import { strings } from "./strings.js";
-import { drawDrawing, drawStroke, GRID, PALETTE } from "./strokes.js";
+import { drawDrawing, drawStroke, FRAME_MS, framesOf, GRID, PALETTE } from "./strokes.js";
 
+/** For all frames together (game/rules.ts). */
 const MAX_STROKES = 300;
 const MAX_POINTS = 12000;
+/** How strongly an animation's other frame shows under the one you draw. */
+const ONION = 0.28;
 const WIDTHS = [8, 20, 48];
 /** The longest lie the input takes (`LIE_SOFT` in game/rules.ts). */
 const LIE_SOFT = 40;
@@ -419,15 +422,15 @@ function colorPicker(err) {
 }
 
 /**
- * The room's rules: the VIP's buttons (undo, colours, adult prompts), a
- * line each for everybody.
+ * The room's rules: the VIP's buttons (undo, colours, adult prompts,
+ * animation), a line each for everybody.
  * @param {HTMLElement} err
  */
 function rules(err) {
-  /** @type {{ key: "undo" | "colorMode" | "adult", row: HTMLElement, buttons: HTMLButtonElement[], line: HTMLElement }[]} */
+  /** @type {{ key: "animate" | "undo" | "colorMode" | "adult", row: HTMLElement, buttons: HTMLButtonElement[], line: HTMLElement }[]} */
   const items = [];
   const box = h("div", { class: "rules" }, h("h2", {}, t.rules));
-  for (const key of /** @type {const} */ (["undo", "colorMode", "adult"])) {
+  for (const key of /** @type {const} */ (["undo", "colorMode", "adult", "animate"])) {
     const [off, on] = t.settings[key];
     const buttons = [false, true].map((value, i) => /** @type {HTMLButtonElement} */ (h("button", { onclick: () => act("settings", { [key]: value }, err).catch(() => {}) }, (i ? on : off)[0])));
     const row = h("div", { class: "row seg" }, ...buttons);
@@ -538,18 +541,39 @@ async function act(type, data, err) {
 // ---------------------------------------------------------------------------
 // Drawing
 
+/**
+ * A stroke's points and its length on the grid.
+ * @param {number[]} s
+ */
+function measure(s) {
+  let length = 0;
+  for (let i = 4; i + 1 < s.length; i += 2) length += Math.hypot(s[i] - s[i - 2], s[i + 1] - s[i - 1]);
+  return { points: (s.length - 2) / 2, length };
+}
+
+/**
+ * The drawing pad: one frame, or an animation's frames (one drawn at a
+ * time, the other faintly under it, a preview that flips through them).
+ * The limits are for all frames together.
+ */
 class Pad {
   /**
    * @param {HTMLCanvasElement} canvas
    * @param {readonly string[]} palette the player's pens
+   * @param {number} [frames] 2: an animation
    */
-  constructor(canvas, palette) {
+  constructor(canvas, palette, frames = 1) {
     this.canvas = canvas;
     this.palette = palette;
     this.ctx = /** @type {CanvasRenderingContext2D} */ (canvas.getContext("2d"));
-    /** @type {number[][]} */
-    this.strokes = [];
-    /** @type {() => void} called when strokes come or go */
+    /** @type {number[][][]} */
+    this.frames = Array.from({ length: Math.max(1, frames) }, () => []);
+    /** The frame being drawn. */
+    this.frame = 0;
+    /** @type {ReturnType<typeof setInterval> | 0} the preview, flipping through the frames */
+    this.playing = 0;
+    this.shown = 0;
+    /** @type {() => void} called when strokes come or go, or the frame or the preview changes */
     this.onchange = () => {};
     /** How much is drawn: the strokes' length on the grid (the TV's progress). */
     this.length = 0;
@@ -573,6 +597,22 @@ class Pad {
     }
   }
 
+  /** The strokes of the frame being drawn. */
+  get strokes() {
+    return this.frames[this.frame];
+  }
+
+  /** Strokes in all frames. */
+  get count() {
+    return this.frames.reduce((n, f) => n + f.length, 0);
+  }
+
+  /** What the host gets: `{ strokes }`, an animation with its `frames`. */
+  get drawing() {
+    const [strokes, ...frames] = this.frames;
+    return frames.length > 0 ? { strokes, frames } : { strokes };
+  }
+
   resize() {
     const r = this.canvas.getBoundingClientRect();
     const dpr = Math.min(3, window.devicePixelRatio || 1);
@@ -584,7 +624,20 @@ class Pad {
   }
 
   redraw() {
-    drawDrawing(this.ctx, { strokes: this.strokes, palette: [...this.palette] }, 0, 0, this.size);
+    const palette = [...this.palette];
+    if (this.playing) {
+      drawDrawing(this.ctx, { strokes: this.frames[this.shown], palette }, 0, 0, this.size);
+      return;
+    }
+    drawDrawing(this.ctx, { strokes: [], palette }, 0, 0, this.size);
+    // The other frames faintly under this one (onion skin).
+    this.ctx.save();
+    this.ctx.globalAlpha = ONION;
+    this.frames.forEach((f, i) => {
+      if (i !== this.frame) drawDrawing(this.ctx, { strokes: f, palette }, 0, 0, this.size, { paper: null });
+    });
+    this.ctx.restore();
+    drawDrawing(this.ctx, { strokes: this.strokes, palette }, 0, 0, this.size, { paper: null });
   }
 
   /** @param {PointerEvent} e */
@@ -596,7 +649,13 @@ class Pad {
 
   /** @param {PointerEvent} e */
   down(e) {
-    if (this.strokes.length >= MAX_STROKES || this.points >= MAX_POINTS) return;
+    // A tap on the preview stops it.
+    if (this.playing) {
+      e.preventDefault();
+      this.stop();
+      return;
+    }
+    if (this.count >= MAX_STROKES || this.points >= MAX_POINTS) return;
     e.preventDefault();
     this.canvas.setPointerCapture(e.pointerId);
     const [x, y] = this.at(e);
@@ -626,26 +685,89 @@ class Pad {
   }
 
   up() {
-    if (this.current) this.onchange();
+    const was = this.current;
     this.current = null;
+    if (was) this.onchange();
   }
 
+  /** @param {number[][]} strokes taken out of the pad's measure */
+  forget(strokes) {
+    for (const s of strokes) {
+      const m = measure(s);
+      this.points -= m.points;
+      this.length -= m.length;
+    }
+    this.points = Math.max(0, this.points);
+    this.length = Math.max(0, this.length);
+  }
+
+  /** Clears the frame being drawn. */
   clear() {
-    this.strokes = [];
-    this.points = 0;
-    this.length = 0;
+    this.forget(this.strokes);
+    this.frames[this.frame] = [];
     this.redraw();
     this.onchange();
   }
 
-  /** Takes back the last stroke (when the room allows undo). */
+  /** Takes back the last stroke of the frame (when the room allows undo). */
   undo() {
     if (this.current) return;
     const s = this.strokes.pop();
     if (!s) return;
-    this.points -= (s.length - 2) / 2;
-    for (let i = 4; i + 1 < s.length; i += 2) this.length -= Math.hypot(s[i] - s[i - 2], s[i + 1] - s[i - 1]);
-    this.length = Math.max(0, this.length);
+    this.forget([s]);
+    this.redraw();
+    this.onchange();
+  }
+
+  /** Draws frame `i` (the preview stops). @param {number} i */
+  go(i) {
+    if (this.current || i < 0 || i >= this.frames.length) return;
+    this.stop(false);
+    this.frame = i;
+    this.redraw();
+    this.onchange();
+  }
+
+  /** Whether {@link copy} can fill the frame: it is empty, another one is not, and the limits allow it. */
+  get canCopy() {
+    const from = this.frames[this.frame === 0 ? 1 : this.frame - 1];
+    if (!from || this.strokes.length > 0 || from.length === 0) return false;
+    const points = from.reduce((n, s) => n + measure(s).points, 0);
+    return this.count + from.length <= MAX_STROKES && this.points + points <= MAX_POINTS;
+  }
+
+  /** Fills an empty frame with the one before it (frame 1 with frame 2), to change what moves. */
+  copy() {
+    if (this.current || !this.canCopy) return;
+    const from = this.frames[this.frame === 0 ? 1 : this.frame - 1];
+    this.frames[this.frame] = from.map((s) => [...s]);
+    for (const s of from) {
+      const m = measure(s);
+      this.points += m.points;
+      this.length += m.length;
+    }
+    this.redraw();
+    this.onchange();
+  }
+
+  /** Flips through the frames on the pad until tapped. */
+  play() {
+    if (this.current || this.playing || this.frames.length < 2) return;
+    this.shown = this.frame;
+    this.playing = setInterval(() => {
+      if (!this.canvas.isConnected) return this.stop(false);
+      this.shown = (this.shown + 1) % this.frames.length;
+      this.redraw();
+    }, FRAME_MS);
+    this.redraw();
+    this.onchange();
+  }
+
+  stop(show = true) {
+    if (!this.playing) return;
+    clearInterval(this.playing);
+    this.playing = 0;
+    if (!show) return;
     this.redraw();
     this.onchange();
   }
@@ -666,28 +788,40 @@ function icon(d) {
 }
 const TRASH = "M4 7h16|M9 7V4h6v3|M6 7l1 13h10l1-13|M10 11v6|M14 11v6";
 const UNDO = "M9 14L4 9l5-5|M4 9h10a6 6 0 0 1 0 12h-3";
+const PLAY = "M7 4.5v15l12-7.5z";
+const STOP = "M6 6h12v12H6z";
+const COPY = "M9 9h11v11H9z|M5 15H4V4h11v1";
 /** The size buttons' dots, px. */
 const DOTS = [8, 14, 22];
 
 /**
  * The pad, as big as the screen allows: a line with the prompt and the
  * clock, the square pad, the player's pens, and one toolbar (sizes,
- * clear, undo when the room allows it, done).
+ * clear, undo when the room allows it, done). An animation (`me.frames`
+ * 2) has a line of frames above the pens: a tab per frame with its
+ * thumbnail, copy (an empty frame gets the other one) and play.
  * @param {any} me
  */
 function draw(me) {
   const palette = /** @type {string[]} */ (Array.isArray(me.palette) && me.palette.length > 0 ? me.palette : PALETTE);
+  const nFrames = me.frames === 2 ? 2 : 1;
   const canvas = /** @type {HTMLCanvasElement} */ (h("canvas", { class: "pad" }));
   const err = h("p", { class: "error" });
   const swatches = h("div", { class: "swatches" });
   const sizes = h("div", { class: "sizes" });
   const done = /** @type {HTMLButtonElement} */ (h("button", { class: "done", id: "done", onclick: () => submit() }, t.done));
-  const top = h("div", { class: "top" }, h("div", { class: "what" }, h("span", { class: "label" }, t.draw), h("span", { class: "prompt" }, me.prompt ?? "")), timer);
+  const top = h("div", { class: "top" }, h("div", { class: "what" }, h("span", { class: "label" }, nFrames > 1 ? t.animate : t.draw), h("span", { class: "prompt" }, me.prompt ?? "")), timer);
   const clear = /** @type {HTMLButtonElement} */ (h("button", { class: "icon", id: "clear", "aria-label": t.clear }, icon(TRASH)));
   const undo = me.undo ? /** @type {HTMLButtonElement} */ (h("button", { class: "icon", id: "undo", "aria-label": t.undo }, icon(UNDO))) : null;
   const bar = h("div", { class: "toolbar" }, sizes, clear, undo, done);
-  show(h("section", { class: "draw" }, top, h("div", { class: "padbox" }, canvas), swatches, bar, err));
-  const p = new Pad(canvas, palette);
+  // The frames: tabs with thumbnails, copy, play.
+  const thumbs = Array.from({ length: nFrames }, () => /** @type {HTMLCanvasElement} */ (h("canvas")));
+  const tabs = thumbs.map((c, i) => /** @type {HTMLButtonElement} */ (h("button", { class: "frame", "data-frame": i + 1, onclick: () => p.go(i) }, c, h("span", {}, t.frameN(i + 1)))));
+  const copy = /** @type {HTMLButtonElement} */ (h("button", { class: "icon", id: "copy", "aria-label": t.copyFrame, onclick: () => p.copy() }, icon(COPY)));
+  const play = /** @type {HTMLButtonElement} */ (h("button", { class: "icon", id: "play", "aria-label": t.play, onclick: () => (p.playing ? p.stop() : p.play()) }, icon(PLAY)));
+  const strip = nFrames > 1 ? h("div", { class: "frames" }, ...tabs, copy, play) : null;
+  show(h("section", { class: `draw${strip ? " anim" : ""}` }, top, h("div", { class: "padbox" }, canvas), strip, swatches, bar, err));
+  const p = new Pad(canvas, palette, nFrames);
   pad = p;
   const pens = palette.map((c, i) => {
     const b = h("button", { style: `background:${c}`, "aria-label": t.colour(i + 1), onclick: () => pick(i) });
@@ -731,10 +865,40 @@ function draw(me) {
     armed = setTimeout(disarm, 2000);
   });
   undo?.addEventListener("click", () => p.undo());
+  /** Frames drawn, as the thumbnails show them (redrawn when they change). */
+  const thumbed = thumbs.map(() => -1);
   const changed = () => {
-    if (undo) undo.disabled = p.strokes.length === 0;
-    clear.disabled = p.strokes.length === 0;
+    if (undo) undo.disabled = p.strokes.length === 0 || !!p.playing;
+    clear.disabled = p.strokes.length === 0 || !!p.playing;
     if (p.strokes.length === 0 && armed) disarm();
+    if (!strip) return;
+    tabs.forEach((b, i) => b.classList.toggle("chosen", i === p.frame && !p.playing));
+    copy.hidden = !p.canCopy || !!p.playing;
+    play.classList.toggle("chosen", !!p.playing);
+    play.replaceChildren(icon(p.playing ? STOP : PLAY));
+    play.setAttribute("aria-label", p.playing ? t.stop : t.play);
+    play.disabled = p.frames.every((f) => f.length === 0);
+    thumbs.forEach((c, i) => {
+      const n = p.frames[i].reduce((k, s) => k + s.length, 0);
+      if (thumbed[i] === n || p.current) return;
+      thumbed[i] = n;
+      const size = c.clientWidth || 30;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      c.width = c.height = Math.round(size * dpr);
+      const ctx = /** @type {CanvasRenderingContext2D} */ (c.getContext("2d"));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawDrawing(ctx, { strokes: p.frames[i], palette: [...palette] }, 0, 0, size);
+    });
+    if (sure && !p.frames.some((f) => f.length === 0)) unsure();
+  };
+  // Done with an empty frame (and another drawn) asks once, on that frame.
+  /** @type {ReturnType<typeof setTimeout> | 0} */
+  let sure = 0;
+  const unsure = () => {
+    if (sure) clearTimeout(sure);
+    sure = 0;
+    done.classList.remove("arm");
+    done.textContent = t.done;
   };
   // The TV shows how much everyone drew (never what): `{ ink }`, the
   // length drawn / 10, at most every half second while drawing.
@@ -752,12 +916,23 @@ function draw(me) {
   });
   changed();
   let sent = false;
-  const submit = async () => {
+  /** @param {boolean} [force] time's up: no questions */
+  const submit = async (force = false) => {
     if (sent) return;
+    const empty = p.frames.findIndex((f) => f.length === 0);
+    if (!force && !sure && empty >= 0 && p.count > 0 && nFrames > 1) {
+      p.go(empty);
+      done.classList.add("arm");
+      done.textContent = t.frameEmpty(empty + 1);
+      sure = setTimeout(unsure, 3000);
+      return;
+    }
+    unsure();
     sent = true;
     done.disabled = true;
+    p.stop(false);
     try {
-      await act("draw", { strokes: p.strokes }, err);
+      await act("draw", p.drawing, err);
     } catch {
       sent = false;
       done.disabled = false;
@@ -766,7 +941,7 @@ function draw(me) {
   // Time's up: send what is there.
   refresh = () => {};
   autoSubmit = () => {
-    if (!sent && pad === p) submit();
+    if (!sent && pad === p) submit(true);
   };
 }
 
@@ -776,7 +951,11 @@ let autoSubmit = null;
 // ---------------------------------------------------------------------------
 // Lies and votes
 
-/** @param {any} drawing */
+/**
+ * The drawing to lie or vote about; an animation flips through its frames
+ * while it is on screen.
+ * @param {any} drawing
+ */
 function mini(drawing) {
   const c = /** @type {HTMLCanvasElement} */ (h("canvas", { class: "mini" }));
   requestAnimationFrame(() => {
@@ -787,6 +966,14 @@ function mini(drawing) {
     const ctx = /** @type {CanvasRenderingContext2D} */ (c.getContext("2d"));
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawDrawing(ctx, drawing, 0, 0, r.width);
+    const n = framesOf(drawing).length;
+    if (n < 2) return;
+    let frame = 0;
+    const flip = setInterval(() => {
+      if (!c.isConnected) return clearInterval(flip);
+      frame = (frame + 1) % n;
+      drawDrawing(ctx, drawing, 0, 0, r.width, { frame });
+    }, FRAME_MS);
   });
   return c;
 }

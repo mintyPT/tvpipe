@@ -104,6 +104,15 @@ const en = (f) => ({
   // Drawing.
   draw: "Draw",
   done: "Done!",
+  // Animations: two frames.
+  animate: "Animate (2 frames)",
+  /** @param {number} i */
+  frameN: (i) => `Frame ${f.n(i)}`,
+  copyFrame: "copy the other frame here",
+  play: "play",
+  stop: "stop",
+  /** @param {number} i */
+  frameEmpty: (i) => `Frame ${f.n(i)} is empty. Send?`,
   /** @param {number} i */
   colour: (i) => `colour ${f.n(i)}`,
   sizes: ["thin", "medium", "thick"],
@@ -115,8 +124,12 @@ const en = (f) => ({
   yourPens: "Your pens:",
   colourNames: ["red", "orange", "yellow", "lime", "green", "teal", "sky blue", "blue", "violet", "pink"],
   rules: "Rules",
-  /** @type {Record<"undo" | "colorMode" | "adult", [[string, string], [string, string]]>} off, on: the button, the line */
+  /** @type {Record<"animate" | "undo" | "colorMode" | "adult", [[string, string], [string, string]]>} off, on: the button, the line */
   settings: {
+    animate: [
+      ["Still", "Everybody draws one picture."],
+      ["Animated", "Animated: everybody draws two frames that flip back and forth."],
+    ],
     undo: [
       ["No undo", "No undo: every stroke counts."],
       ["Undo", "Undo is on: take back the last stroke."],
@@ -216,6 +229,12 @@ const de = (f) => ({
   gameOver: "Spiel vorbei",
   draw: "Zeichne",
   done: "Fertig!",
+  animate: "Animiere (2 Bilder)",
+  frameN: (i) => `Bild ${f.n(i)}`,
+  copyFrame: "das andere Bild hierher kopieren",
+  play: "abspielen",
+  stop: "anhalten",
+  frameEmpty: (i) => `Bild ${f.n(i)} ist leer. Senden?`,
   colour: (i) => `Farbe ${f.n(i)}`,
   sizes: ["dünn", "mittel", "dick"],
   clear: "löschen",
@@ -226,6 +245,10 @@ const de = (f) => ({
   colourNames: ["Rot", "Orange", "Gelb", "Hellgrün", "Grün", "Türkis", "Himmelblau", "Blau", "Violett", "Pink"],
   rules: "Regeln",
   settings: {
+    animate: [
+      ["Standbild", "Alle zeichnen ein Bild."],
+      ["Animiert", "Animiert: Alle zeichnen zwei Bilder, die hin und her wechseln."],
+    ],
     undo: [
       ["Kein Zurück", "Kein Rückgängig: Jeder Strich zählt."],
       ["Rückgängig", "Rückgängig ist an: Der letzte Strich lässt sich zurücknehmen."],

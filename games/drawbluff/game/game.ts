@@ -8,9 +8,9 @@
  *
  * Views:
  * - `party.room` (every phone): `{ phase, lang, round, rounds, players, spot?, spots?, deadline?, drawing?, artist?, minPlayers?,
- *   undo, colorMode, adult, adultOk, colors, taken }` (the settings, the colours to pick and how many have each)
+ *   undo, colorMode, adult, animate, adultOk, colors, taken }` (the settings, the colours to pick and how many have each)
  * - `player.state` (one phone): `{ task, score, rank, of, color, palette, … }`, `task` one of
- *   `lobby`, `wait` (a late joiner), `draw` (`prompt`, `palette`, `undo`, `deadline`, `done`),
+ *   `lobby`, `wait` (a late joiner), `draw` (`prompt`, `palette`, `undo`, `frames`, `deadline`, `done`),
  *   `lie` (`key`, `drawing`, `artist`, `liars`, `early`, `deadline`, `done`, `lie`),
  *   `artist` (`key`), `vote` (`key`, `options`, `deadline`, `done`, `choice`),
  *   `watch` (`note`, `result`), `scores`/`final`
@@ -27,7 +27,9 @@
  * and light shade, or with `colorMode` black and four colours leaning to
  * it. The settings (the host page's, or the VIP's in the lobby): `undo`
  * on the pad (off: every stroke counts), `colorMode`, `adult` (the
- * adult prompts, where the language has them).
+ * adult prompts, where the language has them), `animate` (every drawing
+ * is an animation of `FRAMES` frames that the pages flip through, with
+ * the longer `drawAnimated` time to draw).
  */
 
 import { Emitter, LATE_JOIN, PartyError, type Json, type LateJoin, type Party, type Player } from "@tvpipe/party";
@@ -37,6 +39,8 @@ import {
   cleanTitle,
   decoyOrder,
   displayTitle,
+  FRAMES,
+  framesOf,
   palette,
   PLAYER_COLORS,
   playerColors,
@@ -63,6 +67,8 @@ import {
 
 export interface Timings {
   draw: number;
+  /** Drawing an animation (the `animate` setting): two frames. */
+  drawAnimated: number;
   lie: number;
   vote: number;
   /** Between two reveal steps. */
@@ -76,6 +82,7 @@ export interface Timings {
 
 export const DEFAULT_TIMINGS: Timings = {
   draw: 90_000,
+  drawAnimated: 135_000,
   lie: 45_000,
   vote: 25_000,
   revealStep: 2600,
@@ -86,6 +93,7 @@ export const DEFAULT_TIMINGS: Timings = {
 
 export const FAST_TIMINGS: Timings = {
   draw: 25_000,
+  drawAnimated: 35_000,
   lie: 20_000,
   vote: 15_000,
   revealStep: 1500,
@@ -139,6 +147,8 @@ export interface GameOptions {
   colorMode?: boolean | undefined;
   /** The adult prompts (default off). */
   adult?: boolean | undefined;
+  /** Animated drawings: every player draws `FRAMES` frames that flip (default off). */
+  animate?: boolean | undefined;
 }
 
 /** The room's settings: the host page's, or the VIP's in the lobby. */
@@ -146,6 +156,7 @@ export interface Settings {
   undo: boolean;
   colorMode: boolean;
   adult: boolean;
+  animate: boolean;
 }
 
 export interface ScoreLine {
@@ -263,7 +274,12 @@ export class Drawbluff extends Emitter<GameEvents> {
     load(this.#adultPrompts, options.adultPrompts ?? {});
     if (!this.#prompts.has(this.#lang)) throw new Error(`drawbluff: no prompts in ${this.#lang}`);
     if (options.lateJoin !== undefined) party.lateJoin = options.lateJoin;
-    this.#settings = { undo: options.undo ?? false, colorMode: options.colorMode ?? false, adult: (options.adult ?? false) && this.#adultPrompts.has(this.#lang) };
+    this.#settings = {
+      undo: options.undo ?? false,
+      colorMode: options.colorMode ?? false,
+      adult: (options.adult ?? false) && this.#adultPrompts.has(this.#lang),
+      animate: options.animate ?? false,
+    };
   }
 
   /** The room's settings. */
@@ -323,9 +339,9 @@ export class Drawbluff extends Emitter<GameEvents> {
     });
     party.handle("settings", (d, from) => {
       if (from.role !== "player" || !from.vip) throw new PartyError("not-vip", "Only the VIP can change this");
-      if (typeof d !== "object" || d === null || Array.isArray(d)) throw new PartyError("bad-settings", "undo, colorMode, adult");
+      if (typeof d !== "object" || d === null || Array.isArray(d)) throw new PartyError("bad-settings", "undo, colorMode, adult, animate");
       const o: Partial<Settings> = {};
-      for (const k of ["undo", "colorMode", "adult"] as const) {
+      for (const k of ["undo", "colorMode", "adult", "animate"] as const) {
         const v = (d as Record<string, Json>)[k];
         if (v === undefined) continue;
         if (typeof v !== "boolean") throw new PartyError("bad-settings", `${k}: true or false`);
@@ -502,6 +518,7 @@ export class Drawbluff extends Emitter<GameEvents> {
     if (o.undo !== undefined) this.#settings.undo = o.undo;
     if (o.colorMode !== undefined) this.#settings.colorMode = o.colorMode;
     if (o.adult !== undefined) this.#settings.adult = o.adult;
+    if (o.animate !== undefined) this.#settings.animate = o.animate;
     if (!this.#adultPrompts.has(this.#lang)) this.#settings.adult = false;
     if (this.#settings.colorMode !== colorMode) for (const p of this.party.players) p.state.set(this.#pens(p));
     this.party.room.set(this.#settingsView());
@@ -664,14 +681,16 @@ export class Drawbluff extends Emitter<GameEvents> {
     const prompts = new Map(players.map((p, i) => [p, hand[i]!]));
     // Everyone's pens as dealt (a drawing carries its artist's).
     const pens = new Map(players.map((p) => [p, this.#pens(p).palette]));
-    const deadline = this.#deadline(this.timings.draw);
+    const animate = this.#settings.animate;
+    const frames = animate ? FRAMES : 1;
+    const deadline = this.#deadline(animate ? this.timings.drawAnimated : this.timings.draw);
     const undo = this.#settings.undo;
     this.#ink = new Map(players.map((p) => [p.id, 0]));
     this.#withTv(() => {
       this.#room({ phase: "draw", deadline });
-      this.#screen({ phase: "draw", round, rounds: this.rounds, deadline, waiting: players.map((p) => p.id), done: [], ink: {} });
+      this.#screen({ phase: "draw", round, rounds: this.rounds, deadline, animate, waiting: players.map((p) => p.id), done: [], ink: {} });
       for (const [p, prompt] of prompts) {
-        p.state.replace({ task: "draw", prompt: displayTitle(prompt.text), undo, deadline, done: false, ...this.#rank(p), ...this.#pens(p) });
+        p.state.replace({ task: "draw", prompt: displayTitle(prompt.text), undo, frames, deadline, done: false, ...this.#rank(p), ...this.#pens(p) });
       }
       for (const p of party.players) if (!prompts.has(p)) p.state.replace(this.#waitState(p));
     });
@@ -680,7 +699,7 @@ export class Drawbluff extends Emitter<GameEvents> {
       until: deadline,
       validate: (d, p) => {
         const palette = pens.get(p) ?? this.#pens(p).palette;
-        return { ...validateDrawing(d, palette.length), palette };
+        return { ...validateDrawing(d, palette.length, frames), palette };
       },
       signal: this.#abort.signal,
       onAnswer: (p, _v, answers) => {
@@ -706,7 +725,7 @@ export class Drawbluff extends Emitter<GameEvents> {
     // then connected artists, then drawings with strokes.
     const key = (id: string) => {
       const e = byId.get(id)!;
-      return 4 * (this.#spotted.get(id) ?? 0) - (this.#fresh.has(id) ? 4 : 0) + (e.artist.connected ? 0 : 2) + (e.drawing.strokes.length === 0 ? 1 : 0);
+      return 4 * (this.#spotted.get(id) ?? 0) - (this.#fresh.has(id) ? 4 : 0) + (e.artist.connected ? 0 : 2) + (framesOf(e.drawing).every((f) => f.length === 0) ? 1 : 0);
     };
     const chosen = rotate(ids, key, p.spotlights, this.#rng);
     this.#fresh.clear();

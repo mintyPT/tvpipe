@@ -8,6 +8,7 @@ import {
   cleanTitle,
   deal,
   displayTitle,
+  framesOf,
   oklchHex,
   optionsFor,
   palette,
@@ -37,6 +38,31 @@ test("drawings: limits, clamping, refusals", () => {
   for (const bad of [null, {}, { strokes: [[1, 2, 3]] }, { strokes: [[9, 2, 3, 4]] }, { strokes: [[1, 2, "x", 4]] }, { strokes: [[1, 2, NaN, 4]] }, { strokes: Array(301).fill([0, 4, 1, 1]) }, { strokes: [[0, 4, ...Array(24002).fill(1)]] }]) {
     assert.throws(() => validateDrawing(bad), (e: unknown) => e instanceof PartyError && e.code === "bad-drawing", JSON.stringify(bad)?.slice(0, 50));
   }
+});
+
+test("animated drawings: frames after the first, limits for all frames together", () => {
+  const a = [0, 4, 10, 10];
+  const b = [1, 4, 20.4, 20];
+  // Two frames: the second one moved; a missing frame is empty.
+  assert.deepEqual(validateDrawing({ strokes: [a], frames: [[b]] }, 2, 2), { strokes: [a], frames: [[[1, 4, 20, 20]]] });
+  assert.deepEqual(validateDrawing({ strokes: [a] }, 2, 2), { strokes: [a], frames: [[]] });
+  assert.deepEqual(validateDrawing({ strokes: [], frames: [] }, 2, 2), { strokes: [], frames: [[]] });
+  // A still game drops frames.
+  assert.deepEqual(validateDrawing({ strokes: [a], frames: [[b]] }, 2), { strokes: [a] });
+  assert.deepEqual(framesOf({ strokes: [a], frames: [[b]] }), [[a], [b]]);
+  assert.deepEqual(framesOf({ strokes: [a] }), [[a]]);
+  for (const bad of [
+    { strokes: [a], frames: {} },
+    { strokes: [a], frames: [[b], [b]] },
+    { strokes: [a], frames: [b] },
+    { strokes: [a], frames: [[[2, 4, 1, 1]]] },
+    { strokes: [a], frames: [[[0, 4, 1]]] },
+    { strokes: Array(150).fill(a), frames: [Array(151).fill(a)] },
+    { strokes: [[0, 4, ...Array(12_000).fill(1)]], frames: [[[0, 4, ...Array(12_002).fill(1)]]] },
+  ]) {
+    assert.throws(() => validateDrawing(bad, 2, 2), (e: unknown) => e instanceof PartyError && e.code === "bad-drawing", JSON.stringify(bad)?.slice(0, 60));
+  }
+  assert.deepEqual(validateDrawing({ strokes: Array(150).fill(a), frames: [Array(150).fill(a)] }, 2, 2).frames![0]!.length, 150);
 });
 
 test("options: lies merged, truth-equal lies dropped, decoys fill up, shuffled", () => {

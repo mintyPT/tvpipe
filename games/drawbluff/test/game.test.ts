@@ -18,7 +18,7 @@ import { Drawbluff } from "../game/game.ts";
 import { palette, PLAYER_COLORS, seeded, type Lang } from "../game/rules.ts";
 import { ADULT_BY_LANG, PROMPT_LIST, PROMPTS_BY_LANG } from "./prompts.ts";
 
-const fast = { draw: 1500, lie: 1200, vote: 1200, revealStep: 20, revealEnd: 20, scores: 20, gallery: 20 };
+const fast = { draw: 1500, drawAnimated: 1500, lie: 1200, vote: 1200, revealStep: 20, revealEnd: 20, scores: 20, gallery: 20 };
 
 async function game(n: number, opts: { silent?: number; drop?: number; rounds?: number; think?: number; lateJoin?: LateJoin; lang?: Lang; adult?: boolean; tvDelay?: number } = {}) {
   const relay = new MemoryRelay();
@@ -499,9 +499,9 @@ test("colours, pens and the rules: picked in the lobby, the VIP's settings, adul
     g.on("settings", (s) => changes.push(s));
     await assert.rejects(players[1]!.client.act("settings", { undo: true }), (e: { code: string }) => e.code === "not-vip");
     await assert.rejects(players[0]!.client.act("settings", { undo: "yes" }), (e: { code: string }) => e.code === "bad-settings");
-    assert.deepEqual(g.settings, { undo: false, colorMode: false, adult: false });
+    assert.deepEqual(g.settings, { undo: false, colorMode: false, adult: false, animate: false });
     await players[0]!.client.act("settings", { undo: true, colorMode: true, adult: true });
-    assert.deepEqual(g.settings, { undo: true, colorMode: true, adult: true });
+    assert.deepEqual(g.settings, { undo: true, colorMode: true, adult: true, animate: false });
     assert.equal(changes.length, 1);
     await until(() => players.every((_, i) => me(i).palette.length === 5 && room(i)["colorMode"] === true));
     assert.deepEqual(me(1).palette, palette(free, true));
@@ -537,6 +537,59 @@ test("colours, pens and the rules: picked in the lobby, the VIP's settings, adul
     assert.ok(drawings.length > 0);
     for (const d of drawings) assert.deepEqual(d.palette, palette(g.colorOf(party.player(d.artist)!), true));
     assert.deepEqual(new Set(players.flatMap((b) => b.errors)), new Set());
+  } finally {
+    for (const b of players) b.close();
+    await server.close();
+  }
+});
+
+test("animated drawings: two frames on every pad, the TV, the liars' and the voters' phones get both", async () => {
+  const { server, party, g, players } = await game(4, { rounds: 1 });
+  try {
+    const me = (i: number) => players[i]!.client.view["me"] as Record<string, any>;
+    const room = (i: number) => players[i]!.client.view["room"] as Record<string, any>;
+    await assert.rejects(players[1]!.client.act("settings", { animate: true }), (e: { code: string }) => e.code === "not-vip");
+    await assert.rejects(players[0]!.client.act("settings", { animate: 2 }), (e: { code: string }) => e.code === "bad-settings");
+    await players[0]!.client.act("settings", { animate: true });
+    assert.equal(g.settings.animate, true);
+    await until(() => players.every((_, i) => room(i)?.["animate"] === true) && (party.screen.peek() as { animate?: boolean }).animate === true);
+    const screens: Record<string, any>[] = [];
+    const off = party.on("screen-view", (v) => screens.push(v["screen"] as Record<string, any>));
+    const lies: unknown[] = [];
+    const votes: unknown[] = [];
+    for (const p of players) {
+      p.client.on("view", (v) => {
+        const m = v["me"] as Record<string, any> | undefined;
+        if (m?.["task"] === "lie") lies.push(m["drawing"]);
+        if (m?.["task"] === "vote") votes.push((v["room"] as Record<string, any>)["drawing"]);
+      });
+    }
+    const end = new Promise((r) => g.once("end", r));
+    await players[0]!.client.act("start");
+    await until(() => players.every((_, i) => me(i).task === "draw" || me(i).done));
+    const draw = party.players.map((p) => p.state.peek() as Record<string, any>);
+    assert.ok(draw.every((s) => s["frames"] === 2), "every pad has two frames");
+    const deadline = (party.screen.peek() as { deadline: number }).deadline;
+    assert.ok(deadline - party.now() > fast.draw - 200, "the time to animate");
+    await end;
+    off();
+    // Every drawing on the TV, the liars' and the voters' phones: two frames, the second moved (the bots' doodles hop).
+    const shown = [...screens.filter((s) => s["phase"] === "lie" || s["phase"] === "vote" || s["phase"] === "reveal").map((s) => s["drawing"]), ...lies, ...votes] as {
+      strokes: number[][];
+      frames?: number[][][];
+      palette?: string[];
+    }[];
+    assert.ok(shown.length > 0 && lies.length > 0 && votes.length > 0);
+    for (const d of shown) {
+      assert.equal(d.frames?.length, 1);
+      assert.equal(d.frames![0]!.length, d.strokes.length);
+      assert.notDeepEqual(d.frames![0], d.strokes);
+      assert.ok(Array.isArray(d.palette));
+    }
+    assert.deepEqual(new Set(players.flatMap((b) => b.errors)), new Set());
+    // Back to still drawings after the game.
+    g.configure({ animate: false });
+    assert.equal(g.settings.animate, false);
   } finally {
     for (const b of players) b.close();
     await server.close();

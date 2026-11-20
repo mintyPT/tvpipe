@@ -160,13 +160,14 @@ function renderPlayers(): void {
   $("count").textContent = `${party.players.length} / ${party.maxPlayers}`;
   ($("start") as HTMLButtonElement).disabled = running || party.connectedPlayers.length < game.minPlayers;
   $("start").textContent = running ? t.playing : party.connectedPlayers.length < game.minPlayers ? t.waitingMore(game.minPlayers - party.connectedPlayers.length) : t.start;
-  for (const id of ["rounds", "timers", "late", "lang", "undo", "colormode", "adult"]) ($(id) as HTMLSelectElement).disabled = running;
+  for (const id of ["rounds", "timers", "late", "lang", "animate", "undo", "colormode", "adult"]) ($(id) as HTMLSelectElement).disabled = running;
   renderSettings();
 }
 
 /** The settings as the game has them (the VIP changes them from the lobby too). */
 function renderSettings(): void {
   const s = game.settings;
+  $<HTMLSelectElement>("animate").value = s.animate ? "on" : "off";
   $<HTMLSelectElement>("undo").value = s.undo ? "on" : "off";
   $<HTMLSelectElement>("colormode").value = s.colorMode ? "on" : "off";
   $<HTMLSelectElement>("adult").value = s.adult ? "on" : "off";
@@ -398,7 +399,7 @@ async function main(): Promise<void> {
     party.lateJoin = (e.target as HTMLSelectElement).value as LateJoin;
     party.room.set({ lateJoin: party.lateJoin });
   };
-  const setting = (id: string, key: "undo" | "colorMode" | "adult") => {
+  const setting = (id: string, key: "animate" | "undo" | "colorMode" | "adult") => {
     $<HTMLSelectElement>(id).onchange = (e) => {
       try {
         game.configure({ [key]: (e.target as HTMLSelectElement).value === "on" });
@@ -408,6 +409,7 @@ async function main(): Promise<void> {
       renderSettings();
     };
   };
+  setting("animate", "animate");
   setting("undo", "undo");
   setting("colormode", "colorMode");
   setting("adult", "adult");

@@ -30,7 +30,7 @@ import {
   type Option,
   type Prompt,
 } from "../game/rules.ts";
-import { drawingInput, get, has, parseVectors, RULES } from "./vectors.ts";
+import { drawingFrames, drawingInput, get, has, parseVectors, RULES } from "./vectors.ts";
 
 test("the shared rule vectors (test/vectors/rules.txt)", () => {
   const blocks = parseVectors(readFileSync(RULES, "utf8"));
@@ -59,10 +59,10 @@ test("the shared rule vectors (test/vectors/rules.txt)", () => {
       case "drawing": {
         const input = drawingInput(b);
         if (has(b, "error")) {
-          assert.throws(() => validateDrawing(input), (e: unknown) => e instanceof PartyError && e.code === get(b, "error"), at);
+          assert.throws(() => validateDrawing(input, undefined, drawingFrames(b)), (e: unknown) => e instanceof PartyError && e.code === get(b, "error"), at);
         } else {
           const out = get(b, "output");
-          assert.deepEqual(validateDrawing(input), out === "input" ? input : JSON.parse(out), at);
+          assert.deepEqual(validateDrawing(input, undefined, drawingFrames(b)), out === "input" ? input : JSON.parse(out), at);
         }
         break;
       }

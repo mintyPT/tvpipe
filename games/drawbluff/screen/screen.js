@@ -17,7 +17,7 @@
 
 import { PartyClient, qrSvg } from "/_tvpipe/lib/client.js";
 import { pickLang } from "../phone/i18n.js";
-import { drawDrawing, GRID, PALETTE, PAPER } from "../phone/strokes.js";
+import { drawDrawing, FRAME_MS, framesOf, GRID, PALETTE, PAPER } from "../phone/strokes.js";
 import { strings } from "./strings.js";
 
 /**
@@ -137,7 +137,8 @@ function loop(fn) {
 function frame(now) {
   raf = 0;
   for (const f of [...loops]) if (f(now) === false) loops.delete(f);
-  if (loops.size > 0) raf = requestAnimationFrame(frame);
+  // A loop started by a loop has asked for the next frame already.
+  if (loops.size > 0) raf ||= requestAnimationFrame(frame);
 }
 
 function clearFx() {
@@ -311,8 +312,35 @@ function drawTime(drawing) {
 }
 
 /**
+ * An animation's frames in turn, {@link FRAME_MS} each (twice that with
+ * reduced motion), from the second, while the canvas is on the stage.
+ * The page's motion is the drawing's own: whole frames, nothing between.
+ * @param {HTMLCanvasElement} el
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {any} drawing
+ * @param {number} size
+ */
+function flip(el, ctx, drawing, size) {
+  const n = framesOf(drawing).length;
+  if (n < 2) return;
+  const every = calm() ? 2 * FRAME_MS : FRAME_MS;
+  let t0 = -1;
+  let shown = 0;
+  loop((now) => {
+    if (!el.isConnected && t0 >= 0) return false;
+    if (t0 < 0) t0 = now;
+    const f = (1 + Math.floor((now - t0) / every)) % n;
+    if (f !== shown) {
+      shown = f;
+      drawDrawing(ctx, drawing, 0, 0, size, { frame: f });
+    }
+  });
+}
+
+/**
  * Draws a drawing into a canvas stroke by stroke, like watching it being
- * drawn (each frame adds its pieces; `ms` 0: at once).
+ * drawn (each frame adds its pieces; `ms` 0: at once); an animation draws
+ * its first frame in, then flips through its frames.
  * @param {HTMLCanvasElement} el
  * @param {any} drawing
  * @param {number} ms
@@ -327,6 +355,7 @@ function drawIn(el, drawing, ms, delay = 0, done) {
     if (!ctx) return;
     if (ms <= 0) {
       drawDrawing(ctx, drawing, 0, 0, size);
+      flip(el, ctx, drawing, size);
       done?.();
       return;
     }
@@ -344,6 +373,7 @@ function drawIn(el, drawing, ms, delay = 0, done) {
       const want = Math.floor((all.length / 2) * f);
       for (; i < want; i++) segment(ctx, strokes[all[2 * i]], all[2 * i + 1], k, palette);
       if (f < 1) return true;
+      flip(el, ctx, drawing, size);
       done?.();
       return false;
     });
@@ -646,10 +676,11 @@ function lobby(view) {
     }
     const ready = roster.filter((/** @type {any} */ r) => r.connected).length;
     hint.textContent = ready < min ? t.needed(min - ready) : t.vipStarts(roster.find((/** @type {any} */ r) => r.vip)?.name);
-    // The rules: rounds, undo, colours, adult prompts; one that changes flips.
+    // The rules: rounds, animation, undo, colours, adult prompts; one that changes flips.
     /** @type {[string, string, string, string[] | null, boolean][]} */
     const spec = [
       ["rounds", typeof s.rounds === "number" ? t.roundsN(s.rounds) : "", "", null, typeof s.rounds !== "number"],
+      ["animate", t.animated, "", null, !s.animate],
       ["undo", s.undo ? t.undoOn : t.undoOff, s.undo ? "" : "off", null, false],
       ["colors", s.colorMode ? t.colorMode : t.shades, "", s.colorMode ? ["#1d1d1f", "#e5383b", "#ffd60a", "#2a9d8f", "#3a86ff"] : ["#3b2a7a", "#b3a6f2"], false],
       ["adult", t.adult, "hot", null, !s.adult],
@@ -785,7 +816,7 @@ function draw(view) {
   const height = mode === "big" ? 84 : 64;
   const clock = ring();
   const count = h("div", { class: "dcount" });
-  const title = h("div", { class: "big-title" }, t.drawPrompt);
+  const title = h("div", { class: "big-title" }, s.animate ? t.drawAnimated : t.drawPrompt);
   const grid = h("div", { class: `dgrid ${mode}`, style: `--cols:${cols}` });
   const big = h("div", { class: "bigcount" });
   const root = h(

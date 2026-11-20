@@ -30,6 +30,7 @@ const en = (f) => ({
   // The rules (the lobby's badges).
   /** @param {number} n */
   roundsN: (n) => f.p(n, { one: "# round", other: "# rounds" }),
+  animated: "Animated: 2 frames",
   undoOff: "No undo",
   undoOn: "Undo on",
   shades: "Two shades each",
@@ -44,6 +45,7 @@ const en = (f) => ({
   /** @param {number} r @param {number} of */
   roundOf: (r, of) => `Round ${f.n(r)} of ${f.n(of)}`,
   drawPrompt: "Draw your prompt on your phone!",
+  drawAnimated: "Animate your prompt on your phone!",
   /** @param {number} r */
   roundN: (r) => `Round ${f.n(r)}`,
   /** @param {number} n @param {number} of */
@@ -137,6 +139,7 @@ const de = (f) => ({
   needed: (n) => f.p(n, { one: "Noch # Mitspieler fehlt.", other: "Noch # Mitspieler fehlen." }),
   vipStarts: (vip) => `${vip ?? "Der VIP"} startet das Spiel am Handy.`,
   roundsN: (n) => f.p(n, { one: "# Runde", other: "# Runden" }),
+  animated: "Animiert: 2 Bilder",
   undoOff: "Kein Rückgängig",
   undoOn: "Rückgängig an",
   shades: "Zwei Töne pro Person",
@@ -146,6 +149,7 @@ const de = (f) => ({
   voted: (n, of) => `${f.n(n)} von ${f.n(of)} abgestimmt`,
   roundOf: (r, of) => `Runde ${f.n(r)} von ${f.n(of)}`,
   drawPrompt: "Zeichne deinen Begriff auf dem Handy!",
+  drawAnimated: "Animiere deinen Begriff am Handy!",
   roundN: (r) => `Runde ${f.n(r)}`,
   nOf: (n, of) => `${f.n(n)} von ${f.n(of)}`,
   doneWord: "fertig",

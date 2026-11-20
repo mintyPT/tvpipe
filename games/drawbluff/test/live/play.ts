@@ -8,7 +8,11 @@
  * stream); bots join through the public listener. Screenshots of the
  * launcher, the host window, the TV and the phone per phase.
  *
- *   npm run build && node test/live/play.ts [--zip] [--bots N] [--rounds N] [--tunnel=PROVIDER] [--tv page|canvas] [--lang en|de] [--out DIR] [--shots DIR]
+ *   npm run build && node test/live/play.ts [--zip] [--bots N] [--rounds N] [--tunnel=PROVIDER] [--tv page|canvas] [--lang en|de] [--animate] [--out DIR] [--shots DIR]
+ *
+ * `--animate`: the VIP turns animated drawings on; Phil draws frame 1,
+ * copies it into frame 2 and changes the mouth (shots in
+ * `…-animate`, the TV's drawings flip).
  *
  * `--lang de`: the host page sets the room to German (its Language
  * setting), the phone is a German one (`de-DE`); the screenshots go to
@@ -61,6 +65,7 @@ const { values: args } = parseArgs({
     lang: { type: "string", default: "en" },
     shots: { type: "string" },
     seed: { type: "string", default: String(SEED) },
+    animate: { type: "boolean", default: false },
   },
 });
 
@@ -77,7 +82,7 @@ if (args.shots && (lang !== "en" || (args.bots !== undefined && Number(args.bots
   throw new Error(`--shots plays scenario.ts: in English, with ${NAMES.length} others`);
 }
 const nBots = args.shots ? NAMES.length : Number(args.bots ?? 2);
-const out = `${args.out ?? (lang === "de" ? "/tmp/drawbluff-de" : "/tmp/drawbluff-play")}${args.zip ? "-zip" : ""}${args.tv === "canvas" ? "-canvas" : ""}`;
+const out = `${args.out ?? (lang === "de" ? "/tmp/drawbluff-de" : "/tmp/drawbluff-play")}${args.zip ? "-zip" : ""}${args.tv === "canvas" ? "-canvas" : ""}${args.animate ? "-animate" : ""}`;
 mkdirSync(out, { recursive: true });
 if (args.shots) mkdirSync(args.shots, { recursive: true });
 const t0 = Date.now();
@@ -247,6 +252,11 @@ try {
   await phone.eval(`document.querySelectorAll(".rules .seg")[0].querySelectorAll("button")[1].click(); true`);
   await win.until(`drawbluff.game.settings.undo === true`);
   log("phone: picked a colour, turned undo on");
+  if (args.animate) {
+    await phone.eval(`document.querySelectorAll(".rules .seg")[3].querySelectorAll("button")[1].click(); true`);
+    await win.until(`drawbluff.game.settings.animate === true`);
+    log("phone: turned animated drawings on");
+  }
   // Phil (the VIP) starts from the phone.
   await phone.until(`!document.querySelector("button.primary")?.disabled`);
   await phone.eval(`document.querySelector("button.primary").click(); true`);
@@ -291,6 +301,17 @@ try {
     await tab.drag([pt(0.38, 0.4), pt(0.4, 0.42)]);
     await tab.drag([pt(0.6, 0.4), pt(0.62, 0.42)]);
     await tab.drag(Array.from({ length: 12 }, (_, i) => pt(0.35 + (0.3 * i) / 11, 0.6 + 0.08 * Math.sin((i / 11) * Math.PI))));
+    if (args.animate) {
+      // Frame 2: a copy of frame 1 (the copy button shows on the empty frame), then a gasp instead of the smile.
+      await tab.eval(`document.querySelector('.frames .frame[data-frame="2"]').click(); true`);
+      await tab.until(`!document.getElementById("copy").hidden`);
+      await tab.eval(`document.getElementById("copy").click(); true`);
+      await tab.until(`document.getElementById("copy").hidden`);
+      await tab.eval(`document.getElementById("undo").click(); true`);
+      await tab.drag(Array.from({ length: 16 }, (_, i) => pt(0.5 + 0.06 * Math.cos((i / 15) * 2 * Math.PI), 0.66 + 0.06 * Math.sin((i / 15) * 2 * Math.PI))));
+      const n = await tab.eval<number>(`document.querySelectorAll(".frames .frame").length`);
+      log(`phone: drew ${n} frames (copied frame 1, a gasp instead of the smile)`);
+    }
     await shoot();
   };
   const tasks = new Set<string>();

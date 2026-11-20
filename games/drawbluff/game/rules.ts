@@ -15,11 +15,24 @@ export const PALETTE = ["#1d1d1f", "#ffffff", "#e5383b", "#f9a620", "#ffd60a", "
 /**
  * A drawing on a 1000×1000 grid: strokes of `[colour, width, x0, y0, x1,
  * y1, …]`, `colour` an index into `palette` (the artist's pens, set by
- * the host; {@link PALETTE} without one).
+ * the host; {@link PALETTE} without one). An animation (the `animate`
+ * setting) has `frames`: the frames after the first (`strokes`), each
+ * strokes like it; the pages show them in turn, {@link FRAME_MS} each.
  */
 export interface Drawing {
   strokes: number[][];
+  frames?: number[][][];
   palette?: string[];
+}
+
+/** Frames of an animated drawing (two: it flips between them, like a flip-book of two pages). */
+export const FRAMES = 2;
+/** How long the pages show each frame of an animation, ms (`FRAME_MS` in phone/strokes.js). */
+export const FRAME_MS = 400;
+
+/** A drawing's frames: its strokes, then its further frames (one for a still drawing). */
+export function framesOf(d: Drawing): number[][][] {
+  return [d.strokes, ...(d.frames ?? [])];
 }
 
 // ---------------------------------------------------------------------------
@@ -125,24 +138,37 @@ export const MAX_STROKES = 300;
 export const MAX_POINTS = 12_000;
 export const MAX_TITLE = 48;
 
-/** Checks and normalises a drawing from a phone with `colors` pens (throws `PartyError("bad-drawing")`); its strokes only. */
-export function validateDrawing(data: unknown, colors: number = PALETTE.length): Drawing {
+/**
+ * Checks and normalises a drawing from a phone with `colors` pens and
+ * `frames` frames (throws `PartyError("bad-drawing")`); its strokes only,
+ * and with `frames` > 1 always `frames - 1` further frames (the missing
+ * ones empty; a still drawing's `frames` are dropped). {@link MAX_STROKES}
+ * and {@link MAX_POINTS} are for all frames together (one message).
+ */
+export function validateDrawing(data: unknown, colors: number = PALETTE.length, frames = 1): Drawing {
   const bad = (why: string) => new PartyError("bad-drawing", `That drawing cannot be sent (${why})`);
   if (typeof data !== "object" || data === null || !Array.isArray((data as Drawing).strokes)) throw bad("no strokes");
-  const strokes = (data as Drawing).strokes;
-  if (strokes.length > MAX_STROKES) throw bad("too many strokes");
+  const more = frames > 1 ? (data as { frames?: unknown }).frames : undefined;
+  if (more !== undefined && (!Array.isArray(more) || more.length > frames - 1 || !more.every(Array.isArray))) throw bad("broken frames");
+  const all = [(data as Drawing).strokes, ...((more as unknown[][] | undefined) ?? [])];
+  if (all.reduce((n, f) => n + f.length, 0) > MAX_STROKES) throw bad("too many strokes");
   let points = 0;
-  const out: number[][] = [];
-  for (const s of strokes) {
-    if (!Array.isArray(s) || s.length < 4 || s.length % 2 !== 0) throw bad("a broken stroke");
-    if (!s.every((v) => typeof v === "number" && Number.isFinite(v))) throw bad("not numbers");
-    const [color, width, ...xy] = s as number[];
-    if (!Number.isInteger(color) || color! < 0 || color! >= colors) throw bad("unknown colour");
-    points += xy.length / 2;
-    if (points > MAX_POINTS) throw bad("too many points");
-    out.push([color!, clamp(Math.round(width!), 2, 120), ...xy.map((v) => clamp(Math.round(v), 0, GRID))]);
-  }
-  return { strokes: out };
+  const out = all.map((strokes) => {
+    const frame: number[][] = [];
+    for (const s of strokes) {
+      if (!Array.isArray(s) || s.length < 4 || s.length % 2 !== 0) throw bad("a broken stroke");
+      if (!s.every((v) => typeof v === "number" && Number.isFinite(v))) throw bad("not numbers");
+      const [color, width, ...xy] = s as number[];
+      if (!Number.isInteger(color) || color! < 0 || color! >= colors) throw bad("unknown colour");
+      points += xy.length / 2;
+      if (points > MAX_POINTS) throw bad("too many points");
+      frame.push([color!, clamp(Math.round(width!), 2, 120), ...xy.map((v) => clamp(Math.round(v), 0, GRID))]);
+    }
+    return frame;
+  });
+  if (frames <= 1) return { strokes: out[0]! };
+  while (out.length < frames) out.push([]);
+  return { strokes: out[0]!, frames: out.slice(1) };
 }
 
 function clamp(v: number, lo: number, hi: number): number {

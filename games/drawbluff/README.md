@@ -37,8 +37,17 @@ in `game/rules.ts`; a drawing carries its artist's pens). The host page
 and the VIP's phone set the rules before a game: undo on the pad (off by
 default: every stroke counts), colour mode, and adult prompts
 (`data/prompts.adult.txt`, `data/prompts.adult.de.txt`: 18+, cheeky, not
-explicit). The phone's pad takes the whole screen, square, as big as the
-width allows (sideways: the height).
+explicit), and animated drawings (like Drawful Animate: every player
+draws two frames that flip back and forth, 400 ms each, on the TV and
+the phones; 135 s to draw instead of 90). The phone's pad takes the
+whole screen, square, as big as the width allows (sideways: the height);
+when animating it has a line of frames over the pens (a tab per frame
+with its thumbnail, the other frame faintly under the one you draw,
+copy the other frame into an empty one, play), clear and undo work on
+the frame you draw, and Done asks once when a frame is empty. An
+animation is a drawing with `frames` (the frames after the first,
+`strokes`); the limits of a drawing (300 strokes, 12,000 points) are
+for both frames together.
 
 It is a web app for [`tvpipe game play`](../../docs/playshare-design.md):
 tvpipe serves it, the game runs in its host page (a window on the
@@ -88,9 +97,10 @@ duplicates, structures) and the room's deck (no repeats),
 whole games with 3, 8 and 50 bots on `@tvpipe/party`'s relay in memory
 (a player who drops mid-game and comes back, one who leaves, too few
 players, late joiners in every mode, the VIP removing a player, three
-games in one room without a repeated prompt, a whole game in German).
+games in one room without a repeated prompt, a whole game in German,
+a game of animated drawings).
 `npm run build && node test/live/play.ts [--zip] [--bots N]
-[--rounds N] [--lang de] [--tunnel=PROVIDER]` runs the real thing: `tvpipe
+[--rounds N] [--lang de] [--animate] [--tunnel=PROVIDER]` runs the real thing: `tvpipe
 playshare` on the bundle (or the zip), a headless Chrome as the window
 (the launcher, the host page), as a phone (it joins, draws with touch
 events, lies and votes) and as the TV (the `browser` receiver's player
@@ -101,4 +111,6 @@ screenshots of the
 launcher, the host window, the TV and the phone (also at 320 px wide)
 per phase, each checked for text out of its box and, with `--lang de`
 (a German room and phone, shots in `/tmp/drawbluff-de`), for English
-left on the screen.
+left on the screen; `--animate` turns animated drawings on from the
+VIP's phone and draws a second frame (copied from the first, the mouth
+changed).

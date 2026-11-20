@@ -108,6 +108,11 @@ export function has(b: Block, key: string): boolean {
 }
 
 /** A `drawing` block's input, with `repeat` and `pad` applied. */
+/** The frames a drawing vector's game wants (`frames`, default 1). */
+export function drawingFrames(b: Block): number {
+  return has(b, "frames") ? Number(get(b, "frames")) : 1;
+}
+
 export function drawingInput(b: Block): unknown {
   const input = JSON.parse(get(b, "input")) as { strokes: unknown[][] };
   if (has(b, "repeat")) input.strokes = Array(Number(get(b, "repeat"))).fill(input.strokes[0]);
@@ -222,6 +227,14 @@ const DRAWINGS: Entries[] = [
   [["input", { strokes: [[0, 4, 1, 1]] }], ["repeat", 301]],
   [["input", { strokes: [[0, 4]] }], ["pad", 24_000]],
   [["input", { strokes: [[0, 4]] }], ["pad", 24_002]],
+  // Animations (`frames`: how many the game wants): the frames after the first, the missing ones empty, limits for all together.
+  [["input", { strokes: [[0, 4, 1, 1]], frames: [[[1, 200, 5.5, -3]]] }], ["frames", 2]],
+  [["input", { strokes: [[0, 4, 1, 1]] }], ["frames", 2]],
+  [["input", { strokes: [[0, 4, 1, 1]], frames: [[[1, 4, 2, 2]]] }]],
+  [["input", { strokes: [[0, 4, 1, 1]], frames: [[[1, 4, 2, 2]], []] }], ["frames", 2]],
+  [["input", { strokes: [[0, 4, 1, 1]], frames: [[1, 4, 2, 2]] }], ["frames", 2]],
+  [["input", { strokes: [[0, 4, 1, 1]], frames: {} }], ["frames", 2]],
+  [["input", { strokes: [[0, 4, 1, 1]], frames: [[[9, 4, 2, 2]]] }], ["frames", 2]],
 ];
 
 const LIES = [
@@ -387,7 +400,7 @@ function bless(): void {
     let result: [string, unknown];
     try {
       const input = drawingInput(b);
-      const output = JSON.stringify(validateDrawing(input));
+      const output = JSON.stringify(validateDrawing(input, undefined, drawingFrames(b)));
       // Long ones that pass unchanged stay short.
       result = ["output", output.length > 400 && output === JSON.stringify(input) ? "input" : output];
     } catch (e) {
