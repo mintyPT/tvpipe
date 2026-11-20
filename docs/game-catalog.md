@@ -8,7 +8,7 @@ depends on the list's shape.
 
 - **The list** (`site/static/games.json`, served at
   `https://tvpipe.party/games.json`) has all three of this repository's
-  games (Drawbluff, Jinx, Garble) and screenshots for each.
+  games (Drawbluff, Jinx; Garble is off the list while it is rebuilt) and screenshots for each.
 - **The site** has a games page, `tvpipe.party/games/`, rendered from the
   list with the screenshots.
 - **`tvpipe game play` without a game** opens the window on the list:
