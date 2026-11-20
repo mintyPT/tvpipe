@@ -80,11 +80,33 @@ function loadJson<T>(key: string, fallback: T): T {
 
 function renderJoin(): void {
   const j = party.joinInfo;
-  // Only the QR code here: the TV shows the short link to type
-  // (tvpipe.party/CODE); never the tunnel's link or the room code.
+  // The QR code and the link it holds (the short one when tvpipe has it),
+  // on one line to copy and send to someone who is not in the room.
   $("qr").innerHTML = qrSvg(j.qr, { quiet: 2 });
+  // Shown without the scheme to fit; Copy copies the whole link.
+  const link = j.short ?? j.url;
+  $("join-url").textContent = link.replace(/^https?:\/\//, "");
+  $("join-url").title = link;
   const tunnel = party.info.tunnel;
   $("link-note").textContent = j.mode === "tunnel" ? t.scanQr : j.mode === "lan" ? t.lanOnly : tunnel.state === "starting" ? t.opening : t.localOnly;
+}
+
+/** Copies the join link: the clipboard API, else a selected field. */
+async function copyLink(): Promise<void> {
+  const link = party.joinInfo.short ?? party.joinInfo.url;
+  const button = $<HTMLButtonElement>("copy-link");
+  try {
+    await navigator.clipboard.writeText(link);
+  } catch {
+    const field = document.createElement("textarea");
+    field.value = link;
+    document.body.append(field);
+    field.select();
+    document.execCommand("copy");
+    field.remove();
+  }
+  button.textContent = t.copied;
+  setTimeout(() => (button.textContent = t.page["copy"]!), 1500);
 }
 
 /** The player whose Remove waits for a second click (removing is for good). */
@@ -418,6 +440,7 @@ async function main(): Promise<void> {
   };
   $("quit").onclick = () => void tvpipe.quit();
   $("cast-again").onclick = () => void cast();
+  $("copy-link").onclick = () => void copyLink();
   $("change-tv").onclick = () => void changeTvs();
 
   const chosen = await tvpipe.selection();

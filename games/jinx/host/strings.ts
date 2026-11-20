@@ -16,6 +16,7 @@ const en = (f: Format) => ({
   /** The page's fixed texts, by `data-t`. */
   page: {
     onTv: "On the TV",
+    copy: "Copy",
     noTv: "No TV: open the preview on a screen yourself.",
     changeTv: "Change TVs…",
     tryAgain: "Try again",
@@ -44,6 +45,7 @@ const en = (f: Format) => ({
   lanOnly: "On this Wi-Fi only",
   opening: "Opening a public link…",
   localOnly: "This computer only (no public link)",
+  copied: "Copied",
   bot: "bot",
   vip: "VIP",
   waiting: "waiting",
@@ -87,6 +89,7 @@ type Strings = ReturnType<typeof en>;
 const de = (f: Format): Strings => ({
   page: {
     onTv: "Auf dem Fernseher",
+    copy: "Kopieren",
     noTv: "Kein Fernseher: Öffne die Vorschau selbst auf einem Bildschirm.",
     changeTv: "Fernseher wechseln…",
     tryAgain: "Nochmal versuchen",
@@ -114,6 +117,7 @@ const de = (f: Format): Strings => ({
   lanOnly: "Nur in diesem WLAN",
   opening: "Öffne einen öffentlichen Link…",
   localOnly: "Nur dieser Computer (kein öffentlicher Link)",
+  copied: "Kopiert",
   bot: "Bot",
   vip: "VIP",
   waiting: "wartet",

@@ -15,6 +15,9 @@ h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .08em; margin: 
 .join { display: flex; gap: 14px; align-items: center; }
 .qr { width: 120px; height: 120px; flex: none; background: #fff; border-radius: 8px; overflow: hidden; }
 .qr svg { width: 100%; height: 100%; display: block; }
+.join-text { flex: 1; min-width: 0; }
+.join-link { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
+.join-link .url { flex: 1; min-width: 0; font: 500 11px "Plex Mono", ui-monospace, monospace; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 3px 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; user-select: all; }
 .code { font-family: "Anton", sans-serif; font-size: 28px; margin: 0 0 4px; letter-spacing: .1em; }
 ul { list-style: none; margin: 0; padding: 0; }
 .tvs li, .players li { display: flex; justify-content: space-between; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--line); }

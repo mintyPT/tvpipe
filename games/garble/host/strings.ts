@@ -9,6 +9,7 @@ const en = {
   /** The page's fixed texts, by `data-t`. */
   page: {
     onTv: "On the TV",
+    copy: "Copy",
     noTv: "No TV: open the preview on a screen yourself.",
     tryAgain: "Try again",
     openTv: "Open the TV view",
@@ -38,6 +39,7 @@ const en = {
   scanQr: "Phones join with the QR code or the link on the TV",
   opening: "Opening a public link…",
   localOnly: "This computer only (no public link)",
+  copied: "Copied",
   vip: "VIP",
   waiting: "waiting",
   away: "away",
@@ -70,6 +72,7 @@ type Strings = typeof en;
 const de: Strings = {
   page: {
     onTv: "Am Fernseher",
+    copy: "Kopieren",
     noTv: "Kein Fernseher: Öffne die Vorschau selbst auf einem Bildschirm.",
     tryAgain: "Nochmal versuchen",
     openTv: "TV-Ansicht öffnen",
@@ -99,6 +102,7 @@ const de: Strings = {
   scanQr: "Mitspielen über den QR-Code oder den Link am Fernseher",
   opening: "Öffentlicher Link wird geöffnet…",
   localOnly: "Nur dieser Computer (kein öffentlicher Link)",
+  copied: "Kopiert",
   vip: "VIP",
   waiting: "wartet",
   away: "weg",
