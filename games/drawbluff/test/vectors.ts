@@ -31,7 +31,7 @@
  *   seeded(dealSeed))`), `points`, `voters`, `seen` (`score`), `reveal`
  *   (the ids in `revealOrder`).
  * - `prompts`: `input` (a JSON string: a prompts file), `parsed`
- *   (`[tag, text]` of `parsePrompts`).
+ *   (`[tag, text, decoys]` of `parsePrompts`).
  * - `spread`: `tags` (one per item), `window`, then `order` (the item
  *   indices `spread` gives).
  * - `deck`: `prompts` (`[tag, text]`, or `file` for data/prompts.txt),
@@ -332,6 +332,7 @@ const PROMPT_FILES = [
   "before any tag\n[idiom]\n# inside\nraining cats and dogs\n[view]\n[drama]\nthe last cookie\n",
   "",
   "[Odd]\n[odd ]\nnot a [tag]\n",
+  "[odd]\na snail in a hurry | a slug in a rush |a turtle late for work| \na lonely sock|\n| nothing\n",
 ];
 
 const SPREADS: [string[], number][] = [
@@ -409,7 +410,7 @@ function bless(): void {
   for (let seed = 1; seed <= 8; seed++) out.push(block(rotateBlock(seed)));
   for (let seed = 1; seed <= 48; seed++) out.push(block(turn(seed)));
   for (const input of PROMPT_FILES) {
-    out.push(block([["test", "prompts"], ["input", input], ["parsed", JSON.stringify(parsePrompts(input).map((p) => [p.tag, p.text]))]]));
+    out.push(block([["test", "prompts"], ["input", input], ["parsed", JSON.stringify(parsePrompts(input).map((p) => [p.tag, p.text, p.decoys]))]]));
   }
   for (const [tags, window] of SPREADS) {
     const order = spread(tags.map((_, i) => i), (i) => tags[i]!, window);

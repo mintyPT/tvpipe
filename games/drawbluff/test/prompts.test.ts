@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { DECK_RESERVE, displayTitle, LANGS, LIE_SOFT, PromptDeck, seeded, titleKey, type Prompt } from "../game/rules.ts";
+import { DECK_RESERVE, displayTitle, LANGS, LIE_SOFT, PromptDeck, seeded, titleKey, type Lang, type Prompt } from "../game/rules.ts";
 import { nearDuplicates, perStructure, repeats } from "../scripts/prompt-stats.ts";
 import { ADULT_BY_LANG, PROMPTS_BY_LANG } from "./prompts.ts";
 
@@ -10,19 +10,40 @@ const LETTERS = { en: /^[a-z' ]+$/, de: /^[a-zäöüß' ]+$/ } as const;
 /** The longest word a prompt may have: the phone's prompt and the TV's options break it, but not nicely. */
 const LONGEST_WORD = 26;
 
+/** A prompt's or a decoy's form: what a phone would make of a lie, at most `LIE_SOFT` characters, no long words. */
+function form(text: string, lang: Lang): void {
+  assert.equal(displayTitle(text), text, text);
+  assert.equal(text.normalize("NFC"), text, `${text}: not NFC`);
+  assert.ok([...text].length <= LIE_SOFT, `${text}: ${[...text].length} characters`);
+  assert.match(text, LETTERS[lang], text);
+  assert.ok(!/^ | $|  /.test(text), `${text}: spacing`);
+  for (const w of text.split(" ")) assert.ok([...w].length <= LONGEST_WORD, `${text}: ${w} is too long a word`);
+}
+
+/** Three decoys a prompt: none the prompt, nor another prompt of the file, nor another decoy of it. */
+function decoys(prompts: readonly Prompt[], lang: Lang): void {
+  const keys = new Set(prompts.map((p) => titleKey(p.text, lang)));
+  const seen = new Map<string, string>();
+  for (const p of prompts) {
+    assert.equal(p.decoys?.length, 3, `${p.text}: ${p.decoys?.length ?? 0} decoys`);
+    for (const d of p.decoys!) {
+      const k = titleKey(d, lang);
+      assert.notEqual(k, titleKey(p.text, lang), `${p.text}: the decoy ${d} is the prompt`);
+      assert.ok(!keys.has(k), `${p.text}: the decoy ${d} is a prompt`);
+      assert.ok(!seen.has(k), `${p.text}: the decoy ${d} is also one of ${seen.get(k)}`);
+      seen.set(k, p.text);
+    }
+  }
+}
+
 for (const lang of LANGS) {
   const prompts = PROMPTS_BY_LANG[lang];
 
   test(`prompts (${lang}): display form, at most ${LIE_SOFT} characters, nothing a lie could not be`, () => {
-    for (const { text } of prompts) {
-      assert.equal(displayTitle(text), text, text);
-      assert.equal(text.normalize("NFC"), text, `${text}: not NFC`);
-      assert.ok([...text].length <= LIE_SOFT, `${text}: ${[...text].length} characters`);
-      assert.match(text, LETTERS[lang], text);
-      assert.ok(!/^ | $|  /.test(text), `${text}: spacing`);
-      for (const w of text.split(" ")) assert.ok([...w].length <= LONGEST_WORD, `${text}: ${w} is too long a word`);
-    }
+    for (const p of prompts) for (const text of [p.text, ...(p.decoys ?? [])]) form(text, lang);
   });
+
+  test(`prompts (${lang}): three decoys each, none a prompt, none twice`, () => decoys(prompts, lang));
 
   test(`prompts (${lang}): no two alike, not even nearly`, () => {
     const keys = new Map<string, string>();
@@ -57,15 +78,10 @@ for (const lang of LANGS) {
   const prompts = ADULT_BY_LANG[lang];
 
   test(`adult prompts (${lang}): display form, at most ${LIE_SOFT} characters, nothing a lie could not be`, () => {
-    for (const { text } of prompts) {
-      assert.equal(displayTitle(text), text, text);
-      assert.equal(text.normalize("NFC"), text, `${text}: not NFC`);
-      assert.ok([...text].length <= LIE_SOFT, `${text}: ${[...text].length} characters`);
-      assert.match(text, LETTERS[lang], text);
-      assert.ok(!/^ | $|  /.test(text), `${text}: spacing`);
-      for (const w of text.split(" ")) assert.ok([...w].length <= LONGEST_WORD, `${text}: ${w} is too long a word`);
-    }
+    for (const p of prompts) for (const text of [p.text, ...(p.decoys ?? [])]) form(text, lang);
   });
+
+  test(`adult prompts (${lang}): three decoys each, none a prompt, none twice`, () => decoys(prompts, lang));
 
   test(`adult prompts (${lang}): no two alike, none like a family prompt`, () => {
     const keys = new Map<string, string>();

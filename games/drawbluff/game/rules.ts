@@ -447,15 +447,18 @@ export function revealOrder(options: readonly Option[], voters: ReadonlyMap<stri
 // ---------------------------------------------------------------------------
 // Prompts (docs/drawbluff-scale.md "Prompts")
 
-/** A prompt to draw and its structure (`odd`, `idiom`, `moment`, …; "" for none). */
+/** A prompt to draw, its structure (`odd`, `idiom`, `moment`, …; "" for none) and its decoys. */
 export interface Prompt {
   text: string;
   tag: string;
+  /** Lies written for the prompt's drawing: the game's, when the players wrote too few. */
+  decoys?: readonly string[] | undefined;
 }
 
 /**
  * Reads `data/prompts.txt`: `[tag]` starts a structure, then one prompt
- * per line (trimmed); blank lines and `#` comments are skipped; prompts
+ * per line, its decoys after it, each after `|` (all trimmed); blank
+ * lines, lines without a prompt and `#` comments are skipped; prompts
  * before any `[tag]` have the tag "".
  */
 export function parsePrompts(text: string): Prompt[] {
@@ -465,8 +468,12 @@ export function parsePrompts(text: string): Prompt[] {
     const line = raw.trim();
     if (line === "" || line.startsWith("#")) continue;
     const m = /^\[([a-z]+)\]$/.exec(line);
-    if (m) tag = m[1]!;
-    else out.push({ text: line, tag });
+    if (m) {
+      tag = m[1]!;
+      continue;
+    }
+    const [text, ...decoys] = line.split("|").map((s) => s.trim());
+    if (text) out.push({ text, tag, decoys: decoys.filter((d) => d !== "") });
   }
   return out;
 }
@@ -566,7 +573,7 @@ export class PromptDeck {
   }
 }
 
-/** Decoys for a drawing: the spares of its own structure first, each part in its order. */
+/** Prompts to fall back on as decoys (a drawing's own ran out): the spares of its own structure first, each part in its order. */
 export function decoyOrder(spares: readonly Prompt[], tag: string): Prompt[] {
   return [...spares.filter((p) => p.tag === tag), ...spares.filter((p) => p.tag !== tag)];
 }

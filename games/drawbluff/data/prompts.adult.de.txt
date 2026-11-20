@@ -1,10 +1,11 @@
 # drawbluffs Begriffe für Erwachsene auf Deutsch: für Räume, in denen der
 # Host "ab 18" einschaltet; dann teilt er diese statt data/prompts.de.txt
-# aus (auch die Quelle der Köder-Lügen). Für Deutschsprachige geschrieben,
+# aus. Für Deutschsprachige geschrieben,
 # nicht übersetzt (data/prompts.adult.txt: Englisch).
 #
 # Format und Regeln wie data/prompts.de.txt: `[tag]` beginnt eine
-# Struktur, dann ein Begriff pro Zeile; Leerzeilen und `#`-Kommentare
+# Struktur, dann ein Begriff pro Zeile mit seinen drei Ködern nach
+# ` | `; Leerzeilen und `#`-Kommentare
 # zählen nicht. Jeder Begriff steht in seiner Anzeigeform (klein
 # geschrieben, nur Buchstaben mit ä, ö, ü, ß, Leerzeichen und Apostrophe,
 # nichts am Ende, NFC) und hat höchstens 40 Zeichen. Keine zwei gleichen
@@ -27,316 +28,316 @@
 #   moment    der Moment, wenn: wenn in der disco das licht angeht
 
 [idiom]
-die sau rauslassen
-einen über den durst trinken
-blau wie ein veilchen
-einen in der krone haben
-voll wie eine haubitze
-die puppen tanzen lassen
-sich die kante geben
-sich einen hinter die binde kippen
-einen sitzen haben
-jemandem schöne augen machen
-mit jemandem in die kiste springen
-jemandem den kopf verdrehen
-auf freiersfüßen wandeln
-jemanden abschleppen
-jemandem den laufpass geben
-in die röhre gucken
-jemanden um den finger wickeln
-jemandem hörner aufsetzen
-die hüllen fallen lassen
-die hosen runterlassen
-nichts anbrennen lassen
-im siebten himmel schweben
-feuer und flamme sein
-die nacht zum tag machen
-eine flasche köpfen
-sich wie die karnickel vermehren
-auf dem trockenen sitzen
-das hemd ist näher als die hose
-einen kater pflegen
-auf jemanden abfahren
-die kuh fliegen lassen
+die sau rauslassen | schwein gehabt | den stall ausmisten | den bock zum gärtner machen
+einen über den durst trinken | zu tief ins glas schauen | wasser predigen und wein trinken | der durstige mann in der wüste
+blau wie ein veilchen | ein blaues wunder erleben | durch die blume sprechen | ein mauerblümchen sein
+einen in der krone haben | einer sache die krone aufsetzen | eine meise unterm hut haben | den kopf hoch tragen
+voll wie eine haubitze | das pulver verschossen haben | mit kanonen auf spatzen schießen | unter dampf stehen
+die puppen tanzen lassen | die fäden in der hand halten | nach jemandes pfeife tanzen | aus der reihe tanzen
+sich die kante geben | auf der kippe stehen | jemandem die stirn bieten | um die ecke denken
+sich einen hinter die binde kippen | sich etwas hinter die ohren schreiben | jemandem einen bären aufbinden | sich auf den schlips getreten fühlen
+einen sitzen haben | einen vogel haben | die füße hochlegen | eine schraube locker haben
+jemandem schöne augen machen | jemandem sand in die augen streuen | jemanden mit blicken ausziehen | ein auge auf jemanden werfen
+mit jemandem in die kiste springen | mit jemandem unter einer decke stecken | mit jemandem durch dick und dünn gehen | zwei leute ziehen gemeinsam um
+jemandem den kopf verdrehen | jemandem über den kopf wachsen | den kopf in den sand stecken | jemandem den hals umdrehen
+auf freiersfüßen wandeln | auf großem fuß leben | auf leisen sohlen schleichen | mit dem falschen fuß aufstehen
+jemanden abschleppen | jemanden auf den arm nehmen | jemanden auf händen tragen | einen klotz am bein haben
+jemandem den laufpass geben | jemandem beine machen | jemandem die rote karte zeigen | sich aus dem staub machen
+in die röhre gucken | über den tellerrand schauen | einen braten in der röhre haben | ins leere starren
+jemanden um den finger wickeln | jemandem auf die finger klopfen | sich die finger verbrennen | jemanden an der leine führen
+jemandem hörner aufsetzen | den stier bei den hörnern packen | sich die hörner abstoßen | ein teufel in menschengestalt
+die hüllen fallen lassen | die katze aus dem sack lassen | jemanden im regen stehen lassen | sich warm anziehen müssen
+die hosen runterlassen | sich ins hemd machen | die beine in die hand nehmen | in die knie gehen
+nichts anbrennen lassen | mit dem feuer spielen | den braten riechen | in teufels küche kommen
+im siebten himmel schweben | in den sternen stehen | luftschlösser bauen | auf rosen gebettet sein
+feuer und flamme sein | öl ins feuer gießen | für jemanden durchs feuer gehen | das feuer neu entfachen
+die nacht zum tag machen | den tag vor dem abend loben | eine nacht drüber schlafen | nachts sind alle katzen grau
+eine flasche köpfen | die korken knallen lassen | der geist aus der flasche | kopf und kragen riskieren
+sich wie die karnickel vermehren | da liegt der hase im pfeffer | wie pilze aus dem boden schießen | die familie wächst und wächst
+auf dem trockenen sitzen | auf dem zahnfleisch gehen | auf heißen kohlen sitzen | zwischen zwei stühlen sitzen
+das hemd ist näher als die hose | der apfel fällt nicht weit vom stamm | kleider machen leute | das letzte hemd hat keine taschen
+einen kater pflegen | die katze im sack kaufen | einen frosch im hals haben | den vogel abschießen
+auf jemanden abfahren | den zug verpassen | auf den zug aufspringen | jemanden links liegen lassen
+die kuh fliegen lassen | die kuh vom eis holen | einen drachen steigen lassen | wenn schweine fliegen könnten
 
 [wort]
-ein schluckspecht
-eine schnapsdrossel
-ein schürzenjäger
-ein sitzpinkler
-ein bierbauch
-ein seitensprung
-eine schnapsidee
-ein flachmann
-ein betthupferl
-ein muttersöhnchen
-ein saufkumpan
-ein partylöwe
-ein busenfreund
-eine schnapsleiche
-ein spätzünder
-ein hosenscheißer
-ein rettungsring
-das hüftgold
-ein waschbrettbauch
-ein lustmolch
-ein ehedrache
-ein pantoffelheld
-ein knutschfleck
-ein sahneschnittchen
-ein kotzbrocken
-ein stinkstiefel
-ein schnarchzapfen
-ein frühschoppen
-ein absacker
-ein schäferstündchen
-ein arschgeweih
-ein warmduscher
-ein schlummertrunk
-ein herzensbrecher
+ein schluckspecht | ein pechvogel | ein spaßvogel | ein specht an der flasche
+eine schnapsdrossel | ein schräger vogel | eine nachteule | ein vogel badet im weinglas
+ein schürzenjäger | ein schnäppchenjäger | ein kopfgeldjäger | ein jäger an der wäscheleine
+ein sitzpinkler | ein stubenhocker | ein sesselpupser | ein thronfolger
+ein bierbauch | ein medizinball | ein bierfass auf beinen | ein babybauch
+ein seitensprung | ein seitenstechen | ein luftsprung | ein sprung aus dem fenster
+eine schnapsidee | eine bierlaune | ein geistesblitz | eine glühbirne im glas
+ein flachmann | ein flachwitz | ein strohmann | ein plattgewalzter mann
+ein betthupferl | ein bettflüchter | eine bettwanze | ein frosch auf der matratze
+ein muttersöhnchen | ein nesthäkchen | ein schoßhündchen | ein riesenbaby
+ein saufkumpan | ein stammgast | ein trinkspruch | ein kegelbruder
+ein partylöwe | ein zirkuslöwe | ein partymuffel | ein löwe hat geburtstag
+ein busenfreund | ein kuschelbär | ein brustschwimmer | zwei freunde in einem pulli
+eine schnapsleiche | eine wasserleiche | ein filmriss | ein niederschlag
+ein spätzünder | ein hitzkopf | ein feuerteufel | ein frühaufsteher
+ein hosenscheißer | ein hosenträger | ein durchfallkandidat | ein kleinkind in der pfütze
+ein rettungsring | ein reifenwechsel | ein schwimmflügel | ein dicker im planschbecken
+das hüftgold | der hüftschwung | die goldene mitte | das goldstück
+ein waschbrettbauch | ein wellblechdach | ein waschbär | ein bauch mit rippen
+ein lustmolch | ein schmusekater | ein wonneproppen | ein frosch mit herzaugen
+ein ehedrache | eine schreckschraube | eine feuerprobe | ein drache im brautkleid
+ein pantoffelheld | ein frauenheld | ein stubentiger | ein ritter im bademantel
+ein knutschfleck | ein schönheitsfleck | ein mückenstich | ein vampirbiss
+ein sahneschnittchen | ein tortenheber | ein früchtchen | ein sahnehäubchen
+ein kotzbrocken | ein brechmittel | ein klotz am bein | ein dreckspatz
+ein stinkstiefel | ein stinktier | ein schweißfuß | ein gestiefelter kater
+ein schnarchzapfen | ein sägewerk | ein tannenzapfen | ein murmeltier
+ein frühschoppen | ein stammtisch | ein morgenmuffel | ein sonntagsbraten
+ein absacker | ein schlafsack | ein durchhänger | ein schlusslicht
+ein schäferstündchen | ein kaffeekränzchen | ein mittagsschläfchen | ein schäfer zählt schafe
+ein arschgeweih | ein hirschgeweih | ein hornochse | ein hirsch von hinten
+ein warmduscher | eine frostbeule | ein eisbader | ein schaumschläger
+ein schlummertrunk | ein gutenachtkuss | ein nachttopf | ein schlafwandler
+ein herzensbrecher | ein nussknacker | ein herzschrittmacher | ein gebrochenes herz
 
 [party]
-ein bollerwagen voller junggesellen
-die polonaise durchs großraumbüro
-der chef tanzt auf dem tisch
-karaoke um vier uhr morgens
-ein maßkrug als badewanne
-trinkspiele im altenheim
-der döner um drei uhr nachts
-bierpong auf dem bügelbrett
-der letzte gast an der theke
-die afterparty im waschsalon
-der dj spielt nur schlager
-eine zeltparty im platzregen
-der fünfte schnaps aufs haus
-die kotztüte im partybus
-der heimweg im einkaufswagen
-ein stripper im seniorenheim
-eierlikör aus der gießkanne
-tequila mit dem pfarrer
-konfetti in der unterhose
-ein ballermann am baggersee
-die bowle mit geheimzutat
-ein kater mit sonnenbrille
-aufwachen in der badewanne
-aufwachen neben einem verkehrshütchen
-ein katerfrühstück mit rollmops
-der verlorene schuh nach der feier
-ein bierzelt auf dem mond
-der hintern auf dem kopierer
-der rausschmeißer trägt ein tutu
-sangria aus dem eimer
+ein bollerwagen voller junggesellen | eine schubkarre voller brautjungfern | der vatertagsausflug mit bierkästen | ein kinderwagen voller bierflaschen
+die polonaise durchs großraumbüro | die schlange vor der kaffeemaschine | die weihnachtsfeier im treppenhaus | der betriebsausflug im gänsemarsch
+der chef tanzt auf dem tisch | die chefin singt auf dem stuhl | der azubi schläft unterm tisch | die weihnachtsfeier eskaliert
+karaoke um vier uhr morgens | das ständchen um halb fünf | der weckruf mit dem mikrofon | die nachbarn rufen die polizei
+ein maßkrug als badewanne | ein bierfass als whirlpool | der tauchgang im weizenglas | ein senfglas als planschbecken
+trinkspiele im altenheim | flaschendrehen in der reha | bingoabend mit schnapsgläsern | der stammtisch der rentner
+der döner um drei uhr nachts | die pommes an der tankstelle | die currywurst nach der sperrstunde | der mitternachtssnack im stehen
+bierpong auf dem bügelbrett | bierpong auf dem surfbrett | flunkyball auf dem balkon | kegeln mit leeren bierflaschen
+der letzte gast an der theke | der stammgast schläft am tresen | der wirt stellt die stühle hoch | liebeskummer an der hotelbar
+die afterparty im waschsalon | die disco in der autowaschanlage | der rave im schleudergang | der erste kuss im waschkeller
+der dj spielt nur schlager | der dj schläft am mischpult | die tanzfläche bleibt leer | der alleinunterhalter mit keyboard
+eine zeltparty im platzregen | ein festival im schlammloch | die grillparty unterm regenschirm | das schützenfest im hagel
+der fünfte schnaps aufs haus | die dritte runde für alle | der doppelte korn zum abschied | der wirt hat geburtstag
+die kotztüte im partybus | die butterfahrt mit seegang | der kegelausflug im reisebus | das lunchpaket auf der klassenfahrt
+der heimweg im einkaufswagen | das wettrennen mit schubkarren | der schlafplatz im kinderwagen | der parkplatz um fünf uhr früh
+ein stripper im seniorenheim | ein bodybuilder in der reha | der neue pfleger macht eindruck | ein zauberer beim kaffeekränzchen
+eierlikör aus der gießkanne | kakao aus der kaffeekanne | senf aus dem gartenschlauch | der frühschoppen im schrebergarten
+tequila mit dem pfarrer | brüderschaft mit der nonne | schnaps mit dem schornsteinfeger | die beichte nach der kneipentour
+konfetti in der unterhose | glitzer im bauchnabel | lametta im brusthaar | der morgen nach der hochzeit
+ein ballermann am baggersee | die schaumparty im freibad | ein strandfest im planschbecken | der vatertag am angelteich
+die bowle mit geheimzutat | der punsch mit nebenwirkung | die suppe mit überraschung | der kräuterkuchen vom mitbewohner
+ein kater mit sonnenbrille | ein waschbär mit schlafmaske | ein tiger im liegestuhl | der sonntag nach dem stadtfest
+aufwachen in der badewanne | aufwachen im kofferraum | einschlafen auf dem klo | das nickerchen im planschbecken
+aufwachen neben einem verkehrshütchen | die nacht mit der schaufensterpuppe | ein verkehrshütchen als partyhut | eingeschlafen auf der baustelle
+ein katerfrühstück mit rollmops | ein konterbier zum frühstück | der brunch mit saurer gurke | die heringsplatte am sonntag
+der verlorene schuh nach der feier | aschenputtel um fünf uhr früh | der abgebrochene absatz im gully | die socke auf dem kronleuchter
+ein bierzelt auf dem mond | ein biergarten auf dem mars | ein zirkuszelt auf dem mond | der astronaut im dirndl
+der hintern auf dem kopierer | der po auf der herdplatte | die weihnachtsfeier im kopierraum | das gesicht im fotoautomaten
+der rausschmeißer trägt ein tutu | die ballerina als türsteherin | der bodybuilder im ballettkurs | der türsteher hat seine wette verloren
+sangria aus dem eimer | cocktails aus der blumenvase | glühwein aus der thermoskanne | der eimer voller strohhalme
 
 [date]
-ein erstes date beim zahnarzt
-wischen bis der daumen glüht
-ein blind date mit einem vampir
-das profilfoto von vor zehn jahren
-der flirt an der fleischtheke
-speeddating auf dem friedhof
-ein heiratsantrag der ins wasser fällt
-ein kuss mit zahnspange
-ein anmachspruch der nach hinten losgeht
-rosen von der tankstelle
-ein liebesbrief mit rechtschreibfehlern
-das date bringt seine mutter mit
-ein candlelight dinner mit knoblauch
-ghosting durch ein echtes gespenst
-ein match mit dem eigenen chef
-schwitzige hände beim händchenhalten
-ein picknick im ameisenhaufen
-knutschen im autokino
-das erste date im möbelhaus
-der flirt im fitnessstudio
-eine kontaktanzeige in der zeitung
-liebe auf den ersten wisch
-die rechnung beim ersten date
-ein profilbild mit totem fisch
-der anruf der ex mitten im date
-zwei singles am kühlregal
-ein kuss unterm mistelzweig
-ein ständchen mit der blockflöte
-der lippenstift am kragen
+ein erstes date beim zahnarzt | ein erstes date beim friseur | verliebt in die sprechstundenhilfe | ein flirt im wartezimmer
+wischen bis der daumen glüht | tippen bis der akku stirbt | warten bis er endlich zurückschreibt | ein verbrannter daumen am handy
+ein blind date mit einem vampir | ein blind date mit einer fledermaus | das erste date in der gruft | ein knutschfleck der zu weit geht
+das profilfoto von vor zehn jahren | das date sieht älter aus als gedacht | das hochzeitsfoto vor dem bierbauch | das bewerbungsfoto mit vollen haaren
+der flirt an der fleischtheke | der flirt an der käsetheke | ein extra scheibchen für die süße | zwei verliebte beim grillen
+speeddating auf dem friedhof | die witwe sucht schnell einen neuen | ein picknick zwischen grabsteinen | die nachtwanderung mit dem schwarm
+ein heiratsantrag der ins wasser fällt | der verlobungsring im gully | die hochzeitsnacht auf dem tretboot | ein kniefall auf dem wackeligen steg
+ein kuss mit zahnspange | ein kuss mit schnurrbart | das lächeln voller spinat | der erste kuss im ferienlager
+ein anmachspruch der nach hinten losgeht | der drink der im eigenen gesicht landet | ein zwinkern das wie ein krampf aussieht | die abfuhr vor versammelter mannschaft
+rosen von der tankstelle | pralinen aus dem automaten | der blumenstrauß vom friedhof | ein strauß aus dem vorgarten
+ein liebesbrief mit rechtschreibfehlern | ein gedicht das sich nicht reimt | ein liebesbrief mit kaffeeflecken | die hausaufgaben für die angebetete
+das date bringt seine mutter mit | das date bringt seine ex mit | die schwiegermutter sitzt dazwischen | das erste treffen mit den eltern
+ein candlelight dinner mit knoblauch | ein romantisches dinner mit zwiebeln | der mundgeruch beim ersten kuss | der koch hat es zu gut gemeint
+ghosting durch ein echtes gespenst | ein date mit einem bettlaken | die ex spukt noch im schlafzimmer | ein liebesbrief aus dem jenseits
+ein match mit dem eigenen chef | ein match mit der eigenen nachbarin | die affäre im großraumbüro | der kollege erkennt das profilbild
+schwitzige hände beim händchenhalten | kalte füße unter der gemeinsamen decke | weiche knie beim ersten tanz | zwei hände die nicht loslassen wollen
+ein picknick im ameisenhaufen | ein picknick auf der kuhweide | ein kuss im brennnesselfeld | das date das ständig kribbelt
+knutschen im autokino | ein kuss in der waschstraße | popcorn auf der rückbank | die letzte reihe im kino
+das erste date im möbelhaus | das erste date im baumarkt | probeliegen im ausstellungsbett | ein streit beim schrankaufbau
+der flirt im fitnessstudio | hilfe beim bankdrücken | muskeln zeigen am baggersee | das erste date beim yoga
+eine kontaktanzeige in der zeitung | ein liebesgruß am schwarzen brett | der steckbrief der traumfrau | ein mann versteckt hinter der zeitung
+liebe auf den ersten wisch | ein herz für das eigene handy | verliebt ins eigene spiegelbild | eine beziehung per videoanruf
+die rechnung beim ersten date | das portemonnaie zu hause vergessen | der streit ums trinkgeld | abwaschen statt bezahlen
+ein profilbild mit totem fisch | ein urlaubsfoto mit erlegtem hirsch | ein selfie mit dem goldfisch | der angler sucht eine frau
+der anruf der ex mitten im date | der wecker klingelt mitten im kuss | die mutter ruft beim abendessen an | das handy vibriert in der hose
+zwei singles am kühlregal | zwei singles im waschsalon | streit um den letzten joghurt | die tiefkühlpizza für eine person
+ein kuss unterm mistelzweig | ein kuss unterm regenschirm | ein kuss unter der discokugel | mama küsst den weihnachtsmann
+ein ständchen mit der blockflöte | ein ständchen unterm falschen fenster | der rattenfänger auf brautschau | ein liebeslied auf der mundharmonika
+der lippenstift am kragen | der ketchupfleck am hemd | ein knutschfleck unterm schal | die fremde haarsträhne am sakko
 
 [nackt]
-saunaregeln für anfänger
-der saunameister wedelt mit dem handtuch
-ein fkk strand voller rentner
-nacktbaden im baggersee
-der handtuchkrieg am hotelpool
-ein nacktscanner am flughafen
-die badehose rutscht beim köpper
-ein flitzer beim fußballspiel
-den bauch einziehen am strand
-haare an unerwarteten stellen
-der klempner beim bücken
-die unterhose auf links
-nacktyoga im stadtpark
-aktzeichnen in der volkshochschule
-rückenhaare wie ein perserteppich
-die umkleidekabine ohne vorhang
-ein bikini aus salatblättern
-ein feigenblatt im herbst
-ein pups im fahrstuhl
-die brille beschlägt in der sauna
-strip poker im winter
-bräunungsstreifen vom tanga
-der gemischte saunatag
-ein nacktmull im badeanzug
-der sonnenbrand mit handabdruck
-der bademantel geht beim winken auf
-ein bierbauch im muskelshirt
-die waage im badezimmer verstecken
+saunaregeln für anfänger | dampfbad für fortgeschrittene | die badeordnung im freibad | der erste besuch im thermalbad
+der saunameister wedelt mit dem handtuch | der bademeister winkt mit der fahne | der kellner verscheucht die fliegen | ein saunagast ergibt sich mit dem laken
+ein fkk strand voller rentner | ein nudistencamp voller lehrer | die seniorengymnastik am meer | ein nacktwanderverein im ruhestand
+nacktbaden im baggersee | nachtschwimmen im freibad | ein tauchgang im gartenteich | der badeunfall am stausee
+der handtuchkrieg am hotelpool | die wasserschlacht im freibad | der grillplatzkampf im stadtpark | das frühstücksbuffet um sieben
+ein nacktscanner am flughafen | das röntgenbild beim zahnarzt | die leibesvisitation am zoll | ein ganzkörperspiegel im kaufhaus
+die badehose rutscht beim köpper | das bikinioberteil bei der arschbombe | der bademeister fällt vom turm | die schwimmflügel platzen im becken
+ein flitzer beim fußballspiel | ein maskottchen beim elfmeter | der torjubel ohne trikot | ein platzsturm beim pokalfinale
+den bauch einziehen am strand | die luft anhalten beim tauchen | die brust rausstrecken im freibad | den gürtel enger schnallen
+haare an unerwarteten stellen | muttermale an komischen stellen | ein schnurrbart auf dem rücken | der friseur rutscht beim rasieren ab
+der klempner beim bücken | der elektriker auf der leiter | der fliesenleger auf allen vieren | der gärtner beim unkrautjäten
+die unterhose auf links | der pullover falsch herum | die socken auf halb acht | die badehose von gestern
+nacktyoga im stadtpark | frühsport auf dem balkon | tai chi im schrebergarten | der sonnengruß im freibad
+aktzeichnen in der volkshochschule | der töpferkurs im seniorenheim | der bildhauerkurs im kloster | porträtmalen auf dem marktplatz
+rückenhaare wie ein perserteppich | brusthaare wie ein vogelnest | ein rücken wie ein bärenfell | der rasenmäher auf dem rücken
+die umkleidekabine ohne vorhang | die dusche mit glastür im büro | das schaufenster ohne jalousie | die anprobe im falschen laden
+ein bikini aus salatblättern | ein badeanzug aus seetang | ein tanga aus gurkenscheiben | das brautkleid aus kohlblättern
+ein feigenblatt im herbst | ein lendenschurz im winter | der laubbläser im paradies | ein nackter baum im november
+ein pups im fahrstuhl | ein schluckauf in der kirche | ein niesen im wartezimmer | eine knoblauchfahne im bus
+die brille beschlägt in der sauna | die taucherbrille läuft innen voll | die kontaktlinse schwimmt im aufguss | der blick durch die milchglastür
+strip poker im winter | flaschendrehen im zeltlager | wahrheit oder pflicht im iglu | skat spielen im skiurlaub
+bräunungsstreifen vom tanga | sonnenbrand vom rucksack | abdrücke vom gummiband | ein zebramuster vom liegestuhl
+der gemischte saunatag | der damenabend im hallenbad | die gemeinschaftsdusche im büro | das betriebsfest im dampfbad
+ein nacktmull im badeanzug | ein maulwurf im taucheranzug | ein ferkel im ballettröckchen | ein hamster im bademantel
+der sonnenbrand mit handabdruck | der klaps beim betriebsausflug | die ohrfeige vom liegestuhlnachbarn | der sonnenbrand in herzform
+der bademantel geht beim winken auf | der kimono klemmt in der taxitür | der hausmeister winkt im nachthemd | die bettdecke rutscht beim aufstehen
+ein bierbauch im muskelshirt | ein waschbrettbauch aus pappe | ein schwimmring unterm unterhemd | ein rentner im fitnessstudio
+die waage im badezimmer verstecken | den spiegel im flur abhängen | die kekse im wäschekorb verstecken | das maßband heimlich kürzen
 
 [liebe]
-der kampf um die bettdecke
-schnarchen wie eine kettensäge
-kalte füße im ehebett
-die klobrille bleibt oben
-die schwiegermutter zieht ein
-der putzplan den keiner liest
-namensschilder im wg kühlschrank
-wer hat meinen joghurt gegessen
-die wände in der wg sind dünn
-die socke an der türklinke
-paartherapie beim tierarzt
-die silberhochzeit in der eckkneipe
-ein ehevertrag auf dem bierdeckel
-getrennte schlafzimmer mit dosentelefon
-der vergessene hochzeitstag
-streit um die fernbedienung
-der ehering im abfluss
-ein pärchen im partnerlook
-der erste pups vor dem partner
-die ex kommt zur hochzeit
-zu besuch bei den schwiegereltern
-wer räumt die spülmaschine aus
-die zahnpastatube von der mitte gedrückt
-haare im abfluss
-die katze schläft zwischen uns
-das verflixte siebte jahr
-streit um die heizung
-die zweite zahnbürste im bad
-fremdes parfum auf dem kopfkissen
+der kampf um die bettdecke | der streit um das kopfkissen | ein ringkampf im doppelbett | die decke ist für zwei zu kurz
+schnarchen wie eine kettensäge | reden wie ein wasserfall im schlaf | der nachbar bohrt um drei uhr nachts | zähneknirschen wie ein mühlstein
+kalte füße im ehebett | eine wärmflasche als geliebte | eiskalte hände unter der decke | der hund schläft am fußende
+die klobrille bleibt oben | das klopapier hängt falsch herum | das letzte blatt klopapier | wer pinkelt hier im stehen
+die schwiegermutter zieht ein | die schwiegermutter hat einen schlüssel | der umzug zurück zu mama | die tante kommt für drei wochen
+der putzplan den keiner liest | die einkaufsliste am kühlschrank | der wäscheberg den keiner sieht | der streit um den müllkalender
+namensschilder im wg kühlschrank | das fach mit dem vorhängeschloss | die eiserne ration im eisfach | beschriftete bierflaschen in der wg
+wer hat meinen joghurt gegessen | wer hat mein bier ausgetrunken | der letzte pudding im kühlschrank | mitternachtssnack am offenen kühlschrank
+die wände in der wg sind dünn | der mitbewohner übt posaune | lauschen mit dem wasserglas | die wg party im zimmer nebenan
+die socke an der türklinke | die krawatte an der klinke | das schild bitte nicht stören | der schlüssel unter der fußmatte
+paartherapie beim tierarzt | eheberatung beim friseur | der hund als scheidungskind | der kater muss zum psychologen
+die silberhochzeit in der eckkneipe | der heiratsantrag an der theke | die scheidung in der dorfdisco | die goldene hochzeit im kegelclub
+ein ehevertrag auf dem bierdeckel | ein heiratsantrag auf der serviette | das testament auf dem kassenbon | der deckel fürs ganze leben
+getrennte schlafzimmer mit dosentelefon | die fernbeziehung per brieftaube | liebesbriefe per wäscheleine | eine standleitung zur schwiegermutter
+der vergessene hochzeitstag | der verpasste valentinstag | die entschuldigung mit pralinen | die torte zum falschen jahrestag
+streit um die fernbedienung | das tauziehen um den laptop | fußball gegen liebesfilm | die batterien sind wieder leer
+der ehering im abfluss | der verlobungsring im kuchen | der schlüssel im gully | das gebiss im wasserglas
+ein pärchen im partnerlook | das paar mit den gleichen tattoos | die hochzeit in jogginghosen | zwei rentner im gleichen pullover
+der erste pups vor dem partner | der erste rülpser vor den eltern | das erste mal ohne make up | ein furzkissen im ehebett
+die ex kommt zur hochzeit | der brautstrauß landet beim ex | die mutter hält die hochzeitsrede | ein fremder platzt in die trauung
+zu besuch bei den schwiegereltern | kaffeeklatsch bei den nachbarn | heiligabend bei der verwandtschaft | vorstellen beim strengen vater
+wer räumt die spülmaschine aus | wer bringt den müll runter | wer saugt heute das wohnzimmer | der turm aus dreckigem geschirr
+die zahnpastatube von der mitte gedrückt | das shampoo mit wasser verlängert | die ketchupflasche auf dem kopf gelagert | die letzte zahnpasta mit dem nudelholz
+haare im abfluss | barthaare im becken | spinne in der dusche | zehennägel auf dem sofa
+die katze schläft zwischen uns | eine mauer aus kissen im bett | der kater hat meine seite erobert | der dritte im bunde ist ein hund
+das verflixte siebte jahr | die sieben fetten jahre | der zweite frühling mit fünfzig | die kalte schulter zeigen
+streit um die heizung | das fenster bleibt offen | frieren im eigenen wohnzimmer | die heizkostenabrechnung
+die zweite zahnbürste im bad | der erste schlüssel zur wohnung | ihr föhn in seiner schublade | ein eigenes fach im schrank
+fremdes parfum auf dem kopfkissen | ein schminkfleck auf dem kopfkissen | ein langes haar auf dem sakko | die fremde unterhose unterm bett
 
 [alt]
-die midlifecrisis im cabrio
-die steuererklärung um mitternacht
-rückenschmerzen vom ausschlafen
-die lesebrille auf der stirn
-das erste graue haar
-das tattoo mit achtzig
-ein bausparvertrag als hochzeitsgeschenk
-schwarze luftballons zum vierzigsten
-treppe fegen zum dreißigsten
-ein samstag im baumarkt
-rasenmähen in der mittagsruhe
-die nachbarin kontrolliert den müll
-falten wegbügeln
-die hüfte knackt beim tanzen
-ein toupet im sturm
-das vorstellungsgespräch mit kater
-die videokonferenz ohne hose
-die kaffeemaschine im büro streikt
-botox für die schwiegermutter
-die rente mit siebzig
-der nachbar mit dem laubbläser
-das klassentreffen nach zwanzig jahren
-der ungenutzte fitnessstudiovertrag
-die bandscheibe beim schuhebinden
-drei männer und ein grill
-die lebensversicherung als liebesbrief
-der tanzkurs für frisch verlobte
+die midlifecrisis im cabrio | die führerscheinprüfung mit fünfzig | der autokauf nach der scheidung | ein glatzkopf im fahrtwind
+die steuererklärung um mitternacht | die nebenkostenabrechnung im bett | der liebesbrief an das finanzamt | ein kreuzworträtsel bei schlaflosigkeit
+rückenschmerzen vom ausschlafen | nackenstarre vom mittagsschlaf | der hexenschuss im wasserbett | ein muskelkater vom fernsehen
+die lesebrille auf der stirn | die taucherbrille im büro | die sonnenbrille im haar | die brille im kühlschrank suchen
+das erste graue haar | das erste brusthaar | die erste falte im spiegel | das haar im waschbecken
+das tattoo mit achtzig | das piercing zur rente | die impfung im seniorenheim | die blutabnahme beim hausarzt
+ein bausparvertrag als hochzeitsgeschenk | ein rasenmäher zur silberhochzeit | der ehevertrag vor dem traualtar | das reihenhaus als verlobungsring
+schwarze luftballons zum vierzigsten | ein grabkranz zum fünfzigsten | trauerflor auf der geburtstagstorte | luftballons bei der scheidungsparty
+treppe fegen zum dreißigsten | klinken putzen zum dreißigsten | der schornsteinfeger hat geburtstag | ein besenritt in der walpurgisnacht
+ein samstag im baumarkt | ein sonntag im möbelhaus | die schraubensuche im keller | ein vater im werkzeugrausch
+rasenmähen in der mittagsruhe | bohren am sonntagmorgen | staubsaugen nach zweiundzwanzig uhr | der streit am gartenzaun
+die nachbarin kontrolliert den müll | die vermieterin durchsucht die post | der hausmeister trennt den abfall | die nachbarin sucht ihren ehering
+falten wegbügeln | das doppelkinn plätten | das bügeln am sonntag | ein wellnesstag zu hause
+die hüfte knackt beim tanzen | das knie streikt beim walzer | ein krampf auf der tanzfläche | der discofox auf krücken
+ein toupet im sturm | eine glatze im hagel | der regenschirm im herbst | die föhnfrisur am strand
+das vorstellungsgespräch mit kater | die gehaltsverhandlung mit katze | das meeting nach der firmenfeier | der erste arbeitstag mit grippe
+die videokonferenz ohne hose | das telefonat in unterhose | das homeoffice im bademantel | die onlineprüfung im bett
+die kaffeemaschine im büro streikt | der drucker im büro hat papierstau | der wasserspender läuft über | die gewerkschaft der büromaschinen
+botox für die schwiegermutter | die faltencreme für den ehemann | die grippeimpfung für oma | lippen aufspritzen mit sechzig
+die rente mit siebzig | der ruhestand mit dreißig | die beförderung mit sechzig | das abitur mit siebzig
+der nachbar mit dem laubbläser | der hausmeister mit dem staubsauger | der gärtner mit der heckenschere | der herbst in der reihenhaussiedlung
+das klassentreffen nach zwanzig jahren | die silberhochzeit im gemeindesaal | das wiedersehen mit der ersten liebe | die selbsthilfegruppe für glatzen
+der ungenutzte fitnessstudiovertrag | das verstaubte heimtrainergerät | der vergessene yogakurs am montag | die neujahrsvorsätze im februar
+die bandscheibe beim schuhebinden | das knie beim gartenjäten | der rücken beim kistenschleppen | der heiratsantrag auf einem knie
+drei männer und ein grill | drei frauen und ein whirlpool | vier väter und ein bierfass | das grillfest ohne fleisch
+die lebensversicherung als liebesbrief | das testament als valentinskarte | der ehevertrag als heiratsantrag | die patientenverfügung im blumenstrauß
+der tanzkurs für frisch verlobte | der kochkurs für frisch geschiedene | die paartherapie nach der hochzeit | der erste walzer auf der hochzeit
 
 [invented]
-ein professioneller kuschler
-synchronschnarchen
-olympisches flaschendrehen
-weltmeisterschaft im maßkrugstemmen
-ein schnarchdolmetscher
-eine ausnüchterungstrainerin
-ein ausredendesigner
-ein ersatzfreund für hochzeiten
-ein nacktwanderführer
-ein flirtlehrer für pinguine
-ein unterhosenbügler
-eine vorkosterin für schnaps
-ein katerflüsterer
-der tag der offenen hose
-der weltschwiegermuttertag
-ein knutschprüfer
-turmspringen vom hochbett
-ein festivalklotester
-ein liebesbriefschreiber auf bestellung
-ein alibilieferant für ehemänner
-ein brautstraußtorwart
-der bauchfreie freitag
-bierdeckelweitwurf
-ein rülpsdirigent
-ein heiratsvermittler für geister
-der nationale katertag
-ein hosenstallwächter
-ein peinlichkeitsgutachter
-sackhüpfen beim junggesellenabschied
+ein professioneller kuschler | ein hauptberuflicher seelentröster | eine menschliche heizdecke zum mieten | zwei fremde warten auf den bus
+synchronschnarchen | deckenklauen im duett | schlafwandeln im gleichschritt | zwei holzfäller im bett
+olympisches flaschendrehen | olympisches kronkorkenschnipsen | weltcup im pfandflaschensammeln | eine bierflasche als kompass
+weltmeisterschaft im maßkrugstemmen | weltmeisterschaft im bierkastenstapeln | europameisterschaft im krügeschleppen | ein kellner mit zu viel trinkgeld
+ein schnarchdolmetscher | ein traumdeuter für hunde | ein flüsterlehrer für männer | ein schlafwandelcoach
+eine ausnüchterungstrainerin | eine trinkspielschiedsrichterin | eine wasserglasdompteurin | eine strenge oma mit trillerpfeife
+ein ausredendesigner | ein krankmeldungskünstler | ein schwindelschneider | ein zeichner mit sprechblasen
+ein ersatzfreund für hochzeiten | ein trauzeuge zum ausleihen | eine begleitung für klassentreffen | ein fremder auf dem familienfoto
+ein nacktwanderführer | ein fkk bergretter | ein nackter pfadfinderleiter | ein saunameister im wald
+ein flirtlehrer für pinguine | ein speeddating für nonnen | ein benimmlehrer für oberkellner | ein tanzlehrer am südpol
+ein unterhosenbügler | ein sockenzusammenleger | ein feinripptester | ein hausmann am sonntag
+eine vorkosterin für schnaps | eine eichmeisterin für schnapsgläser | eine hofnärrin mit flachmann | eine frau beim ersten schluck
+ein katerflüsterer | ein katzenpsychiater | der katzenjammerdoktor | ein müder mann mit katze
+der tag der offenen hose | das fest des lockeren gürtels | der tag der kurzen hosen | der hosenträgerfeiertag
+der weltschwiegermuttertag | der internationale omatag | das fest der strengen tanten | der tag des ungebetenen besuchs
+ein knutschprüfer | ein lippenstifttester | ein mistelzweigwächter | ein strenger tanzlehrer
+turmspringen vom hochbett | bauchklatscher ins wasserbett | kopfsprung vom kleiderschrank | ein student fällt aus dem bett
+ein festivalklotester | ein zeltplatzschnüffler | ein schlammbadinspektor | ein mann im telefonhäuschen
+ein liebesbriefschreiber auf bestellung | ein heiratsantragsplaner auf provision | ein ghostwriter für kontaktanzeigen | ein dichter mit sehr vielen freundinnen
+ein alibilieferant für ehemänner | ein notfallanrufer für schlechte dates | ein zeugenverleih für kegelbrüder | ein paketbote mit schlechtem timing
+ein brautstraußtorwart | ein strumpfbandfänger | ein hochzeitstortenretter | die verzweifelte trauzeugin
+der bauchfreie freitag | der speckrollenmittwoch | der hawaiihemdmontag | der dicke kollege im sommer
+bierdeckelweitwurf | schallplattenweitwurf | tellerwerfen am polterabend | ein frisbee in der kneipe
+ein rülpsdirigent | ein gurgelchorleiter | ein schluckaufkapellmeister | ein dirigent im bierzelt
+ein heiratsvermittler für geister | ein scheidungsanwalt für vampire | eine partnerbörse für mumien | ein bettlakenverkäufer mit herz
+der nationale katertag | der bundesweite jogginghosentag | der welttag der sonnenbrille | der internationale ausschlaftag
+ein hosenstallwächter | ein knopflochportier | ein gürtelschnallenpolizist | ein wachmann vor der umkleide
+ein peinlichkeitsgutachter | ein fremdschämberater | ein rotwerdensachverständiger | ein schiedsrichter beim familienfest
+sackhüpfen beim junggesellenabschied | eierlaufen beim polterabend | schubkarrenrennen am hochzeitsmorgen | betrunkene männer im kartoffelsack
 
 [title]
-der herr der augenringe
-schlaflos im schrebergarten
-fluch der kneipentour
-sekt in der stadt
-krieg und frieden im ehebett
-zurück zur ex
-schneewittchen und die sieben schnäpse
-dornröschen mit kater
-das schweigen der schwiegermutter
-die schöne und das feierbiest
-die unendliche betriebsfeier
-der zauberer vom tresen
-hänsel und gretel auf ex
-der fischer und seine ex
-des kaisers neue unterhose
-der froschkönig beim zwanzigsten kuss
-der weiße hai im whirlpool
-die eiskönigin in der sauna
-einer flog über die theke
-tatort schlafzimmer
-promille im kopf
-das liebesleben der anderen
-aschenputtel verliert den tanga
-keinhosenhasen
-die drei musketiere auf malle
-stolz und vollrausch
-der name der weinschorle
-der mit dem bierbauch tanzt
-vom bohneneintopf verweht
-rotkäppchen und der schürzenjäger
+der herr der augenringe | das phantom der nachtschicht | der hobbit nach der party | ein panda im büro
+schlaflos im schrebergarten | liebe in zeiten des rasenmähers | der gartenzwerg schlägt zurück | nachts allein im gartenhaus
+fluch der kneipentour | die schatzinsel am tresen | jäger des verlorenen deckels | ein pirat sucht sein bier
+sekt in der stadt | frühstück bei prosecco | die nacht der korken | anstoßen auf dem dach
+krieg und frieden im ehebett | die zwei türme aus kissen | waffenstillstand unter der bettdecke | verbannt auf die couch
+zurück zur ex | zurück zu mama | liebe auf umwegen | er rennt ihr hinterher
+schneewittchen und die sieben schnäpse | schneewittchen und die sieben ehemänner | die sieben zwerge beim kegelabend | eine prinzessin zählt ihre gläser
+dornröschen mit kater | dornröschen mit schnupfen | die prinzessin auf der erbse | eine katze weckt die königin
+das schweigen der schwiegermutter | die rache der schwiegermutter | der besuch der alten dame | eine oma mit zugeklebtem mund
+die schöne und das feierbiest | die schöne und der türsteher | king kong in der disco | der partylöwe und die prinzessin
+die unendliche betriebsfeier | die unendliche mittagspause | der letzte macht das licht aus | das große fressen im büro
+der zauberer vom tresen | der hexer vom stammtisch | der zauberlehrling am zapfhahn | ein barkeeper mit zauberstab
+hänsel und gretel auf ex | max und moritz an der bar | die hexe lädt zum umtrunk | hänsel und gretel im knusperhaus
+der fischer und seine ex | der angler und die meerjungfrau | der alte mann und das meer | ein mann angelt seine frau
+des kaisers neue unterhose | des königs neue badehose | der prinz in strumpfhosen | ein könig beim wäschewaschen
+der froschkönig beim zwanzigsten kuss | der froschkönig beim ersten date | die prinzessin küsst die kröte | speed dating am seerosenteich
+der weiße hai im whirlpool | der weiße wal in der badewanne | das ungeheuer vom hotelpool | ein delfin im sprudelbad
+die eiskönigin in der sauna | der schneemann in der sauna | frau holle im dampfbad | eine prinzessin schmilzt dahin
+einer flog über die theke | einer fiel vom barhocker | der fliegende holländer am tresen | ein mann hechtet zum zapfhahn
+tatort schlafzimmer | tatort waschküche | die leiche im kleiderschrank | spurensuche unterm bett
+promille im kopf | schmetterlinge im bauch | nur noch bahnhof | ein mann sieht sterne
+das liebesleben der anderen | das fenster zum hof | die geräusche von nebenan | ein mann lauscht an der wand
+aschenputtel verliert den tanga | aschenputtel verliert die perücke | die prinzessin und der wäschedieb | ein prinz sucht die besitzerin
+keinhosenhasen | barfußhasen | kuschelhasen | ein hase im bademantel
+die drei musketiere auf malle | die drei musketiere im freibad | drei mann in einem boot | junggesellenabschied am strand
+stolz und vollrausch | sinn und sinnlichkeit | schuld und schnaps | ein lord torkelt heim
+der name der weinschorle | die bruderschaft der apfelschorle | der geist in der weinflasche | ein mönch mit weinglas
+der mit dem bierbauch tanzt | der mit dem grill tanzt | der bauchtänzer vom stammtisch | ein dicker mann tanzt allein
+vom bohneneintopf verweht | vom zwiebelkuchen verweht | die windhose aus der küche | ein mann fliegt vom esstisch
+rotkäppchen und der schürzenjäger | rotkäppchen und der förster | die großmutter und der jäger | ein wolf bringt blumen mit
 
 [moment]
-wenn der chef in der sauna sitzt
-wenn die hose beim bücken reißt
-die liebesnachricht an den chef
-wenn die mitbewohnerin zu früh heimkommt
-wenn der bh am kronleuchter hängt
-wenn der kater stärker ist als du
-wenn der türsteher dich abweist
-wenn der hosenstall offen steht
-wenn das handtuch in der sauna rutscht
-wenn die karte am tresen abgelehnt wird
-wenn in der disco das licht angeht
-wenn die webcam doch an war
-wenn dir ihr name nicht einfällt
-wenn die waage lügt
-wenn das dirndl zu eng ist
-wenn die lederhose platzt
-der wecker nach zwei stunden schlaf
-die liebeserklärung an den taxifahrer
-wenn die nachbarn an die wand klopfen
-wenn das gehalt am fünften weg ist
-wenn die dusche plötzlich eiskalt wird
-wenn der brautvater breakdance tanzt
-wenn die hose nach dem buffet spannt
-wenn rotwein auf das weiße sofa kippt
-wenn der partner dein handy entsperrt
-wenn du nackt die tür aufmachst
-wenn die blase im stau drückt
-wenn der gürtel ein loch weiter muss
+wenn der chef in der sauna sitzt | wenn der pfarrer im whirlpool sitzt | wenn die schwiegermutter aufgießt | der chef beim betriebsausflug
+wenn die hose beim bücken reißt | wenn der rock beim tanzen hochweht | wenn beim kniebeugen was knackt | der yogakurs mit loch im schritt
+die liebesnachricht an den chef | die kündigung an die exfreundin | das sexting in der familiengruppe | der heiratsantrag per rundmail
+wenn die mitbewohnerin zu früh heimkommt | wenn die eltern unangemeldet klingeln | wenn der vermieter einfach aufschließt | der freund im kleiderschrank versteckt
+wenn der bh am kronleuchter hängt | wenn die krawatte am ventilator hängt | wenn die unterhose im baum landet | der morgen nach der hausparty
+wenn der kater stärker ist als du | wenn die katze das bett erobert hat | wenn der hund dich gassi führt | der boxkampf gegen den eigenen schatten
+wenn der türsteher dich abweist | wenn dein name nicht auf der liste steht | wenn der bodyguard dich wegträgt | die schlange vor dem club um drei
+wenn der hosenstall offen steht | wenn das preisschild noch am kleid hängt | wenn der reißverschluss klemmt | das hemd guckt aus der hose
+wenn das handtuch in der sauna rutscht | wenn der bademantel im wind aufgeht | wenn die badehose im pool verschwindet | der erste tag am fkk strand
+wenn die karte am tresen abgelehnt wird | wenn der kellner das trinkgeld zählt | wenn die runde auf dich geht | die zeche prellen an der bar
+wenn in der disco das licht angeht | wenn die nebelmaschine durchdreht | wenn der dj den schlusssong spielt | der letzte tanz um fünf uhr früh
+wenn die webcam doch an war | wenn das mikro im meeting an ist | wenn oma per videoanruf stört | das homeoffice in unterhose
+wenn dir ihr name nicht einfällt | wenn du sie mit der ex verwechselst | wenn dein date dich nicht erkennt | das namensschild auf der stirn
+wenn die waage lügt | wenn der spiegel schmeichelt | wenn die jeans plötzlich passt | die diät am ersten januar
+wenn das dirndl zu eng ist | wenn das korsett nicht zugeht | wenn die schürze falsch gebunden ist | die kellnerin mit zehn maßkrügen
+wenn die lederhose platzt | wenn der hosenträger abschnalzt | wenn der schuhplattler schiefgeht | der bierbauch im trachtenhemd
+der wecker nach zwei stunden schlaf | der montag nach dem junggesellenabschied | das klingeln nach der durchzechten nacht | der hahn vor dem ersten kaffee
+die liebeserklärung an den taxifahrer | der heiratsantrag an die kassiererin | das geständnis auf dem rücksitz | die heimfahrt nach acht cocktails
+wenn die nachbarn an die wand klopfen | wenn der vermieter an der tür lauscht | wenn das bettgestell zusammenbricht | die hauswand mit dem glas am ohr
+wenn das gehalt am fünften weg ist | wenn die miete am ersten abgebucht wird | wenn der kontoauszug weint | das sparschwein mit dem hammer
+wenn die dusche plötzlich eiskalt wird | wenn das shampoo in die augen läuft | wenn der duschvorhang am körper klebt | der eisbader im winterurlaub
+wenn der brautvater breakdance tanzt | wenn der pfarrer auf dem tisch tanzt | wenn die oma den limbo gewinnt | der onkel mit der krawatte am kopf
+wenn die hose nach dem buffet spannt | wenn der knopf durch den saal fliegt | wenn der teller dreimal voll ist | das verdauungsschläfchen am tisch
+wenn rotwein auf das weiße sofa kippt | wenn ketchup auf das brautkleid tropft | wenn die katze das weinglas umschubst | der erste abend bei den schwiegereltern
+wenn der partner dein handy entsperrt | wenn die freundin deinen verlauf liest | wenn der partner dein tagebuch findet | das handy mit dem gesicht nach unten
+wenn du nackt die tür aufmachst | wenn du im bademantel ausgesperrt bist | wenn der paketbote zweimal klingelt | der nacktschläfer am briefkasten
+wenn die blase im stau drückt | wenn der tank auf der autobahn leer ist | wenn die raststätte geschlossen hat | die pinkelpause im kornfeld
+wenn der gürtel ein loch weiter muss | wenn das hemd über dem bauch spannt | wenn der hosenknopf nicht mehr zugeht | die schnalle unter dem bierbauch

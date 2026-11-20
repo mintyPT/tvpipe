@@ -1,17 +1,24 @@
-# drawbluff's prompts in English (written for drawbluff; also the
-# source of decoy lies), fetched by the host page (data/prompts.de.txt:
-# German, written for German speakers, not translated).
+# drawbluff's prompts in English (written for drawbluff), fetched by the
+# host page (data/prompts.de.txt: German, written for German speakers,
+# not translated).
 #
-# Format: `[tag]` starts a structure, then one prompt per line; blank
-# lines and `#` comments are skipped. A round mixes the structures (no
-# structure twice among three prompts in a row, `deck` in
-# game/rules.ts), decoys come from the drawing's own structure first. A
-# room deals no prompt twice until it dealt them all (`PromptDeck`).
+# Format: `[tag]` starts a structure, then one prompt per line, its
+# three decoys after it, each after ` | `; blank lines and `#` comments
+# are skipped. A round mixes the structures (no structure twice among
+# eight prompts in a row, `deck` in game/rules.ts). A room deals no
+# prompt twice until it dealt them all (`PromptDeck`).
+#
+# Decoys are the lies the game adds when a drawing has too few: other
+# titles for the drawing a player would make of the prompt (a thing
+# swapped for one that looks alike, the picture told as another story),
+# at least two in the prompt's structure, so the truth is not the only
+# one that sounds like a prompt; never the prompt reworded, never a
+# prompt of the file, none twice in the file.
 #
 # Every prompt is in its display form (lowercase, letters, spaces and
 # apostrophes, nothing at the end) and at most 40 characters, the
 # longest lie a phone takes (LIE_SOFT), so neither form nor length is a
-# tell. Drawable, family-friendly, our own; no two alike (`node
+# tell; so is every decoy. Drawable, family-friendly, our own; no two alike (`node
 # scripts/prompts.ts --near` lists near duplicates; test/prompts.test.ts
 # checks all of it).
 #
@@ -35,700 +42,700 @@
 #   scene     everyday scenes gone wrong: grandpa's first video call
 
 [odd]
-a lonely lighthouse at a party
-a vampire at the dentist
-a snowman in a sauna
-a penguin selling sunscreen
-a knight in a bouncy castle
-a ghost at a job interview
-a giraffe in a tiny car
-a mermaid at the gym
-a cowboy riding a goose
-a yeti on a skateboard
-a jellyfish in a hat shop
-a chef cooking in space
-a lion at the hairdresser
-a moose at the movies
-a viking in a canoe
-a peacock at a wedding
-a whale singing karaoke
-a cyclops at the eye doctor
-a pirate at the library
-an astronaut at a car wash
-a robot at a petting zoo
-a sumo wrestler on a tightrope
-a mummy at the beach
-a crocodile at the opera
-a wizard in a laundromat
-a submarine in a fish tank
-a bear at a sushi bar
-a statue at a disco
-a scarecrow at a fashion show
-an octopus directing traffic
-a snail at a marathon
-a king in a bumper car
-an alien at a garage sale
-a flamingo in a snowstorm
-a goldfish on a roller coaster
-a horse in a phone booth
-a hippo ballerina
-a camel at the north pole
-a ninja at a baby shower
-a mime at a rock concert
-a gorilla at a piano recital
-a dinosaur at a yoga class
-a spa for bugs
-a library for ghosts
-a dentist for crocodiles
-a trampoline for elephants
+a lonely lighthouse at a party | a lonely rocket at a birthday | a candle nobody asked to dance | a tall guest guarding the snacks
+a vampire at the dentist | a bat at the barber | a vampire giving blood | a werewolf at the orthodontist
+a snowman in a sauna | a snowman in a hot tub | a sheep stuck in a steam room | an ice cube on a sunbed
+a penguin selling sunscreen | a penguin selling ice cream | a puffin running a beach stall | a butler offering milkshakes
+a knight in a bouncy castle | a knight in a ball pit | a tin man on a waterbed | a king defending his sandcastle
+a ghost at a job interview | a ghost at a parent meeting | a bedsheet asking for a raise | an invisible man on a first date
+a giraffe in a tiny car | a dinosaur in a convertible | a giraffe in a bathtub | a periscope on a go kart
+a mermaid at the gym | a mermaid at a dance class | a seal lifting weights | a fish in a spin class
+a cowboy riding a goose | a cowboy riding an ostrich | a farmer chased by a duck | a sheriff on a flying chicken
+a yeti on a skateboard | a sheep on a skateboard | a bigfoot learning to surf | a snow monster on a sled
+a jellyfish in a hat shop | a jellyfish trying on wigs | a lamp at a costume party | a squid buying a fancy bonnet
+a chef cooking in space | a chef cooking underwater | a waiter on a trampoline | a cook on a floating island
+a lion at the hairdresser | a lion at the dog groomer | a sheep getting a perm | a sunflower getting a trim
+a moose at the movies | a deer at a drive in | a moose at a puppet show | a reindeer watching tv
+a viking in a canoe | a viking in a bathtub | a pirate in a rowboat | a viking on a surfboard
+a peacock at a wedding | a peacock at a prom | a bride with a feather train | a rooster crashing a party
+a whale singing karaoke | a whale singing in the shower | a walrus at a talent show | a submarine giving a speech
+a cyclops at the eye doctor | a cyclops at a spelling bee | a giant looking through a telescope | a monster with a monocle
+a pirate at the library | a pirate at the post office | a parrot reading a map | a pirate reading a bedtime story
+an astronaut at a car wash | an astronaut in a bubble bath | a diver in a dishwasher | a robot stuck in the rain
+a robot at a petting zoo | a robot walking a dog | a vacuum at a farm show | a toaster feeding the goats
+a sumo wrestler on a tightrope | a sumo wrestler on a seesaw | a strongman crossing a canyon | a giant on a skinny bridge
+a mummy at the beach | a patient sunbathing | a mummy lost in the desert | a ghost making sandcastles
+a crocodile at the opera | a crocodile at the ballet | an alligator conducting a choir | a lizard singing a lullaby
+a wizard in a laundromat | a wizard at the car wash | a wizard in a submarine | a magician in a kitchen
+a submarine in a fish tank | a toy boat in a bathtub | a sardine can in an aquarium | a fish visiting a submarine
+a bear at a sushi bar | a bear at a fish market | a raccoon eating takeout | a beaver at a buffet
+a statue at a disco | a statue in a dance class | a robot at a nightclub | a mannequin at a prom
+a scarecrow at a fashion show | a scarecrow at a costume party | a farmer on the runway | a crow judging a catwalk
+an octopus directing traffic | an octopus juggling oranges | a squid conducting an orchestra | an octopus hailing a taxi
+a snail at a marathon | a snail at a car race | a turtle winning a race | a snail in a sack race
+a king in a bumper car | a queen on a go kart | a king in a shopping trolley | a king stuck in traffic
+an alien at a garage sale | an alien selling lemonade | an alien at the lost and found | a robot at a yard sale
+a flamingo in a snowstorm | a flamingo on an ice rink | a stork caught in the rain | a pink umbrella in the wind
+a goldfish on a roller coaster | a goldfish on a water slide | a hamster on a ferris wheel | a goldfish on a skateboard
+a horse in a phone booth | a horse in an elevator | a donkey in a shower stall | a horse in a photo booth
+a hippo ballerina | a rhino figure skater | a pig at ballet school | a dancing elephant
+a camel at the north pole | a camel on an ice floe | a horse in the arctic | a llama lost at the south pole
+a ninja at a baby shower | a ninja at a tea party | a spy at a birthday party | a burglar bringing a gift
+a mime at a rock concert | a mime at a fireworks show | a clown in a mosh pit | a painter at a loud festival
+a gorilla at a piano recital | a gorilla at a violin lesson | a bear playing the organ | a monkey tuning a grand piano
+a dinosaur at a yoga class | a dinosaur at a dance class | a dragon doing stretches | a lizard learning to meditate
+a spa for bugs | a hotel for ants | a sauna for snails | a gym for caterpillars
+a library for ghosts | a museum for ghosts | a bookshop for witches | a reading room for bats
+a dentist for crocodiles | a barber for crocodiles | a dentist for sharks | a toothbrush for dragons
+a trampoline for elephants | a seesaw for elephants | a bouncy castle for hippos | a pogo stick for rhinos
 
 [idiom]
-raining cats and dogs
-a frog in your throat
-butterflies in your stomach
-the elephant in the room
-spilling the beans
-the cat got your tongue
-letting the cat out of the bag
-breaking the ice
-hitting the hay
-head in the clouds
-a couch potato
-a fish out of water
-when pigs fly
-cold feet
-the apple of my eye
-a bull in a china shop
-all your eggs in one basket
-the early bird gets the worm
-a storm in a teacup
-crying over spilled milk
-the ball is in your court
-barking up the wrong tree
-a penny for your thoughts
-burning the midnight oil
-on cloud nine
-sitting on the fence
-over the moon
-under the weather
-hold your horses
-a wolf in sheep's clothing
-the tip of the iceberg
-a needle in a haystack
-time flies
-money growing on trees
-jumping on the bandwagon
-biting off more than you can chew
-let sleeping dogs lie
-walking on eggshells
-going bananas
-the last straw
-turning over a new leaf
-the cherry on top
-in hot water
-skeletons in the closet
-the black sheep of the family
-counting your chickens
-drawing a blank
-opening a can of worms
-a hot potato
-a fork in the road
+raining cats and dogs | fighting like cats and dogs | it never rains but it pours | pets falling from the sky
+a frog in your throat | a lump in your throat | jumping down someone's throat | a toad in the hole
+butterflies in your stomach | a bee in your bonnet | eyes bigger than your stomach | a belly full of moths
+the elephant in the room | an elephant never forgets | a white elephant sale | a giant guest on the sofa
+spilling the beans | spilling the tea | full of beans | knocking over the pantry
+the cat got your tongue | the cat that got the cream | biting your tongue | a cat stealing a lollipop
+letting the cat out of the bag | no room to swing a cat | buying a pig in a poke | a kitten hiding in the groceries
+breaking the ice | skating on thin ice | breaking the mold | cracking a frozen pond
+hitting the hay | sleeping like a log | beating around the bush | a nap in the barn
+head in the clouds | the sky is the limit | head over heels | a very tall giraffe
+a couch potato | a lounge lizard | an armchair critic | a vegetable watching tv
+a fish out of water | a sitting duck | a fish on a bicycle | a goldfish going for a walk
+when pigs fly | when the cows come home | a bird in the hand | a pig on a hang glider
+cold feet | itchy feet | two left feet | a snowman's socks
+the apple of my eye | the big apple | a sight for sore eyes | a fruit with a monocle
+a bull in a china shop | taking the bull by the horns | a bull seeing red | a rhino in a pottery class
+all your eggs in one basket | the chicken or the egg | egg on your face | an egg hunt gone too well
+the early bird gets the worm | the second mouse gets the cheese | the worm has turned | a robin's breakfast in bed
+a storm in a teacup | not my cup of tea | the eye of the storm | a rainy tea party
+crying over spilled milk | the land of milk and honey | crocodile tears | a baby who lost his bottle
+the ball is in your court | keeping your eye on the ball | dropping the ball | a judge playing tennis
+barking up the wrong tree | his bark is worse than his bite | a dog chasing its own tail | a cat stuck up a tree
+a penny for your thoughts | a penny saved is a penny earned | paying through the nose | a thought bubble for sale
+burning the midnight oil | burning the candle at both ends | a night owl doing homework | cooking dinner at midnight
+on cloud nine | in seventh heaven | a silver lining | a nap on a raincloud
+sitting on the fence | the grass is always greener | a bird on a wire | watching the neighbors garden
+over the moon | once in a blue moon | a man in the moon | a cow on a trampoline
+under the weather | a face like thunder | a cloud with a cold | a rainy day off school
+hold your horses | a horse of another color | stop the carousel | a cowboy in a traffic jam
+a wolf in sheep's clothing | the boy who cried wolf | pulling the wool over your eyes | a fox in the henhouse
+the tip of the iceberg | a drop in the ocean | just scratching the surface | a penguin's secret basement
+a needle in a haystack | making hay while the sun shines | a hedgehog in the hay | a farmer losing his glasses
+time flies | time is money | beat the clock | a bird on the clock
+money growing on trees | the root of the problem | saving for a rainy day | an orchard of gold coins
+jumping on the bandwagon | getting the show on the road | the circus comes to town | a one man band
+biting off more than you can chew | having your cake and eating it | a hard nut to crack | a hamster with a whole pizza
+let sleeping dogs lie | the dog days of summer | teaching an old dog tricks | a puppy sleeping in a bed
+walking on eggshells | walking on sunshine | tiptoeing through the tulips | a chick hatching too soon
+going bananas | a barrel of monkeys | top banana | a monkey's lunch
+the last straw | the short straw | clutching at straws | a camel's heavy backpack
+turning over a new leaf | reading between the lines | branching out on your own | a caterpillar's diary
+the cherry on top | the icing on the cake | life is a bowl of cherries | a sundae with a hat
+in hot water | in the soup | out of the frying pan | a frog in a hot tub
+skeletons in the closet | a ghost in the attic | monsters under the bed | a skeleton picking an outfit
+the black sheep of the family | the runt of the litter | counting sheep at bedtime | the odd one out in the photo
+counting your chickens | getting your ducks in a row | ruling the roost | a hen's math homework
+drawing a blank | back to the drawing board | a clean slate | lost for words
+opening a can of worms | packed like sardines | a worm's surprise party | a fishing trip lunch box
+a hot potato | small potatoes | a hot dog | a potato in a sauna
+a fork in the road | the road less traveled | the road to nowhere | a spoon in the garden
 
 [feeling]
-the fear of mondays
-the joy of popping bubble wrap
-the smell of a new book
-a bad hair day
-the sunday blues
-deja vu
-an awkward silence
-beginner's luck
-a guilty conscience
-the calm before the storm
-stage fright
-homesickness
-the urge to sneeze
-the weight of homework
-pure happiness
-a brain freeze
-a secret crush
-the last day of summer
-boredom in a waiting room
-the magic of a snow day
-a sugar rush
-the fear of missing out
-no sense of direction
-writer's block
-an inside joke
-the silent treatment
-peer pressure
-a lucky streak
-the longest wait
-the meaning of life
-a guilty pleasure
-spring fever
-first day jitters
-a power nap
-good vibes only
-a fresh start
-the end of the rainbow
-a broken heart getting stitches
-the best day ever
-a lazy sunday
-a meeting that could be an email
-a second wind
+the fear of mondays | the dread of alarm clocks | the terror of tax day | a calendar monster
+the joy of popping bubble wrap | the thrill of crunchy autumn leaves | the joy of peeling a sticker | someone cracking their knuckles
+the smell of a new book | the sound of turning pages | the taste of fresh bread | the scent of old libraries
+a bad hair day | a static shock | a gust of wind | a messy morning
+the sunday blues | a rainy day mood | a gloomy monday morning | a cloud over my head
+deja vu | seeing double | a time loop | an echo
+an awkward silence | an uneasy elevator ride | a library standoff | a staring contest
+beginner's luck | a happy accident | a natural talent | the first big catch
+a guilty conscience | a tough decision | a little white lie | a nagging doubt
+the calm before the storm | the quiet after the party | the eye of the hurricane | a picnic under dark clouds
+stage fright | a forgotten line | a standing ovation | a shaky solo
+homesickness | wanderlust | missing grandma | daydreaming
+the urge to sneeze | the need to scratch an itch | allergy season | the tickle of a feather
+the weight of homework | the weight of the world | a backpack full of bricks | the pile of unread mail
+pure happiness | total excitement | a dream come true | sweet victory
+a brain freeze | a splitting headache | a cold shoulder | a cold snap
+a secret crush | a love letter | puppy love | a shy valentine
+the last day of summer | the first day of autumn | the end of the holidays | a sunset at the beach
+boredom in a waiting room | patience at the post office | a long line at the bank | a slow day at the office
+the magic of a snow day | the wonder of a first snowfall | the joy of a day off school | a snowman with a big grin
+a sugar rush | a caffeine buzz | a hyper toddler | a candy overload
+the fear of missing out | the curse of a dead battery | a party you weren't invited to | the envy of the neighbors
+no sense of direction | a map read upside down | lost in the woods | going around in circles
+writer's block | a blank page | a broken pen | a mental wall
+an inside joke | a shared secret | a belly laugh | a funny memory
+the silent treatment | a heated argument | a vow of silence | the grumpy roommate
+peer pressure | a dare gone wrong | following the crowd | a tough choice
+a lucky streak | a winning hand | a lucky charm | a jackpot moment
+the longest wait | the slowest line | a watched pot | a late bus
+the meaning of life | the secret of the universe | a deep thought | the answer to everything
+a guilty pleasure | a midnight snack | a forbidden treat | a cheat day
+spring fever | cabin fever | hay fever | a blooming romance
+first day jitters | a nervous newbie | back to school blues | a shaky handshake
+a power nap | a lunch break | a long day at work | a boring meeting
+good vibes only | a positive attitude | peace and love | sunshine and smiles
+a fresh start | spring cleaning | the first step | moving day
+the end of the rainbow | a pot of gold | the edge of the world | the bridge to the clouds
+a broken heart getting stitches | a lonely heart in the hospital | a heart getting a check up | patching up a big argument
+the best day ever | a dream vacation | a perfect birthday | the time of my life
+a lazy sunday | a sick day | a slow morning | a rainy saturday
+a meeting that could be an email | a phone call that could be a text | a lecture that never ends | a sleepy office presentation
+a second wind | a final sprint | a breath of fresh air | the last lap
 
 [moment]
-the moment the toast lands butter down
-the moment you forget why you came in
-the moment the ice cream falls
-the moment the wifi drops
-the moment the cake collapses
-the moment the lights go out
-the moment you step on a toy brick
-the moment the balloon pops
-the moment the dog sees the vet
-the moment the bus leaves without you
-the moment the magic trick fails
-the moment you send the wrong text
-the moment the fish takes the bait
-the moment the alarm rings
-the moment the cat knocks it off
-the moment the soap slips
-the moment the hammock gives way
-the moment the zipper gets stuck
-the moment the egg hatches
-the moment the pinata breaks
-the moment the umbrella flips
-the moment the elevator doors open
-the moment you see your teacher shopping
-the moment the snowball hits
-the moment the popcorn starts popping
-the moment the music stops
-the moment the parachute opens
-the moment the volcano wakes up
-the moment the tooth comes out
-the moment the kite lifts you off
-the moment the sandcastle meets a wave
-the moment the dominoes fall
-the moment the gum bubble bursts
-the moment someone spoils the ending
-the moment the robot becomes self aware
-the moment the penguin learns to fly
-the moment the referee blows the whistle
-the moment the paint can tips over
+the moment the toast lands butter down | the moment the pancake misses the pan | the moment the sandwich hits the floor | a waiter tripping at breakfast
+the moment you forget why you came in | the moment you lose your keys again | the moment you walk into the wrong room | a sleepwalker waking up in the hall
+the moment the ice cream falls | the moment the seagull steals lunch | the moment the scoop starts melting | a kid losing a game of catch
+the moment the wifi drops | the moment the battery dies | the moment the game freezes | someone shouting at a router
+the moment the cake collapses | the moment the jelly wobbles over | the moment the candles melt down | a baker crying over a squashed hat
+the moment the lights go out | the moment the movie starts | the moment you hear a noise at night | two eyes hiding in a dark closet
+the moment you step on a toy brick | the moment you stub your toe | the moment the sand gets too hot | a man stepping on a tiny cactus
+the moment the balloon pops | the moment the tire goes flat | the moment the firework goes off | a startled clown at a birthday
+the moment the dog sees the vet | the moment the dog sees the bath | the moment the cat meets the puppy | a dog hiding under the kitchen table
+the moment the bus leaves without you | the moment you miss the last train | the moment the ferry pulls away | a man chasing a truck down the road
+the moment the magic trick fails | the moment the rabbit escapes the hat | the moment the magician sneezes | a wizard who lost his best wand
+the moment you send the wrong text | the moment you read the group chat | the moment your phone hits the floor | a man scared of his own selfie
+the moment the fish takes the bait | the moment the boat springs a leak | the moment the fisherman falls in | a fish catching a tiny fisherman
+the moment the alarm rings | the moment the fire drill starts | the moment you hit snooze | a rooster yelling at a sleepy man
+the moment the cat knocks it off | the moment the cat spots a mouse | the moment the dog gets the blame | a cat playing pool on the counter
+the moment the soap slips | the moment the fish wriggles free | the moment the shower turns cold | a bar of soap on a water slide
+the moment the hammock gives way | the moment the swing rope snaps | the moment the deckchair folds up | a man asleep in a fishing net
+the moment the zipper gets stuck | the moment the button pops off | the moment the tent will not close | a man stuck inside his own jacket
+the moment the egg hatches | the moment the chick meets its mom | the moment the dinosaur wakes up | a bird wearing an eggshell hat
+the moment the pinata breaks | the moment the bat hits grandpa | the moment the donkey fights back | a kid swinging at a paper horse
+the moment the umbrella flips | the moment the wind steals your hat | the moment the storm rolls in | a man holding a giant tulip in rain
+the moment the elevator doors open | the moment the curtain goes up | the moment the train doors close | a crowd squeezed into a tiny box
+the moment you see your teacher shopping | the moment you wave at a stranger | the moment your mom meets your friends | two people hiding behind the cereal
+the moment the snowball hits | the moment the snowman falls apart | the moment the pie hits the face | a man sneezing in a blizzard
+the moment the popcorn starts popping | the moment the kettle starts boiling | the moment the corn field explodes | a pot full of tiny clouds escaping
+the moment the music stops | the moment the dance floor freezes | the moment the record scratches | an orchestra that lost its conductor
+the moment the parachute opens | the moment the jellyfish takes off | the moment the hot air balloon lifts | a man floating under a giant mushroom
+the moment the volcano wakes up | the moment the chimney catches fire | the moment the dragon wakes up | a campfire that got way too big
+the moment the tooth comes out | the moment the braces come off | the moment the dentist says oops | a kid flying a very short kite
+the moment the kite lifts you off | the moment the balloon carries you away | the moment the wind takes your coat | a girl walking her pet cloud
+the moment the sandcastle meets a wave | the moment the tide steals your towel | the moment a crab claims the castle | a cake left out in the rain
+the moment the dominoes fall | the moment the card tower tumbles | the moment the books slide off | a long line of tired soldiers
+the moment the gum bubble bursts | the moment the chewing gum sticks | the moment you blow a world record | a girl blowing up a pink balloon
+the moment someone spoils the ending | the moment someone talks in the cinema | the moment the movie stops working | a crowd glaring at one loud friend
+the moment the robot becomes self aware | the moment the robot falls in love | the moment the toaster learns to talk | a robot that wants a vacation
+the moment the penguin learns to fly | the moment the ostrich finds its wings | the moment the penguin slips on ice | a penguin riding a paper airplane
+the moment the referee blows the whistle | the moment the goalkeeper slips | the moment the coach loses his temper | a man in stripes yelling at a ball
+the moment the paint can tips over | the moment the dog walks on wet paint | the moment the milk spills | a painter slipping off his ladder
 
 [secret]
-what the fridge does at night
-the secret life of a sock
-a toaster's dream
-the teddy bear's night shift
-the vacuum cleaner's day off
-the rubber duck's double life
-the lamp's secret talent
-what the moon does on weekends
-the shopping cart's escape plan
-a stapler's secret hobby
-the sofa eating your coins
-the washing machine's sock collection
-a pencil's retirement party
-a clock that wants a break
-the umbrella's summer vacation
-a lost glove's adventure
-the mirror's secret opinion
-what traffic cones do at night
-the remote control's hiding spot
-the garden gnome's night out
-the alarm clock's revenge
-a lightbulb with a bright idea
-the toothbrushes' band practice
-the backpack's secret pocket world
-the snow globe's tiny weatherman
-the piano's midnight concert
-a coffee mug's morning routine
-the scarecrow's weekend job
-the bathtub dreaming of the ocean
-the ceiling fan's workout
-a candle's last wish
-the bookshelf's book club
-the kettle's opera debut
-the fridge magnets gossiping
-a mouse with a big secret
-the iceberg's hidden basement
-the tooth fairy's overtime
-a witch's broom getting a wash
-a smartphone addicted to people
-what the dishwasher dreams about
-the escalator's secret dance moves
-the lost keys' hideout
-the night life of museum statues
+what the fridge does at night | what the oven does on holiday | the freezer's midnight snack | a fridge sleepwalking to bed
+the secret life of a sock | the hidden talent of a mitten | a sock running away from home | the private life of a slipper
+a toaster's dream | a microwave's daydream | a toaster's first love | toast dreaming of butter
+the teddy bear's night shift | the rag doll's morning shift | the teddy bear's sleepover | a teddy bear counting sheep
+the vacuum cleaner's day off | the lawn mower's vacation | the vacuum cleaner's first date | a vacuum cleaner on a diet
+the rubber duck's double life | the bath sponge's secret job | the rubber duck's swimming lessons | a rubber duck with sunglasses
+the lamp's secret talent | the lamp's hidden fear | the flashlight's stage fright | a desk lamp chasing a moth
+what the moon does on weekends | what the sun does after work | where the stars go on holiday | the moon with a toothache
+the shopping cart's escape plan | the wheelbarrow's getaway | the shopping cart's road trip | a cart stuck in a puddle
+a stapler's secret hobby | a hole punch's hidden talent | a stapler's lunch break | a stapler that bites
+the sofa eating your coins | the armchair swallowing socks | the sofa saving for a holiday | the cushions guarding treasure
+the washing machine's sock collection | the tumble dryer's button collection | the washing machine's dance party | the laundry basket's lost and found
+a pencil's retirement party | a crayon's going away party | an eraser's farewell speech | a pencil's birthday celebration
+a clock that wants a break | a calendar that wants a holiday | a clock that hates mondays | a clock that lost its hands
+the umbrella's summer vacation | the snow shovel's summer holiday | the umbrella's first sunburn | the parasol's winter break
+a lost glove's adventure | a lost sock's world tour | a glove waving at strangers | a mitten's first day of school
+the mirror's secret opinion | the window's secret crush | the mirror's bad hair day | a mirror laughing at your outfit
+what traffic cones do at night | what road signs do at lunch | where traffic cones go on holiday | traffic cones lost in the fog
+the remote control's hiding spot | the tv remote's escape tunnel | the phone charger's secret den | the remote control's nap time
+the garden gnome's night out | the garden gnome's fishing trip | the lawn flamingo's night out | a gnome stuck in a birdbath
+the alarm clock's revenge | the alarm clock's tantrum | the egg timer's big moment | an alarm clock with hiccups
+a lightbulb with a bright idea | a candle with a warm heart | a lightbulb with a short temper | a lightbulb afraid of the dark
+the toothbrushes' band practice | the hairbrushes' dance class | the toothbrushes' sword fight | two toothbrushes in a dance off
+the backpack's secret pocket world | the suitcase's tiny holiday town | the backpack's lunchbox kingdom | a whole city inside a pencil case
+the snow globe's tiny weatherman | the fishbowl's tiny lifeguard | the snow globe's grumpy snowman | a little man shaking a snow globe
+the piano's midnight concert | the piano's first stage fright | the accordion's midnight show | a piano snoring through the night
+a coffee mug's morning routine | a teapot's afternoon nap | a coffee mug's monday blues | a mug waiting for its teabag
+the scarecrow's weekend job | the snowman's summer job | the scarecrow's dance lessons | a scarecrow scared of crows
+the bathtub dreaming of the ocean | the sink dreaming of a waterfall | the bathtub's sailing holiday | a bathtub that hates bath time
+the ceiling fan's workout | the windmill's workout | the ceiling fan's dizzy spell | a helicopter stuck to the ceiling
+a candle's last wish | a candle's birthday party | a match's first spark | a candle melting in the sun
+the bookshelf's book club | the bookshelf's spelling bee | the cookbooks' cooking class | books arguing on a shelf
+the kettle's opera debut | the teapot's singing lesson | the kettle's whistling contest | a kettle that hates tea
+the fridge magnets gossiping | the fridge magnets' tea party | the sticky notes complaining | magnets planning a fridge escape
+a mouse with a big secret | a mouse with a big appetite | a mouse hiding a giant cheese | a squirrel with a hidden stash
+the iceberg's hidden basement | the volcano's secret kitchen | the iceberg's underwater party | a penguin's house under the ice
+the tooth fairy's overtime | the sandman's busy night | the tooth fairy's piggy bank | a fairy stuck under a pillow
+a witch's broom getting a wash | a witch's cat getting a bath | a broom's first flying lesson | a mop taking a bubble bath
+a smartphone addicted to people | a tablet afraid of children | a smartphone that needs a nap | a laptop that misses its owner
+what the dishwasher dreams about | what the microwave worries about | what the dishwasher sings about | a dishwasher counting plates
+the escalator's secret dance moves | the staircase's secret workout | the escalator's long journey | an elevator doing the moonwalk
+the lost keys' hideout | the lost socks' clubhouse | the spare key's escape route | keys camping inside a boot
+the night life of museum statues | the secret life of museum mummies | what park statues do at lunch | a statue with an itchy nose
 
 [invented]
-a professional cloud sculptor
-the national day of naps
-underwater chess
-a pillow fight championship
-a sock matching expert
-the world cup of hide and seek
-a moon dust sweeper
-a puddle inspector
-the pancake flipping olympics
-a rainbow repair crew
-a full time dragon babysitter
-a squirrel traffic controller
-international hug a cactus day
-a lighthouse night guard
-a professional pillow fluffer
-a dream delivery service
-a professional sneeze catcher
-the backwards running marathon
-synchronized napping
-a tooth fairy for dinosaurs
-the bed testing champion
-a ghost removal plumber
-a star polisher
-a hairdresser for giraffes
-the festival of lost socks
-underwater bicycle racing
-a grumpy cat beauty contest
-a snowflake designer
-a volcano chimney sweep
-a puddle jumping championship
-a wave folding factory
-the day everything is upside down
-moon bowling
-a lullaby singer for owls
-the zero gravity tea party
-the leftovers festival
-a sandwich architect
-a goldfish personal trainer
-a cloud catching contest
-an elevator music composer
+a professional cloud sculptor | a professional sheep shampooer | a cotton candy spinning champion | a man carving fog with a chisel
+the national day of naps | the national day of yawning | the world pajama parade | everyone asleep at the office
+underwater chess | submarine checkers | a chess match in the rain | the goldfish book club
+a pillow fight championship | the marshmallow throwing finals | a sleepover snowball fight | competitive bed jumping
+a sock matching expert | a professional laundry folder | a glove reunion counselor | a man sorting his drawer
+the world cup of hide and seek | the world cup of musical chairs | the championship of peekaboo | a kid hiding behind a tree
+a moon dust sweeper | a crater vacuum cleaner | a stardust collector | a janitor for astronauts
+a puddle inspector | a raindrop counter | a professional mud tester | a duck pond lifeguard
+the pancake flipping olympics | the frying pan juggling finals | the world cup of omelette tossing | a breakfast catching contest
+a rainbow repair crew | a bridge painting team | the sky coloring department | workers fixing a giant slide
+a full time dragon babysitter | a part time dinosaur nanny | a firefighter for baby dragons | a lizard daycare teacher
+a squirrel traffic controller | a pigeon crossing guard | a chipmunk parking attendant | a lollipop lady for ducks
+international hug a cactus day | international pet a porcupine day | world high five a hedgehog day | a cowboy hugging his best friend
+a lighthouse night guard | a rocket launch watchman | a lonely tower doorman | a sleepy castle lookout
+a professional pillow fluffer | a professional dough kneader | a marshmallow quality tester | a hotel bed punching expert
+a dream delivery service | a midnight pizza delivery | a bedtime story courier | a postman for sleepyheads
+a professional sneeze catcher | a professional hiccup collector | a pepper sniffing champion | a tissue goalkeeper for hire
+the backwards running marathon | the moonwalking world finals | the slow motion sprint final | runners chasing their shadows
+synchronized napping | synchronized yawning | competitive sleepwalking | olympic snoring
+a tooth fairy for dinosaurs | a fairy godmother for lizards | a nail clipper for dragons | a sandman for mammoths
+the bed testing champion | the couch potato champion | the mattress jumping finals | the world's longest lie in
+a ghost removal plumber | a ghost hunting janitor | a haunted toilet repairman | a sheet stuck in the drain
+a star polisher | a moon window cleaner | a night sky duster | a sparkle repairman
+a hairdresser for giraffes | a necktie maker for giraffes | a barber on a very tall ladder | a dinosaur getting a haircut
+the festival of lost socks | the parade of odd mittens | the holiday of missing keys | the laundry day carnival
+underwater bicycle racing | underwater horse riding | submarine motorbike stunts | a bike ride through a car wash
+a grumpy cat beauty contest | an angry dog fashion show | a sulky cat talent show | cats judging a dog show
+a snowflake designer | a frost pattern painter | a paper doily inventor | a professional ice carver
+a volcano chimney sweep | a volcano firefighter | a mountain fireplace cleaner | a smoke signal operator
+a puddle jumping championship | the trampoline long jump finals | a raincoat fashion contest | the welly boot olympics
+a wave folding factory | a sea ironing service | an ocean laundry service | a towel making machine
+the day everything is upside down | the day gravity took a break | the world turned inside out | a family standing on the ceiling
+moon bowling | space golf | crater billiards | meteor marbles
+a lullaby singer for owls | a night watchman for bats | an alarm clock for roosters | a bedtime choir for chickens
+the zero gravity tea party | the floating birthday party | the space station picnic | a tea party in a hurricane
+the leftovers festival | the fridge cleaning holiday | the day of cold pizza | the festival of soggy fries
+a sandwich architect | a burger engineer | a professional cake builder | a lasagna stacking champion
+a goldfish personal trainer | a hamster yoga instructor | a lifeguard for goldfish | a fish doing push ups
+a cloud catching contest | a butterfly netting contest | the bubble chasing finals | a kite rescue mission
+an elevator music composer | a doorbell melody composer | a lift operator with a violin | a ringtone songwriter
 
 [contra]
-a shy fireworks show
-a terrifying bunny
-a polite tornado
-a tiny giant
-a sad clown at a party
-a quiet thunderstorm
-a lazy cheetah
-a gentle monster truck
-a cold campfire
-a brave mouse knight
-a vegetarian shark
-a fearless chicken
-a messy robot
-a sleepy rooster
-a slow motion race car
-a silent drum solo
-a friendly haunted house
-a grumpy sunflower
-a happy rain cloud
-an organized tornado
-a modest peacock
-a shark afraid of water
-a knight afraid of the dark
-a candle afraid of birthdays
-a cactus that loves hugs
-a vampire who loves garlic
-a ghost afraid of people
-a bodybuilder ant
-a snowman who loves summer
-a fish who can't swim
-a turtle in a hurry
-an elephant afraid of mice
-a dragon with no fire
-a baby with a beard
-a broom that hates dust
-an alarm clock that oversleeps
-an athletic sloth
-a sleepy volcano
-a superhero with allergies
-the world's smallest elephant
-a tiny king on a huge throne
-an unhappy birthday cake
+a shy fireworks show | a timid meteor shower | a bashful disco ball | fireworks behind a cloud
+a terrifying bunny | a vicious hamster | a menacing teddy bear | a bunny with a scary secret
+a polite tornado | a courteous hurricane | a tornado holding the door | a grateful spinning top
+a tiny giant | a gigantic toddler | a shrunken lumberjack | a giant in a teacup
+a sad clown at a party | a grumpy magician at a party | a crying mime at a wedding | a clown who lost his balloons
+a quiet thunderstorm | a whispering hurricane | a peaceful lightning bolt | a cloud with the hiccups
+a lazy cheetah | a sleepy leopard | a tired racehorse | a cheetah on the couch
+a gentle monster truck | a timid bulldozer | a caring steamroller | a truck carrying a kitten
+a cold campfire | an icy barbecue | a shivering fireplace | a snowball by the tent
+a brave mouse knight | a heroic hamster soldier | a daring rat musketeer | a mouse guarding the cheese
+a vegetarian shark | a vegan crocodile | a shark at the salad bar | a dolphin eating lettuce
+a fearless chicken | a heroic turkey | a daring duckling | a chicken chasing a fox
+a messy robot | a clumsy android | a careless computer | a robot in a junkyard
+a sleepy rooster | a dozing parrot | a tired owl at noon | a rooster who hit snooze
+a slow motion race car | a race car stuck in traffic | a snail at the grand prix | a racing car with a flat tire
+a silent drum solo | a quiet guitar concert | a whispering marching band | a drummer with no sticks
+a friendly haunted house | a cheerful graveyard | a welcoming spooky castle | ghosts throwing a tea party
+a grumpy sunflower | an angry daisy | a cranky tulip | a sunflower with a headache
+a happy rain cloud | a cheerful snowstorm | a joyful puddle | a cloud dancing in the rain
+an organized tornado | a tidy hurricane | a punctual whirlpool | a tornado folding laundry
+a modest peacock | a humble flamingo | a shy turkey | a peacock hiding its tail
+a shark afraid of water | a duck afraid of rain | a whale who hates the ocean | a shark in a life jacket
+a knight afraid of the dark | a pirate afraid of the sea | a knight scared of dragons | a soldier with a night light
+a candle afraid of birthdays | a balloon afraid of parties | a candle that hates wishes | a candle hiding from a cake
+a cactus that loves hugs | a porcupine that loves cuddles | a hedgehog giving high fives | a cactus at a pillow fight
+a vampire who loves garlic | a bat who loves sunshine | a werewolf who loves baths | a vampire at a pizza party
+a ghost afraid of people | a monster afraid of children | a sheet afraid of the wind | a ghost hiding under the bed
+a bodybuilder ant | a weightlifting beetle | a muscular ladybug | an ant carrying a sandwich
+a snowman who loves summer | a penguin who loves the beach | an ice cube who loves saunas | a snowman on a sunbed
+a fish who can't swim | a bird who can't fly | a duck who can't float | a fish with water wings
+a turtle in a hurry | a snail late for work | a turtle chasing a bus | a tortoise on roller skates
+an elephant afraid of mice | a lion afraid of kittens | a giraffe afraid of heights | an elephant on a stool
+a dragon with no fire | a dinosaur with a cold | a crocodile with no teeth | a dragon blowing bubbles
+a baby with a beard | a gnome in a high chair | a grandpa in a stroller | a baby eating spaghetti
+a broom that hates dust | a mop that hates water | a vacuum afraid of crumbs | a broom running from a mop
+an alarm clock that oversleeps | a doorbell that hates visitors | a stopwatch that can't keep up | a clock that forgot the time
+an athletic sloth | a sporty koala | a jogging panda | a sloth lifting weights
+a sleepy volcano | a yawning mountain | a snoring chimney | a grumpy island
+a superhero with allergies | a wizard with the hiccups | a superhero afraid of cats | a caped hero blowing his nose
+the world's smallest elephant | the world's tallest mouse | a mouse in an elephant costume | an elephant in a teacup
+a tiny king on a huge throne | a tiny judge at a huge desk | a little queen in a big castle | a baby on a giant armchair
+an unhappy birthday cake | a grumpy wedding cake | a crying cupcake at a party | a birthday cake nobody ate
 
 [view]
-a sandwich watching you eat lunch
-the world seen by an ant
-a goldfish looking at its owner
-the dentist seen by a tooth
-a haircut seen by the hair
-a birthday through the cake's eyes
-a football's worst day
-inside a piggy bank
-the moon watching the earth
-a bird's view of a picnic
-bedtime from the pillow's side
-a tree watching the seasons go by
-a dance party seen from the floor
-a spider watching a vacuum
-a worm's view of a garden
-inside a whale's mouth
-the fridge's view of a midnight snack
-a ball's view of a dog
-a carrot watching a rabbit
-a snowflake's long fall
-the window watching a storm
-a sock's view of the washing machine
-a shoe's view of a muddy walk
-an umbrella's view of the rain
-a pencil watching the eraser
-the mirror's view of the morning
-a mailbox waiting for mail
-a fly on the wall at dinner
-the moon peeking at a sleepover
-a kite's view of the park
-a fish's view of the fisherman
-a movie from inside the popcorn bucket
-a balloon floating away from home
-the ocean's view of the beach
-a candle waiting to be blown out
-the goalkeeper's view of a penalty
-a bus stop watching people run late
-what a runaway balloon sees
-the bottom of a swimming pool looking up
-the world through a keyhole
-life inside a lava lamp
-under the table at a family dinner
+a sandwich watching you eat lunch | a burger watching you skip dinner | a lunchbox spying on the cafeteria | a hungry kid staring at a sandwich
+the world seen by an ant | the kitchen seen by a mouse | the sidewalk seen by a beetle | a giant foot about to step down
+a goldfish looking at its owner | a hamster looking at its owner | a cat staring into the fishbowl | a parrot judging its new cage
+the dentist seen by a tooth | the barber seen by a beard | a toothbrush's view of the sink | a scary checkup from the chair
+a haircut seen by the hair | the lawnmower seen by the grass | a bad hair day from the comb's side | a shave seen by the mustache
+a birthday through the cake's eyes | a party through the candle's eyes | the last slice watching the guests | a birthday seen from the gift box
+a football's worst day | a tennis ball's worst day | a basketball's longest game | a pumpkin rolling down a hill
+inside a piggy bank | inside a cookie jar | a coin's view of the slot | a pig with a tummy ache
+the moon watching the earth | the sun watching the planets | an astronaut missing home | a satellite looking down at us
+a bird's view of a picnic | a cloud's view of a barbecue | a crow planning a lunch heist | a seagull eyeing your chips
+bedtime from the pillow's side | nap time from the blanket's side | a teddy bear watching you sleep | the alarm clock's view of monday
+a tree watching the seasons go by | a scarecrow watching the crops grow | a snowman watching spring arrive | a tree waving goodbye to its leaves
+a dance party seen from the floor | a disco seen from the mirror ball | a ballroom from the chandelier | a crowd stomping on a lost shoe
+a spider watching a vacuum | a mouse watching a broom | a spider's view of spring cleaning | a bug hiding from the mop
+a worm's view of a garden | a mole's view of a golf course | a seed waiting to sprout | life under a flower bed
+inside a whale's mouth | inside a shark's tummy | a fish swimming into a cave | a tunnel full of tiny fish
+the fridge's view of a midnight snack | the oven's view of a burnt dinner | the cookie jar's view of a sneaky kid | a hungry dad caught by the light
+a ball's view of a dog | a stick's view of a puppy | a toy about to get chewed | the mailman's view of a dog
+a carrot watching a rabbit | a lettuce watching a snail | a bunny's view of the garden | a vegetable hiding from dinner
+a snowflake's long fall | a raindrop's long journey | a feather's trip to the ground | the first snow of the year
+the window watching a storm | the door watching a blizzard | a cozy house hiding from thunder | a lighthouse watching the waves
+a sock's view of the washing machine | a towel's view of the spin cycle | a goldfish's view of a whirlpool | a teddy bear's trip through the wash
+a shoe's view of a muddy walk | a doormat's view of a rainy day | a puddle's view of the school run | a boot stuck in a swamp
+an umbrella's view of the rain | a mushroom's view of the rain | a tent's view of a camping trip | a raincloud's view of a wedding
+a pencil watching the eraser | a crayon watching the sharpener | a ruler watching the scissors | a homework mistake vanishing
+the mirror's view of the morning | the toothbrush's view of breakfast | the sink's view of a bad hair day | a sleepy face meeting monday
+a mailbox waiting for mail | a doghouse waiting for the dog | a birdhouse waiting for a bird | a letter lost on the way home
+a fly on the wall at dinner | a bee on the window at lunch | a mosquito crashing the barbecue | a family argument over peas
+the moon peeking at a sleepover | the stars peeking at a campfire | the sun waking up a camping trip | a pillow fight seen from the sky
+a kite's view of the park | a pigeon's view of the zoo | a plane's view of the city | a kite stuck high in a tree
+a fish's view of the fisherman | a duck's view of the bread thrower | a frog's view of the butterfly net | a fisherman's very bad day
+a movie from inside the popcorn bucket | a magic show from inside the top hat | a concert from inside the tuba | a scary film seen from under a seat
+a balloon floating away from home | a kite escaping from its string | a bubble floating off to see the world | a lost toy drifting down the river
+the ocean's view of the beach | the lake's view of the campsite | a wave's view of a sandcastle | the tide sneaking up on a towel
+a candle waiting to be blown out | a dandelion waiting for the wind | a match waiting to be struck | a wish that took too long
+the goalkeeper's view of a penalty | the batter's view of a fastball | the net's view of the final kick | a ball flying straight at your face
+a bus stop watching people run late | a train station watching people wave | a crosswalk watching everyone rush | a bench watching the morning rush
+what a runaway balloon sees | what an escaped kite sees | what a paper plane sees | a town from way up in the clouds
+the bottom of a swimming pool looking up | the drain of a bathtub looking up | the floor of a fish tank looking up | a diver's view of a crowded beach
+the world through a keyhole | the world through a straw | a spy peeking through a fence | the party through a mail slot
+life inside a lava lamp | life inside a snow globe | a jellyfish in a tiny jar | a rocket full of floating goo
+under the table at a family dinner | under the sofa at a birthday party | the family dog waiting for scraps | a fort made of chairs and blankets
 
 [drama]
-the last cookie standoff
-two snails racing for a leaf
-a sandcastle under attack
-the great remote control battle
-a goldfish breakup
-a pigeon stealing fries
-a squirrel bank robbery
-a queue jumper at the bakery
-the toaster versus the bagel
-the cat and the cucumber
-the cookie crumb detective
-a duel at the salad bar
-a snowball fight ambush
-the last slice of pizza
-the bee and the picnic
-two kings fighting over one chair
-a dog hiding the evidence
-a hamster's great escape
-the seagull and the sandwich
-the pillow fort under siege
-a parrot telling secrets
-the sock that lost its partner
-a garden gnome on strike
-a sock puppet uprising
-the ants and the sugar cube
-a snowman saying goodbye
-a traffic jam of ducks
-the spider in the bathtub
-a chess piece's rebellion
-the thief who stole the moon
-a rubber duck lost at sea
-a lemonade stand price war
-a fridge left open overnight
-the fly that won't leave
-a dragon guarding a cookie jar
-the last leaf on the tree
-a ship escaping its bottle
-a ninja tripping over a cat
-a tug of war over the last pillow
-a chase through the supermarket
-a sandwich custody battle
-two dogs and one stick
-a staring contest with an owl
+the last cookie standoff | the final donut showdown | two kids and one cupcake | the cookie jar stakeout
+two snails racing for a leaf | two turtles racing for a berry | a slug chasing a lettuce leaf | the slowest race in the garden
+a sandcastle under attack | a sandcastle open for business | the sand kingdom's royal parade | a crab moving into a new home
+the great remote control battle | the great phone charger battle | the family tv channel feud | two siblings fighting over a game
+a goldfish breakup | a goldfish first date | a lonely fish in a bowl | a fishbowl argument
+a pigeon stealing fries | a crow stealing popcorn | a pigeon guarding its lunch | a pigeon on a fast food diet
+a squirrel bank robbery | a raccoon jewel heist | a squirrel hiding its savings | a squirrel opening a savings account
+a queue jumper at the bakery | a line cutter at the post office | a rush for the last baguette | a pushy shopper at the deli
+the toaster versus the bagel | the kettle versus the teabag | the waffle iron's revenge | a stuck slice of toast
+the cat and the cucumber | the dog and the vacuum | the cat and the garden hose | a cat jumping at a snake
+the cookie crumb detective | the missing cake investigation | the case of the empty jar | a mouse following a trail
+a duel at the salad bar | a showdown at the buffet | a picky eater at the salad bar | two forks and one crouton
+a snowball fight ambush | a water balloon ambush | a sneak attack by snowmen | kids building a snow fort
+the last slice of pizza | the last taco on the plate | the final wedge of cheese | sharing a pizza with a dog
+the bee and the picnic | the wasp and the lemonade | the ant and the watermelon | a picnic ruined by rain
+two kings fighting over one chair | two queens fighting over one crown | two kings sharing a sofa | a game of musical chairs
+a dog hiding the evidence | a dog blaming the cat | a puppy caught red pawed | a dog burying a slipper
+a hamster's great escape | a hamster's first marathon | a mouse's daring heist | a guinea pig on the run
+the seagull and the sandwich | the pelican and the fish | the crow and the hot dog | a beach lunch gone wrong
+the pillow fort under siege | the pillow fort grand opening | a cardboard castle in danger | a pillow fight at bedtime
+a parrot telling secrets | a parrot learning a new word | a parrot practicing its speech | a bird whispering to a cat
+the sock that lost its partner | the glove that lost its twin | the shoe left at the bus stop | a lonely sock in the dryer
+a garden gnome on strike | a garden gnome on vacation | a scarecrow quitting its job | a protest in the flower bed
+a sock puppet uprising | a sock puppet talent show | the revolt of the mittens | a teddy bear rebellion
+the ants and the sugar cube | the ants and the birthday cake | an ant carrying a giant crumb | the beetles and the candy
+a snowman saying goodbye | a snowman melting in spring | a snowman waving at the bus | the last day of winter
+a traffic jam of ducks | a duck crossing the highway | a parade of baby ducklings | rush hour at the pond
+the spider in the bathtub | the frog in the kitchen sink | a spider taking a bubble bath | a spider learning to swim
+a chess piece's rebellion | a pawn's dream of becoming king | the knight who refused to move | the queen's secret escape
+the thief who stole the moon | the man who sold the stars | the boy who caught a star | a ladder up to the moon
+a rubber duck lost at sea | a rubber duck's first voyage | a toy boat in a storm | a bath toy's big adventure
+a lemonade stand price war | a lemonade stand robbery | a cookie sale rivalry | a lemonade stand going broke
+a fridge left open overnight | a freezer with a broken door | a midnight raid on the fridge | the leftovers having a party
+the fly that won't leave | the guest who won't leave | the mosquito at bedtime | the fly in the soup
+a dragon guarding a cookie jar | a dragon guarding a candy shop | a dinosaur guarding the fridge | a knight raiding the pantry
+the last leaf on the tree | the last apple on the branch | a leaf that refuses to fall | a tree going bald for winter
+a ship escaping its bottle | a ship stuck in a fishbowl | a sailboat lost in a jar | a genie leaving its lamp
+a ninja tripping over a cat | a burglar tripping over a dog | a ninja hiding behind a lamp | a sneaky cat ruining a heist
+a tug of war over the last pillow | a tug of war over the blanket | two kids fighting over a teddy | the battle for the comfy side
+a chase through the supermarket | a race through the shopping mall | a runaway shopping cart | a dog loose in the grocery store
+a sandwich custody battle | a sandwich divorce in court | two lunchboxes in court | a pizza inheritance dispute
+two dogs and one stick | two cats and one box | three puppies and one ball | a dog stuck in a doorway
+a staring contest with an owl | a staring contest with a cat | a showdown with a grumpy owl | an owl reading a bedtime story
 
 [title]
-return of the lunch box
-the curse of the sticky spoon
-the phantom of the bakery
-attack of the giant pancakes
-the princess and the pickle
-around the world in eighty naps
-twenty thousand leagues under the bed
-the hound of the laundry basket
-pirates of the kitchen sink
-journey to the center of the sofa
-the wizard of oats
-the invisible sandwich
-night of the living leftovers
-a tale of two toasters
-the incredible shrinking cat
-war of the garden gnomes
-the mystery of the missing moustache
-gone with the wind turbine
-planet of the snails
-the good the bad and the soggy
-the legend of the lost remote
-raiders of the lost snack
-the old man and the sea monster
-the count of monte carrot
-the fast and the fluffy
-the cheese that got away
-pride and porridge
-the chronicles of the toaster
-alice in laundryland
-the jungle notebook
-sleeping beauty's snooze button
-the abominable snowball
-the lord of the onion rings
-the hunt for the golden spatula
-the case of the vanishing socks
-the secret diary of a teapot
-jurassic pork
-the silence of the lamps
-the empire strikes snack
-a midsummer night's cream
-the sound of muesli
-moby duck
-frankenstein's pet hamster
+return of the lunch box | revenge of the pencil case | escape of the toolbox | a lunch box walking home alone
+the curse of the sticky spoon | the riddle of the runny honey | the legend of the magic ladle | a spoon stuck in a pot of jam
+the phantom of the bakery | the ghost of the pizza oven | the masked baker of paris | a ghost stealing croissants
+attack of the giant pancakes | invasion of the flying frisbees | revenge of the killer waffles | a city buried under giant coins
+the princess and the pickle | the princess and the toad | the duchess and the green bean | a princess kissing a green slug
+around the world in eighty naps | around the moon in forty winks | the long sleep of the balloonist | a sleepy traveller on a globe
+twenty thousand leagues under the bed | ten thousand dust bunnies under the rug | the creature from the dark closet | a submarine lost in the bathtub
+the hound of the laundry basket | the beast of the washing machine | the cat of the clothes hamper | a puppy hiding in dirty socks
+pirates of the kitchen sink | sailors of the bathtub sea | the mutiny on the soap dish | a toy boat lost in the dishwater
+journey to the center of the sofa | lost in the depths of the armchair | expedition to the bottom of the bag | a tiny explorer finding coins
+the wizard of oats | the sorcerer's soup | the magician of muffins | a wizard with a magic bowl
+the invisible sandwich | the imaginary picnic | the ghost of the empty plate | a man eating thin air
+night of the living leftovers | dawn of the moldy casserole | the zombie meatloaf rises | monsters in the fridge
+a tale of two toasters | two kettles in love | the tale of the twin microwaves | the battle of the bread machines
+the incredible shrinking cat | the amazing growing mouse | the cat that ate the shrink ray | a kitten next to a giant chair
+war of the garden gnomes | battle of the flower pots | revenge of the lawn flamingos | gnomes fighting with shovels
+the mystery of the missing moustache | the riddle of the runaway eyebrows | the secret of the stolen beard | a detective with a fake beard
+gone with the wind turbine | blown away by the windmill | the kite that flew too high | a man stuck on a windmill
+planet of the snails | kingdom of the slugs | the snail who reached the moon | a slow invasion from space
+the good the bad and the soggy | the fast the slow and the sleepy | the brave the bold and the damp | three cowboys caught in the rain
+the legend of the lost remote | the myth of the missing slipper | the saga of the stolen pillow | a family searching the couch
+raiders of the lost snack | temple of the forbidden cookie | the quest for the last crisp | an explorer stealing a donut
+the old man and the sea monster | the fisherman and the giant squid | the boy who befriended a whale | a boat stuck on a whale's back
+the count of monte carrot | the baron of broccoli | the duke of the vegetable patch | a carrot in a fancy cape
+the fast and the fluffy | the wild and the woolly | the great sheep grand prix | a bunny driving a race car
+the cheese that got away | the sausage that escaped | the gingerbread getaway | the mouse who missed his lunch
+pride and porridge | sense and sausages | breakfast at the manor | a fine lady spilling her soup
+the chronicles of the toaster | the adventures of the microwave | the saga of the burnt toast | a toaster telling bedtime stories
+alice in laundryland | the girl in the spin cycle | wendy and the washing line | lost in the washing machine
+the jungle notebook | the desert postcard | the zoo homework | a tiger doodling in class
+sleeping beauty's snooze button | cinderella's midnight alarm | the frog prince's bedtime story | a princess smashing her alarm
+the abominable snowball | the terrible snowman | the dreadful ice cube | a giant snowball chasing kids
+the lord of the onion rings | the queen of the curly fries | the fellowship of the fries | a king guarding his donuts
+the hunt for the golden spatula | the quest for the silver whisk | the treasure of the frying pan | chefs fighting over a trophy
+the case of the vanishing socks | the puzzle of the lonely mittens | the riddle of the runaway laundry | a detective counting odd socks
+the secret diary of a teapot | the private letters of a kettle | the memoirs of a coffee pot | a teapot writing a love poem
+jurassic pork | jurassic bark | the land before swine | a pig dressed as a dino
+the silence of the lamps | the whisper of the candles | the night the lights went out | a lamp telling everyone to hush
+the empire strikes snack | galaxy of the giant nachos | the robots raid the fridge | a spaceship firing popcorn
+a midsummer night's cream | a winter's tale of custard | the fairy queen's ice cream | ice cream under the full moon
+the sound of muesli | the song of the cornflakes | the cereal that sings | singing to my breakfast
+moby duck | captain quack | the rubber whale | a giant bath duck
+frankenstein's pet hamster | dracula's pet goldfish | the monster's tiny puppy | a zombie walking a guinea pig
 
 [animal]
-a cat filing its taxes
-a giraffe with a sore throat
-an octopus learning to knit
-a sloth at a speed dating event
-a hedgehog getting a haircut
-a pigeon running for mayor
-a bear trying to fit into jeans
-a dog giving a business presentation
-a chicken that finally crossed the road
-a squirrel who forgot where the nuts are
-a llama posing for a passport photo
-a duck learning to drive
-a cow doing yoga
-a rhino stuck in a revolving door
-a koala that refuses to wake up
-an owl working the day shift
-a spider tying its shoes
-a bat hanging out the laundry
-a crab walking forwards
-a worm doing push ups
-a frog conducting an orchestra
-a seal balancing a teapot
-a penguin in a tuxedo shop
-a turtle moving house
-a kangaroo with a messy pocket
-a zebra at the crosswalk
-a polar bear on a sun lounger
-a mosquito on a diet
-a moose decorating its antlers
-a parrot doing stand up comedy
-a dog walking its owner
-a horse at the shoe store
-a hamster training for the olympics
-a pig at a mud spa
-a beaver building a skyscraper
-a woodpecker with a headache
-a snake knitting a very long scarf
-a giraffe at a limbo contest
+a cat filing its taxes | a raccoon doing its homework | a cat signing a mortgage | a cat buried in paperwork
+a giraffe with a sore throat | an ostrich with the hiccups | a giraffe with a stiff neck | a giraffe swallowing a balloon
+an octopus learning to knit | an octopus playing the drums | a squid untangling earphones | an octopus caught in yarn
+a sloth at a speed dating event | a snail at a speed dating event | a sloth late for a job interview | a sloth asleep at a dinner date
+a hedgehog getting a haircut | a porcupine getting a buzz cut | a hedgehog popping balloons | a hedgehog brushing its spikes
+a pigeon running for mayor | a pigeon giving a wedding speech | a seagull selling newspapers | a crow handing out flyers
+a bear trying to fit into jeans | a hippo squeezing into a swimsuit | a bear trying on wedding dresses | a bear stuck in a sleeping bag
+a dog giving a business presentation | a dog presenting the weather forecast | a cat teaching a math lesson | a dog explaining its report card
+a chicken that finally crossed the road | a duck that missed the last bus | a chicken that won the marathon | a chicken stuck at a red light
+a squirrel who forgot where the nuts are | a squirrel who lost its car keys | a chipmunk searching for its glasses | a squirrel digging up the wrong garden
+a llama posing for a passport photo | a camel getting a driver's license | an alpaca at a school picture day | a llama waiting at airport security
+a duck learning to drive | a goose learning to ride a bike | a duck stuck in a traffic jam | a duck washing its car
+a cow doing yoga | a cow doing ballet | a goat doing pilates | a cow tying itself in knots
+a rhino stuck in a revolving door | a hippo stuck in a cat flap | an elephant in a tiny elevator | a rhino going round in circles
+a koala that refuses to wake up | a panda that overslept for work | a koala hugging its alarm clock | a sloth that missed the school bus
+an owl working the day shift | a bat working the night shift | an owl falling asleep at its desk | an owl wearing sunglasses at noon
+a spider tying its shoes | a centipede buying new socks | an octopus putting on boots | a spider untangling its web
+a bat hanging out the laundry | a bat sleeping on a washing line | a crow stealing the socks | a bat drying its umbrella
+a crab walking forwards | a crab doing the moonwalk | a lobster learning to dance | a crab crossing the street
+a worm doing push ups | a snake lifting weights | a caterpillar doing sit ups | a worm stuck under a pebble
+a frog conducting an orchestra | a frog leading a choir | a cricket conducting a marching band | a frog swatting flies with a stick
+a seal balancing a teapot | a walrus serving afternoon tea | a seal juggling teacups | a sea lion with a lamp on its nose
+a penguin in a tuxedo shop | a penguin auditioning to be a waiter | a penguin trying on a ball gown | a penguin at a wedding
+a turtle moving house | a snail packing a suitcase | a tortoise selling its shell | a turtle stuck on its back
+a kangaroo with a messy pocket | a kangaroo emptying its handbag | a kangaroo working as a postman | a kangaroo hiding the remote
+a zebra at the crosswalk | a zebra at the barcode scanner | a tiger waiting for the bus | a zebra painting the road
+a polar bear on a sun lounger | a polar bear getting a sunburn | a penguin on a summer holiday | a polar bear melting at the beach
+a mosquito on a diet | a mosquito at the blood bank | a fly refusing dessert | a mosquito on a treadmill
+a moose decorating its antlers | a reindeer hanging fairy lights | a moose wearing a christmas tree | a deer using its antlers as a coat rack
+a parrot doing stand up comedy | a parrot singing karaoke | a toucan reading the news | a parrot heckling a magician
+a dog walking its owner | a horse riding its jockey | a cat taking its owner to the vet | a dog flying a kite
+a horse at the shoe store | a pony trying on high heels | a donkey at the tailor | a horse buying new socks
+a hamster training for the olympics | a guinea pig training for a boxing match | a hamster auditioning for the circus | a mouse lifting a sugar cube
+a pig at a mud spa | a hippo getting a facial | a pig at the car wash | a pig taking a bubble bath
+a beaver building a skyscraper | a termite designing a castle | a beaver building a log cabin | a beaver stacking pencils
+a woodpecker with a headache | a woodpecker at the dentist | a chicken with a toothache | a woodpecker knocking on doors
+a snake knitting a very long scarf | a giraffe knitting a turtleneck | a snake wearing a striped sweater | a snake wrapped in a christmas garland
+a giraffe at a limbo contest | a flamingo at a dance contest | a giraffe at a low bridge | a giraffe stuck under a table
 
 [food]
-a jealous meatball
-a pizza delivered by parachute
-soup that fights back
-a banana in disguise
-broccoli on vacation
-a sandwich taller than a house
-a spaghetti waterfall
-a wobbly tower of jelly
-a donut that wants to be a bagel
-an egg on its way to the frying pan
-a cheese that is mostly holes
-a burger falling apart
-a melon wearing a helmet
-a lemon pulling a sour face
-a nervous bag of popcorn
-a dinner party for vegetables
-a salad that ran away
-a muffin hiding a vegetable
-a pepper too hot to handle
-cereal swimming in milk
-a cucumber at the spa
-a hot dog in a sleeping bag
-a waffle used as a tennis racket
-a pretzel that came untied
-an onion making everyone cry
-a lonely brussels sprout
-a fruit bowl election
-a chocolate statue on a hot day
-a sushi conveyor belt race
-a cake with a hundred candles
-noodles escaping the pot
-a ketchup bottle that won't pour
-a peanut butter and jelly wedding
-a carrot with a tan
-a grumpy loaf of bread
+a jealous meatball | a meatball with a crush | a moody chocolate truffle | a potato nobody picked
+a pizza delivered by parachute | a pizza floating to the moon | a pancake that learned to skydive | a pie dropped from a helicopter
+soup that fights back | porridge with a bad temper | a stew that won't be stirred | a spoon losing a boxing match
+a banana in disguise | a pickle working undercover | a banana on the run | a moon with a moustache
+broccoli on vacation | cauliflower at the beach | broccoli missing its flight | a tree at the beach
+a sandwich taller than a house | a pancake stack reaching the clouds | a burger towering over the town | a house made of bread and cheese
+a spaghetti waterfall | a river of hot chocolate | a noodle rainstorm | a pasta water slide
+a wobbly tower of jelly | a shaky stack of pancakes | a sponge tower in an earthquake | a skyscraper made of pudding
+a donut that wants to be a bagel | a cookie that wants to be a pizza | a donut staring into a mirror | a pancake jealous of a waffle
+an egg on its way to the frying pan | a potato on its way to the fryer | an egg running late for breakfast | an egg relaxing in a hot tub
+a cheese that is mostly holes | a moon covered in craters | a cracker with too many holes | a mouse's dream apartment
+a burger falling apart | a burger doing a backflip | a sandwich losing its pickles | a lunch that got knocked over
+a melon wearing a helmet | a coconut ready for battle | a watermelon playing football | a pumpkin on a motorbike
+a lemon pulling a sour face | a grapefruit having a bad day | a lemon tasting itself | an orange with a toothache
+a nervous bag of popcorn | a shy bag of marshmallows | popcorn waiting for the microwave | a sweaty bag of crisps
+a dinner party for vegetables | a birthday party for potatoes | a vegetable patch book club | a family dinner in the garden
+a salad that ran away | a tomato escaping the kitchen | lettuce that grew legs | a salad going for a jog
+a muffin hiding a vegetable | a cupcake keeping a secret | a cupcake with a broccoli candle | a muffin growing a tail
+a pepper too hot to handle | a chili with a fever | a pepper breathing fire | a dragon's favourite snack
+cereal swimming in milk | lifebuoys floating in a bathtub | marshmallows in hot chocolate | a breakfast pool party
+a cucumber at the spa | a pickle in a bubble bath | an avocado getting a facial | a cucumber taking a nap
+a hot dog in a sleeping bag | a sausage tucked into bed | a caterpillar in a cocoon | a burrito wearing pajamas
+a waffle used as a tennis racket | a pancake used as a frisbee | a waffle playing ping pong | a cracker used as a fly swatter
+a pretzel that came untied | a pretzel tying its shoelaces | a croissant losing its curl | a noodle tied in a bow
+an onion making everyone cry | an onion at a sad movie | a garlic clove clearing the room | an onion that hates goodbyes
+a lonely brussels sprout | a forgotten pea on a plate | the last olive in the jar | a cabbage with no friends
+a fruit bowl election | a fruit bowl talent show | a vegetable beauty contest | apples holding a meeting
+a chocolate statue on a hot day | a snowman on a summer holiday | a chocolate bunny losing its ears | a butter sculpture in the oven
+a sushi conveyor belt race | a sushi roll on a treadmill | a dumpling marathon | rice balls on a roller coaster
+a cake with a hundred candles | a birthday cake on fire | a cake for a very old turtle | a cake with too many sparklers
+noodles escaping the pot | worms escaping a bucket | noodles taking a hot bath | a pot of pasta boiling over
+a ketchup bottle that won't pour | a mustard bottle with stage fright | a ketchup bottle holding its breath | a honey jar that is too slow
+a peanut butter and jelly wedding | a bread and butter anniversary | a salt and pepper wedding | milk and cookies on a first date
+a carrot with a tan | a sunburnt sweet potato | a carrot at the beach | a parsnip back from holiday
+a grumpy loaf of bread | a toaster in a bad mood | a croissant with a frown | a pillow that woke up early
 
 [place]
-a hotel for retired superheroes
-a hospital for broken umbrellas
-a school for baby dragons
-a supermarket under the sea
-a ballroom full of bubbles
-a museum of very boring things
-a restaurant run by cats
-a castle made of cheese
-a playground for grandparents
-a gym for lazy people
-a treehouse with an elevator
-a petrol station for horses
-an igloo in the desert
-a zoo where the animals visit people
-a parking lot for flying carpets
-an airport for birds
-a barber shop for sheep
-a post office run by snails
-a spa for tired robots
-a cinema for bats
-a bakery on a cloud
-a kindergarten for monsters
-the lost and found of the universe
-a skyscraper made of pillows
-a vending machine on a mountain top
-a taxi rank in the jungle
-a ski resort on a volcano
-a garden on the roof of a bus
-a bed and breakfast for bees
-an office in a hot air balloon
-a library on a train
-a hotel inside a cactus
-a bowling alley for penguins
+a hotel for retired superheroes | a nursing home for old wizards | a laundromat for superhero capes | a superhero bingo night
+a hospital for broken umbrellas | a hospital for wilted flowers | a laundromat for soggy umbrellas | umbrellas lining up for a check up
+a school for baby dragons | a nursery for baby dinosaurs | a classroom for little lizards | dragons hatching at the zoo
+a supermarket under the sea | a shopping mall for mermaids | a fish market inside a bubble | an octopus doing the weekly shopping
+a ballroom full of bubbles | a dance hall full of balloons | a disco under the ocean | a bubble bath for ballerinas
+a museum of very boring things | a gallery of ordinary spoons | an exhibition of grey pebbles | a museum of forgotten paperclips
+a restaurant run by cats | a cafe run by raccoons | a fish shop owned by cats | a kitchen full of hungry kittens
+a castle made of cheese | a palace made of sponge cake | a palace for royal mice | a sandcastle made of butter
+a playground for grandparents | a retirement home with swings | an old folks' sports day | grandpa's first day at school
+a gym for lazy people | a gym for sleepy sloths | a treadmill with a sofa | a fitness class on the couch
+a treehouse with an elevator | a lighthouse with a slide | a birdhouse with a staircase | a tree with a lift for squirrels
+a petrol station for horses | a car wash for camels | a parking garage for horses | a hay drive through for ponies
+an igloo in the desert | a snowman on the beach | a tent at the north pole | a melting igloo in summer
+a zoo where the animals visit people | an aquarium where the fish watch you | a safari where the lions drive the jeep | giraffes feeding the visitors
+a parking lot for flying carpets | a car wash for magic carpets | a runway for flying brooms | a traffic jam of flying rugs
+an airport for birds | a train station for ducks | a bus stop for pigeons | a control tower for seagulls
+a barber shop for sheep | a hair salon for poodles | a wool factory for lambs | a spa day for fluffy clouds
+a post office run by snails | a bank run by tortoises | a courier service for turtles | a snail waiting for a letter
+a spa for tired robots | a car wash for old robots | a sauna for sleepy toasters | a robot taking a bubble bath
+a cinema for bats | a theatre for owls | a disco in a dark cave | a movie night for spiders
+a bakery on a cloud | a cafe on the moon | a sheep farm in the sky | a cotton candy factory
+a kindergarten for monsters | a daycare for little aliens | a classroom of tiny trolls | a playdate under the bed
+the lost and found of the universe | the junk drawer of outer space | the attic of the solar system | a garage sale on the milky way
+a skyscraper made of pillows | a tower made of mattresses | a fort made of sofa cushions | a cloud city made of marshmallows
+a vending machine on a mountain top | a phone box on a mountain peak | a ticket machine at the summit | a lemonade stand on a cliff edge
+a taxi rank in the jungle | a bus stop in the rainforest | a traffic jam in the jungle | a car park for elephants
+a ski resort on a volcano | a ski lift on a pyramid | a sauna on a snowy mountain | a fire station on a ski slope
+a garden on the roof of a bus | a vegetable patch on a train | a farm on the back of a truck | a flower stall on wheels
+a bed and breakfast for bees | a holiday cottage for ants | a guest house for butterflies | a bee hosting a sleepover
+an office in a hot air balloon | a kitchen in a flying basket | a meeting on a floating island | a businessman floating over town
+a library on a train | a bookshop on a boat | a classroom on a bus | a cinema on a tram
+a hotel inside a cactus | a house inside a pineapple | an apartment in a cucumber | a bird nesting in a cactus
+a bowling alley for penguins | an ice rink for penguins | a curling match for walruses | penguins knocking over snowmen
 
 [gadget]
-a hat that waters your plants
-an umbrella for your sandwich
-a self driving wheelbarrow
-a backpack with legs
-a pillow with an alarm
-a robot that folds laundry badly
-a fork with a built in fan
-a toothbrush that sings while you brush
-a time machine made of cardboard
-a dial that changes the weather
-glasses for seeing tomorrow
-a bicycle for ten people
-a helmet with windshield wipers
-a ladder to the clouds
-shoes with springs
-a fridge with a burglar alarm
-an anti boredom machine
-a robot babysitter
-a pocket sized volcano
-a scale that tells jokes
-a cloud in a jar
-a hairdryer for cats
-an invisibility cloak with a hole
-a sandwich making catapult
-a mirror that compliments you
-a door to anywhere
-a hammock for two hippos
-a mood ring for your dog
-a pencil that does your homework
-a phone with a mile long cord
-a teapot with a periscope
-a mailbox that shoots confetti
-a hat with a built in umbrella
+a hat that waters your plants | a hat that grows its own salad | a shower cap with a garden | a hat that rains on your head
+an umbrella for your sandwich | a raincoat for your lunchbox | a tiny tent for your picnic | a sandwich hiding from the rain
+a self driving wheelbarrow | a self steering shopping cart | a wheelbarrow that runs away | a lawnmower with a mind of its own
+a backpack with legs | a suitcase that walks | a school bag running late | a turtle shell for hikers
+a pillow with an alarm | a pillow that snores for you | a bed that throws you out | a pillow that talks back
+a robot that folds laundry badly | a robot that irons pancakes | a robot that makes your bed wrong | a washing machine with arms
+a fork with a built in fan | a spoon with a propeller | a fan that blows on your pasta | a fork that spins spaghetti
+a toothbrush that sings while you brush | a hairbrush that hums your favorite song | a toothbrush that tells bedtime stories | a karaoke microphone for the bathroom
+a time machine made of cardboard | a spaceship built from a fridge box | a cardboard box that goes to mars | a robot costume made of boxes
+a dial that changes the weather | a remote control for the sun | a knob that turns up the summer | a thermostat for the whole sky
+glasses for seeing tomorrow | binoculars for seeing the past | goggles that see through walls | glasses that make everything pink
+a bicycle for ten people | a skateboard for a whole family | a tandem for the whole class | a scooter for a family of eight
+a helmet with windshield wipers | glasses with tiny windshield wipers | a helmet with a car horn | a motorbike helmet in the rain
+a ladder to the clouds | a staircase to the moon | a slide from the clouds | a rope ladder to the stars
+shoes with springs | boots with rockets | trampoline sneakers | socks that bounce
+a fridge with a burglar alarm | a cookie jar with a guard dog | a fridge that locks at midnight | a lunchbox with a security camera
+an anti boredom machine | a homework eating machine | an anti monday machine | a daydream making machine
+a robot babysitter | a robot grandma | a robot dog walker | a robot that tucks you in
+a pocket sized volcano | a volcano in a teacup | a pocket sized campfire | a lava lamp you can carry
+a scale that tells jokes | a scale that sings your weight | a scale that laughs at you | a bathroom scale that cries
+a cloud in a jar | a sheep in a pickle jar | a rainbow in a bottle | lightning in a jar
+a hairdryer for cats | a leaf blower for dogs | a blow dryer for wet chickens | a vacuum for cats
+an invisibility cloak with a hole | a magic carpet with a stain | a superhero cape with a rip | a ghost costume with a zipper
+a sandwich making catapult | a pancake flipping catapult | a cannon that fires breakfast | a slingshot for meatballs
+a mirror that compliments you | a mirror that shows you at ninety | a window that tells you secrets | a mirror that makes funny faces
+a door to anywhere | a window to yesterday | a door in the middle of nowhere | a door that leads to the sea
+a hammock for two hippos | a swing for three elephants | a bunk bed for two rhinos | a picnic blanket for walruses
+a mood ring for your dog | a fitness watch for your cat | a dog collar that translates | sunglasses for your goldfish
+a pencil that does your homework | a pen that writes your excuses | a pencil that draws by itself | a calculator that does your chores
+a phone with a mile long cord | a vacuum with a mile long hose | a kite with a mile long string | a telephone line across the ocean
+a teapot with a periscope | a submarine shaped like a teapot | a kettle that spies on guests | a teacup with a snorkel
+a mailbox that shoots confetti | a doorbell that throws glitter | a mailbox that eats your letters | a party popper for your post
+a hat with a built in umbrella | a lampshade worn as a hat | a hat with a built in birdbath | a helmet that keeps birds away
 
 [power]
-the power to talk to plants
-a superhero who only rescues kittens
-invisible but only on tuesdays
-the power to always find parking
-a superhero with a cape too long
-the power to turn things into pudding
-a speedster stuck in reverse
-flying an inch above the ground
-x ray vision that only sees sandwiches
-a hero who can find any lost key
-super strength for opening jars
-a sidekick who is a hamster
-a villain who steals only left shoes
-captain procrastination
-the power to sneeze glitter
-a superhero waiting for the bus
-a superhero who gets airsick
-freezing time to take a nap
-reading the minds of dogs
-the power to summon pigeons
-a cape drying on the washing line
-teleporting but always to the kitchen
-a yawn that knocks out a villain
-a team of superhero grandmothers
-laser eyes that only make toast
-a villain who hates birthdays
-an invisible superhero's photo shoot
-a third arm for carrying snacks
-a hero arriving on a scooter
-super hearing in a crowded cafeteria
-a cape made of curtains
-a superpower nobody notices
-an evil plan drawn in crayon
+the power to talk to plants | the power to make flowers sing | a gardener arguing with a cactus | the power to hear what trees think
+a superhero who only rescues kittens | a superhero allergic to cats | a villain who steals all the kittens | a firefighter saving a cat from a tree
+invisible but only on tuesdays | the power to skip every monday | invisible except for your socks | a ghost who forgot what day it is
+the power to always find parking | the power to make every light green | a superhero who can't parallel park | a car with its own superhero cape
+a superhero with a cape too long | a superhero in his dad's costume | a bride with a very long veil | a superhero tripping over his cape
+the power to turn things into pudding | the power to turn rocks into cake | a magic wand that only makes dessert | the power to make anything wobble
+a speedster stuck in reverse | a speedster who can't find the brakes | a runner going backwards in a race | a hero who only runs in circles
+flying an inch above the ground | levitating only while asleep | a superhero who is afraid of heights | walking on air but very slowly
+x ray vision that only sees sandwiches | x ray vision that only sees socks | a hero who can smell lunch boxes | seeing through walls into the fridge
+a hero who can find any lost key | a hero who can open any door | a magnet that attracts every key | the power to never lose your phone
+super strength for opening jars | super strength for squeezing lemons | a bodybuilder losing to a pickle jar | super strength for crushing walnuts
+a sidekick who is a hamster | a sidekick who is a potato | a hamster who wants to be a hero | a superhero's pet guinea pig
+a villain who steals only left shoes | a villain who steals only socks | a burglar with a shoe collection | a hero who lost his other boot
+captain procrastination | captain do it tomorrow | doctor five more minutes | the lazy hero of the sofa
+the power to sneeze glitter | the power to cough confetti | the power to burp bubbles | a hero allergic to fairy dust
+a superhero waiting for the bus | a superhero stuck in a traffic jam | a superhero who forgot how to fly | a superhero on his lunch break
+a superhero who gets airsick | a superhero who gets seasick | a hero who ate too much pizza | a superhero flying through a storm
+freezing time to take a nap | stopping time to finish homework | the power to sleep standing up | a hero who naps through the alarm
+reading the minds of dogs | reading the minds of cats | the power to bark back | a dog who can read your mind
+the power to summon pigeons | the power to summon ducks | a hero feeding birds in the park | the power to speak to seagulls
+a cape drying on the washing line | a kite stuck on a washing line | a flag flapping in the wind | a superhero hiding behind the sheets
+teleporting but always to the kitchen | sleepwalking straight to the fridge | a portal that only opens in the pantry | teleporting but always into a cupboard
+a yawn that knocks out a villain | a sneeze that blows away a villain | a villain bored to sleep by a hero | a lullaby that defeats a monster
+a team of superhero grandmothers | a knitting club fighting crime | grandma's secret superhero past | a superhero retirement home
+laser eyes that only make toast | laser eyes that only melt cheese | a toaster with superpowers | heat vision for warming up soup
+a villain who hates birthdays | a villain who steals birthday cake | a villain afraid of balloons | a monster blowing out the candles
+an invisible superhero's photo shoot | a ghost posing for a school photo | an invisible superhero's first selfie | a photographer with nothing to shoot
+a third arm for carrying snacks | a third arm for scratching your back | a robot arm that feeds you chips | the power to juggle sandwiches
+a hero arriving on a scooter | a hero arriving on a tricycle | a superhero late for the rescue | a villain escaping on roller skates
+super hearing in a crowded cafeteria | super hearing at a rock concert | a hero listening to every whisper | the power to hear what lunch thinks
+a cape made of curtains | a cape made of bath towels | a ghost made of bedsheets | a superhero wearing a tablecloth
+a superpower nobody notices | a superhero nobody remembers | a hero standing in the background | the power to blend into walls
+an evil plan drawn in crayon | a treasure map drawn by a toddler | a villain's plan on a napkin | a secret map to the cookie jar
 
 [then]
-a caveman with a selfie stick
-a pharaoh at the drive through
-a viking ordering a latte
-a knight stuck in traffic
-the first ever pizza delivery
-a dinosaur learning to type
-a caveman inventing a square wheel
-a roman chariot with a flat tire
-a medieval castle with wifi
-a pirate ship with a sat nav
-the mona lisa on her lunch break
-a cowboy on an electric scooter
-the first person to try a lemon
-the stone age olympics
-a woolly mammoth on a sunny beach
-a robot from the future at a museum
-a wizard with a laptop
-a doorbell on a castle drawbridge
-a samurai in a supermarket
-a dinosaur visiting its own skeleton
-a neanderthal at the barber
-an astronaut in the middle ages
-a gladiator in a bubble bath
-the invention of the sandwich
-a court jester in a business meeting
-a pyramid built of sugar cubes
-an ancient statue at the gym
-the wild west's first traffic light
-a robot in ancient rome
-cave paintings of a pizza
-a time traveler missing the bus
-a castle with a moat full of soup
+a caveman with a selfie stick | a caveman with a fishing rod | a caveman toasting a marshmallow | a man holding a stick up high
+a pharaoh at the drive through | a sphinx at the drive through | a pharaoh at the toll booth | a king waiting at a bank window
+a viking ordering a latte | a viking at a juice bar | a pirate ordering hot cocoa | a barbarian on a coffee date
+a knight stuck in traffic | a knight waiting for the bus | a jousting match at rush hour | a knight parking his horse
+the first ever pizza delivery | the first ever food truck | the first ever cooking show | a man carrying a giant cookie
+a dinosaur learning to type | a dinosaur writing its memoir | a t rex playing the piano | a lizard working in an office
+a caveman inventing a square wheel | a caveman inventing the dice | a caveman building a stone cart | the first ever broken wagon
+a roman chariot with a flat tire | a roman chariot at a car wash | a roman chariot with a parking ticket | a chariot race with a pit stop
+a medieval castle with wifi | a castle with a radio tower | a king searching for a signal | a fortress with solar panels
+a pirate ship with a sat nav | a viking ship with a radar | a pirate with a treasure app | a pirate lost without a map
+the mona lisa on her lunch break | a museum guard on his lunch break | the mona lisa ordering a pizza | a duchess having a picnic
+a cowboy on an electric scooter | a cowboy on a skateboard | a sheriff on a hoverboard | a cowboy racing a motorbike
+the first person to try a lemon | the first person to try a chili | a caveman tasting sour candy | a man pulling a funny face
+the stone age olympics | the stone age awards night | the dinosaur world cup | a caveman bowling with rocks
+a woolly mammoth on a sunny beach | a woolly mammoth in the desert | a yeti at a pool party | a hairy elephant at a picnic
+a robot from the future at a museum | a robot from the future at a zoo | a robot tourist at an antique shop | an alien visiting a history class
+a wizard with a laptop | a wizard with a calculator | a witch checking her email | a magician fixing a computer
+a doorbell on a castle drawbridge | a welcome mat at a castle gate | a letterbox on a castle gate | a castle with a garage door
+a samurai in a supermarket | a samurai in a toy shop | a ninja in a shopping mall | a warrior slicing vegetables
+a dinosaur visiting its own skeleton | a dinosaur visiting its grandma | a dog staring at a giant bone | a lizard scared of a skeleton
+a neanderthal at the barber | a neanderthal at the dentist | a caveman shearing a sheep | a yeti at the hair salon
+an astronaut in the middle ages | an astronaut at a royal banquet | a knight walking on the moon | a diver lost in a castle
+a gladiator in a bubble bath | a gladiator in a cooking pot | a knight in a hot tub | a soldier washing his helmet
+the invention of the sandwich | the invention of the hot dog | the first ever packed lunch | a chef building a burger tower
+a court jester in a business meeting | a court jester at a job interview | a clown at a family dinner | a court jester on a jury
+a pyramid built of sugar cubes | a pyramid built of dominoes | a pharaoh's tomb made of cake | a tower of ice cubes melting
+an ancient statue at the gym | an ancient statue at the beach | a greek god carrying the shopping | an ancient statue at the bus stop
+the wild west's first traffic light | the wild west's first parking meter | a cowboy waiting at a crosswalk | a saloon with a stop sign
+a robot in ancient rome | a robot at a toga party | a toaster wearing a toga | a knight made of tin cans
+cave paintings of a pizza | cave paintings of a burger | a caveman drawing a sunflower | ancient carvings of a clock
+a time traveler missing the bus | a time traveler late for school | a man running after a train | a wizard missing his portal
+a castle with a moat full of soup | a castle in a giant cereal bowl | a fortress surrounded by gravy | a king's swimming pool of custard
 
 [scene]
-grandpa's first video call
-a family photo ruined by a seagull
-a toddler running a meeting
-a school photo where everyone blinked
-a wedding cake disaster
-a camping trip in the rain
-a shopping cart that only turns left
-a picnic during a hailstorm
-a road trip with a goat in the back seat
-a dog at a fancy restaurant
-the first driving lesson
-a fire drill in pajamas
-moving day with a grand piano
-building furniture without instructions
-a haircut done by a toddler
-a printer eating important papers
-a sleepover where nobody sleeps
-a cat walking across a laptop
-sheep blocking a country road
-dad dancing at the school disco
-a squirrel photobombing a wedding
-grandma winning at video games
-pushing a broken bike up a hill
-a power cut at the birthday party
-a lost tourist with a huge map
-a baby's first steps
-a gang of seagulls at the beach
-the queue at the only open checkout
-a grocery bag that breaks at the door
-a selfie with a very angry goose
-an escalator going the wrong way
-a tent collapsing at night
+grandpa's first video call | grandpa's first online quiz | a family call on a frozen screen | an old man shouting at the telly
+a family photo ruined by a seagull | a class photo ruined by a pigeon | a beach portrait stolen by a crow | a seagull stealing the family's chips
+a toddler running a meeting | a puppy chairing a board meeting | a toddler giving a school speech | a toddler teaching an art class
+a school photo where everyone blinked | a team photo where nobody smiled | a class photo taken during a sneeze | a choir falling asleep on stage
+a wedding cake disaster | a birthday cake avalanche | the cake that slid off the table | a leaning tower of pancakes
+a camping trip in the rain | a fishing trip in a thunderstorm | a family hike through the fog | a soggy scout campfire
+a shopping cart that only turns left | a lawnmower that only goes in circles | a supermarket trolley race | a pram with one wobbly wheel
+a picnic during a hailstorm | a barbecue during a downpour | a beach day in a snowstorm | ants carrying off the sandwiches
+a road trip with a goat in the back seat | a school run with a sheep in the boot | a taxi ride with a llama as passenger | a farmer driving his goats to market
+a dog at a fancy restaurant | a bear at a posh tea party | a dog ordering at a burger stand | a waiter serving a hungry wolf
+the first driving lesson | a nervous parallel parking test | grandma learning to ride a scooter | the first day on a tractor
+a fire drill in pajamas | a midnight alarm at the hotel | a pillow fight in the hallway | a school assembly in onesies
+moving day with a grand piano | moving a fridge up the stairs | delivering a sofa through a window | a piano stuck in a doorway
+building furniture without instructions | assembling a bike without a manual | fixing the sink with no tools | a bookshelf with spare screws left over
+a haircut done by a toddler | a beard trim done by a puppy | a toddler's first trip to the barber | a makeover done by a little sister
+a printer eating important papers | a shredder eating the tax forms | a photocopier jammed on exam day | the dog eating the homework
+a sleepover where nobody sleeps | a midnight feast under the duvet | a slumber party with a ghost story | a nightlight party for teddy bears
+a cat walking across a laptop | a cat sleeping on the keyboard | a dog chewing the tv remote | a cat knocking over the coffee mug
+sheep blocking a country road | cows crossing a busy motorway | ducks waddling across the high street | a traffic jam on a farm track
+dad dancing at the school disco | mum singing at the school concert | grandpa breakdancing at a wedding | a teacher stuck in the limbo line
+a squirrel photobombing a wedding | a pigeon stealing the bride's bouquet | a fox crashing a garden party | a duck photobombing a graduation
+grandma winning at video games | grandpa winning at a dance game | grandma beating everyone at chess | grandma winning at table tennis
+pushing a broken bike up a hill | carrying a canoe up a mountain | pulling a wagon through the mud | a flat tyre on the way to school
+a power cut at the birthday party | a blackout during the school play | candles going out at a dinner party | a surprise party in the dark
+a lost tourist with a huge map | a hiker lost with a broken compass | a tourist taking photos of a pigeon | a sightseeing bus that took a wrong turn
+a baby's first steps | a toddler's first bike ride | a puppy's first swim | a baby's first time on ice skates
+a gang of seagulls at the beach | a flock of pigeons in the park | crabs stealing a beach towel | a gang of geese at the boating lake
+the queue at the only open checkout | the line for the only working toilet | a traffic jam at the only open bridge | a crowd waiting for the last bus
+a grocery bag that breaks at the door | an umbrella that flips in the wind | oranges rolling down the stairs | a lunchbox that bursts open on the bus
+a selfie with a very angry goose | a picnic with a very hungry swan | a goose chasing the postman | a holiday photo with a grumpy llama
+an escalator going the wrong way | a lift stuck between two floors | a treadmill set to top speed | a revolving door that never stops
+a tent collapsing at night | a hammock snapping at midnight | a deckchair folding up on grandpa | a bouncy castle losing its air

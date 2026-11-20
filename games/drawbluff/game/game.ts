@@ -173,6 +173,8 @@ interface Entry {
   prompt: string;
   /** The prompt's structure. */
   tag: string;
+  /** The prompt's decoys (`data/prompts.txt`). */
+  decoys: readonly string[];
   drawing: Drawing;
 }
 
@@ -687,7 +689,10 @@ export class Drawbluff extends Emitter<GameEvents> {
       },
     });
     this.#ink = undefined;
-    return [...got].map(([artist, drawing]) => ({ artist, prompt: prompts.get(artist)!.text, tag: prompts.get(artist)!.tag, drawing }));
+    return [...got].map(([artist, drawing]) => {
+      const { text, tag, decoys } = prompts.get(artist)!;
+      return { artist, prompt: text, tag, decoys: decoys ?? [], drawing };
+    });
   }
 
   /** The round's spotlights (and the gallery of the other drawings). */
@@ -886,12 +891,13 @@ export class Drawbluff extends Emitter<GameEvents> {
     const options = buildOptions(
       spot.prompt,
       new Map([...(await lies.done)].map(([p, t]) => [p.id, t])),
-      decoyOrder(shuffle(this.#deck.left.filter((t) => titleKey(t.text, lang) !== truthKey), this.#rng), spot.tag).map((t) => t.text),
+      // The prompt's own decoys, then (a file without them) undealt prompts.
+      [...shuffle(spot.decoys, this.#rng), ...decoyOrder(shuffle(this.#deck.left.filter((t) => titleKey(t.text, lang) !== truthKey), this.#rng), spot.tag).map((t) => t.text)],
       this.#rng,
       Math.min(4, lies.liars.length + 1),
       lang,
     );
-    // A decoy shown is not dealt as a prompt later.
+    // A prompt shown as a decoy is not dealt later.
     this.#deck.discard(options.filter((o) => o.decoy).map((o) => o.text));
     // With `open`, newcomers vote from here (never in a vote that runs).
     if (party.lateJoin === "open") this.#dealIn(true);

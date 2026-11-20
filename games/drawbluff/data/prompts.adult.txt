@@ -1,8 +1,8 @@
 # drawbluff's adult themed prompts in English, dealt instead of
 # data/prompts.txt in rooms that turned "adult" on, fetched by the host
 # page (data/prompts.adult.de.txt: German). Same format and rules as
-# data/prompts.txt: `[tag]` starts a structure, one prompt per line,
-# each in its display form and at most 40 characters, drawable, our
+# data/prompts.txt: `[tag]` starts a structure, one prompt per line
+# with its three decoys after ` | `, each in its display form and at most 40 characters, drawable, our
 # own, no two alike and none like a family prompt (test/prompts.test.ts
 # checks it; `node scripts/prompts.ts --file data/prompts.adult.txt
 # --near` lists near duplicates).
@@ -23,312 +23,312 @@
 #   moment    the moment it goes wrong: the moment the towel drops
 
 [double]
-a nice pair of melons
-polishing the family jewels
-a mailman with a huge package
-stuffing the turkey
-a very well hung painting
-big knockers on the front door
-a sausage party
-hiding the salami
-nice buns at the bakery
-a disappointing baguette
-a very moist sponge cake
-the neighbours banging all night
-a lumberjack with massive wood
-the proudest cock on the farm
-going down under
-a man proud of his organ
-screwed at the hardware store
-a sailor with an enormous mast
-searching for the g spot with a map
-a massage with a happy ending
-a handyman who nails everything
-whipped cream in the bedroom
-beating around the bush
-a fireman sliding down the pole
-a ballerina doing the splits
-a pair of jugs on the shelf
-a plumber checking the pipes
-a big bulge in the christmas stocking
-a tight squeeze in the elevator
-a magician with a long wand
+a nice pair of melons | a lovely pair of coconuts | the farmer showing off his fruit | two bowling balls
+polishing the family jewels | buffing the family silver | a butler polishing his knobs | grandma counting her diamonds
+a mailman with a huge package | a milkman with a huge crate | a postman stuck in the door | special delivery for the lady
+stuffing the turkey | basting the big bird | a chef with a hand inside | plucking the old goose
+a very well hung painting | a framed nude in the hallway | an artist with a big brush | a crooked picture on the wall
+big knockers on the front door | a pair of knobs on the cupboard | two lions guarding the mansion | a doorbell begging to be rung
+a sausage party | a hot dog eating contest | a dachshund family reunion | a meat raffle at the pub
+hiding the salami | hiding the cucumber | a thief in the deli | burying the bone
+nice buns at the bakery | hot rolls fresh from the oven | a baker with great tarts | juicy peaches at the market
+a disappointing baguette | a bread roll that went soft | the shortest loaf in paris | a cucumber that let her down
+a very moist sponge cake | a cake left out in the rain | a soggy bottom at the fair | a sponge in the kitchen sink
+the neighbours banging all night | a headboard knocking on the wall | the couple upstairs renovating | a drummer living next door
+a lumberjack with massive wood | a carpenter with a huge plank | a beaver proud of his log | a woodsman with a big axe
+the proudest cock on the farm | the loudest hen in the coop | a rooster waking the whole village | the turkey before thanksgiving
+going down under | lost in the outback | a deep dive at the reef | upside down in australia
+a man proud of his organ | a pianist with big hands | a vicar who loves to play | a busker proud of his tuba
+screwed at the hardware store | nailed at the lumber yard | ripped off at the garage | a man buying too many bolts
+a sailor with an enormous mast | a pirate with a big plank | a sailor showing off his rigging | a captain with a long telescope
+searching for the g spot with a map | a husband lost without directions | digging for buried treasure | a man who refuses to ask for help
+a massage with a happy ending | a spa day with a twist ending | a back rub that went too far | a facial with a surprise finish
+a handyman who nails everything | a builder who drills every wall | a roofer who never misses a spot | a man fixing the whole street
+whipped cream in the bedroom | chocolate sauce on the pillow | breakfast in bed gone wrong | dessert served under the sheets
+beating around the bush | pruning the shrubbery | a man lost in the bushes | a gardener whacking weeds
+a fireman sliding down the pole | a stripper on the night shift | a fireman with a big hose | a kid on the playground slide
+a ballerina doing the splits | a yoga teacher showing off | a cheerleader stuck halfway down | a dancer who can't get back up
+a pair of jugs on the shelf | two big vases in the window | a matching set of teapots | grandma's trophies on display
+a plumber checking the pipes | a plumber laying some pipe | a mechanic under the hood | a doctor checking the plumbing
+a big bulge in the christmas stocking | a lump of coal for the naughty | santa stuck in the chimney | a huge surprise under the tree
+a tight squeeze in the elevator | a sticky situation on the subway | a close encounter on the bus | stuck in the lift with the boss
+a magician with a long wand | a wizard with a big staff | a conductor with a long baton | a fairy with a magic stick
 
 [idiom]
-sowing your wild oats
-a booty call
-a friend with benefits
-a roll in the hay
-caught with your pants down
-the birds and the bees
-playing the field
-sleeping your way to the top
-a cougar on the prowl
-a sugar daddy
-the seven year itch
-a bun in the oven
-a one night stand
-tying the knot
-a shotgun wedding
-the old ball and chain
-going commando
-hot and bothered
-feeling frisky
-the elephant in the bedroom
-wearing the trousers
-the honeymoon is over
-playing hard to get
-a hot mess
-getting hammered
-the walk of shame
-a third wheel
-getting lucky
-bringing someone home to meet mother
+sowing your wild oats | spreading yourself thin | feeding the chickens | a farmer looking for love
+a booty call | a butt dial | a bum steer | a prank call at midnight
+a friend with benefits | a partner in crime | a shoulder to cry on | a friend in need
+a roll in the hay | a needle in a haystack | a farmer's daughter | a tumble down the hill
+caught with your pants down | caught with your hand in the cookie jar | airing your dirty laundry | losing your shirt
+the birds and the bees | a little bird told me | a bird in the hand | the bee's knees
+playing the field | playing the long game | a whole new ball game | a team player
+sleeping your way to the top | climbing the corporate ladder | sleeping on the job | making your bed and lying in it
+a cougar on the prowl | a fox in the henhouse | a cat on a hot tin roof | a wolf in sheep's clothing
+a sugar daddy | a sweet tooth | a gold digger | an old flame
+the seven year itch | an itch you can't scratch | ants in your pants | scratching the surface
+a bun in the oven | buns of steel | a baker's dozen | your goose is cooked
+a one night stand | a night on the town | a stand up guy | a midnight snack
+tying the knot | learning the ropes | tying one on | a knot in your stomach
+a shotgun wedding | jumping the gun | calling shotgun | a wedding crasher
+the old ball and chain | a prisoner of love | chained to your desk | life without parole
+going commando | going undercover | going rogue | a private inspection
+hot and bothered | hot under the collar | sweating bullets | all fired up
+feeling frisky | feeling peckish | feeling the heat | frisked at the airport
+the elephant in the bedroom | a bull in a china shop | the monster under the bed | an elephant never forgets
+wearing the trousers | too big for your boots | filling his shoes | wearing your heart on your sleeve
+the honeymoon is over | the party is over | once in a blue moon | a holiday romance
+playing hard to get | playing hide and seek | playing with fire | the one that got away
+a hot mess | a hot potato | a sticky situation | a kitchen fire
+getting hammered | getting nailed | going under the hammer | a hangover headache
+the walk of shame | the long way home | the road to ruin | the last train home
+a third wheel | two's company | a spare tire | a back seat driver
+getting lucky | hitting the jackpot | beginner's luck | striking it rich
+bringing someone home to meet mother | guess who's coming to dinner | look what the cat dragged in | a family dinner gone wrong
 
 [dating]
-a first date at the dentist
-swiping left on a werewolf
-a dating profile photo holding a fish
-catfished by an actual catfish
-a blind date with a ghost
-splitting the bill to the penny
-speed dating with zombies
-a vampire's lonely hearts ad
-a date who brought his mother along
-two kissers with braces stuck together
-a love bite shaped like a country
-an awkward goodnight kiss
-spinach in your teeth at dinner
-a hookup in a tent in the rain
-running into your ex at the restaurant
-a romantic candlelit meal for one
-serenading the wrong window
-a pickup line that actually worked
-an online match who is a llama
-escaping through the bathroom window
-a hickey under a turtleneck
-being friend zoned by a robot
-a sext sent to grandma
-a dating app for pirates
-a crush who owns forty cats
-a mermaid's awkward smooch
-a hookup at the wrong address
-the all you can eat buffet date
-a toad looking for love online
+a first date at the dentist | a first date at the barber | proposing during a root canal | a date who won't stop yawning
+swiping left on a werewolf | swiping right on a sheepdog | a match who only howls at night | a selfie filter gone too far
+a dating profile photo holding a fish | a passport photo holding a fish | a first date on a fishing boat | a selfie with the one that got away
+catfished by an actual catfish | hooked by a dating app lure | matched with a lonely goldfish | a dinner date at the aquarium
+a blind date with a ghost | a first date at a toga party | a date who keeps disappearing | dinner with an invisible man
+splitting the bill to the penny | a date who brought a calculator | paying for dinner in coins | a prenup signed over dessert
+speed dating with zombies | speed dating on a monday morning | a singles mixer at the morgue | a date who just wants your brain
+a vampire's lonely hearts ad | a bat's lonely hearts ad | a goth's dating profile | a love letter written in blood
+a date who brought his mother along | a date who brought his ex along | meeting the parents too early | a dinner date with a chaperone
+two kissers with braces stuck together | two kissers with lip rings tangled | a kiss that set off the metal detector | a first kiss with a retainer in
+a love bite shaped like a country | a birthmark shaped like a heart | a rash shaped like your ex's face | a tattoo of a map gone wrong
+an awkward goodnight kiss | an awkward goodbye handshake | a kiss that missed the lips | leaning in for a high five
+spinach in your teeth at dinner | lipstick on your teeth at dinner | a first date with a missing tooth | a date who chews with his mouth open
+a hookup in a tent in the rain | a camping trip with your ex | a romantic picnic in a storm | a pillow fort during a thunderstorm
+running into your ex at the restaurant | running into your boss at the bar | your ex serving you at the restaurant | hiding behind the menu on a date
+a romantic candlelit meal for one | a romantic candlelit meal with a cat | being stood up on valentine's day | a power cut at a dinner party
+serenading the wrong window | serenading the neighbour's dog | a breakup song outside her house | a guitar solo under the moon
+a pickup line that actually worked | a pickup line that got a slap | a compliment taken the wrong way | a wink that looked like a twitch
+an online match who is a llama | an online match who is a camel | a date who spits when he talks | a blind date at the petting zoo
+escaping through the bathroom window | breaking into your own house | sneaking out before breakfast | stuck halfway out of a window
+a hickey under a turtleneck | a tattoo under a turtleneck | a scarf in the middle of summer | a neck brace on a first date
+being friend zoned by a robot | being dumped by a vending machine | a robot proposing to a toaster | falling for your smart speaker
+a sext sent to grandma | a selfie sent to the boss | a love text read out loud | grandma reading your diary
+a dating app for pirates | a dating app for parrots | a treasure map to her heart | a cruise for lonely singles
+a crush who owns forty cats | a crush who is allergic to cats | a date with a dog walker | a first date at the cat cafe
+a mermaid's awkward smooch | a fisherman's lucky catch | a sailor's first kiss | kissing a fish at the market
+a hookup at the wrong address | a surprise party at the wrong house | a date at the wrong restaurant | climbing into the wrong bed
+the all you can eat buffet date | the pie eating contest date | a date who orders everything | a first date at a food court
+a toad looking for love online | the pond's most eligible bachelor | a lizard posting a thirst trap | a prince stuck in a swamp
 
 [booze]
-the morning after tequila
-a wine mom at soccer practice
-karaoke after six beers
-drunk texting an ex
-a hangover with a marching band
-the hair of the dog
-beer goggles
-a kebab at four in the morning
-doing shots with a pirate
-a beer belly with a face
-a bartender who's seen everything
-a pub crawl with actual crawling
-asleep in the bathtub fully dressed
-the bottomless brunch
-a wine tasting where nobody spits
-a keg stand at a retirement home
-a toast that goes on too long
-a tipsy uncle at the wedding
-sunglasses indoors at breakfast
-a cocktail with too many umbrellas
-the vow to never drink again
-a bar fight between two grannies
-waking up next to a traffic cone
-last orders at closing time
-a drunk pigeon
-a champagne cork to the eye
-vodka in a water bottle
-dancing on the bar
-a hangover cure made of pickles
+the morning after tequila | the morning after a wedding | food poisoning from tacos | a cactus with a headache
+a wine mom at soccer practice | a coffee mom at ballet class | a nervous dad at a swim meet | a referee having a bad day
+karaoke after six beers | an opera singer with hiccups | a talent show gone wrong | a power ballad after two divorces
+drunk texting an ex | sleep texting your boss | a love poem to the pizza guy | doomscrolling in bed
+a hangover with a marching band | a migraine at a rock concert | a headache from the neighbours | a parade on a sunday morning
+the hair of the dog | the dog's breakfast | raining cats and dogs | a dog with a toupee
+beer goggles | rose tinted glasses | swimming goggles | night vision
+a kebab at four in the morning | a burrito at the bus stop | a midnight snack in the fridge | a hot dog at a stag night
+doing shots with a pirate | a flu jab from a pirate | rum tasting on a sinking ship | arm wrestling a sailor
+a beer belly with a face | a pot belly with a tattoo | a belly dancer's warm up | a bald head with a beard
+a bartender who's seen everything | a therapist who's heard everything | a cab driver who knows your secrets | a waiter who hates his job
+a pub crawl with actual crawling | a bar hop with actual hopping | a toddler at a wine bar | a baby race on a dance floor
+asleep in the bathtub fully dressed | showering with your shoes on | a business meeting in the jacuzzi | hiding from guests in the bath
+the bottomless brunch | the breakfast of champions | pancakes without trousers | the birthday breakfast in bed
+a wine tasting where nobody spits | a cheese tasting where nobody chews | a book club where nobody reads | a dinner party gone off the rails
+a keg stand at a retirement home | a limbo contest at a nursing home | a rave at the bingo hall | grandpa doing a headstand
+a toast that goes on too long | a eulogy that gets too honest | a best man forgetting his speech | a speech nobody asked for
+a tipsy uncle at the wedding | a crying aunt at the funeral | the father of the bride dancing | a cousin crashing the reception
+sunglasses indoors at breakfast | a vampire avoiding the sunrise | a celebrity hiding at a diner | a poker face over pancakes
+a cocktail with too many umbrellas | a cake with too many candles | a hat with too many feathers | a beach bar in a rainstorm
+the vow to never drink again | the promise to start the diet | praying to the porcelain god | a new year's resolution
+a bar fight between two grannies | a pillow fight between two nuns | a handbag duel at the bingo hall | a tug of war at the bake sale
+waking up next to a traffic cone | a wizard hat on a drunk student | a party hat on a sleeping guest | cuddling a lamp post at dawn
+last orders at closing time | the last bus after midnight | the final call at the airport | kicking out the last customer
+a drunk pigeon | a dizzy seagull | a sleepy owl | a pigeon on a diet
+a champagne cork to the eye | a golf ball to the face | a bottle rocket on new year | a pirate losing an eye
+vodka in a water bottle | gin in a perfume bottle | a message in a bottle | smuggling snacks into a movie
+dancing on the bar | a cancan on the countertop | a stage dive at a wedding | a pole dance on the subway
+a hangover cure made of pickles | a face mask made of cucumbers | a love potion made of garlic | a smoothie nobody should drink
 
 [body]
-a fart in yoga class
-a plumber's crack
-the wedgie that won't quit
-sweaty armpits at a job interview
-a nose hair that keeps growing
-the toilet with no paper
-an open zipper at the funeral
-a burp during the wedding vows
-a back hair forest
-a comb over in the wind
-a sneeze fart
-the scale after christmas
-a bikini wax with duct tape
-a sports bra emergency
-a giant pimple before the prom
-a camel toe at the gym
-a muffin top
-a belly button lint collection
-a toenail that could kill
-a smelly foot in the cinema
-morning breath that kills plants
-a wardrobe malfunction on stage
-a doctor with very cold hands
-shapewear that won't come off
-loo roll trailing from your shoe
-the gas after bean soup
-a man boob workout
-a hairy mole with a name
-a rash in an awkward place
+a fart in yoga class | ripped leggings in pilates | a hiccup during meditation | a stretch that went too far
+a plumber's crack | a mechanic's moon | a builder's tan | a plumber stuck under the sink
+the wedgie that won't quit | the itch that won't go away | the trousers that won't stay up | the swimsuit that shrank
+sweaty armpits at a job interview | a shaky handshake at a job interview | sweat patches on a first date | a nervous wreck before a speech
+a nose hair that keeps growing | an ear hair that won't stop | a bogey that won't let go | a moustache gone very wrong
+the toilet with no paper | the stall with no lock | the bathroom with no signal | the sink with no soap
+an open zipper at the funeral | a ringing phone at the funeral | a giggle fit at a memorial | fly down at the board meeting
+a burp during the wedding vows | a hiccup during the first kiss | a yawn during the wedding speech | the groom forgetting the ring
+a back hair forest | a chest hair jungle | a bigfoot at the pool | a very fluffy sweater
+a comb over in the wind | a toupee in a hurricane | a bad hair day at sea | a bald man in a storm
+a sneeze fart | a laugh snort | a double sneeze | a hiccup burp
+the scale after christmas | the jeans after thanksgiving | the belt after the buffet | the luggage scale at the airport
+a bikini wax with duct tape | a chest wax with a lint roller | removing a plaster too fast | a haircut with garden shears
+a sports bra emergency | a swimsuit strap emergency | a pushup bra mishap | running without support
+a giant pimple before the prom | a cold sore before the wedding | a black eye on picture day | a bee sting before the prom
+a camel toe at the gym | a split seam at the gym | sweaty leggings on the treadmill | a wet patch on the spin bike
+a muffin top | a souffle that rose | an overfilled cupcake | tight jeans
+a belly button lint collection | an earwax candle collection | a toenail clipping collection | a hairball in the shower drain
+a toenail that could kill | a fingernail like a dagger | a bunion that could talk | a foot fungus with ambition
+a smelly foot in the cinema | a loud snorer in the cinema | bare feet on the airplane | a stinky sock on the bus
+morning breath that kills plants | garlic breath that wilts roses | a snore that shakes the walls | onion breath on a first date
+a wardrobe malfunction on stage | ripped trousers at the recital | a wig falling off mid song | a costume change gone wrong
+a doctor with very cold hands | a dentist with very shaky hands | a masseur with sweaty palms | a nurse who forgot the gloves
+shapewear that won't come off | a wetsuit that won't come off | skinny jeans stuck at the knees | a corset after a big dinner
+loo roll trailing from your shoe | a skirt tucked into your tights | a price tag hanging off your dress | a party streamer stuck to your shoe
+the gas after bean soup | the hiccups after fizzy pop | the bloat after a curry | the sweats after hot chilli
+a man boob workout | a beer belly workout | a chest day gone wrong | lifting weights in a bra
+a hairy mole with a name | a wart that has a face | a freckle with a fan club | a lucky birthmark on your chin
+a rash in an awkward place | a tattoo in an awkward place | a bruise in the shape of a hand | a mosquito bite on your bum
 
 [couple]
-meeting the in laws
-arguing at the furniture store
-who left the toilet seat up
-the blanket hog
-matching tattoos of each other's faces
-couples therapy for robots
-grandma finds the toy drawer
-spooning gone wrong
-the snoring husband
-a bubble bath for two that overflows
-a stadium proposal that fails
-the anniversary he forgot
-saying the wrong name in bed
-the honeymoon suite with bunk beds
-a wedding night with food poisoning
-the passive aggressive sticky note
-whose turn it is to do the dishes
-couples yoga in a tiny flat
-a romantic massage with a cramp
-lingerie under a winter coat
-the couple who dresses alike
-a breakup by text message
-splitting the record collection
-the open marriage of two snails
-his socks everywhere
-a pillow wall in the middle of the bed
-the honey do list
-a selfie that never ends
-the mother in law moving in
+meeting the in laws | the awkward double date | the new neighbours drop by | a family reunion photo
+arguing at the furniture store | arguing at the car dealership | testing the mattress together | a showroom sofa standoff
+who left the toilet seat up | who used the last of the toilet paper | who forgot to flush | a midnight fall into the toilet
+the blanket hog | the pillow thief | the burrito boyfriend | a cold night in a tent
+matching tattoos of each other's faces | covering up an ex's name tattoo | painting each other's portraits naked | painting each other's faces at the fair
+couples therapy for robots | a dating app for robots | a robot divorce lawyer | marriage counselling for toasters
+grandma finds the toy drawer | grandpa finds the secret stash | the dog brings out the handcuffs | a garage sale gone too far
+spooning gone wrong | a piggyback ride gone wrong | cuddling a cactus | falling out of the hammock
+the snoring husband | the sleepwalking wife | the husband with a cold | a bear in the bed
+a bubble bath for two that overflows | a hot tub date that goes cold | a car wash date gone wrong | a foam party in the bathroom
+a stadium proposal that fails | a kiss cam with the wrong partner | a skywriting proposal with a typo | dumped on the big screen
+the anniversary he forgot | the birthday party nobody came to | the valentine's gift she hated | flowers from the petrol station
+saying the wrong name in bed | talking in your sleep | texting the wrong person goodnight | a pillow with your ex's face
+the honeymoon suite with bunk beds | a romantic getaway at summer camp | a wedding night in a submarine | sharing a sleeper train cabin
+a wedding night with food poisoning | a honeymoon cruise spent seasick | the bride with morning sickness | a first dance after too much cake
+the passive aggressive sticky note | the love note on the fridge door | the chore chart nobody follows | a breakup written on a napkin
+whose turn it is to do the dishes | who broke grandma's good plates | rock paper scissors for the laundry | a kitchen sink full of regrets
+couples yoga in a tiny flat | a twister game gone too far | slow dancing in a phone booth | assembling a bed in a studio flat
+a romantic massage with a cramp | a back rub that ends in a sneeze | a candlelit dinner with a hiccup | the chiropractor's first date
+lingerie under a winter coat | a swimsuit under a snowsuit | a flasher at the bus stop | pyjamas under a business suit
+the couple who dresses alike | the twins who swapped dates | the dog that looks like its owner | a costume party in matching onesies
+a breakup by text message | a proposal by carrier pigeon | getting dumped on voicemail | reading your partner's phone
+splitting the record collection | dividing the plates in the divorce | a custody battle over the cat | the vinyl he never gave back
+the open marriage of two snails | the slowest affair in the garden | a long distance snail romance | two slugs on a candlelit date
+his socks everywhere | her hair in the drain | the dog's chew toys everywhere | a trail of clothes to bed
+a pillow wall in the middle of the bed | a pillow fort built for two grownups | a tape line down the middle of the sofa | sleeping on opposite edges of the bed
+the honey do list | the chore wheel | the bucket list | the naughty list
+a selfie that never ends | a photo booth gone wrong | the vacation slideshow | a goodbye kiss that never ends
+the mother in law moving in | the ex moving in next door | a houseguest who never leaves | grandma takes over the kitchen
 
 [office]
-photocopying your butt
-the boss doing the worm
-reply all to the whole company
-romance in the supply closet
-the intern who saw too much
-a trust fall with nobody catching
-mistletoe over the boss's desk
-a lampshade on the accountant's head
-the meeting with hr on monday
-a video call with no pants
-stealing food from the office fridge
-a desk nap discovered
-secret santa gives handcuffs
-a raise negotiation with a shark
-the email sent to the wrong person
-the conga line through accounting
-the coworker who microwaves fish
-a performance review from a cat
-the boardroom limbo contest
-the awkward elevator ride after
-an out of office reply from the beach
-crying in the office bathroom
-working from home in a bathrobe
-the office gossip as a parrot
-the ugly sweater contest winner
-the slow dance with the ceo
-a lost thong in the conference room
-the company retreat talent show
-the printer jam of shame
+photocopying your butt | faxing your face to the boss | laminating your love letter | photocopying your cleavage
+the boss doing the worm | the boss doing the splits | the manager crawling to the bar | the boss passed out on the rug
+reply all to the whole company | cc'ing your ex on the memo | forwarding your diary to sales | a group chat with the board
+romance in the supply closet | kissing in the copy room | hiding in the stationery cupboard | a fling behind the filing cabinet
+the intern who saw too much | the janitor who heard too much | the intern who knows the password | the night guard on the cameras
+a trust fall with nobody catching | a stage dive into an empty crowd | a trust fall onto the buffet | fainting during the quarterly report
+mistletoe over the boss's desk | a spider above the boss's chair | a kiss under the exit sign | a plant dangling over the printer
+a lampshade on the accountant's head | a traffic cone on the manager's head | a bucket on the intern's head | a party hat on the auditor
+the meeting with hr on monday | the exit interview on friday | a lecture from the principal | the first day back from vacation
+a video call with no pants | a job interview in pajamas | a video call from the toilet | a video call while doing squats
+stealing food from the office fridge | sniffing milk in the break room | hiding cake from your coworkers | the lunch thief caught on camera
+a desk nap discovered | a desk lunch interrupted | drooling on the keyboard | a hangover at your desk
+secret santa gives handcuffs | secret santa gives a leash | the cop's retirement present | a magic trick at the staff party
+a raise negotiation with a shark | a job interview with a dolphin | a contract signed with the devil | asking a crocodile for a day off
+the email sent to the wrong person | the love letter sent to the boss | a text meant for your ex | the resignation you forgot to delete
+the conga line through accounting | the fire drill through the lobby | a parade through the cubicles | the choo choo train through payroll
+the coworker who microwaves fish | the coworker who smells of garlic | the chef who burns the popcorn | the coworker who brings a cat to work
+a performance review from a cat | a job interview with a dog | a pay cut from a hamster | the boss who sleeps on the keyboard
+the boardroom limbo contest | the boardroom tug of war | a hula hoop at the staff party | the office pole vault final
+the awkward elevator ride after | the awkward taxi ride home | the silent walk to the car park | stuck in the lift with your ex
+an out of office reply from the beach | a sick day spent at the beach | a work call from the hot tub | the conference call from a cruise ship
+crying in the office bathroom | napping in the staff toilet | sobbing over the broken printer | hiding from the boss in a stall
+working from home in a bathrobe | a job interview in a towel | answering the door in a bathrobe | a business meeting in the bathtub
+the office gossip as a parrot | the receptionist as a pigeon | the boss as a screaming toddler | the office gossip with a megaphone
+the ugly sweater contest winner | the worst dressed at the gala | the knitting club champion | the scarecrow of the year award
+the slow dance with the ceo | the tango with the janitor | the first dance at the wedding | prom night with the vice principal
+a lost thong in the conference room | a slingshot in the conference room | a bra on the projector screen | a bow tie under the boardroom table
+the company retreat talent show | the office karaoke disaster | the board meeting magic trick | the team building puppet show
+the printer jam of shame | the paper cut of doom | the fax machine meltdown | the shredder ate my tie
 
 [nude]
-skinny dipping with sharks
-nude beach volleyball
-a naked chef
-a surprise at the life drawing class
-a streaker at the cricket match
-an art model who sneezes
-the emperor's new clothes
-a nudist fashion show
-a sunburn in all the wrong places
-a towel that's too small
-locked out naked in the hallway
-a strip poker tournament
-a nude portrait of grandpa
-the naked mole rat's beach day
-a clothing optional cruise
-wearing only a barrel
-a fig leaf in the wind
-naked yoga at dawn
-mooning the tour bus
-a birthday suit party
-the nudist's pocket problem
-streaking through graduation
-a statue getting dressed
-a sauna full of strangers
-the strategically placed pineapple
-a nude selfie with the flash on
-a peeping tom pigeon
-the stripper who forgot his music
-a gorilla at the nudist camp
+skinny dipping with sharks | night swimming with dolphins | a naked lifeguard in trouble | a nude swimmer in a fish tank
+nude beach volleyball | naked beach frisbee | a nudist tennis match | topless sandcastle contest
+a naked chef | a nude butcher | a topless baker | a naked waiter
+a surprise at the life drawing class | a stranger at the pottery class | a mixup at the nude photo shoot | an awkward moment at the art school
+a streaker at the cricket match | a naked fan at the tennis final | a nude pitch invader at rugby | a mascot losing his costume
+an art model who sneezes | a nude model with hiccups | a portrait sitter with an itch | a naked poser with a leg cramp
+the emperor's new clothes | the king's invisible pyjamas | the queen's missing nightgown | the mayor's naked ribbon cutting
+a nudist fashion show | a nudist conga line | a naked beauty pageant | the naked dash to the changing room
+a sunburn in all the wrong places | a mosquito bite in a bad spot | the sunscreen you couldn't reach | a tan line in the shape of a hand
+a towel that's too small | a bathrobe that won't close | a bath mat used as a skirt | a toga made from a pillowcase
+locked out naked in the hallway | stuck naked in the elevator | sleepwalking naked to the lobby | a nude man fetching the newspaper
+a strip poker tournament | a strip scrabble final | a nudist chess championship | losing your shirt at the casino
+a nude portrait of grandpa | a nude statue of grandma | grandpa's old modelling photos | a family portrait gone wrong
+the naked mole rat's beach day | the hairless cat's spa weekend | the plucked chicken's sunbath | a bald hamster on vacation
+a clothing optional cruise | a nudist river rafting trip | a topless ferry crossing | a naked honeymoon on a yacht
+wearing only a barrel | wearing only a cardboard box | hiding in a laundry basket | a nudist stuck in a bucket
+a fig leaf in the wind | a loincloth in a storm | the last leaf on the tree | adam chasing his fig leaf
+naked yoga at dawn | nude tai chi at sunset | a nudist greeting the sunrise | stretching before the neighbours wake
+mooning the tour bus | flashing the school bus | mooning the paparazzi | a bald man waving at the bus
+a birthday suit party | a pyjama party gone wrong | a nudist baby shower | a nudist book club
+the nudist's pocket problem | the nudist's sunscreen dilemma | the nudist's mosquito problem | a nudist losing a contact lens
+streaking through graduation | streaking through the wedding | skinny dipping at prom | a gown blowing open on stage
+a statue getting dressed | a mannequin coming to life | a statue sneaking out of the museum | a pigeon redecorating a statue
+a sauna full of strangers | a hot tub full of coworkers | a steam room with the boss | an elevator full of nudists
+the strategically placed pineapple | the conveniently placed cactus | the strategically held trombone | a nudist hiding behind fruit
+a nude selfie with the flash on | a bathroom mirror selfie gone wrong | a nude photo sent to mum | a naked video call with the boss
+a peeping tom pigeon | a nosy neighbour's parrot | a seagull spying on nudists | a squirrel at the bathroom window
+the stripper who forgot his music | the magician who forgot his trick | the dancer stuck in his costume | a stripper with stage fright
+a gorilla at the nudist camp | a bear at the nudist beach | a hairy man at the waxing salon | a yeti at the hot springs
 
 [adulting]
-doing your taxes at midnight
-a midlife crisis sports car
-the mortgage monster under the bed
-paying bills with tears
-a grey chest hair
-a pension plan made of lottery tickets
-a tax auditor at the door
-the gym membership never used
-excited about a new vacuum cleaner
-in bed by nine on a saturday
-back pain from sleeping wrong
-turning forty at a trampoline park
-a man cave
-meal prepping for the whole week
-a frozen botox smile
-the student loan dragon
-reading glasses on a night out
-a hot flash in a meeting
-a divorce lawyer shark
-a dad bod in tiny swim trunks
-groaning when standing up
-the tax return that never comes
-a dinner party with spreadsheets
-the landlord who never fixes anything
-arguing with the self checkout
-a fifty year old buying a motorcycle
-a wine fridge for emotional support
-the colonoscopy waiting room
-a hangover that lasts three days
+doing your taxes at midnight | writing your will at midnight | online shopping at three am | paying parking fines by candlelight
+a midlife crisis sports car | a divorce settlement sports car | a quarter life crisis go kart | a toy car for a grown man
+the mortgage monster under the bed | the rent goblin in the closet | the credit card troll under the bridge | a scary monster eating a little house
+paying bills with tears | paying rent in loose change | a wallet full of used tissues | watering plants with tears
+a grey chest hair | a grey nose hair | a wild eyebrow hair | your first bald spot
+a pension plan made of lottery tickets | a retirement fund in a sock drawer | a savings account in a piggy bank | a pension plan built on poker chips
+a tax auditor at the door | a census taker at the door | the in laws arriving unannounced | the neighbour asking for sugar
+the gym membership never used | the treadmill used for laundry | the yoga mat still in its wrapper | the new year's resolution list
+excited about a new vacuum cleaner | excited about a new lawn mower | thrilled by a new set of saucepans | in love with a new leaf blower
+in bed by nine on a saturday | asleep on the sofa by eight | leaving the party before dessert | reading in bed while friends go out
+back pain from sleeping wrong | a stiff neck from a bad pillow | throwing your back out sneezing | pulling a muscle putting on socks
+turning forty at a trampoline park | turning fifty at a bouncy castle | a hip injury at a kids birthday party | a grown man stuck in a ball pit
+a man cave | a she shed | a garden shed | a home bar
+meal prepping for the whole week | packing lunch for the whole office | batch cooking for the apocalypse | a fridge full of identical boxes
+a frozen botox smile | a face lift gone wrong | a fake smile at a wedding | a numb smile after the dentist
+the student loan dragon | the overdraft ogre | the tuition fee troll | a dragon guarding a piggy bank
+reading glasses on a night out | reading the menu at arm's length | bifocals on a first date | a hearing aid at a rave
+a hot flash in a meeting | a nosebleed in a meeting | sweating through a job interview | a fan on full blast at work
+a divorce lawyer shark | a wedding planner piranha | a loan shark in a suit | a shark signing a prenup
+a dad bod in tiny swim trunks | a beer belly in a wetsuit | a hairy back at the pool | a sunburnt tourist on the beach
+groaning when standing up | grunting when sitting down | creaky knees on the stairs | needing a nap after the stairs
+the tax return that never comes | the parcel that never arrives | the ex who never calls back | waiting forever by the mailbox
+a dinner party with spreadsheets | a wedding planned with pie charts | a date night with a slideshow | splitting the bill with a calculator
+the landlord who never fixes anything | the plumber who never shows up | the neighbour who never mows the lawn | a leaking ceiling and a bucket
+arguing with the self checkout | arguing with the parking machine | shouting at the sat nav | fighting a vending machine
+a fifty year old buying a motorcycle | a retiree buying a jet ski | a grandad getting his first tattoo | a dad trying on leather trousers
+a wine fridge for emotional support | an emotional support cheese plate | a wine cellar under the stairs | a mini fridge in the bedroom
+the colonoscopy waiting room | the vasectomy waiting room | the queue for the prostate exam | a nervous man in a paper gown
+a hangover that lasts three days | a cold that lasts three weeks | jet lag that lasts all week | a man flu that lasts a month
 
 [moment]
-the moment the towel drops
-when you hit send to the boss
-when the parents walk in
-the moment the tequila kicks in
-when you wake up at a stranger's house
-when your date's mom calls
-when the hot tub jets turn on
-the moment the pants split
-when the webcam is still on
-when the stripper is your dentist
-the moment the bill arrives
-remembering last night
-the moment the bed breaks
-the bra that won't unhook
-when the dress rips on the dance floor
-when the lights come on at the club
-too old for the nightclub
-the moment the waterbed pops
-when the party photos get posted
-mum liking your racy photo
-the baby looks like the mailman
-the karaoke song gets dirty
-caught singing naked in the shower
-the bartender cutting you off
-when the condom wrapper falls out
-the moment your ex walks in
-when grandma reads the group chat
-the moment the zipper sticks
-when the neighbours hear everything
+the moment the towel drops | the moment the robe comes undone | when the sauna door swings open | the moment the swimsuit slips
+when you hit send to the boss | when you send it to the group chat | when your mum sees the sext | the moment autocorrect betrays you
+when the parents walk in | when the roommate gets home | when the landlord lets himself in | the moment the kids barge in
+the moment the tequila kicks in | the moment the vodka hits | the moment the dance floor calls | when you start dancing on tables
+when you wake up at a stranger's house | when you wake up in the wrong hotel | when you wake up next to your boss | the morning you can't find your shoes
+when your date's mom calls | when your date's ex shows up | when your date's dad picks up | when your own mum calls mid date
+when the hot tub jets turn on | when someone farts in the jacuzzi | when the bubble bath overflows | when the pool heater breaks
+the moment the pants split | the moment the chair collapses | when you bend over at the gym | the moment the belt snaps
+when the webcam is still on | when you forget to mute the call | when the boss shares his screen | when the cat walks across the call
+when the stripper is your dentist | when the stripper is your barber | when your therapist is at the bar | when your teacher is the bouncer
+the moment the bill arrives | the moment the date goes dutch | the moment the card gets declined | when nobody reaches for the check
+remembering last night | regretting that last shot | dreaming of your ex again | the headache after the wedding
+the moment the bed breaks | the moment the hammock snaps | the moment the sofa gives way | when the bed frame squeaks
+the bra that won't unhook | the dress that won't unzip | the corset that won't loosen | fumbling with the wrong strap
+when the dress rips on the dance floor | when the heel snaps on the dance floor | when the skirt tucks into your knickers | when your strap breaks during the tango
+when the lights come on at the club | when the music stops at the wedding | when the dj plays the last slow song | when the bouncer throws you out
+too old for the nightclub | grandpa on the dance floor | too drunk for the disco | too sober for the hen party
+the moment the waterbed pops | the moment the air mattress deflates | the moment the bathtub overflows | when the paddling pool bursts
+when the party photos get posted | when your mum joins social media | when the wedding video goes viral | when your ex tags you in a photo
+mum liking your racy photo | dad commenting on your selfie | the boss liking your bikini pic | grandma sharing your beach pics
+the baby looks like the mailman | the baby looks like the milkman | the baby has the plumber's moustache | the dog looks like the neighbour
+the karaoke song gets dirty | the wedding speech gets dirty | the karaoke duet with your boss | the lullaby with the wrong lyrics
+caught singing naked in the shower | caught dancing naked in the kitchen | caught talking to yourself in the bath | the shower duet with the neighbour
+the bartender cutting you off | the bouncer turning you away | the bartender ignoring your order | the barmaid giving you her number
+when the condom wrapper falls out | when the love letter falls out | when your wallet spills at church | when the pregnancy test falls out
+the moment your ex walks in | the moment your boss walks in | when your ex shows up with a model | when your ex is the wedding singer
+when grandma reads the group chat | when grandma joins the dating app | when dad replies all to the family | when grandma finds your phone
+the moment the zipper sticks | the moment the sleeping bag jams | the moment the belt won't buckle | when you catch your shirt in your fly
+when the neighbours hear everything | when the neighbours join in | when the baby monitor picks it up | when the neighbours call the police

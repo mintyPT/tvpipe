@@ -1630,11 +1630,11 @@ reveal = ["o3","o2","o4","o5"]
 
 test = prompts
 input = "# a comment\n\n[odd]\na snail in a hurry\n  a lonely sock  \n\n[moment]\nthe moment the toast falls\n"
-parsed = [["odd","a snail in a hurry"],["odd","a lonely sock"],["moment","the moment the toast falls"]]
+parsed = [["odd","a snail in a hurry",[]],["odd","a lonely sock",[]],["moment","the moment the toast falls",[]]]
 
 test = prompts
 input = "before any tag\n[idiom]\n# inside\nraining cats and dogs\n[view]\n[drama]\nthe last cookie\n"
-parsed = [["","before any tag"],["idiom","raining cats and dogs"],["drama","the last cookie"]]
+parsed = [["","before any tag",[]],["idiom","raining cats and dogs",[]],["drama","the last cookie",[]]]
 
 test = prompts
 input = ""
@@ -1642,7 +1642,11 @@ parsed = []
 
 test = prompts
 input = "[Odd]\n[odd ]\nnot a [tag]\n"
-parsed = [["","[Odd]"],["","[odd ]"],["","not a [tag]"]]
+parsed = [["","[Odd]",[]],["","[odd ]",[]],["","not a [tag]",[]]]
+
+test = prompts
+input = "[odd]\na snail in a hurry | a slug in a rush |a turtle late for work| \na lonely sock|\n| nothing\n"
+parsed = [["odd","a snail in a hurry",["a slug in a rush","a turtle late for work"]],["odd","a lonely sock",[]]]
 
 test = spread
 tags = ["a","a","a","b","b","b","c","c","c"]

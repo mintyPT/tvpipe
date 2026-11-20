@@ -144,7 +144,7 @@ there are 12 × 7 = 84 liar seats: everybody lies once or twice.
 
 The options are built as today: the truth, the liars' lies (equal lies
 by `titleKey` merged into one option with several authors), decoys
-(unused prompts) up to 4 options, shuffled once. The TV lists all of
+(the prompt's own, see "Prompts") up to 4 options, shuffled once. The TV lists all of
 them (≤ 1 + 7).
 
 A phone shows the truth and at most **5 lies** (6 buttons and the
@@ -235,13 +235,24 @@ display form.
 - **No repeats in a room** (`PromptDeck`): the deck is the room's, not
   the game's: the host keeps one per language from game to game and
   deals no prompt twice until it dealt them all. When fewer than a
-  round's prompts and a reserve (`DECK_RESERVE` 16, the decoys) are
-  left, a new deck of the other prompts goes under the rest. A decoy
-  shown on the TV is taken out of the pass too (it would be a tell as a
-  prompt later).
-- **Decoys** (too few lies for a drawing) come from the drawing's own
-  structure first (`decoyOrder`): a "moment" truth gets "moment"
-  decoys, which look like it, and are better bluffs.
+  round's prompts and a reserve (`DECK_RESERVE` 16) are left, a new
+  deck of the other prompts goes under the rest.
+- **Decoys** (too few lies for a drawing) are written for each prompt:
+  three after it in the file (`prompt | decoy | decoy | decoy`), other
+  titles for the drawing a player would make of it (a thing swapped for
+  one that looks alike when doodled, the picture told as another
+  story), at least two in the prompt's structure, so the truth is not
+  the only option that sounds like a prompt. Unused prompts were the
+  decoys before: unrelated to the drawing, so the picture ruled them
+  out, and polished like the truth, so they singled it out among the
+  players' lies. The lints (`test/prompts.test.ts`): every prompt has
+  three, each in the prompts' form, none the prompt, another prompt of
+  the file or another prompt's decoy. A file without decoys falls back
+  to unused prompts, its own structure first (`decoyOrder`), and a
+  prompt shown so is taken out of the pass (it would be a tell later).
+  The decoys were written and edited by model agents per structure
+  (a writer, then an editor checking each against the rules), then
+  linted.
 
 ### Variety: before and after
 

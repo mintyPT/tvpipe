@@ -101,7 +101,7 @@ test("the shared rule vectors (test/vectors/rules.txt)", () => {
         break;
       }
       case "prompts":
-        assert.deepEqual(parsePrompts(json("input")).map((p) => [p.tag, p.text]), json("parsed"), at);
+        assert.deepEqual(parsePrompts(json("input")).map((p) => [p.tag, p.text, p.decoys]), json("parsed"), at);
         break;
       case "spread": {
         const tags = json("tags") as string[];

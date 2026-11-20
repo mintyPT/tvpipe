@@ -350,7 +350,7 @@ test("50 players: spotlights, rotating liars, pipelined lies, sampled options, e
 });
 
 test("a room deals no prompt twice over several games, nor one it showed as a decoy", async () => {
-  // 3 players: two liars, so every vote has a decoy (an unused prompt).
+  // 3 players: two liars, so a vote may have a decoy (one of the prompt's own).
   const { server, party, g, players } = await game(3);
   try {
     const shown = new Set<string>();
@@ -383,6 +383,49 @@ test("a room deals no prompt twice over several games, nor one it showed as a de
     assert.equal(dealt.length, 3 * 2 * 3, "3 games, 2 rounds, 3 prompts");
     assert.deepEqual(problems, []);
     assert.deepEqual(new Set(players.flatMap((b) => b.errors)), new Set());
+  } finally {
+    for (const b of players) b.close();
+    await server.close();
+  }
+});
+
+test("too few lies: the game adds decoys written for the drawing's prompt, never other prompts", async () => {
+  // 3 players and a silent one: every drawing has two lies and a decoy.
+  const { server, party, g, players } = await game(3, { rounds: 1 });
+  const [quiet] = await bots(1, { url: "ws://party.test/_tvpipe/ws", WebSocket: server.relay.WebSocket, room: party.code, key: party.joinKey, silent: true, names: ["Quiet"] });
+  players.push(quiet!);
+  try {
+    const byText = new Map(PROMPT_LIST.map((p) => [p.text, p]));
+    const dealt = new Map<string, string>();
+    const problems: string[] = [];
+    let votes = 0;
+    g.on("phase", (p) => {
+      if (p === "draw") {
+        queueMicrotask(() => {
+          for (const pl of party.players) {
+            const me = pl.state.peek() as { task?: string; prompt?: string };
+            if (me.task === "draw" && me.prompt) dealt.set(pl.id, me.prompt);
+          }
+        });
+      }
+      if (p === "vote") {
+        queueMicrotask(() => {
+          const screen = party.screen.peek() as { artist: { id: string }; options: { text: string }[] };
+          const truth = dealt.get(screen.artist.id)!;
+          const decoys = new Set(byText.get(truth)!.decoys);
+          const texts = screen.options.map((o) => o.text);
+          votes++;
+          if (texts.length !== 4) problems.push(`${truth}: ${texts.length} options`);
+          if (!texts.some((t) => decoys.has(t))) problems.push(`${truth}: no decoy of its own in ${texts.join(", ")}`);
+          for (const t of texts) if (t !== truth && byText.has(t)) problems.push(`${truth}: the prompt ${t} as a decoy`);
+        });
+      }
+    });
+    const end = new Promise((r) => g.once("end", r));
+    await players[0]!.client.act("start");
+    await end;
+    assert.equal(votes, 3, "three drawings (the silent player draws nothing)");
+    assert.deepEqual(problems, []);
   } finally {
     for (const b of players) b.close();
     await server.close();
