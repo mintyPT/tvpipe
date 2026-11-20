@@ -3,7 +3,8 @@
  * they are found, AirPlay PIN pairing, then the game's host page. A game
  * may bring its own launcher with the same API.
  */
-import { PICKER_MESSAGE, Tvpipe } from "../lib/tvpipe.js";
+import { displayLag, eventTime, Metronome, SKIP_TAPS, TAPS, tapRun } from "../lib/tapsync.js";
+import { PICKER_MESSAGE, Tvpipe, TV_DISPLAY_MS, TV_RENDER_MS, TVSYNC_PAGE, } from "../lib/tvpipe.js";
 const $ = (id) => document.getElementById(id);
 const KIND = {
     airplay: "AirPlay",
@@ -98,8 +99,19 @@ function render() {
             const [t, c] = pairingText(p);
             text.append(el("div", `pairing ${c}`, t));
         }
+        if (!browser && typeof d.displayMs === "number")
+            text.append(el("div", "synced", `Synced with phones: ${d.displayMs} ms of its own`));
         const end = el("div", "end");
         end.append(el("span", "tag", KIND[d.kind] ?? d.kind));
+        if (!browser && !(d.needsPairing && pairing.get(d.name)?.state !== "done")) {
+            const sync = el("button", "btn small", typeof d.displayMs === "number" ? "Sync again" : "Sync");
+            sync.title = "Measure how far this TV is behind the phones";
+            sync.onclick = (ev) => {
+                ev.stopPropagation();
+                openSync(d.name);
+            };
+            end.append(sync);
+        }
         if (d.needsPairing && pairing.get(d.name)?.state !== "done") {
             const pair = el("button", "btn small", "Pair");
             pair.onclick = (ev) => {
@@ -221,6 +233,206 @@ async function start(devicesToUse) {
         showError(err.message);
     }
 }
+let sync = null;
+/** The latest status of the sync page's cast. */
+let syncCast = null;
+/** In the cast picker: a sync replaced the game's picture, which must come back. */
+let recast = false;
+let audio;
+let metronome;
+function syncTv() {
+    const s = syncCast;
+    if (!s || !sync)
+        return { ready: false };
+    if (s.state === "failed")
+        return { ready: false, error: s.error ?? "The TV did not start the picture" };
+    if (s.state === "stopped")
+        return { ready: false, error: "The picture on the TV stopped" };
+    const r = (s.receivers ?? []).find((x) => x.name === sync.device);
+    if (r && (r.state === "failed" || r.state === "gave-up"))
+        return { ready: false, error: r.error ?? "The TV refused the picture" };
+    const up = s.state === "streaming" && r && (r.state === "connected" || r.state === "reconnected") && typeof r.delayMs === "number";
+    return up ? { ready: true, delayMs: r.delayMs } : { ready: false };
+}
+function openSync(device) {
+    showError(null);
+    sync = { device, step: "intro", taps: [] };
+    syncCast = null;
+    if (changing)
+        recast = true;
+    // The TV starts its picture while people tap here (it takes seconds).
+    tvpipe.cast({ page: TVSYNC_PAGE, to: [device] }).then((st) => {
+        syncCast ??= st;
+        renderSync();
+    }, (err) => {
+        syncCast = { state: "failed", error: err.message };
+        renderSync();
+    });
+    $("sync-device").textContent = device;
+    const dlg = $("sync");
+    if (!dlg.open)
+        dlg.showModal();
+    renderSync();
+}
+function closeSync() {
+    metronome?.stop();
+    const was = sync;
+    sync = null;
+    const dlg = $("sync");
+    if (dlg.open)
+        dlg.close();
+    // Before the game the TV goes dark again; in the picker the game's
+    // picture comes back when the picker answers.
+    if (was && !changing)
+        void tvpipe.stopCast().catch(() => { });
+}
+function syncTap(t) {
+    if (!sync || (sync.step !== "here" && sync.step !== "tv"))
+        return;
+    sync.taps.push(t);
+    const pad = $("sync-pad");
+    pad.classList.remove("tapped");
+    void pad.offsetWidth;
+    pad.classList.add("tapped");
+    if (sync.taps.length < SKIP_TAPS + TAPS)
+        return renderSync();
+    if (sync.step === "here") {
+        const run = tapRun(sync.taps, 0);
+        sync.taps = [];
+        if (!run.ok)
+            return renderSync(uneven(run));
+        sync.here = run;
+        metronome?.stop();
+        sync.step = syncTv().ready ? "tv" : "wait";
+        return renderSync();
+    }
+    const delayMs = sync.delayMs ?? 0;
+    const known = devices.find((d) => d.name === sync.device)?.displayMs;
+    const run = tapRun(sync.taps, delayMs + (known ?? TV_RENDER_MS + TV_DISPLAY_MS));
+    sync.taps = [];
+    if (!run.ok)
+        return renderSync(uneven(run));
+    sync.result = displayLag(sync.here, run, delayMs);
+    sync.step = "result";
+    renderSync();
+}
+function uneven(run) {
+    return `The taps were too uneven (±${Math.round(run.spread)} ms). Try once more, as steadily as you can.`;
+}
+function renderSync(error) {
+    if (!sync)
+        return;
+    const s = sync;
+    const tv = syncTv();
+    if (s.step === "wait" && tv.ready)
+        s.step = "tv";
+    if (s.step === "tv" || s.step === "wait")
+        s.delayMs = tv.delayMs ?? s.delayMs;
+    const failed = tv.error && s.step !== "result" ? tv.error : undefined;
+    const err = $("sync-error");
+    err.hidden = !(error ?? failed);
+    err.textContent = error ?? failed ?? "";
+    const text = {
+        intro: "Phones show the game at once, the TV a little later. Tap along with flashes twice to measure how much: first with the flashes here, then with the flashes on the TV. Tap the circle, or press the space bar.",
+        here: "Tap along with the flashes here, on the beat.",
+        wait: `Starting the flashes on ${s.device}…`,
+        tv: `Now look at ${s.device} and tap along with its flashes (and clicks).`,
+        result: "",
+    };
+    if (s.step === "result" && s.result) {
+        const r = s.result;
+        text.result = `${s.device} shows a picture ${r.total} ms after this screen: ${s.delayMs ?? 0} ms the picture waits to stay smooth, ${r.displayMs} ms the TV itself takes. Save it, and phones keep in step with this TV from now on.`;
+    }
+    $("sync-text").textContent = text[s.step];
+    const counting = s.step === "here" || s.step === "tv";
+    const n = Math.max(0, s.taps.length - SKIP_TAPS);
+    const dots = $("sync-dots");
+    dots.hidden = !counting;
+    dots.replaceChildren(...Array.from({ length: TAPS }, (_, i) => el("span", i < n ? "on" : "")));
+    const pad = $("sync-pad");
+    pad.disabled = !counting;
+    pad.dataset["step"] = s.step;
+    const go = $("sync-go");
+    go.hidden = !(s.step === "intro" || s.step === "result");
+    go.textContent = s.step === "result" ? "Save" : "Start";
+    $("sync-again").hidden = s.step !== "result";
+    const known = devices.find((d) => d.name === s.device)?.displayMs;
+    $("sync-forget").hidden = typeof known !== "number" || s.step === "result";
+}
+function setupSync() {
+    const dlg = $("sync");
+    $("sync-go").onclick = () => {
+        if (!sync)
+            return;
+        if (sync.step === "intro") {
+            // A click: sound may start now.
+            try {
+                audio ??= new AudioContext();
+            }
+            catch {
+                audio = undefined;
+            }
+            metronome ??= new Metronome($("sync-beat"), { audio });
+            metronome.start();
+            sync.step = "here";
+            sync.taps = [];
+            $("sync-pad").focus();
+            return renderSync();
+        }
+        if (sync.step === "result" && sync.result) {
+            const { device } = sync;
+            const ms = sync.result.displayMs;
+            tvpipe.setDisplayLag(device, ms).then(closeSync, (err) => renderSync(err.message));
+        }
+    };
+    $("sync-again").onclick = () => {
+        if (!sync)
+            return;
+        sync.step = syncTv().ready ? "tv" : "wait";
+        sync.taps = [];
+        renderSync();
+    };
+    $("sync-forget").onclick = () => {
+        if (!sync)
+            return;
+        tvpipe.setDisplayLag(sync.device, null).then(closeSync, (err) => renderSync(err.message));
+    };
+    $("sync-close").onclick = closeSync;
+    dlg.addEventListener("cancel", (ev) => {
+        ev.preventDefault();
+        closeSync();
+    });
+    $("sync-pad").addEventListener("pointerdown", (ev) => {
+        ev.preventDefault();
+        syncTap(eventTime(ev));
+    });
+    dlg.addEventListener("keydown", (ev) => {
+        if (ev.key !== " " && ev.key !== "Enter")
+            return;
+        if (!sync || (sync.step !== "here" && sync.step !== "tv"))
+            return;
+        ev.preventDefault();
+        if (!ev.repeat)
+            syncTap(eventTime(ev));
+    });
+    tvpipe.on("cast", (st) => {
+        if (!sync)
+            return;
+        syncCast = st;
+        renderSync();
+    });
+}
+/** The cast picker's answer when cancelled: the old choice again if a sync took the TV. */
+async function cancelPicker() {
+    if (!recast)
+        return answer(null);
+    try {
+        answer(await tvpipe.chosen());
+    }
+    catch {
+        answer(null);
+    }
+}
 /** The light/dark/system switch, shared with tvpipe's other pages. */
 function themes() {
     const buttons = document.querySelectorAll(".theme button");
@@ -300,12 +512,13 @@ async function main() {
     });
     devices = await tvpipe.watchDevices(true);
     render();
+    setupSync();
     $("start").onclick = () => void start([...selected]);
-    $("no-tv").onclick = () => (changing ? answer(null) : void start([]));
+    $("no-tv").onclick = () => (changing ? void cancelPicker() : void start([]));
     if (changing) {
         addEventListener("keydown", (ev) => {
-            if (ev.key === "Escape" && !$("pin").open)
-                answer(null);
+            if (ev.key === "Escape" && !$("pin").open && !$("sync").open)
+                void cancelPicker();
         });
     }
     $("pin-form").onsubmit = (ev) => {

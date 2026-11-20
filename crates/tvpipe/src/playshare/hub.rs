@@ -5,7 +5,7 @@
 //! Locks: `Hub::st` is taken briefly and never while waiting on a socket;
 //! outboxes have locks of their own, taken after `st` or alone.
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex, MutexGuard, OnceLock, RwLock};
 use std::time::{Duration, Instant};
@@ -130,6 +130,8 @@ pub struct Hub {
     pub events: OnceLock<Events>,
     /// Short join links (`shortlink`), set once; unset: none.
     pub shortlinks: OnceLock<Arc<super::shortlink::ShortLinks>>,
+    /// The TVs' display lags (the storage's `tv-lag`), by name.
+    lags: Mutex<BTreeMap<String, u32>>,
 }
 
 /// `{"t":"event","type":…,"data":…}`.
@@ -188,7 +190,16 @@ pub fn browser_device() -> Value {
 
 impl Hub {
     pub fn new(bundle: Bundle, token: String, backend: Box<dyn Backend>, stop: Stop) -> Arc<Hub> {
+        let lags = match backend.storage().map(|s| s.tv_lags()) {
+            Some(Ok(l)) => l,
+            Some(Err(e)) => {
+                warn!("playshare: the TVs' lags: {e}");
+                BTreeMap::new()
+            }
+            None => BTreeMap::new(),
+        };
         Arc::new(Hub {
+            lags: Mutex::new(lags),
             bundle,
             token,
             ports: OnceLock::new(),
@@ -654,6 +665,7 @@ impl Hub {
                 Ok(Value::object())
             }
             "cast.start" => self.cast_start(params),
+            "tvsync.set" => self.tvsync_set(params),
             "cast.stop" => {
                 let old = self.lock().cast.take();
                 if let Some((c, _)) = old {
@@ -818,6 +830,85 @@ impl Hub {
         )
     }
 
+    /// `tvsync.set {device, displayMs}`: a TV's display lag as measured
+    /// (`null`: forget it, the library's estimate again), kept in the
+    /// storage; devices and statuses show it from the next tick.
+    fn tvsync_set(&self, params: &Value) -> Result<Value> {
+        let device = params
+            .get("device")
+            .and_then(Value::as_str)
+            .filter(|d| !d.trim().is_empty() && d.len() <= 200)
+            .ok_or_else(|| Error::usage("tvsync.set: device"))?;
+        let ms = match params.get("displayMs") {
+            None | Some(Value::Null) => None,
+            Some(v) => Some(
+                v.as_u32()
+                    .filter(|ms| *ms <= crate::storage::MAX_TV_LAG_MS)
+                    .ok_or_else(|| Error::usage("tvsync.set: displayMs is 0–2000 ms or null"))?,
+            ),
+        };
+        if let Some(storage) = self.backend.storage() {
+            storage.set_tv_lag(device, ms)?;
+        }
+        {
+            let mut lags = self.lags.lock().unwrap_or_else(|e| e.into_inner());
+            lags.retain(|k, _| !k.eq_ignore_ascii_case(device.trim()));
+            if let Some(ms) = ms {
+                lags.insert(device.trim().to_owned(), ms);
+            }
+        }
+        match ms {
+            Some(ms) => info!("playshare: {device} shows pictures {ms} ms late (kept)"),
+            None => info!("playshare: {device}'s lag forgotten"),
+        }
+        // The devices list again, with it.
+        let mut st = self.lock();
+        if let Some(list) = st.devices.as_array() {
+            let list = Value::array(list.iter().map(|d| self.with_display(d.clone())));
+            if list != st.devices {
+                st.devices = list.clone();
+                self.broadcast(&st, &event("devices", list));
+            }
+        }
+        drop(st);
+        Ok(Value::object()
+            .with("device", device)
+            .with_opt("displayMs", ms))
+    }
+
+    /// A TV's display lag as kept.
+    fn display_ms(&self, name: &str) -> Option<u32> {
+        let lags = self.lags.lock().unwrap_or_else(|e| e.into_inner());
+        crate::storage::tv_lag_of(&lags, name)
+    }
+
+    /// A device (`name`) or receiver status with its `displayMs`, if kept.
+    fn with_display(&self, mut v: Value) -> Value {
+        let ms = v
+            .get("name")
+            .and_then(Value::as_str)
+            .and_then(|n| self.display_ms(n));
+        if let Some(o) = v.as_object_mut() {
+            o.remove("displayMs");
+            if let Some(ms) = ms {
+                o.insert("displayMs", ms);
+            }
+        }
+        v
+    }
+
+    /// A cast or surface status with each receiver's `displayMs`.
+    pub(super) fn status_with_display(&self, mut v: Value) -> Value {
+        if let Some(o) = v.as_object_mut() {
+            if let Some(Value::Array(list)) = o.get_mut("receivers") {
+                for r in list.iter_mut() {
+                    *r = self.with_display(std::mem::take(r));
+                }
+            }
+        }
+        v
+    }
+
     fn cast_start(self: &Arc<Hub>, params: &Value) -> Result<Value> {
         let page = params
             .get("page")
@@ -872,7 +963,7 @@ impl Hub {
                     job.stop();
                     return Err(Error::closed("playshare is ending"));
                 }
-                let status = job.status();
+                let status = self.status_with_display(job.status());
                 self.lock().cast = Some((job, Value::Null));
                 Ok(status)
             }
@@ -908,7 +999,7 @@ impl Hub {
         }
         if let Some(d) = &st.discovery {
             let mut list = vec![browser_device()];
-            list.extend(d.devices());
+            list.extend(d.devices().into_iter().map(|v| self.with_display(v)));
             let list = Value::array(list);
             if list != st.devices {
                 st.devices = list.clone();
@@ -932,7 +1023,7 @@ impl Hub {
         }
         let mut progress = None;
         if let Some((job, last)) = st.cast.as_mut() {
-            let v = job.status();
+            let v = self.status_with_display(job.status());
             if v != *last {
                 let was = last.get("state").and_then(Value::as_str).map(str::to_owned);
                 let state = v.get("state").and_then(Value::as_str).unwrap_or("");

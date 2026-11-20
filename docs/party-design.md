@@ -431,10 +431,42 @@ pressed rather than by their tunnels, bounded to the second before
 arrival (a phone's word, not proof). Since phones are with the TV,
 reaction times can be measured from what the TV showed.
 
-Not done: measuring the TV's own lag (a calibration step, e.g. a phone's
-microphone hearing a chirp the TV plays, stored per receiver); one
-delay serves every TV (the slowest), as tvpipe gives every receiver the
-same budget anyway.
+**Measuring a TV's own lag: tap along.** The 120 ms is a guess; a TV
+in its movie mode takes far more than in game mode, and nothing on the
+network tells. The launcher (and so the cast picker) has a **Sync**
+button per TV (`npm/party/src/tapsync.ts`, `launcher.ts`):
+
+1. It casts tvpipe's sync page (`/_tvpipe/tvsync/`) to that TV: a
+   circle that flashes (and clicks) on the wall clock's beats, every
+   750 ms, every fourth accented.
+2. Meanwhile the person taps along (space bar, click, touch) with the
+   same flashes in the launcher, ten counted taps after two to find the
+   beat. The median offset is their habit plus this screen's lag.
+3. Then with the TV's flashes. Each tap belongs to the beat nearest to
+   where the TV is expected (its playout delay plus the current
+   estimate), so delays up to ±375 ms off the estimate count right.
+   Runs whose taps spread more than 60 ms (median absolute deviation)
+   are done again.
+4. The TV's median less this screen's is how much later the TV shows a
+   picture than a screen here, and so than a phone (the phone's own lag
+   cancels as this screen's does). Less the playout delay of the
+   receiver as it ran (the cast status's `delayMs`), that is the TV's
+   `displayMs` (render, capture and the TV itself), which stays right when
+   the budget changes (a Cast TV joins).
+5. **Save** keeps it with tvpipe (`tvpipe.setDisplayLag(device, ms)`,
+   API `tvsync.set`; the storage's `tv-lag` item, per TV name, any
+   case); **Forget** goes back to the estimate. Devices and cast and
+   surface statuses carry it as `displayMs`, and `tvDelayOf` uses it
+   instead of `TV_DISPLAY_MS` + `TV_RENDER_MS`: every later session on
+   that TV, every game.
+
+In the cast picker the sync page replaces the game's picture; the picker
+then answers with the selection even when cancelled, so the host page
+casts the game again. A game whose TV picture is a surface to the same
+TV competes with the sync cast for the TV until the picker closes.
+
+One delay serves every TV (the slowest), as tvpipe gives every receiver
+the same budget anyway.
 
 ## 9. A game author's view
 

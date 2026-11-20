@@ -26,8 +26,9 @@ export const TV_RENDER_MS = 30;
 /**
  * How far the picture of a cast or surface is behind the host, ms: the
  * slowest connected receiver's delay, with the TV's lag and a frame of
- * rendering ({@link TV_DISPLAY_MS}, {@link TV_RENDER_MS}; the `browser`
- * receiver has no TV). `undefined` when no receiver is connected.
+ * rendering: as measured for that TV (`displayMs`, which has both), else
+ * {@link TV_DISPLAY_MS} and {@link TV_RENDER_MS} (the `browser` receiver
+ * has no TV). `undefined` when no receiver is connected.
  */
 export function tvDelayOf(status) {
     if (status.state === "stopped" || status.state === "failed")
@@ -36,7 +37,8 @@ export function tvDelayOf(status) {
     for (const r of status.receivers ?? []) {
         if ((r.state !== "connected" && r.state !== "reconnected") || typeof r.delayMs !== "number")
             continue;
-        const d = r.delayMs + TV_RENDER_MS + (r.protocol === "browser" ? 0 : TV_DISPLAY_MS);
+        const lag = typeof r.displayMs === "number" ? r.displayMs : TV_RENDER_MS + (r.protocol === "browser" ? 0 : TV_DISPLAY_MS);
+        const d = r.delayMs + lag;
         max = Math.max(max ?? 0, d);
     }
     return max;
@@ -52,6 +54,8 @@ export class TvpipeError extends Error {
 }
 /** tvpipe's standard launcher. */
 const LAUNCHER = "/_tvpipe/launcher/";
+/** The page the launcher casts to a TV to sync it (`tapsync.ts`). */
+export const TVSYNC_PAGE = "/_tvpipe/tvsync/";
 /** The message the launcher in change mode sends its parent page. */
 export const PICKER_MESSAGE = "tvpipe:cast-picker";
 export class Tvpipe extends Emitter {
@@ -195,6 +199,16 @@ export class Tvpipe extends Emitter {
     }
     async pairCancel(device) {
         await this.call("pair.cancel", { device });
+    }
+    /**
+     * Keeps a TV's display lag (`ms`; `null` forgets it): how much later
+     * than a phone it shows a picture beyond its playout delay, as the
+     * launcher's tap-along sync measures it (`tapsync.ts`). tvpipe stores it
+     * per TV; devices and cast statuses carry it as `displayMs`, and a
+     * party's `tvDelay` follows.
+     */
+    async setDisplayLag(device, ms) {
+        await this.call("tvsync.set", { device, displayMs: ms === null ? null : Math.round(ms) });
     }
     /**
      * Casts a page of this game (a path with its fragment) to `to`, at

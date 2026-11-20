@@ -582,6 +582,12 @@ fn local_listener_rules() {
     assert!(r.contains("Cache-Control: no-cache"), "{r}");
     assert!(get(s.local(), "/_tvpipe/lib/client.js", &host, "").starts_with("HTTP/1.1 200"));
     assert!(get(s.local(), "/_tvpipe/launcher/", &host, "").starts_with("HTTP/1.1 200"));
+    let r = get(s.local(), "/_tvpipe/tvsync/", &host, "");
+    assert!(
+        r.starts_with("HTTP/1.1 200") && r.contains("tvsync.js"),
+        "{r}"
+    );
+    assert!(get(s.local(), "/_tvpipe/tvsync/tvsync.js", &host, "").contains("../lib/tapsync.js"));
     // tvpipe's look: the stylesheet and the browser player's fonts.
     let r = get(s.local(), "/_tvpipe/ui.css", &host, "");
     assert!(r.starts_with("HTTP/1.1 200"), "{r}");
@@ -665,6 +671,7 @@ fn public_listener_rules() {
     assert!(r.contains("scan the QR code on the TV again"), "{r}");
     // Local-only things are not there.
     assert!(get(s.public(), "/_tvpipe/launcher/", &host, "").starts_with("HTTP/1.1 404"));
+    assert!(get(s.public(), "/_tvpipe/tvsync/", &host, "").starts_with("HTTP/1.1 404"));
     assert!(get(
         s.public(),
         &format!("/_tvpipe/start?t={}", s.hub.token),
@@ -839,6 +846,152 @@ fn launcher_flow_with_fake_devices() {
     // The end stops it.
     s.end();
     assert_eq!(s.log.lock().unwrap().stopped, 2);
+}
+
+#[test]
+fn tv_lags_are_kept_and_shown() {
+    let mut s = Setup::new("game");
+    let mut w = api(&s);
+    call(&mut w, "devices.watch", Value::object().with("on", true));
+    let devices = event_of(&mut w, "devices");
+    let room = |list: &Value| {
+        list.as_array()
+            .unwrap()
+            .iter()
+            .find(|d| d.get("name").and_then(Value::as_str) == Some("Living Room"))
+            .cloned()
+            .unwrap()
+    };
+    assert!(room(&devices).get("displayMs").is_none(), "{devices}");
+    // Measured: the devices list says so at once, any case.
+    let r = call(
+        &mut w,
+        "tvsync.set",
+        Value::object()
+            .with("device", "living room")
+            .with("displayMs", 162),
+    );
+    assert_eq!(r.get("ok").and_then(Value::as_bool), Some(true), "{r}");
+    // (Its `devices` event went out before the reply: `call` drops it.)
+    let list = |w: &mut Ws| {
+        call(w, "devices.watch", Value::object().with("on", true))
+            .get("value")
+            .cloned()
+            .unwrap()
+    };
+    let devices = list(&mut w);
+    assert_eq!(
+        room(&devices).get("displayMs").and_then(Value::as_u32),
+        Some(162),
+        "{devices}"
+    );
+    // Statuses carry it for their receivers.
+    call(
+        &mut w,
+        "cast.start",
+        Value::object()
+            .with("page", "/_tvpipe/tvsync/")
+            .with("to", vec!["Living Room"]),
+    );
+    let st = loop {
+        let st = event_of(&mut w, "cast");
+        if st.get("state").and_then(Value::as_str) == Some("streaming") {
+            break st;
+        }
+    };
+    let r = st.get("receivers").and_then(|r| r.at(0)).unwrap();
+    assert_eq!(
+        r.get("displayMs").and_then(Value::as_u32),
+        Some(162),
+        "{st}"
+    );
+    // Out of range or no device: refused; null forgets it.
+    for bad in [
+        Value::object()
+            .with("device", "Living Room")
+            .with("displayMs", 2001),
+        Value::object()
+            .with("device", "Living Room")
+            .with("displayMs", -5),
+        Value::object().with("device", " ").with("displayMs", 10),
+        Value::object().with("displayMs", 10),
+    ] {
+        let r = call(&mut w, "tvsync.set", bad.clone());
+        assert_eq!(r.get("ok").and_then(Value::as_bool), Some(false), "{bad}");
+    }
+    call(
+        &mut w,
+        "tvsync.set",
+        Value::object()
+            .with("device", "Living Room")
+            .with("displayMs", Value::Null),
+    );
+    let devices = list(&mut w);
+    assert!(room(&devices).get("displayMs").is_none(), "{devices}");
+    s.end();
+}
+
+#[test]
+fn tv_lags_come_from_the_storage() {
+    let storage = crate::storage::Storage::memory();
+    storage.set_tv_lag("Living Room", Some(90)).unwrap();
+    struct Kept(Fake, crate::storage::Storage);
+    impl Backend for Kept {
+        fn surface(
+            &self,
+            to: &[String],
+            spec: super::backend::SurfaceSpec,
+        ) -> crate::error::Result<Box<dyn super::backend::SurfaceSink>> {
+            self.0.surface(to, spec)
+        }
+        fn discover(&self) -> crate::error::Result<Box<dyn Discover>> {
+            self.0.discover()
+        }
+        fn pair(&self, device: &str) -> crate::error::Result<Box<dyn Pair>> {
+            self.0.pair(device)
+        }
+        fn cast(
+            &self,
+            url: &str,
+            to: &[String],
+            picture: super::resolution::Picture,
+        ) -> crate::error::Result<Box<dyn Cast>> {
+            self.0.cast(url, to, picture)
+        }
+        fn storage(&self) -> Option<&crate::storage::Storage> {
+            Some(&self.1)
+        }
+    }
+    let hub = Hub::new(
+        Bundle::open(&fixture("game")).unwrap(),
+        "token".into(),
+        Box::new(Kept(
+            Fake {
+                log: Arc::default(),
+                fail_cast: false,
+            },
+            storage.clone(),
+        )),
+        Stop::new(),
+    );
+    let st = hub.status_with_display(Value::object().with(
+        "receivers",
+        Value::array(vec![Value::object().with("name", "Living Room")]),
+    ));
+    assert_eq!(
+        st.to_json(),
+        r#"{"receivers":[{"name":"Living Room","displayMs":90}]}"#
+    );
+    // Changes are written through.
+    hub.call(
+        0,
+        "tvsync.set",
+        &Value::object().with("device", "Den").with("displayMs", 40),
+    )
+    .unwrap();
+    let lags = storage.tv_lags().unwrap();
+    assert_eq!(lags.get("Den"), Some(&40));
+    assert_eq!(lags.get("Living Room"), Some(&90));
 }
 
 #[test]

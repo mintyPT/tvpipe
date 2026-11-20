@@ -63,6 +63,25 @@ dialog input:focus { outline: none; border-color: var(--accent); }
 dialog .error { margin-top: 12px; }
 dialog .buttons { margin-top: 24px; }
 
+/* TV sync: tap along with the flashes, here and on the TV. */
+.device .synced { font-size: 13.5px; color: var(--ink-2); }
+dialog.sync { width: min(520px, calc(100vw - 40px)); }
+.sync .pad { display: grid; place-items: center; width: 100%; height: 210px; margin: 22px 0 0; padding: 0;
+             border: 1px solid var(--rule); border-radius: 4px; background: var(--panel); cursor: pointer;
+             touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.sync .pad:disabled { cursor: default; }
+.sync .pad:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sync .beat { width: 120px; height: 120px; border-radius: 50%; border: 6px solid var(--rule); box-sizing: border-box; }
+.sync .beat.flash { background: var(--ink); border-color: var(--ink); }
+.sync .beat.flash.accent { background: var(--accent); border-color: var(--accent); }
+.sync .pad[data-step="tv"] .beat { border-style: dashed; }
+.sync .pad.tapped .beat { animation: tapped .18s ease-out; }
+@keyframes tapped { from { transform: scale(.88); } to { transform: scale(1); } }
+.sync .dots { display: flex; gap: 6px; justify-content: center; margin-top: 14px; }
+.sync .dots span { width: 9px; height: 9px; border-radius: 50%; background: var(--rule); }
+.sync .dots span.on { background: var(--accent); }
+.sync .dots[hidden] { display: none; }
+
 @media (max-width: 720px) {
   .device { grid-template-columns: 18px minmax(0, 1fr); }
   .device .end { grid-column: 2; justify-content: flex-start; margin-top: 8px; }

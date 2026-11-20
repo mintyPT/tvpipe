@@ -205,7 +205,10 @@ impl Hub {
         let mut s = self.surfaces();
         for (id, e) in s.map.iter_mut() {
             let (status, key) = match lock(&e.sink).as_mut() {
-                Some(sink) => (sink.status(), sink.keyframe_wanted()),
+                Some(sink) => (
+                    self.status_with_display(sink.status()),
+                    sink.keyframe_wanted(),
+                ),
                 None => continue,
             };
             if let Some(o) = &e.out {

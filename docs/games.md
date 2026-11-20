@@ -574,6 +574,13 @@ host page follows and casts its TV page to the chosen TVs.
   guest Wi-Fi), awake, with AirPlay or casting allowed; see `tvpipe
   discover` and the manual's Receivers page.
 - **Several TVs** show the same picture; they are not frame-locked.
+- **Sync** (per TV, here and in the cast picker): the TV flashes and
+  clicks, and you tap along, first with the flashes in the window, then
+  with the TV's (space bar or click). It measures how much later the TV
+  shows things than a phone, and tvpipe keeps it for that TV: phones then
+  wait for the TV's picture exactly as long as it takes (games that use
+  `party.withTv`). Measure again after changing the TV's picture mode
+  (game mode is much quicker).
 - A cast that fails (the TV went to sleep) shows in the host page; the
   game decides whether to offer "try again".
 

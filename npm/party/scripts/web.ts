@@ -1,8 +1,9 @@
 /**
  * Copies the built library and the standard launcher into the tvpipe
  * crate (`crates/tvpipe/src/playshare/web/`), which embeds them and
- * serves them at `/_tvpipe/lib/`, `/_tvpipe/launcher/` and
- * `/_tvpipe/picker/` (the game picker)
+ * serves them at `/_tvpipe/lib/`, `/_tvpipe/launcher/`,
+ * `/_tvpipe/tvsync/` (the TV sync page) and `/_tvpipe/picker/` (the game
+ * picker)
  * (docs/playshare-design.md §8). Run by `npm run build` after `tsc`;
  * `--check` only compares (CI, `npm test`), exiting 1 when they differ.
  */
@@ -26,13 +27,14 @@ export function webFiles(): Map<string, string> {
       out.set(`lib/${f}`, strip(readFileSync(join(dist, f), "utf8")));
     }
   }
-  // The launcher sits beside lib/ when served: `../x.js` is `../lib/x.js`.
-  const launcher = strip(readFileSync(join(dist, "launcher", "launcher.js"), "utf8")).replace(
-    /from "\.\.\/([a-z]+\.js)"/g,
-    'from "../lib/$1"',
-  );
-  out.set("launcher/launcher.js", launcher);
+  // The launcher and the TV sync page sit beside lib/ when served:
+  // `../x.js` is `../lib/x.js`.
+  const page = (dir: string, js: string) =>
+    strip(readFileSync(join(dist, dir, js), "utf8")).replace(/from "\.\.\/([a-z]+\.js)"/g, 'from "../lib/$1"');
+  out.set("launcher/launcher.js", page("launcher", "launcher.js"));
   for (const f of ["index.html", "launcher.css"]) out.set(`launcher/${f}`, readFileSync(join(src, "launcher", f), "utf8"));
+  out.set("tvsync/tvsync.js", page("tvsync", "tvsync.js"));
+  out.set("tvsync/index.html", readFileSync(join(src, "tvsync", "index.html"), "utf8"));
   // The game picker (docs/game-catalog.md): no imports.
   out.set("picker/picker.js", strip(readFileSync(join(dist, "picker", "picker.js"), "utf8")));
   for (const f of ["index.html", "picker.css"]) out.set(`picker/${f}`, readFileSync(join(src, "picker", f), "utf8"));
@@ -53,7 +55,7 @@ if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith
       writeFileSync(p, text);
     }
   }
-  for (const dir of ["lib", "launcher", "picker"]) {
+  for (const dir of ["lib", "launcher", "tvsync", "picker"]) {
     if (!existsSync(join(WEB, dir))) continue;
     for (const f of readdirSync(join(WEB, dir))) {
       if (!files.has(`${dir}/${f}`)) stale.push(`${dir}/${f} (not built: remove it)`);

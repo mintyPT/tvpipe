@@ -144,7 +144,8 @@ manifest's `players.max`), `lateJoin`, `moderate`, `limits`, `grace`,
 
 `Tvpipe`: `info()`, `watchDevices(on)` and the `devices` event,
 `select(names)`, `selection()`, `pair(device)`, `pairPin(device, pin)`,
-`pairCancel(device)` and the `pair` event, `cast({ page, to })`,
+`pairCancel(device)` and the `pair` event, `setDisplayLag(device, ms)`
+(a TV's lag as tapped along: the launcher's Sync), `cast({ page, to })`,
 `stopCast()` and the `cast` event, `qr(text)`, `quit()`, the `tunnel`
 and `closing` events. A game's own launcher uses these, then
 `select()`s and navigates to the host page.

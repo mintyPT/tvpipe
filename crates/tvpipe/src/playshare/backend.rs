@@ -74,6 +74,10 @@ pub trait Backend: Send + Sync {
     fn cast(&self, url: &str, to: &[String], picture: Picture) -> Result<Box<dyn Cast>>;
     /// A session for a surface's encoded frames.
     fn surface(&self, to: &[String], spec: SurfaceSpec) -> Result<Box<dyn SurfaceSink>>;
+    /// Where the TVs' lags are kept (none: for this run only).
+    fn storage(&self) -> Option<&Storage> {
+        None
+    }
 }
 
 /// Receivers as the status objects show them.
@@ -256,6 +260,10 @@ impl SurfaceSink for RealSurface {
 }
 
 impl Backend for Real {
+    fn storage(&self) -> Option<&Storage> {
+        Some(&self.storage)
+    }
+
     fn surface(&self, to: &[String], spec: SurfaceSpec) -> Result<Box<dyn SurfaceSink>> {
         let mut opts = crate::api::Options::new()
             .storage(self.storage.clone())

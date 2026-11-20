@@ -89,5 +89,20 @@
     </div>
   </form>
 </dialog>
+
+<dialog id="sync" class="sync">
+  <span class="lbl">TV sync</span>
+  <h2>Sync <span id="sync-device"></span></h2>
+  <p id="sync-text"></p>
+  <button type="button" id="sync-pad" class="pad" aria-label="Tap on the beat"><span class="beat" id="sync-beat"></span></button>
+  <div class="dots" id="sync-dots" aria-hidden="true"></div>
+  <p class="error bad" id="sync-error" hidden></p>
+  <div class="buttons">
+    <button type="button" id="sync-go" class="btn primary">Start</button>
+    <button type="button" id="sync-again" class="btn" hidden>Again</button>
+    <button type="button" id="sync-forget" class="btn" hidden>Forget</button>
+    <button type="button" id="sync-close" class="btn">Close</button>
+  </div>
+</dialog>
 </body>
 </html>

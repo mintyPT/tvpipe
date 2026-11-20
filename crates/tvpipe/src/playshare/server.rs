@@ -306,8 +306,11 @@ impl Hub {
             }) else {
                 return httpd::error_response(404, "Not Found");
             };
-            let allowed =
-                rel.starts_with("lib/") || (l == Listener::Local && rel.starts_with("launcher/"));
+            // The launcher and the TV sync page (cast from the local
+            // origin) only on this computer.
+            let allowed = rel.starts_with("lib/")
+                || (l == Listener::Local
+                    && (rel.starts_with("launcher/") || rel.starts_with("tvsync/")));
             if !allowed {
                 return httpd::error_response(404, "Not Found");
             }

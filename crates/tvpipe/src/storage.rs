@@ -1,9 +1,11 @@
 //! Where pairings and the player page's token live ([`Storage`]).
 //!
-//! Two items, both text and both secret: `credentials` (the AirPlay
-//! controller identity, one block per paired receiver and one per
-//! receiver PTP failed with, the format of `airplay::credentials`) and `player-token` (the browser player page's
-//! token, so its URL stays the same across runs).
+//! Three text items: `credentials` (the AirPlay controller identity, one
+//! block per paired receiver and one per receiver PTP failed with, the
+//! format of `airplay::credentials`) and `player-token` (the browser
+//! player page's token, so its URL stays the same across runs), both
+//! secret, and `tv-lag` (each TV's display lag as measured by tapping
+//! along in `tvpipe game play`: [`Storage::tv_lags`]).
 //!
 //! A program keeps them in its own directory by default
 //! ([`Storage::app`]); [`Storage::cli`] shares the `tvpipe` CLI's,
@@ -25,6 +27,10 @@ use crate::error::{Error, Result};
 pub const CREDENTIALS: &str = "credentials";
 /// The item holding the browser player page's token.
 pub const PLAYER_TOKEN: &str = "player-token";
+/// The item holding the TVs' display lags ([`Storage::tv_lags`]).
+pub const TV_LAG: &str = "tv-lag";
+/// The largest display lag kept, ms.
+pub const MAX_TV_LAG_MS: u32 = 2000;
 
 /// Overrides the CLI's config directory ([`Storage::cli`]).
 pub const CONFIG_DIR_ENV: &str = "TVPIPE_CONFIG_DIR";
@@ -160,7 +166,7 @@ impl Storage {
     /// read are left out.
     pub fn export(&self) -> String {
         let mut out = String::from("# tvpipe storage: private, do not share\n");
-        for item in [CREDENTIALS, PLAYER_TOKEN] {
+        for item in [CREDENTIALS, PLAYER_TOKEN, TV_LAG] {
             if let Ok(Some(text)) = self.load(item) {
                 out.push_str(&format!("[{item}]\n"));
                 out.push_str(&text);
@@ -170,6 +176,34 @@ impl Storage {
             }
         }
         out
+    }
+
+    /// Each TV's display lag by its name (as discovered, as `--to`
+    /// takes it): how much later than a phone or computer screen it
+    /// shows a picture, beyond its receiver's playout delay (its picture
+    /// processing, and the page's frame), ms. Measured by tapping along
+    /// in `tvpipe game play`'s launcher; `@tvpipe/party` keeps phones in
+    /// step with the TV by it.
+    pub fn tv_lags(&self) -> Result<BTreeMap<String, u32>> {
+        Ok(self
+            .load(TV_LAG)?
+            .map(|t| parse_tv_lags(&t))
+            .unwrap_or_default())
+    }
+
+    /// Sets a TV's display lag (`None` forgets it), replacing one kept
+    /// under the same name in another case.
+    pub fn set_tv_lag(&self, name: &str, ms: Option<u32>) -> Result<()> {
+        let name = name.trim();
+        if name.is_empty() || name.len() > 200 || name.contains(['\n', '\r']) {
+            return Err(Error::usage(format!("not a TV name: {name:?}")));
+        }
+        let mut lags = self.tv_lags()?;
+        lags.retain(|k, _| !k.eq_ignore_ascii_case(name));
+        if let Some(ms) = ms {
+            lags.insert(name.to_owned(), ms.min(MAX_TV_LAG_MS));
+        }
+        self.save(TV_LAG, &format_tv_lags(&lags))
     }
 
     /// The directory, for directory storages.
@@ -258,9 +292,50 @@ impl Default for Storage {
     }
 }
 
+/// A TV's lag in `lags` by name, any case.
+pub(crate) fn tv_lag_of(lags: &BTreeMap<String, u32>, name: &str) -> Option<u32> {
+    lags.iter()
+        .find(|(k, _)| k.eq_ignore_ascii_case(name))
+        .map(|(_, v)| *v)
+}
+
+/// `tv-lag`: lines `MS NAME`, `#` comments; anything else is skipped.
+fn parse_tv_lags(text: &str) -> BTreeMap<String, u32> {
+    let mut out = BTreeMap::new();
+    for line in text.lines() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let Some((ms, name)) = line.split_once(' ') else {
+            continue;
+        };
+        let name = name.trim();
+        match ms.parse::<u32>() {
+            Ok(ms) if !name.is_empty() => {
+                out.insert(name.to_owned(), ms.min(MAX_TV_LAG_MS));
+            }
+            _ => {}
+        }
+    }
+    out
+}
+
+fn format_tv_lags(lags: &BTreeMap<String, u32>) -> String {
+    let mut out = String::from(
+        "# tvpipe: how much later each TV shows a picture than a phone, beyond its\n\
+         # receiver's playout delay, ms (tap-along sync in `tvpipe game play`)\n",
+    );
+    for (name, ms) in lags {
+        out.push_str(&format!("{ms} {name}\n"));
+    }
+    out
+}
+
 fn file_name(item: &str) -> String {
     match item {
         CREDENTIALS => "credentials.txt".to_owned(),
+        TV_LAG => "tv-lag.txt".to_owned(),
         other => other.to_owned(),
     }
 }
@@ -523,6 +598,33 @@ pub(crate) mod tests {
         assert_eq!(c.load(PLAYER_TOKEN).unwrap(), None);
         c.save(PLAYER_TOKEN, "t").unwrap();
         assert_eq!(seen.lock().unwrap()[0], ("player-token".into(), "t".into()));
+    }
+
+    #[test]
+    fn tv_lags() {
+        let s = Storage::memory();
+        assert!(s.tv_lags().unwrap().is_empty());
+        s.set_tv_lag("Living Room", Some(162)).unwrap();
+        s.set_tv_lag("Kitchen", Some(9000)).unwrap();
+        s.set_tv_lag("living room", Some(140)).unwrap();
+        let lags = s.tv_lags().unwrap();
+        assert_eq!(lags.len(), 2, "{lags:?}");
+        assert_eq!(tv_lag_of(&lags, "LIVING ROOM"), Some(140));
+        assert_eq!(tv_lag_of(&lags, "Kitchen"), Some(MAX_TV_LAG_MS));
+        s.set_tv_lag("Kitchen", None).unwrap();
+        assert_eq!(tv_lag_of(&s.tv_lags().unwrap(), "Kitchen"), None);
+        assert!(s.set_tv_lag("a\nb", Some(1)).is_err());
+        assert!(s.set_tv_lag("  ", Some(1)).is_err());
+        let text = s.load(TV_LAG).unwrap().unwrap();
+        assert!(text.ends_with("140 living room\n"), "{text}");
+        // Hand edits: junk is skipped, names keep their spaces.
+        let parsed = parse_tv_lags("# c\n120  Den TV \nx Den\n-5 Hall\n80\n\n33 a b\n");
+        assert_eq!(
+            parsed.into_iter().collect::<Vec<_>>(),
+            [("Den TV".to_owned(), 120), ("a b".to_owned(), 33)]
+        );
+        // Exported with the rest.
+        assert!(s.export().contains("[tv-lag]\n"));
     }
 
     #[test]

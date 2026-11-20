@@ -166,5 +166,6 @@ test("tvDelayOf: the slowest connected receiver, with the TV's lag", () => {
     450,
   );
   assert.equal(tvDelayOf(status([{ name: "browser", protocol: "browser", state: "connected", delayMs: 100 }])), 130, "no TV after a browser");
+  assert.equal(tvDelayOf(status([{ name: "TV", protocol: "airplay", state: "connected", delayMs: 100, displayMs: 60 }])), 160, "measured (tap-along)");
   assert.equal(tvDelayOf(status([{ name: "TV", protocol: "cast", state: "connected", delayMs: 300 }], "stopped")), undefined);
 });
