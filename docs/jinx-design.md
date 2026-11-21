@@ -67,7 +67,11 @@ counts as missed, the bank stays as it is.
   change it: once, twice). A game takes about 10–20 minutes.
 - **Guesser order:** the join order, rotated by one each game.
 - **Joining late:** from the next round, appended to the guesser order
-  (the game gets one or two rounds longer). A player who leaves is
+  (the game gets one or two rounds longer). The host page can close a
+  running game to newcomers instead (the latecomers setting: "from the
+  next round" or "closed"; their phone says the game is closed to new
+  players right now); a player who dropped out comes back by name either
+  way. A player who leaves is
   skipped as guesser; a clue-giver who is gone when writing ends simply
   has no card.
 - **End of the game:** the room's result first, then the best clues of
@@ -388,8 +392,8 @@ card's word is there (the TV's dial holds full while the card turns).
 
 As drawbluff: `game/` (the rules: `rules.ts`, `match.ts`, `game.ts`, bots;
 TypeScript on `@tvpipe/party`, tested in Node), `host/` (the host page:
-the party, the TV, the players, settings: rounds, writing time,
-difficulty), `screen/` (the TV page), `phone/` (the phone page), `data/`
+the party, the TV, the players, settings: language, rounds, writing
+time, difficulty, latecomers), `screen/` (the TV page), `phone/` (the phone page), `data/`
 (`words.txt`, `dict.txt`, fetched by the host page), `CREDITS.md`.
 
 - The host page runs all the rules and matching; phones and the TV only

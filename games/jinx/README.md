@@ -22,7 +22,7 @@ phones join with the QR code.
 |---|---|---|
 | `tvpipe.json` | the manifest | pages, 3–8 players, the TV's size; `root: dist` |
 | `game/` | the rules (`rules.ts`), the clue matchers (`match.ts` English, `match-de.ts` German, `lang.ts` picks one), the game (`game.ts`), bots (`bots.ts`), the views (`views.ts`: the contract between host, TV and phones) | TypeScript on `@tvpipe/party`, tested in Node |
-| `host/` | the host page | tvpipe's standard host page (`HostPage`: the party, the TVs, the players, a muted preview of the TV) with Jinx's settings as a spec (`host.ts`: language, rounds, writing time, words) and its look (`host.css`); `strings.ts` (the status line, Play again) |
+| `host/` | the host page | tvpipe's standard host page (`HostPage`: the party, the TVs, the players, a muted preview of the TV) with Jinx's settings as a spec (`host.ts`: language, rounds, writing time, words, latecomers) and its look (`host.css`); `strings.ts` (the status line, Play again) |
 | `screen/` | the TV page | the table seen from above; `strings.js` |
 | `phone/` | the phone page | faces, clues, cards, the guess; `strings.js`, `i18n.js` (numbers, plurals, lists) |
 | `data/words.txt`, `data/dict.txt`, `data/words.de.txt`, `data/dict.de.txt` | per language: the secret words (with difficulty, category, accepted guesses, banned clues), the dictionary for typos and word forms | fetched by the host page; `design/` has how they were made (German: `design/words/de/`, `design/matching/de/`); `dict.de.txt` is the German Wiktionary's, CC BY-SA 4.0 (`dict.de-LICENSE.txt`) |
@@ -45,7 +45,8 @@ are in (or the host page's Start), and offers "Play again" at the end.
 Settings: language, rounds (auto: every player guesses twice with 3–5 players, once
 with 6–8; or once, or twice), writing time (30/45/60/90 s), words (easy,
 normal: mostly easy and medium with one hard word in ten, hard: medium
-and hard). The room deals no word twice until it dealt them all (kept per
+and hard), latecomers (from the next round, or closed: nobody new joins
+during a game; a player who dropped out still comes back by name). The room deals no word twice until it dealt them all (kept per
 language in the host page's `localStorage`) and never two related words
 in one game. The host page also keeps the room's record: its best bank
 for a game of that many rounds.
@@ -79,7 +80,7 @@ rules (`test/rules.test.ts`: the pot, the bank, dealing, guesser order, titles a
 awards, the web), and whole games with bots on `@tvpipe/party`'s relay
 in memory (`test/game.test.ts`): 3 and 4 players, play again, clue
 refusals and replacing, all clues jinxed, wrong guesses and passes (the bank never below 0), the bank, best clues and the record, timers
-for a silent or disconnected guesser, a late joiner, a player who leaves,
+for a silent or disconnected guesser, a late joiner, a room closed to latecomers, a player who leaves,
 a guesser who leaves, the secrecy of the word on the TV and the guesser's
 phone; a German game with bots, the language switched between games
 (each language with its own dealt words) and a German refusal.

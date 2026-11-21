@@ -5,7 +5,7 @@
  * and shows the room on tvpipe's standard host page (`HostPage` of
  * @tvpipe/party: the QR code, the TVs, the players, a muted preview of
  * the TV) with Jinx's settings (`settings` below: rounds, writing time,
- * words). Bots are for tests: their buttons show only in test mode
+ * words, latecomers). Bots are for tests: their buttons show only in test mode
  * (`tvpipe game play --dev`) or with `?bots` in the page's URL. The
  * room's dealt words are kept in `localStorage` per language, so no word
  * comes twice until all were dealt, and so are the room's records (the
@@ -15,7 +15,7 @@
  * follow it. A language whose data files are missing cannot be picked.
  */
 
-import { HostPage, languageField, preferredLang, type Field } from "@tvpipe/party";
+import { HostPage, languageField, lateJoinField, preferredLang, type Field } from "@tvpipe/party";
 
 import { bots, type Bot } from "../game/bots.ts";
 import { Jinx } from "../game/game.ts";
@@ -85,6 +85,8 @@ function settings(game: Jinx, words: Partial<Record<Lang, WordEntry[]>>): Field[
       get: () => game.difficulty,
       set: (difficulty: Difficulty) => game.configure({ difficulty }),
     },
+    // Latecomers play from the next round, or the game is closed to them (they can still rejoin by name).
+    lateJoinField(game.party, ["wait", "closed"]),
   ];
 }
 

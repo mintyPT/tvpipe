@@ -484,6 +484,24 @@ test("too few, non-VIP start, kick; a late joiner plays from the next round, rou
   }
 });
 
+test("closed to latecomers (the host page's setting): nobody new joins during a game, anyone between games", async () => {
+  const { party, g, players, add, close } = await setup(3, { rounds: 1, bot: () => ({ clues: "random" }) });
+  try {
+    party.lateJoin = "closed";
+    const end = new Promise((r) => g.once("end", r));
+    await players[0]!.client.act("start");
+    await until(() => g.phase === "write");
+    await assert.rejects(add("Late", 3), (e: { code: string }) => e.code === "in-progress");
+    assert.equal(party.players.length, 3);
+    await end;
+    // Between games anyone may join.
+    await add("After", 4);
+    assert.equal(party.players.length, 4);
+  } finally {
+    close();
+  }
+});
+
 test("a player who leaves: skipped as guesser, kept on the TV as left", async () => {
   const { party, g, players, screens, close } = await setup(4, { rounds: 1, bot: () => ({ clues: "random" }) });
   try {
