@@ -712,11 +712,9 @@ into a canvas: `<canvas layoutsubtree content="drawable">` with
 pixels in the canvas). So a game's existing DOM TV page can become a
 surface without changes: the host page puts the TV page in such an
 iframe, draws it every frame and encodes the canvas. Drawbluff's host
-page does this with **TV picture: drawn here** (`host.ts`,
-`beamCanvas`); a whole game ran that way (`node test/live/play.ts
---tv canvas`: the TV picture through the `browser` receiver, every
-phase as with the tab). Limits: Chromium only (the setting is disabled
-elsewhere); painting stops while the window is hidden, like
+page once did this (a "TV picture: drawn here" setting, since removed);
+a whole game ran that way, every phase as with the tab. Limits:
+Chromium only; painting stops while the window is hidden, like
 `requestAnimationFrame` (the TV freezes, the game goes on); the TV page's
 own sound stays in the window unless the game routes it into
 `captureAudio`.

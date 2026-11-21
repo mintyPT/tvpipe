@@ -8,7 +8,7 @@
  * stream); bots join through the public listener. Screenshots of the
  * launcher, the host window, the TV and the phone per phase.
  *
- *   npm run build && node test/live/play.ts [--zip] [--bots N] [--rounds N] [--tunnel=PROVIDER] [--tv page|canvas] [--lang en|de] [--animate] [--out DIR] [--shots DIR]
+ *   npm run build && node test/live/play.ts [--zip] [--bots N] [--rounds N] [--tunnel=PROVIDER] [--lang en|de] [--animate] [--out DIR] [--shots DIR]
  *
  * `--animate`: the VIP turns animated drawings on; Phil draws frame 1,
  * copies it into frame 2 and changes the mouth (shots in
@@ -20,10 +20,6 @@
  * (the phone, also at 320 px wide, and the TV page in the host's
  * preview): no text running out of its box, nothing off the screen, no
  * English left in a German room.
- *
- * `--tv canvas`: the TV page drawn into a canvas in the window
- * (HTML-in-Canvas) and streamed as a surface instead of tvpipe's own
- * browser capturing it (docs/playshare-design.md §17).
  *
  * `--shots DIR`: the pictures for the games list (docs/game-catalog.md)
  * into DIR: `tv-vote` (the TV page), `phone-draw` and `phone-vote`. The
@@ -82,7 +78,7 @@ if (args.shots && (lang !== "en" || (args.bots !== undefined && Number(args.bots
   throw new Error(`--shots plays scenario.ts: in English, with ${NAMES.length} others`);
 }
 const nBots = args.shots ? NAMES.length : Number(args.bots ?? 2);
-const out = `${args.out ?? (lang === "de" ? "/tmp/drawbluff-de" : "/tmp/drawbluff-play")}${args.zip ? "-zip" : ""}${args.tv === "canvas" ? "-canvas" : ""}${args.animate ? "-animate" : ""}`;
+const out = `${args.out ?? (lang === "de" ? "/tmp/drawbluff-de" : "/tmp/drawbluff-play")}${args.zip ? "-zip" : ""}${args.animate ? "-animate" : ""}`;
 mkdirSync(out, { recursive: true });
 if (args.shots) mkdirSync(args.shots, { recursive: true });
 const t0 = Date.now();
@@ -139,12 +135,6 @@ try {
   log(`room ${links.code}, phones join at ${links.join.replace(/#.*/, "#k=…")}`);
   // The TV: the browser receiver's player page, once the cast streams.
   await win.until(`!document.getElementById("player").hidden`, 60_000);
-  if (args.tv === "canvas") {
-    const before = await win.eval<string>(`document.getElementById("player").href`);
-    await win.eval(`(() => { const m = document.getElementById("tvmode"); m.value = "canvas"; m.dispatchEvent(new Event("change")); return true; })()`);
-    await win.until(`document.getElementById("player").href !== ${JSON.stringify(before)} && !document.getElementById("player").hidden`, 60_000);
-    log("the TV picture is drawn in the window (HTML-in-Canvas) and streamed as a surface");
-  }
   const playerUrl = await win.eval<string>(`document.getElementById("player").href`);
   const tv = await browser.open(playerUrl, { width: 1280, height: 720 });
   log(`TV: ${playerUrl.replace(/t=.*/, "t=…")}`);

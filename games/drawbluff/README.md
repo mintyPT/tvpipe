@@ -81,12 +81,9 @@ on this computer"), then Start. The window becomes the host page: the
 room code and QR code, the TVs, the players, rounds and timers, and who
 may join during a game (from the next round, anytime, or not at all).
 Scan the QR code on the TV; the first player is the VIP and starts the
-game from their phone once three are in (or the host page's Start). The TV picture comes
-from tvpipe's own browser showing the TV page (the default), or, with
-**TV picture: drawn here** in Chrome 157+, from the TV page drawn into a
-canvas in the window (HTML-in-Canvas) and streamed as a surface: no
-second browser, but the window must stay visible (docs/playshare-design.md
-§17). Closing the window ends it all. To try it alone, `--dev` (test mode)
+game from their phone once three are in (or the host page's Start). The
+TV picture comes from tvpipe's own browser showing the TV page. Closing
+the window ends it all. To try it alone, `--dev` (test mode)
 puts "Add a bot" and "Add 3 bots" on the host page: dummy players that
 join and play by themselves; join with your phone (or the join link in
 a browser tab), add two bots, start. `tvpipe game play --help`: tunnels (`--tunnel=opentunnel`,

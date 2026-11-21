@@ -116,7 +116,7 @@ A game that streams a canvas this way does not need a party client on its TV pag
 
 Drawing stops while the window is minimized, unless the canvas lives in a worker. With an `OffscreenCanvas` drawn on a timer there (`clock: "timer"`), the library's `SurfaceEncoder` runs in the worker too.
 
-A TV page made of HTML can be drawn into a canvas in Chrome 157 and later (HTML-in-Canvas). The demo game offers it as **TV picture: drawn here**. [docs/playshare-design.md](https://github.com/mitsuhiko/tvpipe/blob/main/docs/playshare-design.md) explains surfaces in section 17.
+A TV page made of HTML can be drawn into a canvas in Chrome 157 and later (HTML-in-Canvas) and streamed the same way. [docs/playshare-design.md](https://github.com/mitsuhiko/tvpipe/blob/main/docs/playshare-design.md) explains surfaces in section 17.
 
 ## Check and pack
 
