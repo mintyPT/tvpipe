@@ -53,7 +53,7 @@ impl Default for Limits {
 pub struct Manifest {
     pub name: String,
     pub title: String,
-    /// The tvpipe the game is made for (`"0.2"`), checked already.
+    /// The tvpipe the game is made for (`"0.3"`), checked already.
     pub tvpipe: Option<String>,
     /// The served directory, relative to the manifest (`""`: its own).
     pub root: String,

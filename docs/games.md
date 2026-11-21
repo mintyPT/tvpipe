@@ -100,7 +100,7 @@ drawbluff/
 |---|---|---|
 | `name` | required | 1–40 of `a-z`, `0-9`, `-`: logs, the zip's folder and file name |
 | `title` | optional | the launcher's heading (default: `name`), at most 80 characters |
-| `tvpipe` | recommended | the tvpipe (and so `@tvpipe/party`) the game is made for, `"0.2"`; see [Versions](#versions) |
+| `tvpipe` | recommended | the tvpipe (and so `@tvpipe/party`) the game is made for, `"0.3"`; see [Versions](#versions) |
 | `root` | optional | the served folder, relative to `tvpipe.json` (default: its own folder) |
 | `pages.host` | required | the host page, relative to `root` |
 | `pages.tv` | required | the TV page |
@@ -137,11 +137,23 @@ message naming it.
 - The **TV page** only draws `view.screen` (what the host sets) and
   `view.join` (the code, link and QR code). It renders at `tv` size,
   with sound; a browser of tvpipe's own allows autoplay. Keep it to one
-  screen without scrolling.
+  screen without scrolling, and out of the join badge's corner
+  (`data-tvpipe-join`, `--tvpipe-join-w`/`-h`: the join badge in
+  [Using `@tvpipe/party`](#using-tvpipeparty)): nothing the players
+  need may sit under it, not even with the most players the game takes.
 - The **phone page** joins with a name (`client.join(name)`), or
   reconnects (`client.connect()`) when the phone played before, then
   shows `view.room` and `view.me` and sends actions. Make it work on a
   small touch screen, in portrait.
+- **Words are read whole**, on the TV and on phones. A word players
+  must read (a prompt, a clue, a guess, a name on a card) is never cut
+  off (no ellipsis, no line clamp) and never broken in the middle
+  ("Schraubenschlüs-sel": no `overflow-wrap: anywhere`, no `hyphens:
+  auto`). Give it a smaller font until it fits instead (Krakel's
+  `phone/fit.js` does it for elements marked `data-fit`); text may
+  break between words. A typed field's font gets smaller as the text
+  outgrows it. Check with the longest words the game has (in German
+  too).
 - A **launcher of your own** (rarely needed) may call any `Tvpipe`
   method; it ends with `tvpipe.select(names)` and a navigation to the
   host page. tvpipe's standard one lists the TVs, pairs AirPlay TVs that
@@ -283,8 +295,10 @@ the TV's own picture processing: about a quarter of a second on an Apple
 TV, half a second on Cast (`party.tvDelay` has tvpipe's figure for the
 TVs that show the game, 0 without one). Without help, phones show the
 vote before the TV shows the drawing, give away a result the TV is about
-to reveal, and countdowns on the TV run behind the phones'. Three things
-keep them together:
+to reveal, and countdowns on the TV run behind the phones'. The rule:
+**a phone never learns a phase, a result or a score before the TV shows
+it**, not even in a view it does not draw yet. Three things keep them
+together:
 
 - **`party.withTv(() => { … })`** around what the TV shows: a new phase,
   a reveal, a result. Views changed inside it (`room`, `screen`,
@@ -323,6 +337,13 @@ own code (`party.showRejoin(player)`). What a game must do:
 - Keep their place: an away player stays in the game (`player.connected`
   is false meanwhile), with their score and their part of the round;
   their phone gets the whole view back (`me` included) and carries on.
+- End early when too few are left: at the start of each round (after
+  letting latecomers in), a running game with fewer players in it than
+  it needs to start (`players.min`; a `minPlayers` option, never a
+  literal) ends at once, on its normal final screen. Players who left
+  or were removed do not count (they are gone from `party.players`); an
+  away phone does (it may come back). The round in progress is not cut
+  short: its deadlines end it.
 - Make room for the join badge (below).
 - A "Rejoin code" button beside away players on the host page
   (`party.showRejoin(p)`; the standard host page has it).
