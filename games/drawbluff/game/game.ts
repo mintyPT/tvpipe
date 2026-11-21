@@ -13,7 +13,7 @@
  *   `lobby`, `wait` (a late joiner), `draw` (`prompt`, `palette`, `undo`, `frames`, `deadline`, `done`),
  *   `lie` (`key`, `drawing`, `artist`, `liars`, `early`, `deadline`, `done`, `lie`),
  *   `artist` (`key`), `vote` (`key`, `options`, `deadline`, `done`, `choice`),
- *   `watch` (`note`, `result`), `scores`/`final`
+ *   `watch` (`note`; `result` with `note: "result"`, after the TV showed the truth), `scores`/`final`
  * - `party.screen` (the TV): `{ phase, lang, colors, … }` per phase, see each method;
  *   `colors` every player's colour by id. While drawing `ink` (how much
  *   each one drew, from the phones' continuous input `{ ink }`), while
@@ -968,10 +968,9 @@ export class Drawbluff extends Emitter<GameEvents> {
       },
     });
 
-    // Points and the reveal.
+    // Points (counted once the TV showed them, see #reveal) and the reveal.
     const byVoter = new Map([...votes].map(([p, o]) => [p.id, o]));
     const scoring = score(artist.id, options, shown, byVoter, round);
-    for (const [id, n] of scoring.points) this.scores.set(id, (this.scores.get(id) ?? 0) + n);
     for (const [id, o] of byVoter) {
       const opt = options.find((x) => x.id === o);
       if (!opt || !scoring.voters.get(o)!.includes(id)) continue;
@@ -1037,20 +1036,32 @@ export class Drawbluff extends Emitter<GameEvents> {
         stepMs: this.timings.revealStep,
         endMs: this.timings.revealEnd,
       });
+      // The TV tells: the phones only say to look at it (scores and ranks from before this drawing).
       for (const p of party.players) {
         if (writing.has(p)) continue;
-        if (!this.scores.has(p.id)) {
-          p.state.replace(this.#waitState(p));
-          continue;
-        }
-        p.state.replace({ task: "watch", note: "reveal", result: this.#result(p, spot, options, scoring, votes), ...this.#rank(p) });
+        p.state.replace(this.scores.has(p.id) ? { task: "watch", note: "reveal", ...this.#rank(p) } : this.#waitState(p));
       }
     });
     for (let step = 1; step <= items.length; step++) {
       await this.#sleep(this.timings.revealStep);
       this.#withTv(() => party.screen.set({ step }));
     }
-    await this.#sleep(this.timings.revealEnd);
+    // Once the TV showed the truth and its points: the points count, and
+    // each phone says what it did for you (`note: "result"`).
+    const after = Math.min(this.timings.revealStep, Math.floor(this.timings.revealEnd / 2));
+    await this.#sleep(after);
+    for (const [id, n] of scoring.points) this.scores.set(id, (this.scores.get(id) ?? 0) + n);
+    this.#withTv(() => {
+      for (const p of party.players) {
+        if (writing.has(p)) continue;
+        if (!this.scores.has(p.id)) {
+          p.state.replace(this.#waitState(p));
+          continue;
+        }
+        p.state.replace({ task: "watch", note: "result", result: this.#result(p, spot, options, scoring, votes), ...this.#rank(p) });
+      }
+    });
+    await this.#sleep(this.timings.revealEnd - after);
   }
 
   /** What one phone says after a vote: what you found, who fooled you, what your lie did. */

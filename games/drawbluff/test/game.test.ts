@@ -596,6 +596,46 @@ test("animated drawings: two frames on every pad, the TV, the liars' and the vot
   }
 });
 
+test("the reveal: no phone tells its points before the TV showed the truth", async () => {
+  const { server, party, g, players } = await game(4, { rounds: 1 });
+  try {
+    let before = new Map<string, number>();
+    g.on("phase", (p) => {
+      if (p === "vote") before = new Map(g.scores);
+    });
+    const leaks: string[] = [];
+    let steps = 0;
+    const off = party.on("screen-view", (v) => {
+      const s = v["screen"] as { phase: string; step: number; items: unknown[] };
+      if (s.phase !== "reveal" || s.step >= s.items.length) return;
+      steps++;
+      for (const p of party.players) {
+        const st = p.state.peek() as Record<string, unknown>;
+        if (st["note"] === "result" || st["result"] !== undefined) leaks.push(`${p.name}: a result at step ${s.step}`);
+        if (g.scores.get(p.id) !== before.get(p.id)) leaks.push(`${p.name}: points at step ${s.step}`);
+        if (typeof st["score"] === "number" && st["score"] !== before.get(p.id)) leaks.push(`${p.name}: score ${String(st["score"])} at step ${s.step}`);
+      }
+    });
+    const results = new Set<string>();
+    for (const b of players) {
+      b.client.on("view", (v) => {
+        const me = v["me"] as Record<string, any> | undefined;
+        if (me?.["note"] === "result" && me["result"]) results.add(b.name);
+      });
+    }
+    const end = new Promise((r) => g.once("end", r));
+    await players[0]!.client.act("start");
+    await end;
+    off();
+    assert.ok(steps > 0);
+    assert.deepEqual(leaks, []);
+    assert.deepEqual(results, new Set(players.map((b) => b.name)), "every phone got its result after all");
+  } finally {
+    for (const b of players) b.close();
+    await server.close();
+  }
+});
+
 test("the TV: every player's colour in every phase, ink while drawing, who types, the reveal's ids", async () => {
   const { server, party, g, players } = await game(4, { rounds: 1, think: 900 });
   try {

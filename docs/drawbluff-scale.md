@@ -89,11 +89,13 @@ its liars get the drawing when the gallery starts.
 | `lie` | "You're a liar for Bob's drawing (1 of 7)" + the drawing + the input; pipelined also "It's next on the TV: you sit this vote out" | from when the liars get the drawing until they answer |
 | `artist` | "That's your drawing! Watch the others try to name it." | lie and vote of their spotlight (unless they are the next liars) |
 | `vote` | the drawing, the truth and ≤ 5 lies (in the TV's order) | vote |
-| `watch` | the note of the moment (gallery: "your drawing is in it"; lie: "not lying on this one"; reveal: your result "+1000, you found it" / "fooled by Anna") + own score and **rank "#12 of 50"** | everything else |
+| `watch` | the note of the moment (gallery: "your drawing is in it"; lie: "not lying on this one"; reveal: "look at the TV", then, once the TV showed the truth and its points, your result "+1000, you found it" / "fooled by Anna") + own score and **rank "#12 of 50"** | everything else |
 | `scores`, `final` | score, rank of N | between rounds, the end |
 
 Every state carries `score`, `rank` and `of`, so the phone always shows
-"#12 of 50".
+"#12 of 50". A drawing's points count from the moment its result goes
+to the phones, so no phone (score, rank or result) tells before the TV
+does.
 
 ## 4. What the TV shows (legible for 50)
 

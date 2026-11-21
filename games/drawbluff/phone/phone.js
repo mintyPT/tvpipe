@@ -341,7 +341,7 @@ function watch(me, room) {
     return scoreCard(t.drawingOf(me.artist?.name), me, h("p", { class: "big" }, t.notLying));
   }
   const r = me.result;
-  if (me.note === "reveal" && r) {
+  if (me.note === "result" && r) {
     const lines = [];
     if (r.kind === "artist") lines.push(t.artistResult(r.count ?? 0, r.seen ?? 0));
     if (r.kind === "found") lines.push(t.found);
