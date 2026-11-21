@@ -244,6 +244,9 @@ is the bright one.
   leaves, which is wider than tall: that is not a phone on its side
   (the sideways layout asks for 560 px of width), and with little
   height left everything but the picture gets smaller.
+- **Reduced motion** (the system's setting) stops everything that
+  loops or blinks, on the TV and the phone: the logo's bounce, the red
+  seconds, the wiggles and the beating heart.
 
 ## 7. Views and privacy
 

@@ -329,6 +329,5 @@ h1 small { font-size: 2.2rem; margin-left: 1.6rem; color: var(--ink); -webkit-te
 :root { --tvpipe-join-bg: var(--paper); --tvpipe-join-fg: var(--ink); --tvpipe-join-accent: var(--ink); --tvpipe-join-font: "Shantell Sans", system-ui, sans-serif; --tvpipe-join-border: .32rem solid var(--ink); --tvpipe-join-shadow: .4rem .5rem 0 var(--ink); --tvpipe-join-x: 3rem; --tvpipe-join-y: 2.4rem; }
 #status { position: absolute; left: 0; right: 0; bottom: 0; background: var(--red); color: #fff; text-align: center; padding: 1rem; z-index: 30; font-weight: 700; }
 @media (prefers-reduced-motion: reduce) {
-  .logo span { animation-duration: 6s; }
-  .easel.busy .pad, .lobby .doodle, .lobby .hint.ready { animation: none; }
+  .logo span, .clock.low .secs, .easel.busy .pad, .lobby .doodle, .lobby .hint.ready, .podium .p1 .avatar { animation: none; }
 }
