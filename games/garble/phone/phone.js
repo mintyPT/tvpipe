@@ -10,13 +10,12 @@
 
 import { PartyClient } from "/_tvpipe/lib/client.js";
 import { browserLang, num, pickLang } from "./i18n.js";
-import { drawInk, drawLayers, fit, GRID, INK, Live, OLD_INK } from "./ink.js";
+import { drawInk, drawLayers, fit, GRID, INK, Live, MAX_POINTS, MAX_STROKES, OLD_INK, WIDTHS } from "./ink.js";
 import { strings } from "./strings.js";
 
-const WIDTHS = [7, 16, 38];
+/** The pens' buttons: a dot per width (WIDTHS, game/ink.ts). */
 const DOTS = [7, 13, 22];
-const MAX_STROKES = 400;
-const MAX_POINTS = 16000;
+/** The longest guess (MAX_GUESS, game/rules.ts). */
 const MAX_GUESS = 28;
 /** The earlier layers of a best-move candidate, under its own in colour. */
 const FADED = "#cdc6b6";
@@ -456,11 +455,14 @@ class Pad {
     /** @type {number[][]} */
     this.strokes = [];
     this.points = 0;
+    /** @type {number} */
     this.width = WIDTHS[1];
     /** @type {Live | null} */
     this.live = null;
     this.locked = false;
     this.onchange = () => {};
+    /** A stroke was refused: the layer has all the ink it can take. */
+    this.onfull = () => {};
     const f = fit(canvas);
     this.ctx = f.ctx;
     this.size = f.size;
@@ -483,6 +485,10 @@ class Pad {
   redraw() {
     drawLayers(this.ctx, [{ drawing: this.base, color: OLD_INK }, { drawing: { strokes: this.strokes }, color: INK }], 0, 0, this.size);
   }
+  /** Whether the layer has all the strokes or points it can take (MAX_STROKES, MAX_POINTS). */
+  get full() {
+    return this.strokes.length >= MAX_STROKES || this.points >= MAX_POINTS;
+  }
   /** @param {PointerEvent} e */
   at(e) {
     const r = this.canvas.getBoundingClientRect();
@@ -491,8 +497,9 @@ class Pad {
   }
   /** @param {PointerEvent} e */
   down(e) {
-    if (this.locked || this.live || this.strokes.length >= MAX_STROKES || this.points >= MAX_POINTS) return;
+    if (this.locked || this.live) return;
     e.preventDefault();
+    if (this.full) return this.onfull();
     try {
       this.canvas.setPointerCapture(e.pointerId);
     } catch {}
@@ -509,7 +516,10 @@ class Pad {
     if (!live) return;
     e.preventDefault();
     for (const ev of e.getCoalescedEvents?.() ?? [e]) {
-      if (this.points >= MAX_POINTS) return this.up();
+      if (this.points >= MAX_POINTS) {
+        this.up();
+        return this.onfull();
+      }
       const [x, y] = this.at(ev);
       const s = live.s;
       if (Math.hypot(x - s[s.length - 2], y - s[s.length - 1]) < 4) continue;
@@ -595,6 +605,11 @@ function draw(me) {
     };
     changed();
   } else pad.onchange = () => hint?.classList.add("gone");
+  pad.onfull = () => {
+    const say = t.inkOut(!!me.undo);
+    err.textContent = say;
+    setTimeout(() => err.textContent === say && (err.textContent = ""), 3000);
+  };
   tools.append(done);
   // The first step: pick one of two words, then draw.
   /** @type {number | undefined} */

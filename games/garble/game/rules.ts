@@ -17,17 +17,13 @@
 
 import { cleanText, PartyError } from "@tvpipe/party";
 
-// ---------------------------------------------------------------------------
-// Drawings: strokes on a square grid.
+import { GRID, MAX_POINTS, MAX_STROKES, MAX_WIDTH } from "./ink.ts";
 
-/** Drawings are on a GRID × GRID square. */
-export const GRID = 1000;
-/** The pens' widths (fine, medium, thick) on the grid. */
-export const WIDTHS = [7, 16, 38] as const;
-export const MAX_WIDTH = 80;
-/** The most strokes and points of one layer. */
-export const MAX_STROKES = 400;
-export const MAX_POINTS = 16_000;
+// ---------------------------------------------------------------------------
+// Drawings: strokes on a square grid (the grid and the limits: game/ink.ts, shared with the pages).
+
+export { GRID, MAX_POINTS, MAX_STROKES, MAX_WIDTH, WIDTHS } from "./ink.ts";
+
 /** The longest guess (characters): a word or two. */
 export const MAX_GUESS = 28;
 

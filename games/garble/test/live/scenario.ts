@@ -26,14 +26,13 @@
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
+import { WIDTHS } from "../../game/ink.ts";
 import type { Tab } from "./browser.ts";
 
 type Stroke = number[];
 
-/** The phone's pens (`WIDTHS` in phone/phone.js). */
-const FINE = 7;
-const PEN = 16;
-const FAT = 38;
+/** The phone's pens. */
+const [FINE, PEN, FAT] = WIDTHS as readonly number[] as [number, number, number];
 
 // A steady hand that is not a machine's: small fixed wobbles.
 let seed = 7;

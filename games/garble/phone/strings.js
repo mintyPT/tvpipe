@@ -73,6 +73,7 @@ const EN = {
   clearSure: "sure?",
   undoBtn: "undo",
   done: "Done",
+  inkOut: (/** @type {boolean} */ undo) => /** @type {string} */ (undo ? "Out of ink: this layer is full. Undo something to draw more." : "Out of ink: this layer is full."),
   // Guessing
   whatNow: "What is it now?",
   from: (/** @type {string} */ name) => `from ${name}`,
@@ -177,6 +178,7 @@ const DE = {
   clearSure: "sicher?",
   undoBtn: "zurück",
   done: "Fertig",
+  inkOut: (undo) => (undo ? "Keine Tinte mehr: Die Schicht ist voll. Nimm etwas zurück, um weiterzuzeichnen." : "Keine Tinte mehr: Die Schicht ist voll."),
   whatNow: "Was ist es jetzt?",
   from: (name) => `von ${name}`,
   lastGuess: "der letzte Tipp",

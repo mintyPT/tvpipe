@@ -162,7 +162,17 @@ TV only.
 
 The phone is made for thumbs: the pad as large as the screen allows,
 the word to draw above it, the tools under the thumb; the guess screen
-keyboard-aware, the picture as large as fits above the field.
+keyboard-aware, the picture as large as fits above the field. A layer
+takes at most 400 strokes and 16,000 points (one message); a full pad
+says so ("Out of ink", with "undo something" when undo is on) instead
+of ignoring the finger.
+
+The ink's geometry (the grid, the pens, the limits, a stroke's smoothed
+path, a replay's cut by length) is one module, `game/ink.ts`, which the
+rules check drawings with and the pages draw with (`phone/ink.js`), with
+known answers in `test/ink.test.ts`. A replay keeps the strokes that
+are whole on a sheet of their own, so a frame draws only the stroke
+being drawn.
 
 ## 7. Views and privacy
 

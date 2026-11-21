@@ -10,64 +10,19 @@
  * Strokes are smoothed the same way everywhere: a quadratic curve
  * through the midpoints of the points (the pad draws it piece by piece
  * while the finger moves, see {@link Live}). A replay draws a drawing
- * the way it was drawn, stroke by stroke, along its length.
+ * the way it was drawn, stroke by stroke, along its length. The geometry
+ * (the grid, the limits, the paths, a replay's cut) is `game/ink.ts`,
+ * shared with the rules.
  */
 
-export const GRID = 1000;
+import { cut, GRID, polyline, replayTime as timeOf } from "../game/ink.js";
+
+export { GRID, MAX_POINTS, MAX_STROKES, WIDTHS } from "../game/ink.js";
+
 export const INK = "#17161c";
 /** The old ink on the pad: the layers before yours, a shade lighter than your own. */
 export const OLD_INK = "#8d8a97";
 export const PAPER = "#fbf8f1";
-
-/**
- * A stroke's path as a polyline (curves sampled), in grid units: the
- * same shape {@link strokePath} draws, for replays.
- * @type {WeakMap<number[], number[]>}
- */
-const sampled = new WeakMap();
-
-/** @param {number[]} s */
-function polyline(s) {
-  let out = sampled.get(s);
-  if (out) return out;
-  out = [];
-  const n = (s.length - 1) / 2;
-  const x = (/** @type {number} */ i) => s[1 + 2 * i];
-  const y = (/** @type {number} */ i) => s[2 + 2 * i];
-  if (n <= 2) {
-    for (let i = 0; i < n; i++) out.push(x(i), y(i));
-  } else {
-    out.push(x(0), y(0));
-    let px = (x(0) + x(1)) / 2;
-    let py = (y(0) + y(1)) / 2;
-    out.push(px, py);
-    for (let i = 1; i < n - 1; i++) {
-      const cx = x(i);
-      const cy = y(i);
-      const nx = (x(i) + x(i + 1)) / 2;
-      const ny = (y(i) + y(i + 1)) / 2;
-      for (let t = 1; t <= 4; t++) {
-        const u = t / 4;
-        const a = (1 - u) * (1 - u);
-        const b = 2 * (1 - u) * u;
-        const c = u * u;
-        out.push(a * px + b * cx + c * nx, a * py + b * cy + c * ny);
-      }
-      px = nx;
-      py = ny;
-    }
-    out.push(x(n - 1), y(n - 1));
-  }
-  sampled.set(s, out);
-  return out;
-}
-
-/** @param {number[]} p a polyline */
-function lengthOf(p) {
-  let len = 0;
-  for (let i = 2; i + 1 < p.length; i += 2) len += Math.hypot(p[i] - p[i - 2], p[i + 1] - p[i - 1]);
-  return len;
-}
 
 /**
  * @param {CanvasRenderingContext2D} ctx
@@ -109,6 +64,25 @@ export function strokePath(ctx, s, x0, y0, k, color = INK) {
 }
 
 /**
+ * A polyline (`[x, y, …]` in grid units) with a stroke's pen: the part
+ * of a stroke a replay has drawn so far.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {readonly number[]} s the stroke (its width)
+ * @param {readonly number[]} p
+ * @param {number} x0
+ * @param {number} y0
+ * @param {number} k px per grid unit
+ * @param {string} color
+ */
+function path(ctx, s, p, x0, y0, k, color) {
+  pen(ctx, s[0], k, color);
+  ctx.beginPath();
+  ctx.moveTo(x0 + p[0] * k, y0 + p[1] * k);
+  for (let i = 2; i + 1 < p.length; i += 2) ctx.lineTo(x0 + p[i] * k, y0 + p[i + 1] * k);
+  ctx.stroke();
+}
+
+/**
  * A whole drawing on paper, `size` px square at (x, y).
  * @param {CanvasRenderingContext2D} ctx
  * @param {{ strokes?: number[][] } | null | undefined} drawing
@@ -130,37 +104,9 @@ export function drawInk(ctx, drawing, x, y, size, opts = {}) {
   ctx.clip();
   const k = size / GRID;
   const strokes = drawing?.strokes ?? [];
-  const progress = opts.progress ?? 1;
-  if (progress >= 1) {
-    for (const s of strokes) strokePath(ctx, s, x, y, k, color);
-  } else if (progress > 0) {
-    // Dots count as a short stroke, so they appear in turn.
-    const lens = strokes.map((s) => (s.length <= 3 ? 12 : lengthOf(polyline(s))));
-    const total = lens.reduce((a, b) => a + b, 0);
-    let left = total * progress;
-    for (let i = 0; i < strokes.length && left > 0; i++) {
-      const s = strokes[i];
-      if (left >= lens[i]) {
-        strokePath(ctx, s, x, y, k, color);
-        left -= lens[i];
-        continue;
-      }
-      if (s.length <= 3) break;
-      // The stroke drawn so far.
-      const p = polyline(s);
-      pen(ctx, s[0], k, color);
-      ctx.beginPath();
-      ctx.moveTo(x + p[0] * k, y + p[1] * k);
-      for (let j = 2; j + 1 < p.length && left > 0; j += 2) {
-        const d = Math.hypot(p[j] - p[j - 2], p[j + 1] - p[j - 1]);
-        const f = d > left ? left / d : 1;
-        ctx.lineTo(x + (p[j - 2] + (p[j] - p[j - 2]) * f) * k, y + (p[j - 1] + (p[j + 1] - p[j - 1]) * f) * k);
-        left -= d;
-      }
-      ctx.stroke();
-      break;
-    }
-  }
+  const c = cut(strokes, opts.progress ?? 1);
+  for (let i = 0; i < c.whole; i++) strokePath(ctx, strokes[i], x, y, k, color);
+  if (c.part) path(ctx, strokes[c.whole], c.part, x, y, k, color);
   ctx.restore();
 }
 
@@ -187,17 +133,15 @@ export function drawLayers(ctx, layers, x, y, size, opts = {}) {
  * @param {{ strokes?: number[][] } | null | undefined} drawing
  */
 export function replayTime(drawing, min = 900, max = 2600) {
-  const strokes = drawing?.strokes ?? [];
-  let len = 0;
-  for (const s of strokes) len += s.length <= 3 ? 12 : lengthOf(polyline(s));
-  return Math.max(min, Math.min(max, len * 0.45 + strokes.length * 40));
+  return timeOf(drawing?.strokes ?? [], min, max);
 }
 
 /**
  * Replays a drawing into a canvas (`size` px, its backing store already
  * scaled), over `ms`; resolves when done or cancelled (`signal`). With
  * `paper: null` the canvas is a transparent sheet over another (cleared
- * each frame).
+ * each frame). The strokes that are whole are kept on a sheet of their
+ * own, so a frame only adds what is new and the stroke being drawn.
  * @param {CanvasRenderingContext2D} ctx
  * @param {any} drawing
  * @param {number} size
@@ -207,6 +151,19 @@ export function replayTime(drawing, min = 900, max = 2600) {
  * @param {{ paper?: string | null, color?: string }} [opts]
  */
 export function replay(ctx, drawing, size, ms, signal, each, opts = {}) {
+  const strokes = drawing?.strokes ?? [];
+  const color = opts.color ?? INK;
+  const k = size / GRID;
+  const sheet = document.createElement("canvas");
+  sheet.width = ctx.canvas.width;
+  sheet.height = ctx.canvas.height;
+  const sc = /** @type {CanvasRenderingContext2D} */ (sheet.getContext("2d"));
+  sc.setTransform(ctx.getTransform());
+  if (opts.paper !== null) {
+    sc.fillStyle = opts.paper ?? PAPER;
+    sc.fillRect(0, 0, size, size);
+  }
+  let done = 0;
   return new Promise((resolve) => {
     const t0 = performance.now();
     const frame = () => {
@@ -214,8 +171,14 @@ export function replay(ctx, drawing, size, ms, signal, each, opts = {}) {
       const p = Math.min(1, (performance.now() - t0) / ms);
       // Ease out: quick strokes first, the last ones settle.
       const e = 1 - Math.pow(1 - p, 1.6);
-      if (opts.paper === null) ctx.clearRect(0, 0, size, size);
-      drawInk(ctx, drawing, 0, 0, size, { ...opts, progress: e });
+      const c = cut(strokes, e);
+      while (done < c.whole) strokePath(sc, strokes[done++], 0, 0, k, color);
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      if (opts.paper === null) ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      ctx.drawImage(sheet, 0, 0);
+      ctx.restore();
+      if (c.part) path(ctx, strokes[c.whole], c.part, 0, 0, k, color);
       each?.(e);
       if (p < 1) requestAnimationFrame(frame);
       else resolve(undefined);
