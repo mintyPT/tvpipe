@@ -14,6 +14,7 @@
 
 import { A, EASE, fitText, h, removeLater, rich, short } from "./dom.js";
 import { floatText } from "./fx.js";
+import { joinRoom } from "./layout.js";
 import { chip } from "./pieces.js";
 import { sfx } from "./sound.js";
 import { t as tr } from "./strings.js";
@@ -24,7 +25,8 @@ export const GOALS = ["mixed signals", "in sync", "mind readers", "telepaths"];
 /**
  * The bank's meter: a tube of gold chips (the fill moves with transform
  * only), the titles' marks on tape to its right, the record a red dashed
- * line on the tube's left (keep 170 px free there), the chips on a paper
+ * line on the tube's left (keep 170 px free there; on the right when the
+ * join badge is under it), the chips on a paper
  * tag at the fill's top.
  * @param {HTMLElement} parent
  * @param {Bank} bank `chips` sets the scale (the fill starts at `from`)
@@ -63,6 +65,21 @@ export function meter(parent, bank, { x, top, height, from, tube = 116 }) {
     rec = h("div", { class: "mklbl rec", style: `right:${tube + 22}px;top:${y}px` }, h("span", null, tr.record), h("b", null, String(bank.record)));
     box.append(line, rec);
     fitText(rec, 24, 24, 150, 0.7);
+    // under tvpipe's join badge (a low record, bottom left): on the right with the titles, clear of their labels
+    const j = joinRoom();
+    if (j && top + y + 19 > j.top && x - 22 - rec.offsetWidth < j.right) {
+      rec.style.right = "";
+      rec.style.left = `${tube + 22}px`;
+      rec.style.transformOrigin = "left center";
+      const taken = GOALS.map((g) => yOf(bank.goals[g]));
+      let ly = y;
+      for (let i = 0; i < 4; i++) {
+        const near = taken.find((t) => Math.abs(t - ly) < 42);
+        if (near === undefined) break;
+        ly = near + (ly >= near ? 42 : -42);
+      }
+      rec.style.top = `${ly}px`;
+    }
     marks.push({ n: bank.record, lbl: rec, line });
   }
   const num = h("b", null, String(from));

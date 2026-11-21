@@ -50,7 +50,8 @@ export function script(o) {
   const result = o.jinx === "all" ? "lost" : o.pass ? "pass" : o.wrong ? "wrong" : "right";
   const historyAfter = /** @type {("found" | "missed")[]} */ ([...historyBefore, right ? "found" : "missed"]);
   const tallyAfter = { found: historyAfter.filter((x) => x === "found").length, played: historyAfter.length, total: rounds, history: historyAfter };
-  const base = (/** @type {Person[]} */ ps = people) => ({ people: ps, round, rounds, guesser: guesser.id });
+  const bank = { chips: 12, goals: { "mixed signals": 2 * rounds, "in sync": 4 * rounds, "mind readers": 6 * rounds, telepaths: 8 * rounds } };
+  const base = (/** @type {Person[]} */ ps = people) => ({ people: ps, round, rounds, guesser: guesser.id, bank });
 
   // the clues
   /** @type {[string, string, boolean][]} author, word, bold */
@@ -179,7 +180,7 @@ export function script(o) {
       make: (t) => ({ phase: "replay", ...base(), tally: tallyAfter, word, result, cards: all.map((c) => ({ ...c, turned: picks.includes(c.id) ? picks.indexOf(c.id) + 1 : undefined })), groups, picking: result === "right", payouts, pot, ...(result === "right" ? { deadline: t + 20000 } : {}) }),
       then: result === "right" && mvpCard ? [[2400, (t) => ({ phase: "replay", ...base(), tally: tallyAfter, word, result, cards: all.map((c) => ({ ...c, turned: picks.includes(c.id) ? picks.indexOf(c.id) + 1 : undefined })), groups, picking: false, mvp: mvpCard, payouts: [...payouts, { id: all.find((c) => c.id === mvpCard)?.author ?? "p0", delta: 3, why: "mvp" }], pot, deadline: t + 4000 })]] : [],
     },
-    { name: "scores", make: (t) => ({ phase: "scores", ...base(scored), tally: tallyAfter, lines, next: people[0]?.id, until: t + 5000 }) },
+    { name: "bank", make: (t) => ({ phase: "bank", ...base(scored), bank: { ...bank, record: 11 }, tally: tallyAfter, banked: 4, next: people[0]?.id, until: t + 5000 }) },
     ...["room", "mvp", "awards", "web"].map((step) => ({
       name: `end-${step}`,
       make: () => ({
@@ -188,6 +189,8 @@ export function script(o) {
         step: /** @type {any} */ (step),
         tally: { found: nightWords.length - 2, played: nightWords.length, total: nightWords.length, history: nightWords.map((_, i) => (i === 2 || i === 5 ? "missed" : "found")) },
         title: /** @type {"in sync"} */ ("mind readers"),
+        bank: { ...bank, chips: 30, record: 11 },
+        clues: [],
         words: nightWords.map((w, i) => ({ word: w, found: !(i === 2 || i === 5), guesser: people[i % n]?.id ?? "p0" })),
         mvp: { id: sorted[0]?.id ?? "p0", score: sorted[0]?.score ?? 0, mvpClues: 3, jinxed: 0 },
         awards: /** @type {import("../../game/views.ts").Award[]} */ (n === 3 ? [{ kind: "kamikaze", ids: ["p1"], count: 3 }] : [

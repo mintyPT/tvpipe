@@ -13,6 +13,7 @@
 import { A, EASE, fitText, h, hm, rnd, short } from "./dom.js";
 import { dust, shake } from "./fx.js";
 import { groupReason } from "./jinx.js";
+import { clearOfJoin } from "./layout.js";
 import { cardEl, chip, fitRosette, rosette } from "./pieces.js";
 import { sfx } from "./sound.js";
 import { t as tr } from "./strings.js";
@@ -95,8 +96,9 @@ export function replay(ctx, v, prev) {
   let k = 0;
   rows.forEach((row, ri) => {
     const total = row.reduce((s, u) => s + width(u), 0) + (row.length - 1) * GAP;
-    let x = 64 + (896 - total) / 2;
     const y = ys[ri] ?? 160;
+    // a row under the join badge's top moves right of it (the right column starts at 985)
+    let x = clearOfJoin(64 + (896 - total) / 2, total, y + H + 60, 975);
     for (const u of row) {
       if (!u.stack) {
         const c = /** @type {Card} */ (u.cards[0]);

@@ -14,6 +14,7 @@
  */
 
 import { meter } from "./bank.js";
+import { joinRoom, rowLefts } from "./layout.js";
 import { A, EASE, clamp, fitText, h, hm, short, svg } from "./dom.js";
 import { confetti, shake, stampAt } from "./fx.js";
 import { INK, cardEl, chip } from "./pieces.js";
@@ -172,10 +173,11 @@ function clues(ctx, box, v, anim) {
   const ys = rows.length === 1 ? [290] : [200, 460];
   let k = 0;
   rows.forEach((row, ri) => {
-    const total = row.length * W + (row.length - 1) * gap;
     const y = ys[ri] ?? 200;
+    // a row under the join badge's top moves right of it
+    const lefts = rowLefts(row.length, W, gap, { bottom: y + H + 20 });
     row.forEach((b, i) => {
-      const x = 640 - total / 2 + i * (W + gap);
+      const x = lefts[i] ?? 640;
       const rot = ((k * 5) % 7) - 3;
       const wrap = h("div", { class: "abs", style: `left:0;top:0;width:1280px;height:720px;transform-origin:${x + W / 2}px ${y + H / 2}px` });
       box.append(wrap);
@@ -214,7 +216,8 @@ function awards(ctx, box, v, anim) {
     box.append(h("div", { class: "caption", style: "top:320px;font-size:36px" }, tr.noAwards[0], h("b", null, tr.noAwards[1])));
     return;
   }
-  const xs = list.length === 3 ? [110, 480, 850] : list.length === 2 ? [295, 665] : [480];
+  // 320 px cards, 50 apart; right of the join badge (the cards reach down to 600)
+  const xs = rowLefts(list.length, 320, 50, { bottom: 610 });
   const bursts = h("div", { class: "abs", style: "inset:0" });
   box.append(bursts);
   const cards = list.map((a, i) => {
@@ -269,15 +272,20 @@ function awards(ctx, box, v, anim) {
  * @param {number} n @param {boolean} hubs
  */
 function webGrid(n, hubs) {
+  const join = joinRoom();
   const rows = n <= 4 ? 1 : n <= 10 ? 2 : n <= 12 ? 3 : 4;
   const perRow = Math.ceil(n / rows);
   const top = 112;
   const H = 684 - top;
   const gapX = 30;
   const gapY = hubs ? (rows <= 2 ? 120 : 56) : rows <= 2 ? 48 : 30;
-  const w = Math.min(300, Math.floor((1152 - (perRow - 1) * gapX) / perRow));
   const h = Math.min(rows === 1 ? 230 : 196, Math.floor((H - (rows - 1) * gapY) / rows));
   const y0 = top + (H - (rows * h + (rows - 1) * gapY)) / 2;
+  // the last row right of the join badge when it reaches below the badge's top (the cards a little narrower for it)
+  const lastIn = n - (rows - 1) * perRow;
+  const under = !!join && y0 + rows * h + (rows - 1) * gapY > join.top;
+  const lastLeft = under && join ? Math.max(64, join.right) : 64;
+  const w = Math.min(300, Math.floor((1152 - (perRow - 1) * gapX) / perRow), Math.floor((1216 - lastLeft - (lastIn - 1) * gapX) / lastIn));
   /** @type {{ x: number, y: number }[]} centres */
   const out = [];
   // the bands where shared clues' tags go: between the rows, else above and below the one row
@@ -287,7 +295,8 @@ function webGrid(n, hubs) {
   if (rows === 1) bands.push(Math.max(140, y0 - 50), Math.min(650, y0 + h + 50));
   for (let r = 0; r < rows; r++) {
     const inRow = Math.min(perRow, n - r * perRow);
-    const x0 = 640 - (inRow * w + (inRow - 1) * gapX) / 2;
+    const rowW = inRow * w + (inRow - 1) * gapX;
+    const x0 = r === rows - 1 && under ? Math.max(640 - rowW / 2, lastLeft) : 640 - rowW / 2;
     for (let c = 0; c < inRow; c++) out.push({ x: x0 + c * (w + gapX) + w / 2, y: y0 + r * (h + gapY) + h / 2 });
   }
   return { spots: out, w, h, bands };

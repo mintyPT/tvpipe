@@ -3,14 +3,16 @@
  * The TV harness (not shipped): the TV's renderer (../../screen/app.js)
  * with a fake clock and fake QR code, fed a scripted round (script.js).
  *
- *   python3 -m http.server -d games/jinx 8791 --bind 127.0.0.1
- *   http://127.0.0.1:8791/design/harness/?n=8&step=reveal&mode=warm&controls=1
+ *   (cd npm/party && npm run build)   # the library's build, for /_tvpipe/lib/
+ *   python3 -m http.server -d . 8791 --bind 127.0.0.1
+ *   http://127.0.0.1:8791/games/jinx/design/harness/?n=8&step=reveal&mode=warm&controls=1
  *
  * Query: n (3 or 8), step (a step name, see script.js; default: play the
  * whole script), mode (`cold`: the step's view as the first one; `warm`:
  * the step before cold, then this step and its updates), jinx, wrong,
  * pass, long, web (few, none), controls, sound, lang (`de`: German, with
- * German words).
+ * German words), badge (`1`: tvpipe's join badge bottom left, as on the
+ * real TV; `away`: grown into the rejoin card for an away player).
  */
 
 import { createTv } from "../../screen/app.js";
@@ -74,11 +76,27 @@ const root = /** @type {HTMLElement} */ (document.getElementById("viewport"));
 const tv = createTv({ root, now: () => Date.now(), qrSvg, muted: q.get("sound") !== "1" });
 const steps = script({ n: Number(q.get("n") ?? 8), jinx: q.get("jinx") ?? "one", wrong: q.get("wrong") === "1", pass: q.get("pass") === "1", long: q.get("long") === "1", web: q.get("web") ?? "" });
 
+// `badge`: tvpipe's own join badge (the library's build), bottom left as screen.js puts it.
+const BADGE = q.get("badge");
+/** @type {any} */
+let badge = null;
+if (BADGE) {
+  const { RejoinBadge } = await import("../../../../npm/party/dist/rejoin.js");
+  badge = new RejoinBadge(document, { qrSvg, joinText: () => "tvpipe.party/KQZM", now: () => Date.now() }, { corner: "bottom-left", delay: 0 });
+}
+
 /** @param {import("../../game/views.ts").ScreenView} screen */
 const feed = (screen) => {
   let json = JSON.stringify(screen);
   if (LANG === "de") json = json.replace(/"([A-Za-z]+)"/g, (m, w) => (GERMAN[w] ? `"${GERMAN[w]}"` : m));
-  tv.update({ screen: { ...JSON.parse(json), lang: LANG }, join });
+  const v = { ...JSON.parse(json), lang: LANG };
+  // The badge first, as on the TV page (the client updates it before the page's view handler).
+  if (badge) {
+    badge.suppressed = v.phase === "lobby";
+    const roster = (v.people ?? []).map((/** @type {any} */ p, /** @type {number} */ i) => ({ id: p.id, name: p.name, connected: BADGE === "away" && i === 1 ? false : true }));
+    badge.update({ join: { ...join, inProgress: v.phase !== "lobby" }, roster });
+  }
+  tv.update({ screen: v, join });
 };
 
 /** @type {ReturnType<typeof setTimeout>[]} */

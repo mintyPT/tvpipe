@@ -12,6 +12,7 @@
 
 import { A, EASE, h, rnd, short } from "./dom.js";
 import { dust, stampAt } from "./fx.js";
+import { seatRow } from "./layout.js";
 import { PENCIL, cardEl, chip, dial, envelope } from "./pieces.js";
 import { sfx } from "./sound.js";
 import { t as tr } from "./strings.js";
@@ -111,13 +112,16 @@ export function write(ctx, v, prev) {
   const d = dial(940, 226, 180);
   L.append(d.el);
 
-  const gx = (/** @type {number} */ i) => 640 + (i - (v.givers.length - 1) / 2) * 150;
+  // the seats (a chip, the name under it, 150 px each) keep out of the join badge's corner
+  const seats = seatRow(v.givers.length, 150, 150, { bottom: 620, minStep: 112 });
+  const gx = (/** @type {number} */ i) => seats.xs[i] ?? 640;
+  const nameW = Math.min(150, Math.floor(seats.step) - 4);
   /** @type {Map<string, HTMLElement>} */
   const chips = new Map();
   v.givers.forEach((id, i) => {
     const p = ctx.person(id);
     const t = chip(p, 84, { style: `left:${gx(i) - 42}px;top:492px` });
-    L.append(t, h("div", { class: "seatname", style: `left:${gx(i) - 75}px;top:590px` }, short(p?.name, 10)));
+    L.append(t, h("div", { class: "seatname", style: `left:${gx(i) - nameW / 2}px;top:590px;width:${nameW}px` }, short(p?.name, 10)));
     chips.set(id, t);
     if (anim) A(t, [{ transform: "translateY(200px)" }, { transform: "none" }], 420, { delay: 200 + i * 70, easing: EASE.back });
   });

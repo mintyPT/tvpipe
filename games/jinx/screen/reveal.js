@@ -17,7 +17,7 @@
 import { A, EASE, fitText, h, removeLater, short } from "./dom.js";
 import { confetti, dust, floatText, shake, stampAt, strikeThrough } from "./fx.js";
 import { reasonText } from "./jinx.js";
-import { grid } from "./layout.js";
+import { clearOfJoin, grid } from "./layout.js";
 import { Dymo, cardEl, chip, dial, envelope, mood, setWord, sign, swingIn } from "./pieces.js";
 import { bed, heartbeat, sfx } from "./sound.js";
 import { t as tr } from "./strings.js";
@@ -255,7 +255,9 @@ export function verdict(ctx, v, prev) {
   for (const p of v.people) if (p.id !== v.guesser && !p.left && !ids.includes(p.id)) ids.push(p.id);
   const seats = ids.slice(0, 7);
   const rowW = seats.length * 112 - 48;
-  const row = h("div", { class: "abs", style: `left:${Math.round(522 - rowW / 2)}px;top:600px;width:${rowW}px;height:70px` });
+  // right of the join badge (the pot's box starts at 1020)
+  const rowX = clearOfJoin(Math.round(522 - rowW / 2), rowW, 670, 1000);
+  const row = h("div", { class: "abs", style: `left:${rowX}px;top:600px;width:${rowW}px;height:70px` });
   L.append(row);
   const toks = seats.map((id, i) => {
     const t = chip(ctx.person(id), 64, { style: `left:${i * 112}px;top:0` });

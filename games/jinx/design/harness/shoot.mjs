@@ -1,9 +1,9 @@
 // Screenshots of the TV harness in headless Chrome, in real time (not shipped).
 //
-//   python3 -m http.server -d games/jinx 8791 --bind 127.0.0.1
+//   python3 -m http.server -d . 8791 --bind 127.0.0.1   (the repository's root)
 //   node games/jinx/design/harness/shoot.mjs OUTDIR name:query:ms[,ms…] …
 //
-// Each shot opens http://127.0.0.1:8791/design/harness/?QUERY in a fresh tab,
+// Each shot opens http://127.0.0.1:8791/games/jinx/design/harness/?QUERY in a fresh tab,
 // waits ms (real time) and saves OUTDIR/name-ms.png (1280×720). Console
 // errors and exceptions are printed. Node built-ins only (global WebSocket).
 
@@ -13,7 +13,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const CHROME = process.env.CHROME ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-const BASE = process.env.HARNESS ?? "http://127.0.0.1:8791/design/harness/";
+const BASE = process.env.HARNESS ?? "http://127.0.0.1:8791/games/jinx/design/harness/";
 const [outDir, ...specs] = process.argv.slice(2);
 if (!outDir || specs.length === 0) {
   console.error("usage: shoot.mjs OUTDIR name:query:ms[,ms…] …");

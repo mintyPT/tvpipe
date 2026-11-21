@@ -361,6 +361,16 @@ The TV page is rendered in a headless Chrome and H.264-encoded at about
 
 - A 1280×720 layout (it renders sharper at 1080p and 4K), one screen, no
   scrolling, everything inside a 5 % safe area (x 64–1216, y 36–684).
+- tvpipe's join badge (the join code, outside the lobby; the lobby shows
+  it big) sits in the bottom-left corner, inside the table's edge, and
+  the picture keeps out of its room (`layout.js` `joinRoom`, from
+  `data-tvpipe-join` and `--tvpipe-join-w`/`-h` on `<html>`, in stage
+  px): the writers' seats keep their right end and sit closer together,
+  a row of cards (the jinx check, the reveal, the replay), the verdict's
+  seats and the best clues of the night move right of it, the awards
+  close up, the word web's last row starts right of it with narrower
+  cards. The rejoin card that grows from it while a phone is away lies
+  over the picture for that time.
 - Nothing under 24 px; clue words 40–44 px, shrinking to 24 px, then
   condensed (`scaleX` ≥ 0.74) so 15 letters fit on a card. 5–7 surviving
   cards use two rows.
