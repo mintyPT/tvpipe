@@ -1257,7 +1257,15 @@ impl EncodedState {
             Kind::H264Config => {
                 let data = &p.payload[1..];
                 let avcc = match p.payload[0] {
-                    slrw::CONFIG_AVCC => data.to_vec(),
+                    slrw::CONFIG_AVCC => {
+                        let mut cfg = AvcConfig::parse(data)?;
+                        if cfg.undouble_headers() {
+                            debug!("slrw: the avcC's parameter sets have doubled NAL headers (Firefox); removed");
+                            cfg.to_bytes()?
+                        } else {
+                            data.to_vec()
+                        }
+                    }
                     slrw::CONFIG_ANNEX_B => {
                         let (sps, pps) = parameter_sets(h264::annexb_nals(data));
                         AvcConfig::from_parameter_sets(sps, pps)?.to_bytes()?
@@ -1904,6 +1912,27 @@ pub(crate) mod tests {
         let mut s = Vec::new();
         slrw::write_magic(&mut s).unwrap();
         assert!(SlrwEncodedInput::open(io::Cursor::new(s), encoded_opts(None), never()).is_err());
+    }
+
+    /// Firefox 160 on Linux doubles the NAL headers in its avcC (tvpipe
+    /// issue #6): the stream gets the record without them.
+    #[test]
+    fn slrw_encoded_firefox_avcc() {
+        let data = crate::util::hex::decode(h264::tests::FIREFOX_DOUBLED_AVCC).unwrap();
+        let mut st = EncodedState::new(encoded_opts(None).video, None, &[], None).unwrap();
+        let mut payload = vec![slrw::CONFIG_AVCC];
+        payload.extend_from_slice(&data);
+        st.handle(Packet {
+            kind: Kind::H264Config,
+            pts_us: 0,
+            payload,
+        })
+        .unwrap();
+        let info = st.stream_info().unwrap();
+        assert_eq!((info.video.width, info.video.height), (1920, 1080));
+        let cfg = AvcConfig::parse(&info.video.avcc).unwrap();
+        assert_eq!(cfg.sps[0][..2], [0x67, 0x42]);
+        assert_eq!(cfg.pps[0], [0x68, 0xcb, 0x8c, 0xb2]);
     }
 
     #[test]

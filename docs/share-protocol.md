@@ -205,7 +205,10 @@ are dropped above the same threshold.
   page hidden). Its VideoEncoder (Firefox 130+) takes H.264 Constrained
   Baseline, Main and High with `avc: {format: "avc"}` and
   `latencyMode: "realtime"`; the AudioWorklet and the OffscreenCanvas
-  padding work as in the other browsers.
+  padding work as in the other browsers. On Linux (Firefox 160) its avcC
+  writes each parameter set's NAL header twice (`67 67 42 c0 …`,
+  `68 68 …`; issue #6); tvpipe drops the repeated byte
+  (`AvcConfig::undouble_headers`, for every encoded SLRW config record).
 - Firefox's getDisplayMedia shows its own picker (windows and screens;
   `displaySurface`, `preferCurrentTab`, `selfBrowserSurface`, `systemAudio`
   and audio are not supported, per MDN's compatibility data). With

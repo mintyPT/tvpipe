@@ -694,6 +694,31 @@ impl AvcConfig {
         })
     }
 
+    /// Undoes parameter sets whose NAL header byte is written twice
+    /// (`67 67 42 c0 …`, `68 68 cb …`), as Firefox 160's avcC on Linux has
+    /// them (tvpipe issue #6). An SPS shows it without doubt: its second
+    /// byte is `profile_idc`, and a repeated SPS header (0x07, 0x27, 0x47,
+    /// 0x67) is no profile. Only when every SPS has it are PPSs whose first
+    /// two bytes are equal undone too (one byte alone could be a real PPS).
+    /// Returns whether anything changed.
+    pub fn undouble_headers(&mut self) -> bool {
+        let doubled = |nal: &[u8]| nal.len() > 2 && nal[0] == nal[1];
+        if self.sps.is_empty()
+            || !self
+                .sps
+                .iter()
+                .all(|s| nal_unit_type(s) == Some(nal_type::SPS) && doubled(s))
+        {
+            return false;
+        }
+        for nal in self.sps.iter_mut().chain(self.pps.iter_mut()) {
+            if doubled(nal) {
+                nal.remove(0);
+            }
+        }
+        true
+    }
+
     /// Builds a record from parameter sets (4-byte lengths). Profile, level
     /// and extension fields come from the first SPS.
     pub fn from_parameter_sets(sps: Vec<Vec<u8>>, pps: Vec<Vec<u8>>) -> Result<AvcConfig> {
@@ -764,7 +789,7 @@ fn put_ps(w: &mut Writer, nal: &[u8]) -> Result<()> {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
 
     #[test]
@@ -795,6 +820,41 @@ mod tests {
         assert!(!same_decoding(&first, &first[..6]));
     }
     use crate::util::vectors;
+
+    /// Firefox 160 on Linux (tvpipe issue #6): the avcC's SPS and PPS
+    /// carry their NAL header twice.
+    pub(crate) const FIREFOX_DOUBLED_AVCC: &str =
+        "0142c02803010019676742c028d900780227e5840000030004007a12003c60c9200100056868cb8cb2";
+
+    #[test]
+    fn avcc_doubled_headers() {
+        let data = crate::util::hex::decode(FIREFOX_DOUBLED_AVCC).unwrap();
+        let mut cfg = AvcConfig::parse(&data).unwrap();
+        let e = parse_sps(&cfg.sps[0]).unwrap_err();
+        assert!(e.to_string().contains("cropping exceeds"), "{e}");
+        assert!(cfg.undouble_headers());
+        assert_eq!(
+            crate::util::hex::encode(&cfg.sps[0]),
+            "6742c028d900780227e5840000030004007a12003c60c920"
+        );
+        assert_eq!(crate::util::hex::encode(&cfg.pps[0]), "68cb8cb2");
+        let sps = parse_sps(&cfg.sps[0]).unwrap();
+        assert_eq!((sps.profile_idc, sps.level_idc), (66, 40));
+        assert_eq!((sps.width, sps.height), (1920, 1080));
+        // Written back as a well-formed record, and done once only.
+        let fixed = AvcConfig::parse(&cfg.to_bytes().unwrap()).unwrap();
+        assert_eq!(fixed, cfg);
+        assert!(!cfg.undouble_headers());
+
+        // A PPS that starts with its header's value is left alone when the
+        // SPS is fine (Chrome's 1280x720 SPS, a made-up PPS).
+        let sps = crate::util::hex::decode("2742001f898a300a00b74d40434041e10084d0").unwrap();
+        let mut cfg =
+            AvcConfig::from_parameter_sets(vec![sps], vec![vec![0x68, 0x68, 0xce]]).unwrap();
+        let before = cfg.clone();
+        assert!(!cfg.undouble_headers());
+        assert_eq!(cfg, before);
+    }
 
     #[test]
     fn sps_vectors() {
