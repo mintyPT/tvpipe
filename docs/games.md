@@ -182,6 +182,54 @@ async function round() {
 endButton.onclick = () => tvpipe.quit();     // ends tvpipe: TVs stop, phones are told
 ```
 
+**The standard host page** (`HostPage` in `/_tvpipe/lib/index.js`) is
+the window most games want: the logo and the game's status, the join QR
+code and link (Copy), the TVs (change them, try again, open the TV
+view), the players (VIP, a rejoin code for away players, remove), Start
+(with how many are still missing) and End, a muted preview of the TV,
+the bots' buttons in test mode, and the game's **settings, from a
+spec**: a list of fields, each a label, its choices and how to read and
+change the value. The page draws them (a dropdown, a row of buttons or
+a switch, the label above the control, so long German labels and
+choices fit), locks them while a game runs (but `live` ones), shows a
+refused change (`set` throws) as an error, speaks the room's language
+(its own texts in English and German, the game's as `{ en, de }`), and
+keeps the host's choices in `localStorage` for a reload. Its look comes
+from the game's stylesheet: CSS variables (`--bg`, `--card`, `--line`,
+`--text`, `--muted`, `--accent`, `--accent-text`, `--link`, `--ok`,
+`--error`) and `.logo`.
+
+```js
+import { HostPage, languageField, lateJoinField, preferredLang } from "/_tvpipe/lib/index.js";
+
+const page = await HostPage.connect({ name: "quiz", title: "Quiz", lang: preferredLang("quiz", ["en", "de"]) });
+const party = await page.tvpipe.party();
+const game = new Quiz(party);                // running, minPlayers, play(), lang, …
+page.run({
+  party,
+  game,
+  lang: () => game.lang,                     // the page speaks the room's language
+  settings: [
+    languageField({ langs: ["en", "de"], get: () => game.lang, set: (lang) => game.configure({ lang }) }),
+    { key: "rounds", type: "buttons", label: { en: "Rounds", de: "Runden" },
+      choices: [1, 2, 3].map((n) => ({ value: n, label: String(n) })),
+      get: () => game.rounds, set: (rounds) => game.configure({ rounds }) },
+    { key: "hard", type: "toggle", label: { en: "Hard questions", de: "Schwere Fragen" },
+      hint: { en: "For quiz nerds.", de: "Für Quiz-Profis." },
+      get: () => game.hard, set: (hard) => game.configure({ hard }) },
+    lateJoinField(party, ["wait", "closed"]),
+  ],
+  status: (lang) => (game.running ? `Round ${game.round}` : "Lobby"),
+  bots: (n) => addBots(n),                   // optional: the bots' buttons in test mode
+});
+game.on("change", () => page.update());      // the VIP changed a setting, a new phase
+await page.castChosen();
+```
+
+A host page of a game's own skips it (it is a convenience, not a
+requirement), or uses only the form: `new SettingsForm(fields,
+lang).element` in any element. This repository's games all use it.
+
 The TV page:
 
 ```js
@@ -251,9 +299,9 @@ phones lose the signal, lock, reload, or open the link in another
 browser or on another phone. The library does the returning: the same
 phone resumes with its token; another phone gets the player's seat back
 by typing the same name (even when the room is locked or closed to
-newcomers); the TV page draws a rejoin badge (the join QR code, the
-short link and who is missing) while a game is in progress and someone
-has been away for a few seconds; the host page can show a player their
+newcomers); the TV page has the join code in a corner the whole game,
+and names who is missing there while someone has been away for a few
+seconds (the join badge, below); the host page can show a player their
 own code (`party.showRejoin(player)`). What a game must do:
 
 - Keep going without them: deadlines on every phase that waits for
@@ -262,14 +310,39 @@ own code (`party.showRejoin(player)`). What a game must do:
 - Keep their place: an away player stays in the game (`player.connected`
   is false meanwhile), with their score and their part of the round;
   their phone gets the whole view back (`me` included) and carries on.
-- Keep the badge clear: `client.joinVisible = true` while the TV shows
-  its own join code (the lobby, a corner for latecomers);
-  `client.rejoinBadge.corner` when bottom-right covers something.
+- Make room for the join badge (below).
 - A "Rejoin code" button beside away players on the host page
-  (`party.showRejoin(p)`, feature-detected for older tvpipes).
+  (`party.showRejoin(p)`; the standard host page has it).
 - Test it: a whole game played through `dropOuts()` from
   `@tvpipe/party/testing` (phones dropping out and coming back, by token
   and by name, all game long) ends with everyone in it.
+
+**The join code is always on the TV.** People join late, come back
+after a reload, or pick up a second phone, and none of them should have
+to ask: every TV page shows the join QR code and the short link to type
+(`tvpipe.party/BCDF`, with a tunnel) in a corner, all game long. The
+library draws it (the join badge: `PartyClient` on TV and watch pages,
+in a shadow root of its own), titled by who may join now ("Join", "Join
+next round", "Rejoin" when the game is closed to newcomers), and grows
+it into the rejoin card naming who is missing while a phone is away. A
+game:
+
+- picks the corner and the shape: `PartyClient.fromLocation({
+  rejoinBadge: { corner: "top-right", layout: "row" } })` (default
+  `bottom-right`, `column`: narrow and tall; `row`: low and wide);
+- sets `client.joinVisible = true` while it shows the code big itself
+  (the lobby): the badge steps aside;
+- keeps its picture out of the corner: while the badge shows, `<html>`
+  has `data-tvpipe-join="CORNER"` and the room it takes from the
+  screen's edges as `--tvpipe-join-w` and `--tvpipe-join-h` (`0px`
+  otherwise), so a column ends above it with `[data-tvpipe-join$="right"]
+  .answers { padding-bottom: var(--tvpipe-join-h) }`;
+- may dress it: `--tvpipe-join-bg`, `-fg`, `-accent`, `-font`,
+  `-border`, `-shadow`, and `--tvpipe-join-x`/`-y` for its distance
+  from the edges.
+
+`rejoinBadge: { always: false }` shows only the rejoin card, while
+someone is away; `rejoinBadge: false` none (a game that draws its own).
 
 **TypeScript and bundlers.** Install the package for its types
 (`npm install --save-dev @tvpipe/party`), then make the built files

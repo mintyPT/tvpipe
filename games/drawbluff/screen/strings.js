@@ -10,8 +10,6 @@ import { format } from "../phone/i18n.js";
 const en = (f) => ({
   /** What the lobby says about latecomers (`join.lateJoin`). @type {Record<string, string>} */
   late: { open: "Join anytime, even during the game", wait: "Latecomers join at the next round", closed: "Joining closes when the game starts" },
-  /** The corner's line during a game. @type {Record<string, string>} */
-  corner: { open: "Scan to join now (from the next drawing) or to rejoin.", wait: "Scan to join (from the next round) or to rejoin." },
   reconnecting: "Reconnecting to the game…",
   over: "The game is over.",
   /** @param {number} n */
@@ -127,7 +125,6 @@ const en = (f) => ({
 /** @type {typeof en} */
 const de = (f) => ({
   late: { open: "Jederzeit einsteigen, auch mitten im Spiel", wait: "Nachzügler steigen in der nächsten Runde ein", closed: "Einsteigen nur bis zum Spielstart" },
-  corner: { open: "Scannen zum Einsteigen (ab der nächsten Zeichnung) oder Wiedereinsteigen.", wait: "Scannen zum Einsteigen (ab der nächsten Runde) oder Wiedereinsteigen." },
   reconnecting: "Verbinde wieder mit dem Spiel…",
   over: "Das Spiel ist vorbei.",
   joinedMore: (n) => `+ ${f.n(n)} weitere`,

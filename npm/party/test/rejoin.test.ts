@@ -232,18 +232,22 @@ test("the badge: names players away for a while during a game, with the QR code 
     // The game shows its own code: aside.
     badge.suppressed = true;
     assert.deepEqual(badge.missing(), ["Bob"]);
-    const card = el.children[0]!.children[1]!;
+    const card = el.children[0]!.children[2]!;
+    const mini = el.children[0]!.children[1]!;
     assert.equal(card.classList.set.has("on"), false);
+    assert.equal(mini.classList.set.has("shown"), false, "the small card steps aside too");
     badge.suppressed = false;
     assert.equal(card.classList.set.has("on"), true);
+    assert.deepEqual([mini.classList.set.has("shown"), mini.classList.set.has("under")], [true, true], "the small card under the big one");
     // Many away: three names and a count.
     badge.update({ roster: roster(["Ann", "Bob", "Cy", "Dee", "Eve"]), join });
     now += 4000;
     badge.update({ roster: roster(["Ann", "Bob", "Cy", "Dee", "Eve"]), join });
     assert.match(el.text(), /Ann, Bob, Cy \+2/);
-    // Back: gone; and never outside a game.
+    // Back: gone, the small card again; and never outside a game.
     badge.update({ roster: roster([]), join });
     assert.equal(card.classList.set.has("on"), false);
+    assert.deepEqual([mini.classList.set.has("shown"), mini.classList.set.has("under")], [true, false]);
     badge.update({ roster: roster(["Bob"]), join: { ...join, inProgress: false } });
     now += 5000;
     badge.update({ roster: roster(["Bob"]), join: { ...join, inProgress: false } });
@@ -252,4 +256,39 @@ test("the badge: names players away for a while during a game, with the QR code 
   } finally {
     await tick(1);
   }
+});
+
+test("the badge: the join code in a corner the whole game, titled by who may join", async () => {
+  const body = new El("body");
+  const doc = { createElement: (t: string) => new El(t), body, documentElement: { lang: "de" } } as unknown as Document;
+  const badge = new RejoinBadge(doc, { qrSvg: () => "<svg/>", joinText: (j) => (j.short ? "tvpipe.party/BCDF" : null), now: () => 0 }, { corner: "top-left" });
+  try {
+    const join = { qr: { size: 1, rows: ["1"] }, url: "https://x/", short: "https://tvpipe.party/BCDF", inProgress: false, lateJoin: "wait" };
+    badge.update({ roster: [], join: { ...join, qr: null } });
+    assert.equal(badge.showing, false, "no code yet");
+    badge.update({ roster: [], join });
+    assert.equal(badge.showing, true);
+    const el = body.children[0]!;
+    const mini = el.children[0]!.children[1]!;
+    assert.equal(el.attrs["data-corner"], "top-left");
+    assert.equal(mini.classList.set.has("shown"), true);
+    assert.equal(mini.text(), "Mitspielentvpipe.party/BCDF");
+    badge.update({ roster: [], join: { ...join, inProgress: true } });
+    assert.match(mini.text(), /^Ab nächster Runde/);
+    badge.update({ roster: [], join: { ...join, inProgress: true, lateJoin: "open" } });
+    assert.match(mini.text(), /^Jetzt mitspielen/);
+    badge.update({ roster: [], join: { ...join, inProgress: true, lateJoin: "closed", short: undefined } });
+    assert.equal(mini.text(), "Wieder einsteigen", "no short link: the QR code alone");
+    // The lobby's own big code: aside.
+    badge.suppressed = true;
+    assert.equal(badge.showing, false);
+    assert.equal(mini.classList.set.has("shown"), false);
+  } finally {
+    badge.destroy();
+  }
+  // Only while someone is away, as it was.
+  const quiet = new RejoinBadge(doc, { qrSvg: () => "<svg/>", joinText: () => null, now: () => 0 }, { always: false });
+  quiet.update({ roster: [], join: { qr: { size: 1, rows: ["1"] }, url: "https://y/", inProgress: true } });
+  assert.equal(quiet.showing, false);
+  quiet.destroy();
 });

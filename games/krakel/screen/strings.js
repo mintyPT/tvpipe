@@ -12,7 +12,6 @@ const EN = {
   // Lobby
   tagline: "Draw it. Name it. Fast.",
   scanToJoin: "Scan to play",
-  joinCorner: "Join in:",
   players: "Players",
   waitingSeat: "waiting…",
   freeSeat: "free",
@@ -85,7 +84,6 @@ const DE = {
   over: "Das Spiel ist vorbei.",
   tagline: "Zeichnen. Erraten. Schnell sein.",
   scanToJoin: "Scannen und mitspielen",
-  joinCorner: "Mitspielen:",
   players: "Wer spielt mit",
   waitingSeat: "wartet…",
   freeSeat: "frei",

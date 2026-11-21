@@ -88,7 +88,8 @@ try {
   await win.eval(`document.getElementById("start").click(); true`);
   await win.until(`location.pathname.endsWith("/host/index.html") && !!globalThis.garble`, 20_000);
   log("the host page runs the game");
-  const set = (id: string, value: string) => win.eval(`(() => { const s = document.getElementById(${JSON.stringify(id)}); s.value = ${JSON.stringify(value)}; s.dispatchEvent(new Event("change")); return true; })()`);
+  // A setting as the host picks it (HostPage.set: the form's own path).
+  const set = (key: string, value: string) => win.eval(`(() => { garble.page.set(${JSON.stringify(key)}, ${JSON.stringify(value)}); return true; })()`);
   await set("rounds", shots ? "1" : args.rounds);
   await set("length", shots ? "3" : args.length);
   await set("timers", "fast");

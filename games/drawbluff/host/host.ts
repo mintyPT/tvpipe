@@ -1,273 +1,91 @@
 /**
- * Drawbluff's host page: the game runs here, in tvpipe's
- * window (docs/playshare-design.md). It makes the party on tvpipe's
- * relay, puts the TV page on the TVs the launcher chose, runs the rules
- * (`game/`), and shows the room: the QR code, the TVs,
- * the players, the settings and a preview of the TV. Bots are for tests:
+ * Drawbluff's host page: the game runs here, in tvpipe's window
+ * (docs/playshare-design.md). It makes the party on tvpipe's relay, puts
+ * the TV page on the TVs the launcher chose, runs the rules (`game/`),
+ * and shows the room on tvpipe's standard host page (`HostPage` of
+ * @tvpipe/party: the QR code, the TVs, the players, a preview of the TV)
+ * with Drawbluff's settings (`settings` below). Bots are for tests:
  * their buttons show only in test mode (`tvpipe game play --dev`) or with
- * `?bots` in the page's URL. The room's
- * language (default: this browser's) is a setting: the prompts, every
+ * `?bots` in the page's URL. The room's language (default: the last
+ * choice here, else this browser's) is a setting: the prompts, every
  * phone, the TV and this page follow it.
  */
 
-import { qrSvg, Tvpipe, type CastStatus, type HostedParty, type Player, type LateJoin } from "@tvpipe/party";
+import { HostPage, languageField, lateJoinField, preferredLang, type Field } from "@tvpipe/party";
 
 import { bots, type Bot } from "../game/bots.ts";
-import { DEFAULT_TIMINGS, Drawbluff, FAST_TIMINGS } from "../game/game.ts";
-import { LANGS, parsePrompts, pickLang, type Lang, type Prompt } from "../game/rules.ts";
-import { strings } from "./strings.ts";
+import { DEFAULT_TIMINGS, Drawbluff, FAST_TIMINGS, MAX_ROUNDS } from "../game/game.ts";
+import { LANGS, parsePrompts, type Lang, type Prompt } from "../game/rules.ts";
+import { status } from "./strings.ts";
 
-const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
-
-function showError(text: string | null): void {
-  const e = $("error");
-  e.hidden = !text;
-  e.textContent = text ?? "";
-}
-
-let party: HostedParty;
-let game: Drawbluff;
-let tvpipe: Tvpipe;
 const robots: Bot[] = [];
 
-/** The room's language: last time's choice on this computer, else the browser's. */
-const LANG_KEY = "drawbluff:host-lang";
-let lang: Lang = pickLang(localStorage.getItem(LANG_KEY) ?? navigator.languages?.[0] ?? navigator.language);
-let t = strings(lang);
-
-/** The page's fixed texts and the language attribute (hyphenation). */
-function renderLang(): void {
-  document.documentElement.lang = lang;
-  const page = t.page as Record<string, string>;
-  for (const el of document.querySelectorAll<HTMLElement>("[data-t]")) {
-    const text = page[el.dataset["t"]!];
-    if (text !== undefined) el.textContent = text;
-  }
-  $<HTMLSelectElement>("lang").value = lang;
-}
-
-function renderJoin(): void {
-  const j = party.joinInfo;
-  // The QR code and the link it holds (the short one when tvpipe has it),
-  // on one line to copy and send to someone who is not in the room.
-  $("qr").innerHTML = qrSvg(j.qr, { quiet: 2 });
-  // Shown without the scheme to fit; Copy copies the whole link.
-  const link = j.short ?? j.url;
-  $("join-url").textContent = link.replace(/^https?:\/\//, "");
-  $("join-url").title = link;
-  const tunnel = party.info.tunnel;
-  $("link-note").textContent =
-    j.mode === "tunnel" ? t.scanQr : j.mode === "lan" ? t.lanOnly : tunnel.state === "starting" ? t.opening : t.localOnly;
-}
-
-/** Copies the join link: the clipboard API, else a selected field. */
-async function copyLink(): Promise<void> {
-  const link = party.joinInfo.short ?? party.joinInfo.url;
-  const button = $<HTMLButtonElement>("copy-link");
-  try {
-    await navigator.clipboard.writeText(link);
-  } catch {
-    const field = document.createElement("textarea");
-    field.value = link;
-    document.body.append(field);
-    field.select();
-    document.execCommand("copy");
-    field.remove();
-  }
-  button.textContent = t.copied;
-  setTimeout(() => (button.textContent = t.page.copy), 1500);
-}
-
-/** The player whose Remove waits for a second click (removing is for good). */
-let confirmKick: string | undefined;
-let confirmTimer: ReturnType<typeof setTimeout> | undefined;
-/** What the players list shows now. */
-let playersKey = "";
-
-/**
- * A player's buttons, in the lobby and during a game: their rejoin code
- * (away players), make them the VIP (connected players; a tvpipe whose
- * library has `makeVip`), and remove them, which asks once more.
- */
-function playerButtons(p: Player): HTMLButtonElement[] {
-  const out: HTMLButtonElement[] = [];
-  // Away: their own code to scan with any phone (a tvpipe whose library has `showRejoin`).
-  if (!p.connected && typeof party.showRejoin === "function") {
-    const back = document.createElement("button");
-    back.className = "act";
-    back.title = t.rejoinTitle(p.name);
-    back.textContent = t.rejoin;
-    back.onclick = () => void party.showRejoin(p).catch(() => {});
-    out.push(back);
-  }
-  if (!p.vip && p.connected && typeof party.makeVip === "function") {
-    const vip = document.createElement("button");
-    vip.className = "act";
-    vip.title = t.makeVipTitle(p.name);
-    vip.textContent = t.makeVip;
-    vip.onclick = () => party.makeVip(p);
-    out.push(vip);
-  }
-  const kick = document.createElement("button");
-  const sure = confirmKick === p.id;
-  kick.className = sure ? "act kick sure" : "act kick";
-  kick.title = t.remove(p.name);
-  kick.textContent = sure ? t.removeSure : "✕";
-  kick.onclick = () => {
-    clearTimeout(confirmTimer);
-    if (sure) {
-      confirmKick = undefined;
-      party.kick(p);
-    } else {
-      confirmKick = p.id;
-      confirmTimer = setTimeout(() => {
-        confirmKick = undefined;
-        renderPlayers();
-      }, 4000);
-    }
-    renderPlayers();
-  };
-  out.push(kick);
-  return out;
-}
-
-function renderPlayers(): void {
-  const list = $("players");
-  const running = game.running;
-  // Rebuilt only when it changes: views change many times a second
-  // during a game, and a rebuilt button loses the click.
-  const key = JSON.stringify([lang, confirmKick, party.players.map((p) => [p.id, p.name, p.vip, p.waiting, p.connected])]);
-  if (key !== playersKey) {
-    playersKey = key;
-    list.replaceChildren(
-      ...party.players.map((p) => {
-        const li = document.createElement("li");
-        if (!p.connected) li.className = "away";
-        const who = document.createElement("span");
-        who.className = "who";
-        who.textContent = p.name;
-        const tag = document.createElement("span");
-        tag.className = "tag";
-        tag.textContent = [p.vip ? t.vip : "", p.waiting ? t.waiting : "", p.connected ? "" : t.away].filter(Boolean).join(" · ");
-        const end = document.createElement("span");
-        end.className = "end";
-        end.append(tag);
-        end.append(...playerButtons(p));
-        li.append(who, end);
-        return li;
-      }),
-    );
-  }
-  $("count").textContent = `${party.players.length} / ${party.maxPlayers}`;
-  ($("start") as HTMLButtonElement).disabled = running || party.connectedPlayers.length < game.minPlayers;
-  $("start").textContent = running ? t.playing : party.connectedPlayers.length < game.minPlayers ? t.waitingMore(game.minPlayers - party.connectedPlayers.length) : t.start;
-  for (const id of ["rounds", "timers", "late", "lang", "animate", "undo", "colormode", "adult"]) ($(id) as HTMLSelectElement).disabled = running;
-  renderSettings();
-}
-
-/** The rounds and the settings as the game has them (the VIP changes them from the lobby too). */
-function renderSettings(): void {
-  const s = game.settings;
-  $<HTMLSelectElement>("rounds").value = String(game.rounds);
-  $<HTMLSelectElement>("animate").value = s.animate ? "on" : "off";
-  $<HTMLSelectElement>("undo").value = s.undo ? "on" : "off";
-  $<HTMLSelectElement>("colormode").value = s.colorMode ? "on" : "off";
-  $<HTMLSelectElement>("adult").value = s.adult ? "on" : "off";
-  ($<HTMLSelectElement>("adult").options[1] as HTMLOptionElement).disabled = !game.adultOk;
-  $<HTMLSelectElement>("late").value = party.lateJoin;
-}
-
-function renderCast(s: CastStatus): void {
-  const list = $("tvs");
-  // Stopped on purpose (no TVs chosen): as before the first cast.
-  const none = s.state === "stopped" && !s.error && !s.receivers?.length;
-  const rows = (s.receivers ?? []).map((r) => {
-    const li = document.createElement("li");
-    const name = document.createElement("span");
-    name.textContent = r.name === "browser" ? t.browserTab : r.name;
-    const tag = document.createElement("span");
-    const ok = r.state === "connected" || r.state === "reconnected";
-    tag.className = `tag ${ok ? "ok" : r.state === "failed" || r.state === "gave-up" ? "bad" : ""}`;
-    tag.textContent = ok ? (s.state === "streaming" ? t.showing : t.connected) : r.error ? `${r.state}: ${r.error}` : r.state;
-    li.append(name, tag);
-    return li;
-  });
-  if (rows.length === 0) {
-    const li = document.createElement("li");
-    li.className = "muted";
-    li.textContent = none ? t.page.noTv : s.state === "starting" ? t.starting(s.to) : s.error ? t.tvFailed(s.error) : t.tvState(s.state);
-    rows.push(li);
-  }
-  list.replaceChildren(...rows);
-  $("cast-again").hidden = none || !(s.state === "failed" || s.state === "stopped");
-  const player = $<HTMLAnchorElement>("player");
-  player.hidden = !s.player;
-  if (s.player) player.href = s.player;
-}
-
-/**
- * tvpipe's cast picker over this page: other TVs, another resolution.
- * The TV page goes to the new choice; none stops it.
- */
-async function changeTvs(): Promise<void> {
-  showError(null);
-  let sel;
-  try {
-    sel = await tvpipe.showCastPicker();
-  } catch (err) {
-    showError((err as Error).message);
-    return;
-  }
-  if (!sel) return;
-  if (sel.devices.length > 0) {
-    await cast();
-    return;
-  }
-  await party.stopCast().catch(() => {});
-  renderCast({ state: "stopped" });
-}
-
-async function cast(): Promise<void> {
-  showError(null);
-  try {
-    renderCast(await party.cast());
-  } catch (err) {
-    renderCast({ state: "failed", error: (err as Error).message });
-  }
-}
-
-function fitPreview(): void {
-  const frame = $<HTMLIFrameElement>("preview");
-  const box = frame.parentElement!;
-  frame.style.transform = `scale(${box.clientWidth / 1280})`;
-}
-
-async function addBots(n: number): Promise<void> {
-  showError(null);
-  const url = `${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/_tvpipe/ws`;
-  const names = ["Robo", "Pixel", "Gizmo", "Bolt", "Chip", "Sprocket", "Widget", "Servo"];
-  try {
-    const added = await bots(n, {
-      url,
-      room: party.code,
-      key: party.joinKey,
-      names: names.map((x) => `${x}${robots.length + 1}`),
-      think: () => 800 + Math.random() * 4000,
-    });
-    robots.push(...added);
-  } catch (err) {
-    showError(t.botFailed((err as Error).message));
-  }
+/** Drawbluff's settings, as the host page shows them (the VIP's phone has most of them too). */
+function settings(game: Drawbluff, prompts: Partial<Record<Lang, Prompt[]>>): Field[] {
+  const s = () => game.settings;
+  return [
+    languageField({ langs: LANGS, get: () => game.lang, set: (lang) => game.configure({ lang }), available: (l) => !!prompts[l] }),
+    {
+      key: "rounds",
+      type: "buttons",
+      label: { en: "Rounds", de: "Runden" },
+      hint: { en: "Every round counts more than the one before.", de: "Jede Runde zählt mehr als die davor." },
+      choices: Array.from({ length: MAX_ROUNDS }, (_, i) => ({ value: i + 1, label: String(i + 1) })),
+      get: () => game.rounds,
+      set: (rounds: number) => game.configure({ rounds }),
+    },
+    {
+      key: "timers",
+      label: { en: "Timers", de: "Zeit" },
+      choices: [
+        { value: "normal", label: { en: "normal", de: "normal" } },
+        { value: "fast", label: { en: "fast", de: "schnell" } },
+      ],
+      get: () => (game.timings.draw === FAST_TIMINGS.draw ? "fast" : "normal"),
+      set: (v: string) => game.configure({ timings: v === "fast" ? FAST_TIMINGS : DEFAULT_TIMINGS }),
+    },
+    lateJoinField(game.party, ["wait", "open", "closed"], (mode) => game.party.room.set({ lateJoin: mode })),
+    {
+      key: "animate",
+      type: "toggle",
+      label: { en: "Animated drawings", de: "Animierte Zeichnungen" },
+      hint: { en: "Everyone draws 2 frames that flip back and forth.", de: "Alle zeichnen 2 Bilder, die sich abwechseln." },
+      get: () => s().animate,
+      set: (animate) => game.configure({ animate }),
+    },
+    {
+      key: "undo",
+      type: "toggle",
+      label: { en: "Undo", de: "Rückgängig" },
+      hint: { en: "Players can take strokes back. Off: every stroke counts.", de: "Striche lassen sich zurücknehmen. Aus: Jeder Strich zählt." },
+      get: () => s().undo,
+      set: (undo) => game.configure({ undo }),
+    },
+    {
+      key: "colormode",
+      type: "toggle",
+      label: { en: "Colour mode", de: "Farbmodus" },
+      hint: { en: "Black and 4 colours instead of 2 shades of your own colour.", de: "Schwarz und 4 Farben statt 2 Töne der eigenen Farbe." },
+      get: () => s().colorMode,
+      set: (colorMode) => game.configure({ colorMode }),
+    },
+    {
+      key: "adult",
+      type: "toggle",
+      label: { en: "Adult prompts (18+)", de: "Begriffe ab 18" },
+      hint: { en: "Cheeky, not explicit. Off: family-friendly.", de: "Frech, nicht explizit. Aus: familientauglich." },
+      get: () => s().adult,
+      set: (adult) => game.configure({ adult }),
+      disabled: () => !game.adultOk,
+      // Every party starts family-friendly.
+      remember: false,
+    },
+  ];
 }
 
 async function main(): Promise<void> {
-  renderLang();
-  try {
-    tvpipe = await Tvpipe.connect();
-  } catch (err) {
-    showError(t.noTvpipe((err as Error).message));
-    return;
-  }
+  let lang: Lang = preferredLang("drawbluff", LANGS);
+  const page = await HostPage.connect({ name: "drawbluff", title: "Drawbluff", lang });
   // Every language's prompts (data/prompts.txt, data/prompts.de.txt) and adult ones (data/prompts.adult.txt, …).
   const prompts: Partial<Record<Lang, Prompt[]>> = {};
   const adultPrompts: Partial<Record<Lang, Prompt[]>> = {};
@@ -281,92 +99,39 @@ async function main(): Promise<void> {
     ),
   );
   if (!prompts[lang]) lang = "en";
-  for (const o of $<HTMLSelectElement>("lang").options) o.disabled = !prompts[pickLang(o.value)];
-  t = strings(lang);
-  renderLang();
-  party = await tvpipe.party({ lateJoin: "wait" });
-  game = new Drawbluff(party, { prompts, adultPrompts, lang, rounds: 2 });
+  const party = await page.tvpipe.party({ lateJoin: "wait" });
+  const game = new Drawbluff(party, { prompts, adultPrompts, lang, rounds: 2 });
   game.open();
-  renderJoin();
-  renderPlayers();
-  party.on("screen-view", () => {
-    renderJoin();
-    renderPlayers();
+
+  const addBots = async (n: number) => {
+    const url = `${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/_tvpipe/ws`;
+    const names = ["Robo", "Pixel", "Gizmo", "Bolt", "Chip", "Sprocket", "Widget", "Servo"];
+    const added = await bots(n, {
+      url,
+      room: party.code,
+      key: party.joinKey,
+      names: names.map((x) => `${x}${robots.length + 1}`),
+      think: () => 800 + Math.random() * 4000,
+    });
+    robots.push(...added);
+  };
+
+  page.run({
+    party,
+    game,
+    lang: () => game.lang,
+    settings: settings(game, prompts),
+    status: (l) => status(l as Lang, game.phase, Number(party.room.peek()["round"] ?? 0)),
+    bots: addBots,
   });
-  game.on("settings", renderSettings);
-  game.on("phase", (p) => {
-    $("phase").textContent = p === "lobby" ? t.lobby : p === "final" ? t.gameOver : t.round(Number(party.room.peek()["round"] ?? 0), t.phases[p] ?? p);
-    renderPlayers();
-  });
-  tvpipe.on("cast", renderCast);
-  tvpipe.on("tunnel", () => setTimeout(renderJoin, 100));
-  tvpipe.on("close", () => showError(t.stopped));
-  tvpipe.on("closing", () => {
+  game.on("settings", () => page.update());
+  game.on("phase", () => page.update());
+  page.tvpipe.on("closing", () => {
     for (const b of robots) b.close();
   });
-
-  const frame = $<HTMLIFrameElement>("preview");
-  frame.src = `${party.links.watch}&mute=1`;
-  fitPreview();
-  addEventListener("resize", fitPreview);
-
-  $<HTMLSelectElement>("lang").onchange = (e) => {
-    const next = pickLang((e.target as HTMLSelectElement).value);
-    try {
-      game.configure({ lang: next });
-    } catch (err) {
-      showError((err as Error).message);
-      $<HTMLSelectElement>("lang").value = lang;
-      return;
-    }
-    lang = next;
-    t = strings(lang);
-    localStorage.setItem(LANG_KEY, lang);
-    renderLang();
-    renderJoin();
-    renderPlayers();
-    $("phase").textContent = game.phase === "lobby" ? t.lobby : game.phase === "final" ? t.gameOver : "";
-  };
-  ($("rounds") as HTMLSelectElement).onchange = (e) => game.configure({ rounds: Number((e.target as HTMLSelectElement).value) });
-  ($("timers") as HTMLSelectElement).onchange = (e) =>
-    game.configure({ timings: (e.target as HTMLSelectElement).value === "fast" ? FAST_TIMINGS : DEFAULT_TIMINGS });
-  ($("late") as HTMLSelectElement).onchange = (e) => {
-    party.lateJoin = (e.target as HTMLSelectElement).value as LateJoin;
-    party.room.set({ lateJoin: party.lateJoin });
-  };
-  const setting = (id: string, key: "animate" | "undo" | "colorMode" | "adult") => {
-    $<HTMLSelectElement>(id).onchange = (e) => {
-      try {
-        game.configure({ [key]: (e.target as HTMLSelectElement).value === "on" });
-      } catch (err) {
-        showError((err as Error).message);
-      }
-      renderSettings();
-    };
-  };
-  setting("animate", "animate");
-  setting("undo", "undo");
-  setting("colormode", "colorMode");
-  setting("adult", "adult");
-  // Bots are for tests, not for players: their buttons show only in test
-  // mode (tvpipe game play --dev) or with ?bots.
-  $("bots").hidden = !party.info.dev && !new URLSearchParams(location.search).has("bots");
-  $("bot1").onclick = () => void addBots(1);
-  $("bot3").onclick = () => void addBots(3);
-  $("start").onclick = () => {
-    if (game.running || party.connectedPlayers.length < game.minPlayers) return;
-    void game.play();
-    renderPlayers();
-  };
-  $("quit").onclick = () => void tvpipe.quit();
-  $("cast-again").onclick = () => void cast();
-  $("copy-link").onclick = () => void copyLink();
-  $("change-tv").onclick = () => void changeTvs();
-
-  const chosen = await tvpipe.selection();
-  if (chosen.length > 0) await cast();
+  await page.castChosen();
   // For checks and tests (DevTools): the party and the game.
-  Object.assign(globalThis, { drawbluff: { party, game, tvpipe, addBots } });
+  Object.assign(globalThis, { drawbluff: { party, game, tvpipe: page.tvpipe, page, addBots } });
 }
 
 void main();

@@ -16,9 +16,9 @@ import { drawLayers, fit, replay, replayTime } from "../phone/ink.js";
 import { strings } from "./strings.js";
 
 const params = new URLSearchParams(location.hash.slice(1));
-const client = PartyClient.fromLocation({ role: /** @type {any} */ (params.get("role") ?? "screen") });
+// tvpipe's join badge bottom right, low (the reveal's story ends above it: screen.css).
+const client = PartyClient.fromLocation({ role: /** @type {any} */ (params.get("role") ?? "screen"), rejoinBadge: { layout: "row" } });
 const stage = /** @type {HTMLElement} */ (document.getElementById("stage"));
-const corner = /** @type {HTMLElement} */ (document.getElementById("corner"));
 const statusBar = /** @type {HTMLElement} */ (document.getElementById("status"));
 const reactions = /** @type {HTMLElement} */ (document.getElementById("reactions"));
 
@@ -262,18 +262,10 @@ function render(view) {
     stage.append(scene.el);
   }
   scene?.update?.(view);
-  // The join code in a corner: between rounds, for latecomers.
-  const late = view.join?.lateJoin ?? "wait";
-  corner.hidden = !["scores", "final"].includes(s.phase) || !view.join?.qr || late === "closed";
-  if (!corner.hidden && corner.dataset["url"] !== view.join.url) {
-    corner.dataset["url"] = view.join.url;
-    /** @type {HTMLElement} */ (document.getElementById("corner-qr")).innerHTML = qrSvg(view.join.qr, { quiet: 2 });
-  }
-  const text = joinText(view.join);
-  // The short link on a line of its own, never wrapped.
-  /** @type {HTMLElement} */ (document.getElementById("corner-text")).replaceChildren(t.joinCorner, ...(text ? [h("b", {}, text)] : []));
-  // Elsewhere tvpipe's rejoin badge shows the code while a phone is away.
-  client.joinVisible = !corner.hidden || s.phase === "lobby";
+  // tvpipe's join badge has the join code in the bottom right corner
+  // (the scenes keep clear of it: \`data-tvpipe-join\` and its size on
+  // <html>, screen.css), but in the lobby, which shows it big.
+  client.joinVisible = s.phase === "lobby" || !s.phase;
 }
 
 function frame() {

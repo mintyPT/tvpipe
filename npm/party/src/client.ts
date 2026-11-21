@@ -215,8 +215,10 @@ export interface PartyClientOptions {
   /** Default the global one. */
   WebSocket?: WebSocketFactory | undefined;
   /**
-   * Screens in a page: the rejoin badge ({@link PartyClient.rejoinBadge}),
-   * on by default; `false` turns it off (a game that draws its own).
+   * Screens in a page: the join badge ({@link PartyClient.rejoinBadge}),
+   * on by default; `{ corner }` places it, `{ always: false }` shows it
+   * only while someone is away, `false` turns it off (a game that draws
+   * its own).
    */
   rejoinBadge?: RejoinBadgeOptions | false | undefined;
 }
@@ -282,11 +284,14 @@ export class PartyClient {
   /** The reason of the last `bye`, if any. */
   byeReason: string | null = null;
   /**
-   * A screen's rejoin badge (TV and watch pages in a browser; `null`
-   * elsewhere or when turned off): while a game runs and a player's
-   * phone has been away for a few seconds, a card in a corner with the
-   * join QR code, the short link and who is missing. Set
-   * `rejoinBadge.corner` to keep it clear of the game's picture.
+   * A screen's join badge (TV and watch pages in a browser; `null`
+   * elsewhere or when turned off): a small card in a corner with the
+   * join QR code and the short link the whole time (but while
+   * {@link joinVisible}), and while a game runs and a player's phone has
+   * been away for a few seconds, a bigger one with who is missing. Set
+   * `rejoinBadge.corner` to keep it clear of the game's picture; the
+   * page's `<html>` tells the game where it is and how much room it
+   * takes (`data-tvpipe-join`, `--tvpipe-join-w`, `--tvpipe-join-h`).
    */
   readonly rejoinBadge: RejoinBadge | null = null;
   /** Not before this (`Date.now()`): reconnects after a test's {@link drop}. */
@@ -339,9 +344,9 @@ export class PartyClient {
   }
 
   /**
-   * Whether the game shows the join code itself right now (a corner of
-   * its own for latecomers, the lobby): the rejoin badge steps aside
-   * meanwhile. Set it whenever that changes.
+   * Whether the game shows the join code itself right now (the lobby's
+   * big one): the join badge steps aside meanwhile. Set it whenever that
+   * changes.
    */
   get joinVisible(): boolean {
     return this.rejoinBadge?.suppressed ?? false;

@@ -15,7 +15,10 @@ This package is what runs in those pages:
 - **`Tvpipe`**: tvpipe's local API (the receivers, AirPlay pairing,
   casting, QR codes, the relay); `tvpipe.party()` makes a `Party` on it.
 - **`PartyClient`** (phones, the TV page): joins, reconnects, keeps the
-  view up to date, sends actions.
+  view up to date, sends actions; on the TV, the join code in a corner.
+- **`HostPage`**: the standard host page (the join code, the TVs, the
+  players, Start, a preview of the TV) with the game's settings drawn
+  from a spec (`Field`s).
 - **`memoryRelay()`**: a host and fake phones in one process, for tests.
 
 tvpipe serves the built modules at `/_tvpipe/lib/` (`index.js`,
@@ -102,17 +105,20 @@ back.
 - **Another phone or browser**: typing the same name takes the seat of
   a player who is away (the `reclaim` option, on by default), even when
   the room is locked, full or closed to newcomers.
-- **The TV shows the way back**: TV pages draw a **rejoin badge** by
-  themselves while a game is in progress (`party.inProgress`) and a phone
-  has been away for 4 s: the join QR code, the short link and who is
-  missing, in a corner. `PartyClient.fromLocation({ rejoinBadge: { corner:
-  "top-left" } })` or `client.rejoinBadge.corner = …` moves it clear of
-  the game; set `client.joinVisible = true` while the game shows its own
-  join code (the lobby, a corner for latecomers) and it steps aside.
+- **The TV shows the way back**: TV pages draw a **join badge** by
+  themselves: the join QR code and the short link in a corner the whole
+  time, and while a game is in progress (`party.inProgress`) and a phone
+  has been away for 4 s, a bigger card with who is missing.
+  `PartyClient.fromLocation({ rejoinBadge: { corner: "top-left", layout:
+  "row" } })` or `client.rejoinBadge.corner = …` moves it clear of the
+  game, which keeps out of the corner with `data-tvpipe-join` and
+  `--tvpipe-join-w`/`-h` on `<html>`; set `client.joinVisible = true`
+  while the game shows its own join code (the lobby) and it steps aside
+  (docs/games.md, "The join code is always on the TV").
 - **The host page** can show a player their own code
   (`party.showRejoin(player)`: a QR code of `party.rejoinLink(player)`
-  over the host page, closing when they are back). Put a button beside
-  away players.
+  over the host page, closing when they are back). `HostPage` has the
+  button beside away players.
 - **Tests**: `dropOuts(phones)` from `@tvpipe/party/testing` drops and
   brings back phones while a whole game runs; every game should pass a
   game played through it (see Tests).
@@ -141,6 +147,23 @@ manifest's `players.max`), `lateJoin`, `moderate`, `limits`, `grace`,
 | `party.cast(to?)`, `party.stopCast()` | The TV page on receivers (default: the launcher's choice); `tvpipe.on("cast", status)` follows it. An AirPlay TV that fails for want of pairing (`code: "pairing-required"`: never paired, or it forgot the pairing) gets the pairing dialog, then the page is cast again (once per TV and `cast()`; the `pair` option of `tvpipe.party()`: your own function, or `false`). |
 | `party.stats`, `party.screenView()` | What the views cost; what screens see. |
 | events | `join`, `reconnect`, `away`, `leave`, `vip`, `active`, `screen`, `screen-view`, `input`, `tv` |
+
+`HostPage` (the standard host page; docs/games.md has an example):
+`await HostPage.connect({ name, title, lang })` draws it and connects to
+tvpipe (`page.tvpipe`); `page.run({ party, game, lang, settings, status,
+startLabel, tags, bots, previewNote, remember })` fills it in (`game`:
+`running`, `minPlayers`, `play()`); `page.update()` after the game
+changed (a phase, the VIP's settings), `page.castChosen()`,
+`page.set(key, value)` (as if the host picked it: tests),
+`page.error(text)`. `settings` is a list of `Field`s: `{ key, label,
+hint, type: "select" | "buttons", choices: [{ value, label, disabled,
+title }], get, set }` or `{ key, label, hint, type: "toggle", get, set,
+disabled }`, with `live` (changeable during a game), `hidden()` and
+`remember: false`; labels are `Text`s (a string, `{ en, de }` or `(lang)
+=> string`). `languageField({ langs, get, set, available })` and
+`lateJoinField(party, modes, changed)` are ready-made;
+`preferredLang(name, langs)` is the language to start in;
+`SettingsForm` is the form alone.
 
 `Tvpipe`: `info()`, `watchDevices(on)` and the `devices` event,
 `select(names)`, `selection()`, `pair(device)`, `pairPin(device, pin)`,
@@ -186,8 +209,9 @@ storage, WebSocket })`; `join(name)`, `connect()`, `act(type, data)`
 (rejects with `PartyActionError`: `code`, `message`), `input(data)`,
 `on("view" | "msg" | "status" | "bye" | "welcome" | "tv", fn)`, `view`, `you`,
 `status`, `now()`, `hostNow()`, `tvDelay`, `leave()`, `close()`; on
-screens `rejoinBadge` (`corner`; option `rejoinBadge: false` turns it
-off) and `joinVisible`; `qrSvg(qr)`, `drawQr(ctx, qr, x,
+screens `rejoinBadge` (the join badge: `corner`; options `corner`,
+`layout`, `always: false` for the rejoin card only, `rejoinBadge: false`
+for none) and `joinVisible`; `qrSvg(qr)`, `drawQr(ctx, qr, x,
 y, size)`, `joinText(join)`, `memoryStorage()`. It reconnects by itself
 (and when the page becomes visible again), keeps the player's identity in
 `localStorage`, takes a rejoin link's token, and resends unacknowledged

@@ -1,135 +1,19 @@
 /**
- * What the host page says, per language: the room's (the Language
- * setting), so the person running the party reads what the players read.
+ * What the host page says of Garble itself, per language (the room's):
+ * the status beside the logo. The page's own texts and the settings'
+ * labels are @tvpipe/party's (`HostPage`) and `host.ts`'s.
  */
 
 import type { Lang } from "../game/rules.ts";
 
-const en = {
-  /** The page's fixed texts, by `data-t`. */
-  page: {
-    onTv: "On the TV",
-    copy: "Copy",
-    noTv: "No TV: open the preview on a screen yourself.",
-    tryAgain: "Try again",
-    openTv: "Open the TV view",
-    changeTv: "Change TVs…",
-    players: "Players",
-    addBot: "Add a bot",
-    addBots: "Add 3 bots",
-    language: "Language",
-    rounds: "Rounds",
-    length: "Layers per picture",
-    layers3: "3 (short)",
-    layers5: "5",
-    layers7: "7 (long)",
-    timers: "Timers",
-    normal: "normal",
-    fast: "fast",
-    undo: "Undo",
-    undoOff: "off: every stroke counts",
-    undoOn: "on: your own strokes",
-    latecomers: "Latecomers",
-    nextRound: "next round",
-    notDuring: "not during a game",
-    end: "End",
-    previewNote: "What the TV shows (a preview, no sound). The VIP's phone can start the game too.",
-  } as Record<string, string>,
-  lanOnly: "On this Wi-Fi only",
-  scanQr: "Phones join with the QR code or the link on the TV",
-  opening: "Opening a public link…",
-  localOnly: "This computer only (no public link)",
-  copied: "Copied",
-  vip: "VIP",
-  waiting: "waiting",
-  away: "away",
-  remove: (name: string) => `Remove ${name}`,
-  removeSure: "Remove?",
-  rejoin: "Rejoin code",
-  rejoinTitle: (name: string) => `Show ${name} a code to get back in on any phone`,
-  makeVip: "Make VIP",
-  makeVipTitle: (name: string) => `Make ${name} the VIP`,
-  playing: "Playing…",
-  waitingMore: (n: number) => `Waiting for ${n} more`,
-  start: "Start the game",
-  browserTab: "A browser tab",
-  showing: "showing",
-  connected: "connected",
-  starting: (to: string[] | undefined) => `Starting${to ? `: ${to.join(", ")}` : ""}…`,
-  tvFailed: (e: string) => `The TV failed: ${e}`,
-  tvState: (s: string) => `The TV: ${s}`,
-  noTvpipe: (msg: string) => `${msg}. Start the game with tvpipe game play.`,
-  stopped: "tvpipe stopped: the game is over.",
-  botFailed: (msg: string) => `A bot could not join: ${msg}`,
-  lobby: "lobby",
-  gameOver: "game over",
-  phases: { play: "drawing and guessing", reveal: "reveal", vote: "best move", best: "best move", scores: "scores" } as Record<string, string>,
-  round: (r: number, phase: string) => `round ${r} · ${phase}`,
+const PHASES: Record<Lang, Record<string, string>> = {
+  en: { lobby: "Lobby", final: "Game over", play: "drawing and guessing", reveal: "reveal", vote: "best move", best: "best move", scores: "scores" },
+  de: { lobby: "Lobby", final: "Spielende", play: "zeichnen und raten", reveal: "Auflösung", vote: "bester Zug", best: "bester Zug", scores: "Punkte" },
 };
 
-type Strings = typeof en;
-
-const de: Strings = {
-  page: {
-    onTv: "Am Fernseher",
-    copy: "Kopieren",
-    noTv: "Kein Fernseher: Öffne die Vorschau selbst auf einem Bildschirm.",
-    tryAgain: "Nochmal versuchen",
-    openTv: "TV-Ansicht öffnen",
-    changeTv: "Fernseher ändern…",
-    players: "Spieler",
-    addBot: "Bot dazu",
-    addBots: "3 Bots dazu",
-    language: "Sprache",
-    rounds: "Runden",
-    length: "Schichten pro Bild",
-    layers3: "3 (kurz)",
-    layers5: "5",
-    layers7: "7 (lang)",
-    timers: "Zeit",
-    normal: "normal",
-    fast: "schnell",
-    undo: "Rückgängig",
-    undoOff: "aus: jeder Strich zählt",
-    undoOn: "an: eigene Striche",
-    latecomers: "Nachzügler",
-    nextRound: "nächste Runde",
-    notDuring: "nicht während eines Spiels",
-    end: "Beenden",
-    previewNote: "Was der Fernseher zeigt (Vorschau, ohne Ton). Der VIP kann das Spiel auch am Handy starten.",
-  },
-  lanOnly: "Nur in diesem WLAN",
-  scanQr: "Mitspielen über den QR-Code oder den Link am Fernseher",
-  opening: "Öffentlicher Link wird geöffnet…",
-  localOnly: "Nur dieser Computer (kein öffentlicher Link)",
-  copied: "Kopiert",
-  vip: "VIP",
-  waiting: "wartet",
-  away: "weg",
-  remove: (name) => `${name} entfernen`,
-  removeSure: "Entfernen?",
-  rejoin: "Rückkehrcode",
-  rejoinTitle: (name) => `${name} einen Code zeigen, um mit jedem Handy zurückzukommen`,
-  makeVip: "Zum VIP",
-  makeVipTitle: (name) => `${name} zum VIP machen`,
-  playing: "Spiel läuft…",
-  waitingMore: (n) => `Warte auf ${n} weitere`,
-  start: "Spiel starten",
-  browserTab: "Ein Browser-Tab",
-  showing: "zeigt",
-  connected: "verbunden",
-  starting: (to) => `Startet${to ? `: ${to.join(", ")}` : ""}…`,
-  tvFailed: (e) => `Der Fernseher: ${e}`,
-  tvState: (s) => `Der Fernseher: ${s}`,
-  noTvpipe: (msg) => `${msg}. Starte das Spiel mit tvpipe game play.`,
-  stopped: "tvpipe wurde beendet: Das Spiel ist vorbei.",
-  botFailed: (msg) => `Ein Bot konnte nicht beitreten: ${msg}`,
-  lobby: "Lobby",
-  gameOver: "Spielende",
-  phases: { play: "zeichnen und raten", reveal: "Auflösung", vote: "bester Zug", best: "bester Zug", scores: "Punkte" },
-  round: (r, phase) => `Runde ${r} · ${phase}`,
-};
-
-export function strings(lang: Lang): Strings {
-  return lang === "de" ? de : en;
+/** The status beside the logo: the lobby, the end, or the round and what happens in it. */
+export function status(lang: Lang, phase: string, round: number): string {
+  const p = PHASES[lang] ?? PHASES.en;
+  if (phase === "lobby" || phase === "final") return p[phase]!;
+  return `${lang === "de" ? "Runde" : "Round"} ${round} · ${p[phase] ?? phase}`;
 }

@@ -42,7 +42,7 @@ phones join with the QR code.
 |---|---|---|
 | `tvpipe.json` | the manifest | pages, 3–12 players, the TV's size; `root: dist` |
 | `game/` | the rules (`rules.ts`: drawings, the word lists and the matcher, seating, decks, points), the game (`game.ts`), bots (`bots.ts`) | TypeScript on `@tvpipe/party`, tested in Node |
-| `host/` | the host page | the party, the TVs, the players, settings, a preview of the TV; `strings.ts` |
+| `host/` | the host page | tvpipe's standard host page (`HostPage`: the party, the TVs, the players, a preview of the TV) with Garble's settings as a spec (`host.ts`) and its look (`host.css`); `strings.ts` (the status line) |
 | `screen/` | the TV page | the lobby, the ring of players passing their pages, the reveal, the gallery and the best move, the ledger, the podium; `strings.js` |
 | `phone/` | the phone page | joining, the lobby (the VIP's settings), picking a word, guessing, the pad on top of the old ink, reactions, the best-move vote; `strings.js`, `ink.js` (the strokes, shared with the TV) |
 | `data/` | the word lists, English and German: `word\|synonym\|…` per line | fetched by the host page |

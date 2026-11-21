@@ -445,9 +445,9 @@ start to its podium, and activates every waiting player at the podium.
   runs); every phone sees the line under it (`room.lateJoin`). The TV
   shows it under the lobby's QR code (from `join.lateJoin`: "Join
   anytime, even during the game" in green, "Latecomers join at the next
-  round", "Joining closes when the game starts"); during a game the
-  corner QR code says "Scan to join now (from the next drawing)" or
-  "(from the next round)", and is hidden with `closed`.
+  round", "Joining closes when the game starts"); during a game
+  tvpipe's join badge in the bottom right corner says "Join now" or
+  "Join next round" over the QR code, and "Rejoin" with `closed`.
 - `open` in detail: a newcomer is dealt in at the next spotlight
   boundary, when the game picks the next liars (`startLies`) or starts
   a vote, so they vote from the next drawing on and, when the liars are

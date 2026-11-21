@@ -34,7 +34,6 @@ function joinText(join) {
 
 const client = PartyClient.fromLocation({ role: /** @type {any} */ (new URLSearchParams(location.hash.slice(1)).get("role") ?? "screen") });
 const stage = /** @type {HTMLElement} */ (document.getElementById("stage"));
-const corner = /** @type {HTMLElement} */ (document.getElementById("corner"));
 const status = /** @type {HTMLElement} */ (document.getElementById("status"));
 const joined = /** @type {HTMLElement} */ (document.getElementById("joined"));
 
@@ -416,7 +415,7 @@ function sting(label, sub) {
   for (let i = 0; i < 8; i++) box.append(h("i", { style: `left:${i * 14 - 10}%;background:${cols[i % cols.length]};transition-delay:${i * 30}ms` }));
   const word = h("b", {}, label);
   box.append(h("i", { class: "st" }, sub ? h("small", {}, sub) : null, word));
-  document.body.insertBefore(box, corner);
+  document.body.insertBefore(box, joined);
   stinger = box;
   // Long words in a smaller size.
   const max = window.innerWidth * 0.9;
@@ -520,24 +519,15 @@ function render(view) {
     } else build(view);
   }
   refresh?.();
-  // Not in the lobby (the big code), nor where the options fill the
-  // right side, nor when the game is closed to newcomers.
-  const late = /** @type {"open" | "wait" | "closed"} */ (view.join?.lateJoin ?? "wait");
-  corner.hidden = s.phase === "lobby" || s.phase === "vote" || s.phase === "reveal" || !s.phase || !view.join?.qr || late === "closed";
-  if (!corner.hidden && corner.dataset.url !== view.join.url) {
-    corner.dataset.url = view.join.url;
-    /** @type {HTMLElement} */ (document.getElementById("corner-qr")).innerHTML = qrSvg(view.join.qr, { quiet: 2 });
-  }
-  if (!corner.hidden) /** @type {HTMLElement} */ (document.getElementById("corner-text")).textContent = t.corner[late] ?? "";
-  // Elsewhere tvpipe's rejoin badge shows the code while a phone is away.
-  client.joinVisible = !corner.hidden || s.phase === "lobby";
+  // tvpipe's join badge has the join code in the bottom right corner
+  // (the stage keeps clear of it: `data-tvpipe-join` and its size on
+  // <html>, screen.css), but in the lobby, which shows it big.
+  client.joinVisible = s.phase === "lobby" || !s.phase;
   // This round's newcomers, discreetly.
   const names = /** @type {string[]} */ (s.phase !== "lobby" && Array.isArray(s.joined) ? s.joined : []);
   const more = typeof s.joinedMore === "number" ? s.joinedMore : 0;
   joined.hidden = names.length === 0;
   joined.textContent = [...names.map((n) => `+ ${n}`), ...(more > 0 ? [t.joinedMore(more)] : [])].join(" · ");
-  // The stage keeps the corners free for them.
-  document.body.classList.toggle("corner-on", !corner.hidden);
   document.body.classList.toggle("joined-on", !joined.hidden);
 }
 

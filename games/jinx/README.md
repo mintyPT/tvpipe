@@ -22,7 +22,7 @@ phones join with the QR code.
 |---|---|---|
 | `tvpipe.json` | the manifest | pages, 3–8 players, the TV's size; `root: dist` |
 | `game/` | the rules (`rules.ts`), the clue matchers (`match.ts` English, `match-de.ts` German, `lang.ts` picks one), the game (`game.ts`), bots (`bots.ts`), the views (`views.ts`: the contract between host, TV and phones) | TypeScript on `@tvpipe/party`, tested in Node |
-| `host/` | the host page | the party, the TVs, the players, settings (language, rounds, writing time, words), a muted preview of the TV; `strings.ts` |
+| `host/` | the host page | tvpipe's standard host page (`HostPage`: the party, the TVs, the players, a muted preview of the TV) with Jinx's settings as a spec (`host.ts`: language, rounds, writing time, words) and its look (`host.css`); `strings.ts` (the status line, Play again) |
 | `screen/` | the TV page | the table seen from above; `strings.js` |
 | `phone/` | the phone page | faces, clues, cards, the guess; `strings.js`, `i18n.js` (numbers, plurals, lists) |
 | `data/words.txt`, `data/dict.txt`, `data/words.de.txt`, `data/dict.de.txt` | per language: the secret words (with difficulty, category, accepted guesses, banned clues), the dictionary for typos and word forms | fetched by the host page; `design/` has how they were made (German: `design/words/de/`, `design/matching/de/`); `dict.de.txt` is the German Wiktionary's, CC BY-SA 4.0 (`dict.de-LICENSE.txt`) |

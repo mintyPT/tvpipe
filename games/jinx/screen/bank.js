@@ -12,7 +12,6 @@
  * @typedef {import("./tv.js").Ctx} Ctx
  */
 
-import { joinText } from "/_tvpipe/lib/client.js";
 import { A, EASE, fitText, h, removeLater, rich, short } from "./dom.js";
 import { floatText } from "./fx.js";
 import { chip } from "./pieces.js";
@@ -167,10 +166,6 @@ export function bank(ctx, v, prev) {
       ? h("div", { class: "next" }, h("span", { class: "dim" }, tr.nextUp), chip(nextP, 72, { style: "position:relative" }), tr.guesses(short(nextP?.name, 10)))
       : h("div", { class: "next" }, tr.thatsTheGame),
   );
-  // newcomers may join for the next round
-  const j = ctx.join;
-  const link = joinText(j);
-  if (v.next && link && j?.lateJoin && j.lateJoin !== "closed") right.append(h("div", { class: "joinline" }, tr.joiningLate, h("b", null, link)));
   L.append(right);
   fitText(goalEl, 28, 24, 496, 0.8);
   if (!anim) return {};

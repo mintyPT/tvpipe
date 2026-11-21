@@ -264,7 +264,7 @@ shows*. Each client has one **view**: `{ roster, room | screen, me }`.
   back by typing the same name while they are away (a new token; the old
   one stops working; `reclaim: false` turns it off), or with a rejoin
   link the host page shows them (`party.showRejoin`). TV pages show the
-  join code while someone is missing (the client's rejoin badge).
+  join code all game, and who is missing (the client's join badge).
   Details: party-protocol.md §4.1.
 - A lost socket makes the player `connected: false` (`away` event); the
   game decides what that means (skip their vote at the deadline). Players

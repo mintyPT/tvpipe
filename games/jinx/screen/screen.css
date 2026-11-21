@@ -22,6 +22,8 @@
   font-family: "Plex Sans", system-ui, sans-serif;
   color: var(--cream-on-felt);
 }
+/* tvpipe's join badge (bottom left, inside the table's edge) as a paper label. */
+:root { --tvpipe-join-bg: var(--paper); --tvpipe-join-fg: var(--ink); --tvpipe-join-accent: var(--dymo); --tvpipe-join-shadow: 0 .6vh 0 rgba(0, 0, 0, .3); --tvpipe-join-x: 3.6vw; --tvpipe-join-y: 5vh; }
 [hidden] { display: none !important; }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: #0d1716; overflow: hidden; }
@@ -294,8 +296,6 @@ html, body { margin: 0; height: 100%; background: #0d1716; overflow: hidden; }
 .slots i.todo { background: transparent; box-shadow: none; border: 3px dashed #4f8781; }
 .next { margin-top: 32px; display: flex; align-items: center; justify-content: center; gap: 18px; font-size: 30px; font-weight: 700; white-space: nowrap; }
 .next .dim { color: var(--dim); }
-.joinline { margin-top: 26px; font-size: 24px; font-weight: 600; color: var(--dim); }
-.joinline b { font-family: "Plex Mono", monospace; font-weight: 500; color: var(--cream-on-felt); letter-spacing: .12em; }
 
 /* ---------------------------------------------------------------- end */
 .mc { position: absolute; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-weight: 700; text-transform: uppercase; box-shadow: 0 0 0 3px var(--ink), 0 6px 0 rgba(0,0,0,.3); white-space: nowrap; overflow: visible; }

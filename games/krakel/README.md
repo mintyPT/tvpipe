@@ -50,7 +50,7 @@ phones join with the QR code.
 |---|---|---|
 | `tvpipe.json` | the manifest | pages, 3–10 players, the TV's size; `root: dist` |
 | `game/` | the rules (`rules.ts`: drawings, the word lists and the matcher, the deal, points), the ink's geometry (`ink.ts`: a stroke's path, the cut of a drawing at a point of its replay; the pages load it too), the game (`game.ts`), bots (`bots.ts`) | TypeScript on `@tvpipe/party`, tested in Node |
-| `host/` | the host page | the party, the TVs, the players, settings, a preview of the TV; `strings.ts` |
+| `host/` | the host page | tvpipe's standard host page (`HostPage`: the party, the TVs, the players, a preview of the TV) with Krakel's settings as a spec (`host.ts`) and its look (`host.css`); `strings.ts` (the status line) |
 | `screen/` | the TV page | the lobby, everyone drawing, the replay under the pencil with the guesses, the word, the gallery with hearts and ranking, the scores, the podium; sounds; `strings.js` |
 | `phone/` | the phone page | joining, the lobby (the VIP's settings), picking a word, the pad, the replay with the guess below it, the heart; `strings.js`, `ink.js` (the canvas, shared with the TV) |
 | `data/` | the word lists, English and German: `== Category`, then `word\|other name\|…` per line | fetched by the host page; `node scripts/words.ts` checks them |

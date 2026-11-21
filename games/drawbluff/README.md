@@ -64,7 +64,7 @@ phones join with the QR code.
 |---|---|---|
 | `tvpipe.json` | the manifest | pages, 3–50 players, the TV's size; `root: dist` |
 | `game/` | the rules (`rules.ts`), the game (`game.ts`), bots (`bots.ts`) | TypeScript on `@tvpipe/party`, tested in Node |
-| `host/` | the host page | the party, the TV, the players, settings (the language), a preview of the TV; `strings.ts` |
+| `host/` | the host page | tvpipe's standard host page (`HostPage`: the party, the TV, the players, a preview of the TV) with Drawbluff's settings as a spec (`host.ts`) and its look (`host.css`); `strings.ts` (the status line) |
 | `screen/` | the TV page | the screen view (`{ roster, screen, join }`); `strings.js` |
 | `phone/` | the phone page | drawing, lies, votes; `strings.js`, `i18n.js` (languages, `Intl`) |
 | `data/prompts.txt`, `data/prompts.de.txt` | the prompts, English and German | fetched by the host page |

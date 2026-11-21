@@ -124,9 +124,10 @@ try {
   await win.eval(`document.getElementById("start").click(); true`);
   await win.until(`location.pathname.endsWith("/host/index.html") && !!globalThis.drawbluff`, 20_000);
   log("the host page runs the game");
-  await win.eval(`(() => { const r = document.getElementById("rounds"); r.value = ${JSON.stringify(args.rounds)}; r.dispatchEvent(new Event("change")); const t = document.getElementById("timers"); t.value = ${JSON.stringify(args.shots ? "normal" : "fast")}; t.dispatchEvent(new Event("change")); return true; })()`);
+  // The settings as the host picks them (HostPage.set: the form's own path).
+  await win.eval(`(() => { drawbluff.page.set("rounds", ${JSON.stringify(args.rounds)}); drawbluff.page.set("timers", ${JSON.stringify(args.shots ? "normal" : "fast")}); return true; })()`);
   // The room's language, as the host page sets it.
-  await win.eval(`(() => { const l = document.getElementById("lang"); l.value = ${JSON.stringify(lang)}; l.dispatchEvent(new Event("change")); return true; })()`);
+  await win.eval(`(() => { drawbluff.page.set("lang", ${JSON.stringify(lang)}); return true; })()`);
   await win.until(`drawbluff.game.lang === ${JSON.stringify(lang)} && document.documentElement.lang === ${JSON.stringify(lang)}`);
   log(`the room speaks ${lang}`);
   const links = await win.eval<{ join: string; phone: string; code: string; watch: string }>(
@@ -239,11 +240,11 @@ try {
   const pick = await phone.eval<number>(`[...document.querySelectorAll(".colors button")].findIndex((b) => !b.classList.contains("taken") && !b.classList.contains("chosen"))`);
   await phone.eval(`document.querySelectorAll(".colors button")[${pick}].click(); true`);
   await phone.until(`document.querySelectorAll(".colors button")[${pick}]?.classList.contains("chosen")`);
-  await phone.eval(`document.querySelectorAll(".rules .seg")[0].querySelectorAll("button")[1].click(); true`);
+  await phone.eval(`document.querySelectorAll(".rules .seg:not(.rounds)")[0].querySelectorAll("button")[1].click(); true`);
   await win.until(`drawbluff.game.settings.undo === true`);
   log("phone: picked a colour, turned undo on");
   if (args.animate) {
-    await phone.eval(`document.querySelectorAll(".rules .seg")[3].querySelectorAll("button")[1].click(); true`);
+    await phone.eval(`document.querySelectorAll(".rules .seg:not(.rounds)")[3].querySelectorAll("button")[1].click(); true`);
     await win.until(`drawbluff.game.settings.animate === true`);
     log("phone: turned animated drawings on");
   }

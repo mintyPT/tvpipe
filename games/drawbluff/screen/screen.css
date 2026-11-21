@@ -29,7 +29,7 @@ body { background: radial-gradient(circle at 15% 10%, var(--bg2), var(--bg) 65%)
 #stage { position: absolute; inset: 0; padding: 5vh 4vw; display: flex; gap: 4vw; }
 /* German compounds ("regenbogenreparaturdienst") break with a hyphen where the language allows. */
 #stage { overflow-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; }
-#corner, #joined, #status { z-index: 10; }
+#joined, #status { z-index: 10; }
 .logo { font-family: "Sixtyfour", monospace; color: var(--accent); }
 h1 { font-family: "Michroma", sans-serif; font-weight: 400; font-size: 4.2vh; line-height: 1.35; margin: 0 0 2vh; }
 h2 { font-size: 2.4vh; text-transform: uppercase; letter-spacing: .1em; opacity: .7; margin: 0 0 1.5vh; font-weight: 600; }
@@ -138,9 +138,11 @@ h1 .count.bump { animation: pop .35s cubic-bezier(.2,1.6,.4,1); }
 .dcount { font-family: "Michroma", sans-serif; font-size: 2.4vh; text-align: right; line-height: 1.5; white-space: nowrap; }
 .dcount small { display: block; font-family: "Plex Sans", sans-serif; font-size: 2vh; opacity: .7; }
 .dgrid { flex: 1; display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 3vh 1.8vw; align-content: center; }
-.corner-on .dgrid { margin-bottom: 12vh; }
+/* tvpipe's join badge (bottom right; its room from the screen's edge in --tvpipe-join-h/-w, less the stage's padding). */
+[data-tvpipe-join] .dgrid { margin-bottom: max(2vh, calc(var(--tvpipe-join-h) - 4vh)); }
 .joined-on .dgrid { margin-bottom: 2vh; }
-.corner-on.joined-on .dgrid { margin-bottom: 12vh; }
+[data-tvpipe-join] .joined-on .dgrid { margin-bottom: max(2vh, calc(var(--tvpipe-join-h) - 4vh)); }
+[data-tvpipe-join$="right"] .right { padding-bottom: max(0px, calc(var(--tvpipe-join-h) - 4vh)); }
 .dc { position: relative; border-radius: 2vh; background: rgba(255,255,255,.08); padding: 2vh 1.5vw 1.8vh; display: flex; flex-direction: column; gap: 1.6vh; min-width: 0;
   outline: .35vh solid transparent; outline-offset: -.35vh; transition: background .45s;
   --pd: color-mix(in oklab, var(--pc) 62%, black); --pl: color-mix(in oklab, var(--pc) 55%, white); }
@@ -195,7 +197,7 @@ h1 .count.bump { animation: pop .35s cubic-bezier(.2,1.6,.4,1); }
 /* ---------------- Gallery ---------------- */
 .pgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3.4vh 2vw; flex: 1; align-content: center; justify-items: center; }
 .pol { background: var(--paper); padding: 1.2vh 1.2vh 0; border-radius: .6vh; color: var(--dark); width: 26vh; position: relative; transform: rotate(var(--r)); box-shadow: 0 1vh 2.4vh rgba(0,0,0,.35); }
-.corner-on .pol { width: 24vh; }
+[data-tvpipe-join] .pol { width: 24vh; }
 .pol canvas { width: 100%; aspect-ratio: 1; display: block; }
 .pol .cap { padding: .7vh .2vh .9vh; height: 7.6vh; opacity: 0; transition: opacity .4s; display: flex; flex-direction: column; gap: .3vh; }
 .pol .cap.on { opacity: 1; }
@@ -372,9 +374,9 @@ h1 .count.bump { animation: pop .35s cubic-bezier(.2,1.6,.4,1); }
 .pblock { width: 100%; height: 0; background: var(--pc); color: var(--pt); border-radius: 1.6vh 1.6vh 0 0; display: flex; justify-content: center; padding-top: 1vh;
   font-family: "Michroma", sans-serif; font-size: 6.5vh; overflow: hidden; transition: height .7s cubic-bezier(.3,1.25,.4,1); border-top: 1.2vh solid color-mix(in srgb, var(--pc) 60%, white); }
 .fin-foot { align-self: stretch; display: flex; flex-direction: column; align-items: center; gap: 1vh; margin-top: 2vh; }
-.corner-on .fin-foot { align-items: flex-start; margin-right: 28vw; }
+[data-tvpipe-join] .fin-foot { align-items: flex-start; margin-right: var(--tvpipe-join-w); }
 .rest { display: flex; flex-wrap: wrap; gap: 1vh 1vw; justify-content: center; }
-.corner-on .rest { justify-content: flex-start; }
+[data-tvpipe-join] .rest { justify-content: flex-start; }
 .rest .pchip { font-size: 2.2vh; background: rgba(255,255,255,.1); color: var(--ink); }
 .rest .pchip .av { font-size: 1.6vh; }
 .rest .pchip.in { animation: optin .45s cubic-bezier(.2,1.3,.4,1) both; }
@@ -382,14 +384,7 @@ h1 .count.bump { animation: pop .35s cubic-bezier(.2,1.6,.4,1); }
 .fin .hint.on { opacity: .85; }
 .conf { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4; }
 
-/* ---------------- Corner, newcomers, status ---------------- */
-#corner {
-  position: absolute; right: 2vw; bottom: 3vh; display: flex; align-items: center; gap: 1vw;
-  background: rgba(0,0,0,.35); padding: 1vh; border-radius: 1.4vh; font-size: 1.8vh;
-}
-#corner-qr { width: 12vh; height: 12vh; background: #fff; border-radius: .8vh; overflow: hidden; }
-#corner-qr svg { width: 100%; height: 100%; display: block; }
-#corner-text { max-width: 14vw; opacity: .85; }
+/* ---------------- Newcomers, status ---------------- */
 #joined { position: absolute; left: 2.5vw; bottom: 2vh; font-size: 2.2vh; opacity: .7; white-space: nowrap; max-width: 60vw; overflow: hidden; text-overflow: ellipsis; }
 #status { position: absolute; left: 0; right: 0; bottom: 0; background: var(--hot); text-align: center; padding: 1vh; }
 
@@ -404,4 +399,4 @@ h1 .count.bump { animation: pop .35s cubic-bezier(.2,1.6,.4,1); }
 /* Up to four answers: room for every name. */
 .ropts:not(.many) .ropt .meta { flex-wrap: wrap; row-gap: .4vh; }
 .ropts:not(.many) .ropt .who { white-space: normal; }
-.corner-on .podium { margin-bottom: 3vh; }
+[data-tvpipe-join] .podium { margin-bottom: 3vh; }

@@ -60,6 +60,24 @@ export {
 export { TvpipeRelay, frame, OP_TEXT, OP_BINARY, type Relay, type RelayConn, type Via } from "./relay.ts";
 export { Emitter } from "./emitter.ts";
 export { RejoinBadge } from "./rejoin.ts";
+export {
+  HostPage,
+  SettingsForm,
+  hostStrings,
+  languageField,
+  lateJoinField,
+  preferredLang,
+  textIn,
+  type Choice,
+  type ChoiceField,
+  type Field,
+  type HostGame,
+  type HostRunOptions,
+  type HostShellOptions,
+  type Text,
+  type ToggleField,
+  type Value,
+} from "./host.ts";
 export { StateBox, diff, applyDiff, toJson, type Diff, type Json, type JsonObject } from "./sync.ts";
 export { cleanText, graphemes, nameKey } from "./names.ts";
 export { TokenBucket, WindowCounter } from "./limits.ts";

@@ -16,10 +16,9 @@ import { drawInk, fit, GRID, progressAt, Replay } from "../phone/ink.js";
 import { strings } from "./strings.js";
 
 const params = new URLSearchParams(location.hash.slice(1));
-// The top right corner is kept free in every scene: tvpipe's rejoin badge goes there (and the join code between rounds).
+// The top right corner is kept free in every scene: tvpipe's join badge goes there (the join code the whole game, and who is away).
 const client = PartyClient.fromLocation({ role: /** @type {any} */ (params.get("role") ?? "screen"), rejoinBadge: { corner: "top-right" } });
 const stage = /** @type {HTMLElement} */ (document.getElementById("stage"));
-const corner = /** @type {HTMLElement} */ (document.getElementById("corner"));
 const statusBar = /** @type {HTMLElement} */ (document.getElementById("status"));
 
 let lang = pickLang(undefined);
@@ -329,17 +328,9 @@ function render(view) {
     stage.append(scene.el);
   }
   scene?.update?.(view);
-  // The join code in a corner: between rounds, for latecomers.
-  const late = view.join?.lateJoin ?? "wait";
-  corner.hidden = !["scores", "final"].includes(s.phase) || !view.join?.qr || late === "closed";
-  if (!corner.hidden && corner.dataset["url"] !== view.join.url) {
-    corner.dataset["url"] = view.join.url;
-    /** @type {HTMLElement} */ (document.getElementById("corner-qr")).innerHTML = qrSvg(view.join.qr, { quiet: 2 });
-  }
-  const text = joinText(view.join);
-  /** @type {HTMLElement} */ (document.getElementById("corner-text")).replaceChildren(t.joinCorner, ...(text ? [h("b", {}, text)] : []));
-  // Elsewhere tvpipe's rejoin badge shows the code while a phone is away.
-  client.joinVisible = !corner.hidden || s.phase === "lobby";
+  // tvpipe's join badge has the join code in the top right corner, but in
+  // the lobby, which shows it big.
+  client.joinVisible = s.phase === "lobby" || !s.phase;
 }
 
 function frame() {

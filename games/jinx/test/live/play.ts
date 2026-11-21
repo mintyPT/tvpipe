@@ -186,11 +186,11 @@ try {
   log("the host page runs the game");
   // Settings, as the host page sets them.
   await win.eval(
-    `(() => { const r = document.getElementById("rounds"); r.value = ${JSON.stringify(args.rounds)}; r.dispatchEvent(new Event("change")); const w = document.getElementById("write"); w.value = "30"; w.dispatchEvent(new Event("change")); return true; })()`,
+    `(() => { jinx.page.set("rounds", ${JSON.stringify(args.rounds)}); jinx.page.set("write", 30); return true; })()`,
   );
   await win.until(`jinx.game.rounds === ${JSON.stringify(args.rounds === "auto" ? "auto" : Number(args.rounds))} && jinx.game.timings.write === 30000`);
   // The room's language, as the host page sets it (German needs its word list).
-  await win.eval(`(() => { const l = document.getElementById("lang"); l.value = ${JSON.stringify(args.lang)}; l.dispatchEvent(new Event("change")); return true; })()`);
+  await win.eval(`(() => { jinx.page.set("lang", ${JSON.stringify(args.lang)}); return true; })()`);
   await win.until(`jinx.game.lang === ${JSON.stringify(args.lang)}`, 5000);
   const links = await win.eval<{ join: string; watch: string; code: string }>(`({ join: jinx.party.links.join, watch: jinx.party.links.watch, code: jinx.party.code })`);
   log(`room ${links.code}, phones join at ${links.join.replace(/#.*/, "#k=…")}`);

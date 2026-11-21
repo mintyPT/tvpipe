@@ -174,7 +174,6 @@ const en = (f) => ({
   bankLine: (n) => (n > 0 ? "*We're in the money.*" : n < 0 ? "Ouch. *We'll win it back.*" : "*Steady.* On to the next one."),
   nextUp: "Next up:",
   thatsTheGame: "That's the game!",
-  joiningLate: "Joining late? Go to ",
   // The end.
   endRoom: "Game over · the room",
   of: "of",
@@ -317,7 +316,6 @@ const de = (f) => ({
   bankLine: (n) => (n > 0 ? "*Es klingelt in der Kasse.*" : n < 0 ? "Autsch. *Das holen wir uns zurück.*" : "*Ruhig Blut.* Weiter geht's."),
   nextUp: "Als Nächstes:",
   thatsTheGame: "Das war's!",
-  joiningLate: "Zu spät dran? Geh auf ",
   endRoom: "Spiel vorbei · alle zusammen",
   of: "von",
   bankCaption: (chips, found, total) => `${f.p(chips, { one: "Chip", other: "Chips" })} in der Bank · ${f.n(found)} von ${f.n(total)} Wörtern`,

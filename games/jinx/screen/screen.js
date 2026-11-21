@@ -11,7 +11,7 @@ import { createTv } from "./app.js";
 import { t } from "./strings.js";
 
 const hash = new URLSearchParams(location.hash.slice(1));
-// The rejoin badge (a phone away mid-game) bottom left: the pot is on the right.
+// tvpipe's join badge (the join code the whole game, and who is away) bottom left: the pot is on the right.
 const client = PartyClient.fromLocation({ role: /** @type {any} */ (hash.get("role") ?? "screen"), rejoinBadge: { corner: "bottom-left" } });
 const root = /** @type {HTMLElement} */ (document.getElementById("viewport"));
 const status = /** @type {HTMLElement} */ (document.getElementById("status"));
@@ -22,7 +22,7 @@ const tv = createTv({ root, now: () => client.now(), qrSvg, muted: hash.get("mut
 let pending = null;
 let ready = false;
 client.on("view", (view) => {
-  // The lobby has the big code; elsewhere tvpipe's rejoin badge shows it while a phone is away.
+  // The lobby has the big code; elsewhere tvpipe's join badge shows it.
   client.joinVisible = view.screen?.phase === "lobby";
   if (ready) tv.update(view);
   else pending = view;

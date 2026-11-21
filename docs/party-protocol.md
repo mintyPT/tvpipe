@@ -113,10 +113,11 @@ score and turn:
   player (a QR code). The client keeps the token as its own, takes it
   out of the address bar, and resumes.
 
-Screens show the way back: the client library draws a rejoin badge on
-TV and watch pages (the join QR code, the short link, the names of
-players away for 4 s or more) while `join.inProgress` is set, unless the
-page says its own join code is showing.
+Screens show the way in and back: the client library draws a join
+badge on TV and watch pages (the join QR code and the short link the
+whole time; the names of players away for 4 s or more while
+`join.inProgress` is set), unless the page says its own join code is
+showing.
 
 ## 5. Views and diffs
 

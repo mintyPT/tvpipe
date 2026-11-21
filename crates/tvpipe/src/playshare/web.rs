@@ -28,6 +28,7 @@ pub static FILES: &[Asset] = web![
     "lib/client.js",
     "lib/emitter.js",
     "lib/flashsync.js",
+    "lib/host.js",
     "lib/index.js",
     "lib/limits.js",
     "lib/names.js",
