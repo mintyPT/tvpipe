@@ -531,7 +531,8 @@ export class Drawbluff extends Emitter<GameEvents> {
     if (!this.#adultPrompts.has(this.#lang)) this.#settings.adult = false;
     if (this.#settings.colorMode !== colorMode) for (const p of this.party.players) p.state.set(this.#pens(p));
     this.party.room.set(this.#settingsView());
-    if (this.#phase === "lobby") {
+    // Between games (the lobby, the final screen) the rules for the next one.
+    if (this.#phase === "lobby" || this.#phase === "final") {
       this.party.room.set({ rounds: this.rounds });
       this.party.screen.set({ ...this.#settings, rounds: this.rounds });
     }
@@ -1150,8 +1151,9 @@ export class Drawbluff extends Emitter<GameEvents> {
     this.#setPhase("final");
     const table = this.#table();
     this.#withTv(() => {
-      party.room.replace({ phase: "final", lang: this.#lang, minPlayers: this.minPlayers, lateJoin: party.lateJoin, ...this.#settingsView(), ...this.#colorView() });
-      party.screen.replace({ phase: "final", lang: this.#lang, scores: table.slice(0, BOARD_LINES), total: table.length, colors: this.#screenColors() });
+      // The next game's rules too (the VIP's phone shows them again).
+      party.room.replace({ phase: "final", lang: this.#lang, minPlayers: this.minPlayers, maxPlayers: party.maxPlayers, rounds: this.rounds, lateJoin: party.lateJoin, ...this.#settingsView(), ...this.#colorView() });
+      party.screen.replace({ phase: "final", lang: this.#lang, scores: table.slice(0, BOARD_LINES), total: table.length, colors: this.#screenColors(), rounds: this.rounds, ...this.#settings });
       for (const p of party.players) p.state.replace({ task: "final", ...this.#rank(this.scores.has(p.id) ? p : undefined), ...this.#pens(p) });
     });
     this.emit("end", table);

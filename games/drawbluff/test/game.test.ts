@@ -548,6 +548,16 @@ test("colours, pens and the rules: picked in the lobby, the VIP's settings, adul
     for (const p of prompts) assert.ok(adult.has(p), `${p}: an adult prompt`);
     assert.ok(drawings.length > 0);
     for (const d of drawings) assert.deepEqual(d.palette, palette(g.colorOf(party.player(d.artist)!), true));
+    // After the game the VIP sets the next one's rules: every phone and the TV see them.
+    await until(() => players.every((_, i) => me(i).task === "final" && room(i)["rounds"] === 1));
+    assert.equal((party.screen.peek() as { rounds: number }).rounds, 1);
+    await players[0]!.client.act("settings", { rounds: 3, undo: false });
+    assert.equal(g.rounds, 3);
+    await until(() => players.every((_, i) => room(i)["rounds"] === 3 && room(i)["undo"] === false && room(i)["phase"] === "final"));
+    assert.deepEqual(
+      [(party.screen.peek() as { rounds: number }).rounds, (party.screen.peek() as { undo: boolean }).undo, (party.screen.peek() as { phase: string }).phase],
+      [3, false, "final"],
+    );
     assert.deepEqual(new Set(players.flatMap((b) => b.errors)), new Set());
   } finally {
     for (const b of players) b.close();
