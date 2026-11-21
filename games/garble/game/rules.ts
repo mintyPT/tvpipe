@@ -1,7 +1,8 @@
 /**
  * Garble's rules, without a party: drawings and guesses as they arrive
  * from phones, the word lists (`cat|kitten|kitty`), the matcher that
- * judges a guess, the seating (who works on which picture at which
+ * judges a guess (spelling slips forgiven, never towards another word
+ * of the list), the seating (who works on which picture at which
  * step), the decks and the points. Pure functions with known-answer tests
  * (test/rules.test.ts). The design: docs/garble-design.md.
  *
@@ -155,9 +156,130 @@ export interface Word {
   also: string[];
 }
 
-/** Whether a guess names a word: the word itself or one of its synonyms ({@link says}). */
-export function judge(guess: string, word: Word, lang: Lang = "en"): boolean {
-  return says(guess, word.word, lang) || word.also.some((a) => says(guess, a, lang));
+/**
+ * The edit distance of two words (insert, delete, replace, and two
+ * neighbours swapped, each 1), or `max + 1` when it is more than `max`.
+ */
+export function distance(a: string, b: string, max = 3): number {
+  if (a === b) return 0;
+  const la = a.length;
+  const lb = b.length;
+  if (Math.abs(la - lb) > max) return max + 1;
+  let prev2: number[] = [];
+  let prev = Array.from({ length: lb + 1 }, (_, j) => j);
+  for (let i = 1; i <= la; i++) {
+    const row = [i];
+    let best = i;
+    for (let j = 1; j <= lb; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      let v = Math.min(prev[j]! + 1, row[j - 1]! + 1, prev[j - 1]! + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) v = Math.min(v, prev2[j - 2]! + 1);
+      row.push(v);
+      if (v < best) best = v;
+    }
+    if (best > max) return max + 1;
+    prev2 = prev;
+    prev = row;
+  }
+  return Math.min(prev[lb]!, max + 1);
+}
+
+/** Letters a guess may be off a word of that length and still count: none up to 4, one up to 7, two from 8. */
+export function slips(length: number): number {
+  return length <= 4 ? 0 : length <= 7 ? 1 : 2;
+}
+
+/**
+ * German written without umlauts on the keyboard: `ae`, `oe`, `ue` as
+ * the folded `a`, `o`, `u` (`Kaese`, `Schildkroete`, `Kuehe`). Only
+ * the guess's other reading; the guess as typed counts too (`Feuer`).
+ */
+function umlautsOff(text: string): string {
+  return text.replace(/([aou])e/gi, "$1");
+}
+
+/** Whether a run of a guess (folded, written as one) is a form as written: the same letters or the same stem, nothing inside. */
+function isForm(t: string, w: string, lang: Lang): boolean {
+  if (t === w) return true;
+  const st = stem(t, lang);
+  const sw = stem(w, lang);
+  return st === sw || st === w || t === sw;
+}
+
+/** A word's names (the word, its synonyms), each folded and written as one, with its number of words. */
+function formsOf(word: Word): { joined: string; count: number }[] {
+  return [word.word, ...word.also]
+    .map((f) => {
+      const ts = tokens(f);
+      return { joined: ts.join(""), count: ts.length };
+    })
+    .filter((f) => f.joined);
+}
+
+/**
+ * Whether a run of a guess (folded, written as one) is a spelling slip
+ * of a name (`joined`): the same first letter (a rhyme is another word:
+ * `house` is no `mouse`, `power` no `tower`), and at most
+ * {@link slips} letters off it, as typed or without an ending
+ * (`elefants`, `girafe`, `Krokodiel`).
+ */
+function slipOf(t: string, joined: string, lang: Lang): boolean {
+  const allowed = slips(joined.length);
+  if (allowed === 0 || t[0] !== joined[0]) return false;
+  if (distance(t, joined, allowed) <= allowed) return true;
+  const st = stem(t, lang);
+  if (st !== t && distance(st, joined, allowed) <= allowed) return true;
+  // Stem to stem, as many slips as the shorter stem allows (`kuh` is no slip of `Kuchen`).
+  const sw = stem(joined, lang);
+  const few = slips(sw.length);
+  return few > 0 && distance(st, sw, few) <= few;
+}
+
+/**
+ * Whether a guess reads a word right through a spelling slip: some run
+ * of its words (one word, or as many as the name has, or one more:
+ * `fire truk`, `firetruk`, `snow mann`) is a slip of one of the word's
+ * names ({@link slipOf}), and that run is not itself another word of
+ * `others` (`mouse` is a word of its own, not a misspelt `moose`).
+ * `readings` are the guess as typed and its other readings (German
+ * umlauts written out: the same words); a run is another word when it
+ * is in any of them.
+ */
+function slipped(readings: readonly string[], word: Word, lang: Lang, others: readonly Word[]): boolean {
+  const all = readings.map((g) => tokens(g));
+  let rivalForms: string[] | undefined;
+  // The other words' names, only once a run is a slip (most are not).
+  const rivals = () => {
+    const own = fold(word.word);
+    return (rivalForms ??= others.filter((o) => fold(o.word) !== own).flatMap(formsOf).map((f) => f.joined));
+  };
+  for (const w of formsOf(word)) {
+    if (slips(w.joined.length) === 0) continue;
+    for (const ts of all) {
+      for (let size = 1; size <= w.count + 1; size++) {
+        for (let i = 0; i + size <= ts.length; i++) {
+          if (!slipOf(ts.slice(i, i + size).join(""), w.joined, lang)) continue;
+          const runs = all.map((x) => x.slice(i, i + size).join(""));
+          if (rivals().some((r) => runs.some((t) => isForm(t, r, lang)))) continue;
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Whether a guess names a word: it says the word or one of its
+ * synonyms ({@link says}), or, failing that, a run of it is a spelling
+ * slip away from one ({@link slipped}) and is not another word of
+ * `others` (the room's word list). German guesses count with `ae`,
+ * `oe`, `ue` for umlauts too.
+ */
+export function judge(guess: string, word: Word, lang: Lang = "en", others: readonly Word[] = []): boolean {
+  const readings = lang === "de" && /[aou]e/i.test(guess) ? [guess, umlautsOff(guess)] : [guess];
+  for (const g of readings) if (says(g, word.word, lang) || word.also.some((a) => says(g, a, lang))) return true;
+  return slipped(readings, word, lang, others);
 }
 
 // ---------------------------------------------------------------------------
@@ -247,13 +369,20 @@ export class Deck<T> {
   }
 }
 
+/** Whether a name of one word would be right for the other (as written or by a slip: `horse` and `house`). */
+function clash(a: Word, b: Word, lang: Lang): boolean {
+  return a.word === b.word || [a.word, ...a.also].some((f) => judge(f, b, lang)) || [b.word, ...b.also].some((f) => judge(f, a, lang));
+}
+
 /**
  * The words of one picture: two to pick from for the first layer, then
- * one per further layer, none twice and none saying another.
+ * one per further layer, none twice and none whose name would be right
+ * for another, even by a slip (a `horse` drawn into a `house` could not
+ * be told from it by the guess).
  */
 export function dealPicture(deck: Deck<Word>, layers: number, lang: Lang = "en"): { choices: [Word, Word]; words: Word[] } {
   const taken: Word[] = [];
-  const fits = (w: Word) => !taken.some((x) => x.word === w.word || judge(x.word, w, lang) || judge(w.word, x, lang));
+  const fits = (w: Word) => !taken.some((x) => clash(x, w, lang));
   const next = () => {
     const w = deck.draw(fits);
     taken.push(w);
@@ -316,9 +445,9 @@ export interface Picture {
   layers: Layer[];
 }
 
-/** A guess at a layer, judged (an empty one is wrong). */
-export function guessAt(layer: Layer, by: string, text: string, lang: Lang = "en"): Guess {
-  return { by, text, right: !!text && judge(text, layer.word, lang) };
+/** A guess at a layer, judged against the room's word list `others` (an empty one is wrong). */
+export function guessAt(layer: Layer, by: string, text: string, lang: Lang = "en", others: readonly Word[] = []): Guess {
+  return { by, text, right: !!text && judge(text, layer.word, lang, others) };
 }
 
 export const POINTS = {

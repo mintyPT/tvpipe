@@ -80,9 +80,35 @@ off plurals only (`-s`, `-es`, `-ies`; not `-ss`, `-us`, `-is`), German
 `toaster`. A word of several (`ice cream`) is said by its words in a
 row or written as one (`icecream`).
 
+**Spelling slips** count too (`judge(guess, word, lang, list)` in
+`game/rules.ts`, known answers in `test/rules.test.ts`): a word of the
+guess (or as many words in a row as the name has, or one more: `fire
+truk`, `firetruk`, `snow mann`) is right when it is no letter off a name
+of up to 4 letters, one off up to 7, two from 8 (insert, delete,
+replace, two neighbours swapped; as typed or without its ending:
+`elefants`, `girafe`, `pengiun`, `Krokodiel`, `Schmeterling`), **and**
+
+- keeps the name's first letter: a rhyme is another word, not a slip
+  (`power` is no `tower`, `rouse` no `mouse`);
+- is not itself a word or synonym of the room's whole list, by its
+  letters or its stem: `house` is a house, not a misspelt `horse`;
+  `Birne` no `Biene`, `Kirche` no `Kirsche` (the picture's own words
+  count as the list's, for a script's words that are not in it);
+- stem to stem gets only the slips the shorter stem allows (`Kuh` is no
+  slip of `Kuchen`).
+
+German guesses count with `ae`, `oe`, `ue` for umlauts too (`Kaese`,
+`Schildkroete`, `Kuehe`), besides as typed (`Feuer`). There is no
+"close": a guess is right or wrong, and the reveal shows it as typed.
+
+The deal keeps words a slip apart out of one picture (`horse` and
+`house`, `Mütze` and `Münze`): drawn on top of each other, the guess
+could not tell them apart.
+
 The word lists are concrete, drawable nouns, each with the synonyms and
-irregular plurals people actually write, and no word or synonym says
-another entry's (`test/rules.test.ts` checks every pair). That costs a
+irregular plurals people actually write (misspellings and regular
+plurals are the matcher's job), and no word or synonym says another
+entry's (`test/rules.test.ts` checks every pair). That costs a
 few: German has no `Fledermaus` (a `Maus`), no `Spiegel` (an `Igel`),
 no `Haifisch` (a `Fisch`), English no `pineapple` next to `apple`.
 

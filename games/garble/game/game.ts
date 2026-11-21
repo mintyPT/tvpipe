@@ -642,7 +642,9 @@ export class Garble extends Emitter<GameEvents> {
       const c = pictureOf(p);
       if (!first) {
         const prev = c.layers.at(-1)!;
-        prev.guess = guessAt(prev, p.id, guessed.get(p) ?? "", this.#lang);
+        // A slip counts unless it is another word: of the list, or of this picture (a script's words need not be in the list).
+        const others = [...(this.#words.get(this.#lang) ?? []), ...c.layers.map((l) => l.word)];
+        prev.guess = guessAt(prev, p.id, guessed.get(p) ?? "", this.#lang, others);
       }
       if (last) continue;
       const a = got.get(p);

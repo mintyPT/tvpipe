@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
+import { misspelt } from "../game/bots.ts";
 import {
   bestMove,
   cleanGuess,
   dealPicture,
   Deck,
+  distance,
   flatten,
   fold,
   guessAt,
@@ -22,6 +24,7 @@ import {
   scoreRound,
   seatOf,
   seeded,
+  slips,
   stem,
   validateDrawing,
   type Lang,
@@ -100,6 +103,68 @@ test("judge: the word or any synonym, with plurals", () => {
   assert.ok(judge("ein Igelchen", igel, "de"));
 });
 
+test("distance: inserts, deletes, replacements and swaps", () => {
+  assert.equal(distance("elephant", "elephant"), 0);
+  assert.equal(distance("elefant", "elephant"), 2);
+  assert.equal(distance("girafe", "giraffe"), 1);
+  assert.equal(distance("pengiun", "penguin"), 1, "two neighbours swapped");
+  assert.equal(distance("krokodiel", "krokodil"), 1);
+  assert.equal(distance("cat", "elephant", 2), 3, "more than max: max + 1");
+  assert.deepEqual([3, 4, 5, 7, 8, 14].map(slips), [0, 0, 1, 1, 2, 2]);
+});
+
+test("judge: spelling slips count, unless they are another word", () => {
+  const en = list("words.txt");
+  const de = list("words.de.txt");
+  const of = (words: Word[], w: string) => words.find((x) => x.word === w) ?? { word: w, also: [] };
+  const right: [string, string, Lang][] = [
+    ["elefant", "elephant", "en"],
+    ["elefants", "elephant", "en"],
+    ["a girafe", "giraffe", "en"],
+    ["pengiun", "penguin", "en"],
+    ["umbrela", "umbrella", "en"],
+    ["snow mann", "snowman", "en"],
+    ["a big firetruk", "fire truck", "en"],
+    ["fire truk", "fire truck", "en"],
+    ["a mous", "mouse", "en"],
+    ["Krokodiel", "Krokodil", "de"],
+    ["Schmeterling", "Schmetterling", "de"],
+    ["Gieraffe", "Giraffe", "de"],
+    ["Pingiun", "Pinguin", "de"],
+    ["Schneman", "Schneemann", "de"],
+    // Umlauts written out.
+    ["Kaese", "Käse", "de"],
+    ["Schildkroete", "Schildkröte", "de"],
+    ["zwei Kuehe", "Kuh", "de"],
+  ];
+  for (const [g, w, lang] of right) assert.ok(judge(g, of(lang === "de" ? de : en, w), lang, lang === "de" ? de : en), `${g} reads ${w}`);
+  const wrong: [string, string, Lang][] = [
+    // Another word of the list, not a slip.
+    ["house", "horse", "en"],
+    ["a mouse", "moose", "en"],
+    ["Birne", "Biene", "de"],
+    ["Kirche", "Kirsche", "de"],
+    ["Feuer", "Feder", "de"],
+    // A rhyme is another word: the first letter stays.
+    ["power", "tower", "en"],
+    ["rouse", "mouse", "en"],
+    // No slips in short words, or in short stems.
+    ["cap", "cat", "en"],
+    ["Kuh", "Torte", "de"],
+    ["frying pan", "trousers", "en"],
+    // Two slips are too many for seven letters.
+    ["pinguen", "penguin", "en"],
+  ];
+  for (const [g, w, lang] of wrong) assert.ok(!judge(g, of(lang === "de" ? de : en, w), lang, lang === "de" ? de : en), `${g} does not read ${w}`);
+  // Without a list, only the word itself guards: a word of the list may then be a slip.
+  assert.ok(judge("house", of(en, "horse"), "en"));
+  // A bot's slip is one.
+  assert.equal(misspelt("elephant"), "elephhant");
+  assert.equal(misspelt("owl"), "owl");
+  for (const w of en) if (!w.word.includes(" ")) assert.ok(judge(misspelt(w.word), w, "en", en), `${misspelt(w.word)} reads ${w.word}`);
+  for (const w of de) if (!w.word.includes(" ")) assert.ok(judge(misspelt(w.word), w, "de", de), `${misspelt(w.word)} reads ${w.word}`);
+});
+
 test("the word lists: drawable entries with synonyms, none saying another", () => {
   for (const [f, lang] of LISTS) {
     const words = list(f);
@@ -118,7 +183,10 @@ test("the word lists: drawable entries with synonyms, none saying another", () =
     for (const a of words) {
       for (const b of words) {
         if (a === b) continue;
-        for (const form of [a.word, ...a.also]) assert.ok(!judge(form, b, lang), `${f}: ${form} (${a.word}) says ${b.word}`);
+        for (const form of [a.word, ...a.also]) {
+          assert.ok(!says(form, b.word, lang) && !b.also.some((x) => says(form, x, lang)), `${f}: ${form} (${a.word}) says ${b.word}`);
+          assert.ok(!judge(form, b, lang, words), `${f}: ${form} (${a.word}) reads as a slip of ${b.word}`);
+        }
       }
     }
   }
@@ -202,7 +270,15 @@ test("a picture's words: two to pick from, then one per layer, none twice", () =
       assert.equal(words.length, 6);
       const all = [...choices, ...words];
       assert.equal(new Set(all.map((w) => w.word)).size, 8, "never twice in one picture");
+      for (const a of all) for (const b of all) if (a !== b) assert.ok(!judge(a.word, b, lang), `${a.word} and ${b.word} in one picture: one reads as the other`);
     }
+  }
+  // Words a slip apart never share a picture.
+  const near = new Deck<Word>([{ word: "horse", also: [] }, { word: "house", also: [] }, { word: "cat", also: [] }, { word: "dog", also: [] }], seeded(4));
+  for (let i = 0; i < 20; i++) {
+    const { choices, words } = dealPicture(near, 2);
+    const all = [...choices, ...words].map((w) => w.word);
+    assert.ok(!(all.includes("horse") && all.includes("house")), all.join(", "));
   }
   // A tiny deck: still a deal (the deck reshuffles).
   const small = new Deck<Word>([{ word: "cat", also: [] }, { word: "dog", also: [] }, { word: "owl", also: [] }], seeded(3));

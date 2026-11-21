@@ -16,7 +16,9 @@ a submarine becomes a hedgehog, and the TV replays how.
 - **The machine judges**: a guess is right when it says the latest
   layer's word, a plural or inflection of it, a compound with it inside
   (`Piratenschiff` for `Pirat`), or one of its synonyms from the word
-  list (`cat|kitten|kitty`).
+  list (`cat|kitten|kitty`). Spelling slips count (`elefant`,
+  `Krokodiel`, `Kaese`), unless the slip is another word of the list
+  (`house` is not a misspelt `horse`) or a rhyme (`power` for `tower`).
 - **Points**: a layer read right pays its drawer and its reader
   `50 + 50·k` each (layer 1: 100, layer 5: 300); later layers are harder.
 - **The reveal**: the TV rebuilds each picture layer by layer, each layer

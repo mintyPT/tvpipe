@@ -7,7 +7,8 @@
  *
  * A bot cannot see a drawing. With an `oracle` (the host page's, which
  * knows what each layer was meant to be) it reads it right most of the
- * time, sometimes with a synonym or a plural, and now and then not.
+ * time, sometimes with a synonym, a plural or a spelling slip, and now
+ * and then not.
  */
 
 import { memoryStorage, PartyClient, type WebSocketFactory } from "@tvpipe/party/client";
@@ -39,6 +40,17 @@ export const GUESSES: Record<Lang, readonly string[]> = {
   en: ["a potato", "my uncle", "a lamp", "abstract art", "a pancake", "a cloud", "a tired frog", "a toaster", "spaghetti", "a mess"],
   de: ["eine Kartoffel", "mein Onkel", "eine Lampe", "moderne Kunst", "ein Pfannkuchen", "eine Wolke", "ein müder Frosch", "ein Toaster", "Spaghetti", "Chaos"],
 };
+
+/**
+ * A word as typed in a hurry: a letter in the middle of a word of five
+ * letters and more doubled (`elephhant`), the matcher's one slip; a
+ * shorter word as it is (no slips there).
+ */
+export function misspelt(word: string): string {
+  if (word.length < 5 || word.includes(" ")) return word;
+  const i = Math.floor(word.length / 2);
+  return word.slice(0, i) + word[i] + word.slice(i);
+}
 
 /** A doodle: a face, a house, a sun or a cat, in a random spot (bots draw it on top of whatever is there). */
 export function doodle(rng: () => number): Drawing {
@@ -117,7 +129,7 @@ export class Bot {
     }, delay);
   }
 
-  /** A guess: the word (mostly), one of its synonyms or its plural, or nonsense. */
+  /** A guess: the word (mostly), one of its synonyms, its plural or a slip of it, or nonsense. */
   #guess(lang: Lang): string {
     const known = this.client.you ? this.#o.oracle?.(this.client.you.id) : undefined;
     const silly = GUESSES[lang];
@@ -127,6 +139,7 @@ export class Bot {
     if (x < 0.5) return known.word;
     if (x < 0.65 && known.also.length > 0) return known.also[Math.floor(this.#rng() * known.also.length)]!;
     if (x < 0.75) return lang === "de" ? `viele ${known.word}` : `${known.word}s`;
+    if (x < 0.82) return misspelt(known.word);
     return any;
   }
 

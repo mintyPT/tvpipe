@@ -163,7 +163,7 @@ test("pictures: who draws and guesses which layer, the words, the verdicts", asy
       p.layers.forEach((l, k) => {
         assert.equal(l.by, seats[(p.id + k) % n]);
         assert.equal(l.guess!.by, seats[(p.id + k + 1) % n]);
-        assert.equal(l.guess!.right, judge(l.guess!.text, l.word));
+        assert.equal(l.guess!.right, judge(l.guess!.text, l.word, "en", WORDS.en));
         if (l.guess!.right) right++;
       });
       assert.equal(new Set([...p.layers.map((l) => l.by), p.layers.at(-1)!.guess!.by]).size, 7);
@@ -268,7 +268,7 @@ test("in German: German words, judged in German", async () => {
     const layers = rounds[0]!.pictures.flatMap((p) => p.layers);
     assert.ok(layers.every((l) => german.has(l.word.word)));
     assert.ok(layers.some((l) => l.guess!.right));
-    for (const l of layers) assert.equal(l.guess!.right, !!l.guess!.text && judge(l.guess!.text, l.word, "de"));
+    for (const l of layers) assert.equal(l.guess!.right, !!l.guess!.text && judge(l.guess!.text, l.word, "de", WORDS.de));
   } finally {
     for (const b of players) b.close();
     close();

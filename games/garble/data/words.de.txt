@@ -2,11 +2,12 @@
 # One entry per line: the word first (a concrete thing you can draw,
 # without article, singular), then `|` and the other words people write
 # for it (synonyms, irregular plurals, the everyday name): a guess saying
-# any of them reads the layer right (game/rules.ts, judge). No word or
-# synonym says another entry's (inside a longer word from four letters,
-# or with the same stem; folded: ä → a, ß → ss): test/rules.test.ts
-# checks it. That keeps a few out (Fledermaus has a Maus, Spiegel an
-# Igel, Haifisch a Fisch).
+# any of them reads the layer right (game/rules.ts, judge); spelling
+# slips, ae/oe/ue for umlauts and regular plurals are the matcher's job.
+# No word or synonym says another entry's (inside a longer word from
+# four letters, or with the same stem; folded: ä → a, ß → ss):
+# test/rules.test.ts checks it. That keeps a few out (Fledermaus has a
+# Maus, Spiegel an Igel, Haifisch a Fisch).
 # Lines starting with # are comments; blank lines are ignored.
 
 # Tiere

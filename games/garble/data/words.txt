@@ -2,9 +2,10 @@
 # One entry per line: the word first (a concrete thing you can draw,
 # lowercase, singular), then `|` and the other words people write for it
 # (synonyms, irregular plurals, the everyday name): a guess saying any of
-# them reads the layer right (game/rules.ts, judge). No word or synonym
-# says another entry's (inside a longer word from four letters, or with
-# the same stem): test/rules.test.ts checks it.
+# them reads the layer right (game/rules.ts, judge); misspellings and
+# regular plurals are the matcher's job. No word or synonym says another
+# entry's (inside a longer word from four letters, or with the same
+# stem): test/rules.test.ts checks it.
 # Lines starting with # are comments; blank lines are ignored.
 
 # Animals
