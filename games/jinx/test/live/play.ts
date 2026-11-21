@@ -447,10 +447,17 @@ try {
       await phone.until(`!!document.querySelector(".cards button.card.down:not([disabled])")`);
       // The scenario's cards by author, else the first face-down one.
       const by = args.shots ? JSON.stringify(scenario.TURN[i]) : "null";
+      const picked = Date.now();
       await phone.eval(`[...document.querySelectorAll(".cards button.card.down")].find((b) => ${by} === null || b.querySelector(".who")?.textContent === ${by}).click(); true`);
+      // The card turns on the TV first: the phone shows it turning, its word when the TV shows it.
+      await phone.until(`!!document.querySelector(".cards .card.turning")`, 3000).catch(() => problem("reveal: the picked card does not show as turning on the phone"));
+      if (i === 0) await shot(`${at}-reveal-turning`);
       await phone.until(`document.querySelectorAll(".cards .card.turned").length === ${i + 1}`);
+      const ms = Date.now() - picked;
+      const flip = await win.eval<number>(`jinx.game.timings.flip + jinx.party.tvDelay`);
+      if (ms < flip - 150) problem(`reveal: the phone showed the word ${ms} ms after the pick, before the TV's flip (${flip} ms)`);
       await win.until(`jinx.party.screen.peek().cards?.filter((c) => c.turned).length === ${i + 1}`);
-      log(`phone: turned card ${i + 1} of ${cards}: "${await phone.eval<string>(`[...document.querySelectorAll(".cards .card.turned .word")].at(-1).textContent`)}"`);
+      log(`phone: turned card ${i + 1} of ${cards}: "${await phone.eval<string>(`[...document.querySelectorAll(".cards .card.turned .word")].at(-1).textContent`)}" (its word ${ms} ms after the pick; the TV's flip and lag: ${flip} ms)`);
       if (i === 0) await shot(`${at}-reveal-turned`, { wait: 2500 });
     }
     const secret = (await state()).secret!;

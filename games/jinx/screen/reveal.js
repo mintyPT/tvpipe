@@ -55,9 +55,11 @@ export function reveal(ctx, v, prev) {
   const d = dial(1064, 150, 104);
   L.append(d.el);
   const tick = () => {
-    const s = Math.max(0, Math.ceil((v.deadline - ctx.now()) / 1000));
-    // the decision's length from `started` (typing moves only the deadline)
-    d.set(s, v.started && v.deadline > v.started ? Math.round((v.deadline - v.started) / 1000) : 30);
+    // the decision's length from `started` (typing moves only the deadline);
+    // a card still turning: the dial holds it full until the word shows
+    const full = v.started && v.deadline > v.started ? Math.round((v.deadline - v.started) / 1000) : 30;
+    const s = Math.max(0, Math.min(full, Math.ceil((v.deadline - ctx.now()) / 1000)));
+    d.set(s, full);
     if (s <= 10 && s > 0 && !v.typing) sfx.tick();
   };
   tick();

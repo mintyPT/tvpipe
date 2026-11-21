@@ -1160,6 +1160,8 @@ function guess(me) {
     go,
   );
   let busy = false;
+  /** A card turning on the TV (`me.turning`): its word comes when the TV shows it. */
+  let turning = "";
   let cards = me.cards;
   let lastCards = "";
   input.addEventListener("input", () => {
@@ -1168,7 +1170,7 @@ function guess(me) {
   });
   function lockIn() {
     const text = input.value.trim();
-    if (busy || !text || !cards.some((c) => c.turned)) return;
+    if (busy || turning || !text || !cards.some((c) => c.turned)) return;
     busy = true;
     sync();
     input.blur();
@@ -1180,7 +1182,7 @@ function guess(me) {
   }
   /** @param {string} id */
   function pick(id) {
-    if (busy) return;
+    if (busy || turning) return;
     busy = true;
     sync();
     buzz([20]);
@@ -1194,12 +1196,14 @@ function guess(me) {
   function sync() {
     const turned = cards.filter((c) => c.turned).length;
     const left = cards.length - turned;
-    input.disabled = busy || turned === 0;
+    const wait = busy || !!turning;
+    input.disabled = wait || turned === 0;
     input.placeholder = turned === 0 ? t.turnFirst : t.guessPlaceholder;
-    go.disabled = busy || turned === 0 || !input.value.trim();
-    pass.disabled = busy || turned === 0;
-    grid.querySelectorAll("button").forEach((b) => ((/** @type {HTMLButtonElement} */ (b)).disabled = busy));
-    info.textContent = turned === 0 ? t.whoseCard : left === 0 ? t.noCardsLeft : t.another;
+    go.disabled = wait || turned === 0 || !input.value.trim();
+    pass.disabled = wait || turned === 0;
+    grid.querySelectorAll("button").forEach((b) => ((/** @type {HTMLButtonElement} */ (b)).disabled = wait));
+    const card = turning ? cards.find((c) => c.id === turning) : undefined;
+    info.textContent = card ? t.turning(nameOf(card.author)) : turned === 0 ? t.whoseCard : left === 0 ? t.noCardsLeft : t.another;
   }
   return {
     tone: "hot",
@@ -1208,7 +1212,8 @@ function guess(me) {
     refresh: (m) => {
       if (m.task !== "guess") return;
       cards = m.cards;
-      const key = JSON.stringify([m.cards, m.pot]);
+      turning = m.turning ?? "";
+      const key = JSON.stringify([m.cards, m.pot, turning]);
       if (key !== lastCards) {
         const before = lastCards;
         lastCards = key;
@@ -1219,9 +1224,9 @@ function guess(me) {
         grid.replaceChildren(
           ...m.cards.map((c) => {
             const name = nameOf(c.author);
-            return c.turned
-              ? cardEl(c)
-              : cardEl(c, { tag: "button", onclick: () => pick(c.id), label: t.turnCard(name), words: false });
+            if (c.turned) return cardEl(c);
+            if (c.id === turning) return cardEl(c, { words: false, extra: "turning" });
+            return cardEl(c, { tag: "button", onclick: () => pick(c.id), label: t.turnCard(name), words: false });
           }),
         );
         if (before) buzz([15]);

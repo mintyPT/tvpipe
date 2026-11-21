@@ -88,7 +88,8 @@ phone; a German game with bots, the language switched between games
 `npm run build`; not part of `npm test`): a whole game on the real `tvpipe
 game play` with headless Chrome as the host window, the TV and a phone, bots
 for the others; screenshots of every phase, layout checks, and checks that
-no phone shows a jinx or the word before the TV does. Bots write the
+no phone shows a jinx, the word or a turned card's word before the TV
+does. Bots write the
 word's category or another word from the word list, so they jinx now and
 then, and they peek at the word to guess. They are for tests: the host
 page's bot buttons show only with `?bots` in its URL or with `tvpipe

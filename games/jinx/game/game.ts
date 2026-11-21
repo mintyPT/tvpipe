@@ -14,6 +14,15 @@
  * speak it. Refusals are PartyErrors whose codes the phones translate
  * (views.ts `Actions`); only a refused clue's message is the matcher's own
  * wording, in the room's language.
+ *
+ * No phone tells what the TV is about to show: what the TV shows (a
+ * phase, a turned card, the verdict) reaches the phones when the TV
+ * picture with it is up (`party.withTv`, the TV's `tvDelay`), and later
+ * still where the TV takes its time (a card's word after its lift and
+ * flip, `flip`; a giver's fate near the end of the slams, `fateBefore`;
+ * the result once the envelope is open, `resultAfter`). Deadlines and the
+ * TV's `until`s are counted from when the TV and the phones show them
+ * (`party.deadline`).
  */
 
 import { Emitter, PartyError, type Json, type Party, type Player } from "@tvpipe/party";
@@ -62,6 +71,8 @@ export interface Timings {
   fateBefore: number;
   /** Phones get the verdict this long into it (the TV opens the envelope first). */
   resultAfter: number;
+  /** A turned card's word shows on the TV this long after the pick (the lift, then the flip): the phones get it then. */
+  flip: number;
   /** Picking the best clue. */
   best: number;
   /** The replay when there is no best clue to pick. */
@@ -88,6 +99,7 @@ export const DEFAULT_TIMINGS: Timings = {
   verdict: 6000,
   fateBefore: 1500,
   resultAfter: 3000,
+  flip: 1600,
   best: 20_000,
   replay: 8000,
   replayHold: 4000,
@@ -187,6 +199,8 @@ interface Round {
   banked: number;
   picking: boolean;
   best?: string;
+  /** A card turning on the TV: the phones get it when its word shows (`flip`). */
+  flipping?: ReturnType<typeof setTimeout> | undefined;
   abort: AbortController;
   signal: AbortSignal;
 }
@@ -486,6 +500,16 @@ export class Jinx extends Emitter<JinxEvents> {
     this.party.room.replace({ ...base, ...fields });
   }
 
+  /**
+   * What the TV shows (a phase, a turned card, results): phones get it
+   * when the TV picture with it is up (`party.withTv`; a tvpipe before
+   * 0.3.1 has none and sends it at once). The TV gets it at once.
+   */
+  #withTv(fn: () => void): void {
+    if (typeof this.party.withTv === "function") this.party.withTv(fn);
+    else fn();
+  }
+
   /** Lobby and end states (they follow the roster). */
   #passiveState(p: Player): void {
     if (this.#running) return;
@@ -673,9 +697,11 @@ export class Jinx extends Emitter<JinxEvents> {
 
     // The hot seat.
     this.#setPhase("hotseat");
-    this.#screen({ phase: "hotseat", ...this.#inRound(r), until: party.now() + this.timings.hotseat });
-    this.#roomView({ phase: "hotseat" });
-    for (const p of this.#inGame()) p.state.replace(this.#s({ task: "hotseat", guesser: p === guesser }));
+    this.#withTv(() => {
+      this.#screen({ phase: "hotseat", ...this.#inRound(r), until: party.deadline(this.timings.hotseat) });
+      this.#roomView({ phase: "hotseat" });
+      for (const p of this.#inGame()) p.state.replace(this.#s({ task: "hotseat", guesser: p === guesser }));
+    });
     await this.#sleep(this.timings.hotseat, r.signal);
     if (r.signal.aborted) return;
 
@@ -716,14 +742,17 @@ export class Jinx extends Emitter<JinxEvents> {
 
   async #write(r: Round): Promise<void> {
     const party = this.party;
-    const started = party.now();
-    r.deadline = started + this.timings.write;
+    // The whole time from when the phones (and the TV) show it.
+    r.deadline = party.deadline(this.timings.write);
+    const started = r.deadline - this.timings.write;
     for (const g of r.givers) r.slots.set(g.id, new Array<Slot | null>(r.each).fill(null));
     this.#setPhase("write");
-    this.#screen({ phase: "write", ...this.#inRound(r), givers: r.givers.map((g) => g.id), each: r.each, ...this.#writeView(r), started, deadline: r.deadline });
-    this.#roomView({ phase: "write" });
-    for (const g of r.givers) g.state.replace(this.#s(this.#writeState(r, g)));
-    r.guesser.state.replace(this.#s({ task: "blind", givers: r.givers.length, done: 0, deadline: r.deadline }));
+    this.#withTv(() => {
+      this.#screen({ phase: "write", ...this.#inRound(r), givers: r.givers.map((g) => g.id), each: r.each, ...this.#writeView(r), started, deadline: r.deadline });
+      this.#roomView({ phase: "write" });
+      for (const g of r.givers) g.state.replace(this.#s(this.#writeState(r, g)));
+      r.guesser.state.replace(this.#s({ task: "blind", givers: r.givers.length, done: 0, deadline: r.deadline }));
+    });
     const end = r.deadline + party.grace;
     while (!r.signal.aborted && party.now() < end) {
       const live = r.givers.filter((g) => party.players.includes(g));
@@ -767,8 +796,10 @@ export class Jinx extends Emitter<JinxEvents> {
     slots[slot] = { clue: res.clue, bold };
     from.state.replace(this.#s(this.#writeState(r, from)));
     const v = this.#writeView(r);
-    this.#screenSet(v);
-    r.guesser.state.set({ done: v.done.length });
+    this.#withTv(() => {
+      this.#screenSet(v);
+      r.guesser.state.set({ done: v.done.length });
+    });
     this.#wake();
     return { text: res.clue.display, bold };
   }
@@ -794,14 +825,26 @@ export class Jinx extends Emitter<JinxEvents> {
     r.jinxed = r.cards.filter((c) => c.fate === "jinxed").length;
     r.pot = this.#pot(r);
     const weight = r.groups.reduce((s, g) => s + (g.cards.length >= 3 ? 1.5 : 1), 0);
-    const until = party.now() + this.timings.jinxBase + Math.round(this.timings.jinxGroup * weight);
+    const ms = this.timings.jinxBase + Math.round(this.timings.jinxGroup * weight);
+    // Here (`end`) and on the TV's clock (`until`).
+    const end = party.now() + ms;
+    const until = party.deadline(ms);
     this.#setPhase("jinx");
-    this.#screen({ phase: "jinx", ...this.#inRound(r), cards: r.cards.map((c) => this.#cardView(c, false)), groups: r.groups, potBefore: POT.start, pot: r.pot, until });
-    this.#roomView({ phase: "jinx" });
-    // Phones watch the TV until the slams are done.
-    for (const p of this.#inGame()) p.state.replace(this.#s({ task: "tv" }));
-    await this.#until(until - this.timings.fateBefore, r.signal);
+    this.#withTv(() => {
+      this.#screen({ phase: "jinx", ...this.#inRound(r), cards: r.cards.map((c) => this.#cardView(c, false)), groups: r.groups, potBefore: POT.start, pot: r.pot, until });
+      this.#roomView({ phase: "jinx" });
+      // Phones watch the TV until the slams are done.
+      for (const p of this.#inGame()) p.state.replace(this.#s({ task: "tv" }));
+    });
+    await this.#until(end - this.timings.fateBefore, r.signal);
     if (r.signal.aborted) return;
+    this.#withTv(() => this.#fates(r));
+    await this.#until(end, r.signal);
+  }
+
+  /** Each giver's cards' fate, the guesser how many survived. */
+  #fates(r: Round): void {
+    const party = this.party;
     const name = (id: string) => party.player(id)?.name ?? this.#left.find((l) => l.id === id)?.name ?? "someone";
     for (const g of r.givers) {
       if (!party.players.includes(g)) continue;
@@ -818,7 +861,6 @@ export class Jinx extends Emitter<JinxEvents> {
       g.state.replace(this.#s({ task: "fate", word: r.entry.word, cards }));
     }
     r.guesser.state.replace(this.#s({ task: "check", survived: r.cards.length - r.jinxed, jinxed: r.jinxed }));
-    await this.#until(until, r.signal);
   }
 
   // -------------------------------------------------------------------------
@@ -836,10 +878,10 @@ export class Jinx extends Emitter<JinxEvents> {
 
   async #reveal(r: Round): Promise<void> {
     const party = this.party;
-    const started = party.now();
-    r.deadline = started + this.timings.decide;
+    r.deadline = party.deadline(this.timings.decide);
+    const started = r.deadline - this.timings.decide;
     this.#setPhase("reveal");
-    this.#screen({
+    this.#withTv(() => this.#screen({
       phase: "reveal",
       ...this.#inRound(r),
       cards: this.#alive(r).map((c) => this.#cardView(c, false)),
@@ -849,9 +891,11 @@ export class Jinx extends Emitter<JinxEvents> {
       typing: false,
       started,
       deadline: r.deadline,
+    }));
+    this.#withTv(() => {
+      this.#roomView({ phase: "reveal" });
+      this.#revealStates(r);
     });
-    this.#roomView({ phase: "reveal" });
-    this.#revealStates(r);
     while (!r.outcome && !r.signal.aborted) {
       await this.#until(r.deadline, r.signal, true);
       if (r.outcome || r.signal.aborted) break;
@@ -859,6 +903,8 @@ export class Jinx extends Emitter<JinxEvents> {
     }
     clearTimeout(this.#draftTimer);
     this.#draftTimer = undefined;
+    clearTimeout(r.flipping);
+    r.flipping = undefined;
   }
 
   /** A decision ran out: the draft as the guess, else a random card, else a pass. */
@@ -881,15 +927,28 @@ export class Jinx extends Emitter<JinxEvents> {
     return pot({ jinxed: jinxed.length, boldJinxed: jinxed.filter((c) => c.bold).length, turned: turned.length, boldTurned: turned.filter((c) => c.bold).length });
   }
 
+  /**
+   * A card turns: on the TV at once (the lift, then the flip); the phones
+   * get its word when the TV shows it (`flip` later, with the TV's lag).
+   * Meanwhile the guesser's phone shows the card turning (`turning`), and
+   * the next decision's time counts from when the word is there.
+   */
   #turn(r: Round, card: RoundCard): void {
+    const party = this.party;
     card.turned = ++r.turns;
     r.pot = this.#pot(r);
     r.picked = card.id;
     r.typing = false;
-    const started = this.party.now();
-    r.deadline = started + this.timings.decide;
+    r.deadline = party.deadline(this.timings.flip + this.timings.decide);
+    const started = r.deadline - this.timings.decide;
     this.#screenSet({ cards: this.#alive(r).map((c) => this.#cardView(c, false)), pot: r.pot, picked: card.id, typing: false, started, deadline: r.deadline });
-    this.#revealStates(r);
+    r.guesser.state.set({ turning: card.id });
+    clearTimeout(r.flipping);
+    r.flipping = setTimeout(() => {
+      r.flipping = undefined;
+      if (this.#round !== r || this.#phase !== "reveal" || r.outcome || r.signal.aborted) return;
+      this.#withTv(() => this.#revealStates(r));
+    }, this.timings.flip);
     this.#wake();
   }
 
@@ -1009,20 +1068,24 @@ export class Jinx extends Emitter<JinxEvents> {
       cards: r.cards.map((c) => this.#cardView(c, true)),
       banked: r.banked,
       pot: r.pot,
-      until: party.now() + this.timings.verdict,
+      until: party.deadline(this.timings.verdict),
     };
     if (o.guess !== undefined && (o.result === "right" || o.result === "wrong")) view["guess"] = o.guess;
     if (o.near) view["near"] = o.near;
     this.#setPhase("verdict");
-    this.#screen(view);
-    this.#roomView({ phase: "verdict" });
-    // Phones watch the TV until the envelope is open.
-    for (const p of this.#inGame()) p.state.replace(this.#s({ task: "tv" }));
+    this.#withTv(() => {
+      this.#screen(view);
+      this.#roomView({ phase: "verdict" });
+      // Phones watch the TV until the envelope is open.
+      for (const p of this.#inGame()) p.state.replace(this.#s({ task: "tv" }));
+    });
   }
 
-  /** The verdict on the phones (after `resultAfter`). */
+  /** The verdict on the phones (after `resultAfter`, when the TV has it too). */
   #results(r: Round): void {
-    for (const p of this.#inGame()) p.state.replace(this.#s(this.#resultState(r, p)));
+    this.#withTv(() => {
+      for (const p of this.#inGame()) p.state.replace(this.#s(this.#resultState(r, p)));
+    });
   }
 
   #resultState(r: Round, p: Player): PlayerState {
@@ -1041,7 +1104,7 @@ export class Jinx extends Emitter<JinxEvents> {
     const right = r.outcome!.result === "right" && party.players.includes(r.guesser);
     const choices = this.#alive(r);
     r.picking = right && choices.length > 0;
-    const deadline = party.now() + this.timings.best;
+    const deadline = party.deadline(this.timings.best);
     const view: Record<string, unknown> = {
       phase: "replay",
       ...this.#inRound(r),
@@ -1055,20 +1118,24 @@ export class Jinx extends Emitter<JinxEvents> {
     };
     if (r.picking) view["deadline"] = deadline;
     this.#setPhase("replay");
-    this.#screen(view);
-    this.#roomView({ phase: "replay" });
+    this.#withTv(() => {
+      this.#screen(view);
+      this.#roomView({ phase: "replay" });
+      if (r.picking) r.guesser.state.replace(this.#s({ task: "best", cards: choices.map((c) => this.#cardView(c, true)), deadline }));
+    });
     if (!r.picking) {
       await this.#sleep(this.timings.replay, signal);
       return;
     }
-    r.guesser.state.replace(this.#s({ task: "best", cards: choices.map((c) => this.#cardView(c, true)), deadline }));
     while (r.picking && !signal.aborted && party.now() < deadline + party.grace && party.players.includes(r.guesser)) {
       await this.#until(deadline + party.grace, signal, true);
     }
     if (r.picking) {
       r.picking = false;
-      this.#screenSet({ picking: false, deadline: undefined });
-      if (party.players.includes(r.guesser)) r.guesser.state.replace(this.#s(this.#resultState(r, r.guesser)));
+      this.#withTv(() => {
+        this.#screenSet({ picking: false, deadline: undefined });
+        if (party.players.includes(r.guesser)) r.guesser.state.replace(this.#s(this.#resultState(r, r.guesser)));
+      });
       return;
     }
     await this.#sleep(this.timings.replayHold, signal);
@@ -1088,10 +1155,12 @@ export class Jinx extends Emitter<JinxEvents> {
     if (st) st.bestClues++;
     const played = this.#played[this.#played.length - 1];
     if (played) played.best = { clue: card.clue.display, author: card.author };
-    this.#screenSet({ picking: false, best: card.id, deadline: undefined });
-    r.guesser.state.replace(this.#s(this.#resultState(r, r.guesser)));
     const author = this.party.player(card.author);
-    if (author) author.state.replace(this.#s(this.#resultState(r, author)));
+    this.#withTv(() => {
+      this.#screenSet({ picking: false, best: card.id, deadline: undefined });
+      r.guesser.state.replace(this.#s(this.#resultState(r, r.guesser)));
+      if (author) author.state.replace(this.#s(this.#resultState(r, author)));
+    });
     this.#wake();
     return null;
   }
@@ -1099,17 +1168,19 @@ export class Jinx extends Emitter<JinxEvents> {
   async #bankPhase(r: Round, signal: AbortSignal): Promise<void> {
     const party = this.party;
     const next = this.#queue.find((t) => party.player(t.id));
-    const view: Record<string, unknown> = { phase: "bank", ...this.#inRound(r), banked: r.banked, until: party.now() + this.timings.bank };
+    const view: Record<string, unknown> = { phase: "bank", ...this.#inRound(r), banked: r.banked, until: party.deadline(this.timings.bank) };
     if (next) view["next"] = next.id;
     this.#setPhase("bank");
-    this.#screen(view);
-    this.#roomView({ phase: "bank" });
     const goal = nextGoal(this.#bank, this.#total());
-    for (const p of this.#inGame()) {
-      const st: PlayerState = { task: "bank", bank: this.#bank, banked: r.banked, next: next?.id === p.id };
-      if (goal) st.goal = goal;
-      p.state.replace(this.#s(st));
-    }
+    this.#withTv(() => {
+      this.#screen(view);
+      this.#roomView({ phase: "bank" });
+      for (const p of this.#inGame()) {
+        const st: PlayerState = { task: "bank", bank: this.#bank, banked: r.banked, next: next?.id === p.id };
+        if (goal) st.goal = goal;
+        p.state.replace(this.#s(st));
+      }
+    });
     await this.#sleep(this.timings.bank, signal);
   }
 
@@ -1162,9 +1233,11 @@ export class Jinx extends Emitter<JinxEvents> {
       this.emit("record", rounds, this.#bank);
     }
     this.#setPhase("end");
-    this.#screen(view);
-    this.#roomView({ phase: "end" });
-    for (const p of party.players) this.#passiveState(p);
+    this.#withTv(() => {
+      this.#screen(view);
+      this.#roomView({ phase: "end" });
+      for (const p of party.players) this.#passiveState(p);
+    });
     this.emit("end", this.#bank);
     void (async () => {
       await this.#sleep(this.timings.endRoom, signal);

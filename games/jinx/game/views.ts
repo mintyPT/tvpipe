@@ -388,7 +388,7 @@ export type PlayerState =
   | { task: "fate"; word: string; cards: { text: string; bold: boolean; fate: "alive" | "jinxed"; with: string[]; reason?: Reason }[] }
   | { task: "check"; survived: number; jinxed: number }
   | { task: "tv" }
-  | { task: "guess"; cards: Card[]; pot: number; deadline: number; jinxed: number }
+  | { task: "guess"; cards: Card[]; pot: number; deadline: number; jinxed: number; turning?: string }
   | { task: "watch"; word: string; cards: Card[]; pot: number }
   | { task: "result"; word: string; result: "right" | "wrong" | "pass" | "lost"; guesser: boolean; banked: number; bank: number; parts: Part[] }
   | { task: "best"; cards: Card[]; deadline: number }

@@ -28,6 +28,7 @@ const fast: Partial<Timings> = {
   jinxBase: 10,
   jinxGroup: 5,
   decide: 400,
+  flip: 20,
   typing: 300,
   verdict: 10,
   best: 400,
@@ -55,10 +56,18 @@ type BotOpts = Partial<Omit<BotOptions, "url" | "room" | "key" | "name">>;
 
 async function setup(
   n: number,
-  o: { rounds?: "auto" | 1 | 2; bot?: (i: number) => BotOpts; timings?: Partial<Timings>; lang?: "en" | "de"; dealt?: { en?: string[]; de?: string[] }; records?: Record<number, number> } = {},
+  o: {
+    rounds?: "auto" | 1 | 2;
+    bot?: (i: number) => BotOpts;
+    timings?: Partial<Timings>;
+    lang?: "en" | "de";
+    dealt?: { en?: string[]; de?: string[] };
+    records?: Record<number, number>;
+    tvDelay?: number;
+  } = {},
 ) {
   const relay = new MemoryRelay();
-  const party = new Party({ grace: 100, maxPlayers: 8 }).listen(relay);
+  const party = new Party({ grace: 100, maxPlayers: 8, tvDelay: o.tvDelay }).listen(relay);
   const g = new Jinx(party, {
     lang: o.lang,
     words: { en: WORDS, de: WORDS_DE },
@@ -547,6 +556,91 @@ test("no spoilers on phones: fate after the TV's slams, the result after the env
     const last = seq.lastIndexOf("tv");
     assert.ok(last > seq.indexOf("fate") && last < seq.indexOf("result"), seq.join(" "));
     assert.ok(at("result") - tasks[last]!.at >= 400, "the result after the envelope");
+  } finally {
+    close();
+  }
+});
+
+test("a turned card: the TV at once, the phones when the TV shows its word (the flip, the TV's lag)", async () => {
+  const tvDelay = 300;
+  const flip = 400;
+  const { party, g, players, close } = await setup(4, {
+    rounds: 1,
+    tvDelay,
+    timings: { flip, decide: 5000 },
+    bot: (i) => (i === 0 ? { guess: "silent" } : { clues: "random" }),
+  });
+  try {
+    const [guesser, giver] = [players[0]!, players[1]!];
+    type Me = { task?: string; cards?: { id: string; word?: string; turned?: number }[]; turning?: string; deadline?: number };
+    const seen: { who: string; at: number; me: Me }[] = [];
+    // A copy: the client updates its view in place.
+    for (const b of [guesser, giver]) b.client.on("view", (v) => seen.push({ who: b.name, at: Date.now(), me: JSON.parse(JSON.stringify(v["me"] ?? {})) as Me }));
+    await guesser.client.act("start");
+    await until(() => g.phase === "reveal" && (guesser.client.view["me"] as Me)?.task === "guess", 15_000);
+    const card = (guesser.client.view["me"] as Me).cards!.find((c) => !c.turned)!;
+    assert.equal(card.word, undefined, "face down on the guesser's phone");
+    const t0 = Date.now();
+    await guesser.client.act("pick", { card: card.id });
+    // The TV: at once.
+    const tv = party.screen.peek() as { picked?: string; cards: { id: string; word?: string }[]; deadline: number; started: number };
+    assert.equal(tv.picked, card.id);
+    assert.ok(tv.cards.find((c) => c.id === card.id)?.word, "the TV has the word to show");
+    assert.equal(tv.deadline - tv.started, 5000, "the TV's dial: the whole decision");
+    // The guesser's phone: the card turning at once, its word only when the TV shows it.
+    await until(() => (guesser.client.view["me"] as Me).turning === card.id, 1000);
+    assert.ok(Date.now() - t0 < flip, "turning at once");
+    await until(() => !!(guesser.client.view["me"] as Me).cards?.find((c) => c.id === card.id)?.word, 3000);
+    await until(() => !!(giver.client.view["me"] as Me).cards?.find((c) => c.id === card.id)?.turned, 3000);
+    const first = (who: string) => seen.find((s) => s.who === who && s.at >= t0 && s.me?.cards?.find((c) => c.id === card.id)?.turned)!;
+    for (const who of [guesser.name, giver.name]) {
+      const s = first(who);
+      assert.ok(s.at - t0 >= flip + tvDelay - 30, `${who}: the word after the flip and the TV's lag (${s.at - t0} ms)`);
+    }
+    const me = guesser.client.view["me"] as Me;
+    assert.equal(me.turning, undefined);
+    assert.ok(me.deadline! - party.now() > 5000 - 400, "the whole decision from when the word shows");
+  } finally {
+    close();
+  }
+});
+
+test("a TV 250 ms behind: a whole game; every phone gets a phase when the TV shows it, never before", async () => {
+  const tvDelay = 250;
+  const { party, g, players, phases, close } = await setup(4, { rounds: 1, tvDelay });
+  try {
+    // When the host changed the TV to each phase, and when each phone's room got there.
+    const tv = new Map<string, number>();
+    const off = party.on("screen-view", (v) => {
+      const sc = v["screen"] as { round?: number; phase?: string } | undefined;
+      const key = `${String(sc?.round)}:${String(sc?.phase)}`;
+      if (!tv.has(key)) tv.set(key, Date.now());
+    });
+    const early: string[] = [];
+    let checked = 0;
+    for (const b of players) {
+      let last = "";
+      b.client.on("view", (v) => {
+        const key = `${String(v["room"]?.["round"])}:${String(v["room"]?.["phase"])}`;
+        if (key === last) return;
+        last = key;
+        const at = tv.get(key);
+        if (at === undefined || !g.running) return;
+        checked++;
+        if (Date.now() - at < tvDelay - 30) early.push(`${b.name}: ${key} ${Date.now() - at} ms after the TV`);
+      });
+    }
+    const end = new Promise((r) => g.once("end", r));
+    await players[0]!.client.act("start");
+    await end;
+    off();
+    assert.equal(phases.filter((p) => p === "verdict").length, 4);
+    assert.ok(checked > 10, `${checked} phases checked`);
+    assert.deepEqual(early, []);
+    assert.deepEqual(
+      players.map((b) => b.errors),
+      [[], [], [], []],
+    );
   } finally {
     close();
   }
