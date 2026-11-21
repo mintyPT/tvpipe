@@ -209,59 +209,31 @@ class El {
   }
 }
 
-test("the badge: names players away for a while during a game, with the QR code and the short link", async () => {
+test("the badge: a player away during a game sees the same card, nothing grows from it", () => {
   const body = new El("body");
   const doc = { createElement: (t: string) => new El(t), body, documentElement: { lang: "en" } } as unknown as Document;
-  let now = 1000;
+  const badge = new RejoinBadge(doc, { qrSvg: () => "<svg/>", joinText: (j) => (j.short ? "tvpipe.party/BCDF" : null) });
   try {
-    const badge = new RejoinBadge(doc, { qrSvg: () => "<svg/>", joinText: (j) => (j.short ? "tvpipe.party/BCDF" : null), now: () => now }, { delay: 4000 });
-    const join = { qr: { size: 1, rows: ["1"] }, url: "https://x/", short: "https://tvpipe.party/BCDF", inProgress: true };
-    const roster = (away: string[]) => ["Ann", "Bob", "Cy", "Dee", "Eve"].map((n, i) => ({ id: `p${i}`, name: n, connected: !away.includes(n) }));
-    badge.update({ roster: roster(["Bob"]), join });
-    assert.deepEqual(badge.missing(), [], "not at once");
-    now += 4000;
-    badge.update({ roster: roster(["Bob"]), join });
-    assert.deepEqual(badge.missing(), ["Bob"]);
-    const el = body.children[0]!;
-    assert.equal(el.tag, "tvpipe-rejoin");
-    assert.equal(el.attrs["data-corner"], "bottom-right");
-    const text = el.text();
-    assert.match(text, /Rejoin/);
-    assert.match(text, /Bob/);
-    assert.match(text, /tvpipe\.party\/BCDF/);
-    // The game shows its own code: aside.
-    badge.suppressed = true;
-    assert.deepEqual(badge.missing(), ["Bob"]);
-    const card = el.children[0]!.children[2]!;
-    const mini = el.children[0]!.children[1]!;
-    assert.equal(card.classList.set.has("on"), false);
-    assert.equal(mini.classList.set.has("shown"), false, "the small card steps aside too");
-    badge.suppressed = false;
-    assert.equal(card.classList.set.has("on"), true);
-    assert.deepEqual([mini.classList.set.has("shown"), mini.classList.set.has("under")], [true, true], "the small card under the big one");
-    // Many away: three names and a count.
-    badge.update({ roster: roster(["Ann", "Bob", "Cy", "Dee", "Eve"]), join });
-    now += 4000;
-    badge.update({ roster: roster(["Ann", "Bob", "Cy", "Dee", "Eve"]), join });
-    assert.match(el.text(), /Ann, Bob, Cy \+2/);
-    // Back: gone, the small card again; and never outside a game.
+    const join = { qr: { size: 1, rows: ["1"] }, url: "https://x/", short: "https://tvpipe.party/BCDF", inProgress: true, lateJoin: "closed" };
+    const roster = (away: string[]) => ["Ann", "Bob"].map((n, i) => ({ id: `p${i}`, name: n, connected: !away.includes(n) }));
     badge.update({ roster: roster([]), join });
-    assert.equal(card.classList.set.has("on"), false);
-    assert.deepEqual([mini.classList.set.has("shown"), mini.classList.set.has("under")], [true, false]);
-    badge.update({ roster: roster(["Bob"]), join: { ...join, inProgress: false } });
-    now += 5000;
-    badge.update({ roster: roster(["Bob"]), join: { ...join, inProgress: false } });
-    assert.deepEqual(badge.missing(), []);
-    badge.destroy();
+    const el = body.children[0]!;
+    const shadow = el.children[0]!;
+    const before = el.text();
+    badge.update({ roster: roster(["Bob"]), join });
+    assert.equal(el.text(), before, "no names, no other card");
+    assert.doesNotMatch(el.text(), /Bob/);
+    assert.equal(shadow.children.length, 2, "the style and the card");
+    assert.equal(shadow.children[1]!.text(), "Rejointvpipe.party/BCDF", "the join code brings Bob back");
   } finally {
-    await tick(1);
+    badge.destroy();
   }
 });
 
 test("the badge: the join code in a corner the whole game, titled by who may join", async () => {
   const body = new El("body");
   const doc = { createElement: (t: string) => new El(t), body, documentElement: { lang: "de" } } as unknown as Document;
-  const badge = new RejoinBadge(doc, { qrSvg: () => "<svg/>", joinText: (j) => (j.short ? "tvpipe.party/BCDF" : null), now: () => 0 }, { corner: "top-left" });
+  const badge = new RejoinBadge(doc, { qrSvg: () => "<svg/>", joinText: (j) => (j.short ? "tvpipe.party/BCDF" : null) }, { corner: "top-left" });
   try {
     const join = { qr: { size: 1, rows: ["1"] }, url: "https://x/", short: "https://tvpipe.party/BCDF", inProgress: false, lateJoin: "wait" };
     badge.update({ roster: [], join: { ...join, qr: null } });
@@ -286,9 +258,4 @@ test("the badge: the join code in a corner the whole game, titled by who may joi
   } finally {
     badge.destroy();
   }
-  // Only while someone is away, as it was.
-  const quiet = new RejoinBadge(doc, { qrSvg: () => "<svg/>", joinText: () => null, now: () => 0 }, { always: false });
-  quiet.update({ roster: [], join: { qr: { size: 1, rows: ["1"] }, url: "https://y/", inProgress: true } });
-  assert.equal(quiet.showing, false);
-  quiet.destroy();
 });

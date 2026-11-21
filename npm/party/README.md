@@ -107,8 +107,7 @@ back.
   the room is locked, full or closed to newcomers.
 - **The TV shows the way back**: TV pages draw a **join badge** by
   themselves: the join QR code and the short link in a corner the whole
-  time, and while a game is in progress (`party.inProgress`) and a phone
-  has been away for 4 s, a bigger card with who is missing.
+  time; scanning it and typing the same name brings a player back.
   `PartyClient.fromLocation({ rejoinBadge: { corner: "top-left", layout:
   "row" } })` or `client.rejoinBadge.corner = …` moves it clear of the
   game, which keeps out of the corner with `data-tvpipe-join` and
@@ -215,8 +214,7 @@ storage, session, followGames, WebSocket })`; `join(name)`, `connect()`, `act(ty
 `on("view" | "msg" | "status" | "bye" | "welcome" | "tv", fn)`, `view`, `you`,
 `status`, `now()`, `hostNow()`, `tvDelay`, `leave()`, `close()`; on
 screens `rejoinBadge` (the join badge: `corner`; options `corner`,
-`layout`, `always: false` for the rejoin card only, `rejoinBadge: false`
-for none) and `joinVisible`; `qrSvg(qr)`, `drawQr(ctx, qr, x,
+`layout`, `rejoinBadge: false` for none) and `joinVisible`; `qrSvg(qr)`, `drawQr(ctx, qr, x,
 y, size)`, `joinText(join)`, `memoryStorage()`. It reconnects by itself
 (and when the page becomes visible again), keeps the player's identity in
 `localStorage`, takes a rejoin link's token, and resends unacknowledged

@@ -350,8 +350,7 @@ try {
   })()`;
   /**
    * The TV page: nothing of the picture under tvpipe's join badge (its
-   * small card bottom left; the rejoin card that grows from it while a
-   * phone is away lies over the picture): text, chips, cards, labels.
+   * card bottom left): text, chips, cards, labels.
    */
   const underBadge = `(() => {
     const out = [];
@@ -604,7 +603,7 @@ try {
   /**
    * Dropping out (not with --shots): at the first write a bot's phone
    * goes for 9 s and comes back by name (its token lost, as on another
-   * phone): the TV shows the rejoin badge, the host page a Rejoin button
+   * phone): the TV still shows the join badge, the host page a Rejoin button
    * (Phil's phone stays: the timing check watches it).
    */
   const dropped = new Set<string>();
@@ -617,10 +616,10 @@ try {
       log(`${name}'s phone dropped out (back by name in 9 s)`);
       await sleep(6000);
       await Promise.all([tv.screenshot(`${out}/tv-${at}-rejoin.png`), screen.screenshot(`${out}/screen-${at}-rejoin.png`)]);
-      const badge = await screen.eval<string>(`document.querySelector("tvpipe-rejoin")?.shadowRoot.querySelector(".card.on")?.innerText ?? ""`);
+      const badge = await screen.eval<string>(`(() => { const r = document.querySelector("tvpipe-rejoin")?.shadowRoot; return r?.querySelector(".card") ? "a rejoin card" : r?.querySelector(".mini.shown")?.innerText ?? ""; })()`);
       const button = await win.eval<boolean>(`[...document.querySelectorAll("button")].some((b) => b.textContent === ${JSON.stringify(rejoin)})`);
-      log(`the TV's rejoin badge: ${JSON.stringify(badge.replace(/\n/g, " / "))}; the host's Rejoin button: ${button}`);
-      if (!badge.includes(name) || !button) throw new Error("no rejoin badge on the TV, or no Rejoin button");
+      log(`the TV's join badge: ${JSON.stringify(badge.replace(/\n/g, " / "))}; the host's Rejoin button: ${button}`);
+      if (!badge || badge === "a rejoin card" || !button) throw new Error("no join badge on the TV (or a rejoin card), or no Rejoin button");
       await win.eval(`[...document.querySelectorAll("button")].find((b) => b.textContent === ${JSON.stringify(rejoin)}).click(); true`);
       await win.until(`!!document.querySelector("dialog.tvpipe-rejoin")`);
       await win.screenshot(`${out}/host-${at}-rejoin.png`);

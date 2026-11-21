@@ -220,8 +220,7 @@ export class PartyClient {
      * A screen's join badge (TV and watch pages in a browser; `null`
      * elsewhere or when turned off): a small card in a corner with the
      * join QR code and the short link the whole time (but while
-     * {@link joinVisible}), and while a game runs and a player's phone has
-     * been away for a few seconds, a bigger one with who is missing. Set
+     * {@link joinVisible}): for joining and for coming back. Set
      * `rejoinBadge.corner` to keep it clear of the game's picture; the
      * page's `<html>` tells the game where it is and how much room it
      * takes (`data-tvpipe-join`, `--tvpipe-join-w`, `--tvpipe-join-h`).
@@ -275,7 +274,7 @@ export class PartyClient {
         this.#WS = opts.WebSocket ?? globalThis.WebSocket;
         const doc = globalThis.document;
         if (this.role !== "player" && opts.rejoinBadge !== false && doc?.createElement) {
-            const badge = new RejoinBadge(doc, { qrSvg, joinText, now: () => Date.now() }, opts.rejoinBadge || {});
+            const badge = new RejoinBadge(doc, { qrSvg, joinText }, opts.rejoinBadge || {});
             this.rejoinBadge = badge;
             this.on("view", (view) => badge.update(view));
         }

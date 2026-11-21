@@ -418,7 +418,7 @@ try {
   /**
    * Dropping out (not with --shots): at the first vote a bot's phone goes
    * for 9 s and comes back by name (its token lost, as on another phone):
-   * the TV shows the rejoin badge, the host page a Rejoin button; at the
+   * the TV still shows the join badge, the host page a Rejoin button; at the
    * first scores Phil's phone forgets everything, reloads and joins with
    * the same name: his seat again.
    */
@@ -429,12 +429,12 @@ try {
       dropped.add("bot");
       bot.client.drop({ away: 9000, forget: true });
       log(`${bot.name}'s phone dropped out (back by name in 9 s)`);
-      await new Promise((r) => setTimeout(r, 6500)); // 4 s away, then the TV's lag
+      await new Promise((r) => setTimeout(r, 6500)); // away a while, then the TV's lag
       await tv.screenshot(`${out}/tv-${at}-rejoin.png`);
-      const badge = await win.eval<string>(`document.getElementById("preview").contentDocument.querySelector("tvpipe-rejoin")?.shadowRoot.querySelector(".card.on")?.innerText ?? ""`);
+      const badge = await win.eval<string>(`(() => { const r = document.getElementById("preview").contentDocument.querySelector("tvpipe-rejoin")?.shadowRoot; return r?.querySelector(".card") ? "a rejoin card" : r?.querySelector(".mini.shown")?.innerText ?? ""; })()`);
       const button = await win.eval<boolean>(`[...document.querySelectorAll("#players button")].some((b) => b.textContent === ${JSON.stringify(lang === "de" ? "Rückkehrcode" : "Rejoin code")})`);
-      log(`the TV's rejoin badge: ${JSON.stringify(badge.replace(/\n/g, " / "))}; the host's Rejoin button: ${button}`);
-      if (!badge.includes(bot.name) || !button) throw new Error("no rejoin badge on the TV, or no Rejoin button");
+      log(`the TV's join badge: ${JSON.stringify(badge.replace(/\n/g, " / "))}; the host's Rejoin button: ${button}`);
+      if (!badge || badge === "a rejoin card" || !button) throw new Error("no join badge on the TV (or a rejoin card), or no Rejoin button");
       await win.eval(`[...document.querySelectorAll("#players button")].find((b) => b.textContent === ${JSON.stringify(lang === "de" ? "Rückkehrcode" : "Rejoin code")}).click(); true`);
       await win.until(`!!document.querySelector("dialog.tvpipe-rejoin")`);
       await win.screenshot(`${out}/host-${at}-rejoin.png`);

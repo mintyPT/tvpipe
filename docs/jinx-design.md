@@ -369,8 +369,7 @@ The TV page is rendered in a headless Chrome and H.264-encoded at about
   a row of cards (the jinx check, the reveal, the replay), the verdict's
   seats and the best clues of the night move right of it, the awards
   close up, the word web's last row starts right of it with narrower
-  cards. The rejoin card that grows from it while a phone is away lies
-  over the picture for that time.
+  cards.
 - Nothing under 24 px (but the longest clues, §11); clue words 40–44 px,
   shrinking to 24 px, then condensed (`scaleX` ≥ 0.74) so 15 letters fit
   on a card, down to 0.6 for longer ones, two lines beyond (§11). 5–7

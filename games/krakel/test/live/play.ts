@@ -252,7 +252,7 @@ try {
   /**
    * Dropping out (not with --shots): during the first guessing a bot's
    * phone goes for 9 s and comes back by name (its token lost, as on
-   * another phone): the TV shows the rejoin badge; at the first scores
+   * another phone): the TV still shows the join badge; at the first scores
    * Phil's phone forgets everything, reloads and joins with the same
    * name: his seat again.
    */
@@ -265,9 +265,9 @@ try {
       log(`${name}'s phone dropped out (back by name in 9 s)`);
       await sleep(5500);
       await tvShot("rejoin");
-      const badge = await tv.eval<string>(`document.querySelector("tvpipe-rejoin")?.shadowRoot.querySelector(".card.on")?.innerText ?? ""`);
-      log(`the TV's rejoin badge: ${JSON.stringify(badge.replace(/\n/g, " / "))}`);
-      if (!badge.includes(name)) throw new Error("no rejoin badge on the TV");
+      const badge = await tv.eval<string>(`(() => { const r = document.querySelector("tvpipe-rejoin")?.shadowRoot; return r?.querySelector(".card") ? "a rejoin card" : r?.querySelector(".mini.shown")?.innerText ?? ""; })()`);
+      log(`the TV's join badge: ${JSON.stringify(badge.replace(/\n/g, " / "))}`);
+      if (!badge || badge === "a rejoin card") throw new Error("no join badge on the TV (or a rejoin card)");
       await win.until(`krakel.party.players.find((p) => p.name === ${JSON.stringify(name)}).connected`, 15_000);
       log(`${name} is back by name`);
     }

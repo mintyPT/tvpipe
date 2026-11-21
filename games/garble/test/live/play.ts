@@ -253,7 +253,7 @@ try {
   /**
    * Dropping out (not with --shots): at the first reveal a bot's phone
    * goes for 15 s and comes back by name (its token lost, as on another
-   * phone): the TV shows the rejoin badge, the host page a Rejoin button;
+   * phone): the TV still shows the join badge, the host page a Rejoin button;
    * at the first scores Phil's phone forgets everything, reloads and
    * joins with the same name: his seat again.
    */
@@ -267,11 +267,11 @@ try {
       log(`${name}'s phone dropped out (back by name in 15 s)`);
       await sleep(5500);
       // Both before the screenshot: with several windows a screenshot can take seconds.
-      const badge = await tv.eval<string>(`document.querySelector("tvpipe-rejoin")?.shadowRoot.querySelector(".card.on")?.innerText ?? ""`);
+      const badge = await tv.eval<string>(`(() => { const r = document.querySelector("tvpipe-rejoin")?.shadowRoot; return r?.querySelector(".card") ? "a rejoin card" : r?.querySelector(".mini.shown")?.innerText ?? ""; })()`);
       const button = await win.eval<boolean>(`[...document.querySelectorAll("button")].some((b) => b.textContent === ${JSON.stringify(rejoin)})`);
       await tv.screenshot(`${out}/tv-${String(++n).padStart(2, "0")}-rejoin.png`);
-      log(`the TV's rejoin badge: ${JSON.stringify(badge.replace(/\n/g, " / "))}; the host's Rejoin button: ${button}`);
-      if (!badge.includes(name) || !button) throw new Error("no rejoin badge on the TV, or no Rejoin button");
+      log(`the TV's join badge: ${JSON.stringify(badge.replace(/\n/g, " / "))}; the host's Rejoin button: ${button}`);
+      if (!badge || badge === "a rejoin card" || !button) throw new Error("no join badge on the TV (or a rejoin card), or no Rejoin button");
       await win.eval(`[...document.querySelectorAll("button")].find((b) => b.textContent === ${JSON.stringify(rejoin)}).click(); true`);
       await win.until(`!!document.querySelector("dialog.tvpipe-rejoin")`);
       await win.screenshot(`${out}/host-rejoin.png`);

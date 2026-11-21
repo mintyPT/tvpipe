@@ -326,9 +326,9 @@ phones lose the signal, lock, reload, or open the link in another
 browser or on another phone. The library does the returning: the same
 phone resumes with its token; another phone gets the player's seat back
 by typing the same name (even when the room is locked or closed to
-newcomers); the TV page has the join code in a corner the whole game,
-and names who is missing there while someone has been away for a few
-seconds (the join badge, below); the host page can show a player their
+newcomers); the TV page has the join code in a corner the whole game
+(the join badge, below), so scanning it and typing the same name is the
+way back; the host page can show a player their
 own code (`party.showRejoin(player)`). What a game must do:
 
 - Keep going without them: deadlines on every phase that waits for
@@ -357,9 +357,9 @@ to ask: every TV page shows the join QR code and the short link to type
 (`tvpipe.party/BCDF`, with a tunnel) in a corner, all game long. The
 library draws it (the join badge: `PartyClient` on TV and watch pages,
 in a shadow root of its own), titled by who may join now ("Join", "Join
-next round", "Rejoin" when the game is closed to newcomers), and grows
-it into the rejoin card naming who is missing while a phone is away. A
-game:
+next round", "Rejoin" when the game is closed to newcomers); it is
+also the way back for a player whose phone went away, so nothing else
+appears while someone is missing. A game:
 
 - picks the corner and the shape: `PartyClient.fromLocation({
   rejoinBadge: { corner: "top-right", layout: "row" } })` (default
@@ -375,8 +375,7 @@ game:
   `-border`, `-shadow`, and `--tvpipe-join-x`/`-y` for its distance
   from the edges.
 
-`rejoinBadge: { always: false }` shows only the rejoin card, while
-someone is away; `rejoinBadge: false` none (a game that draws its own).
+`rejoinBadge: false` turns it off (a game that draws its own).
 
 **TypeScript and bundlers.** Install the package for its types
 (`npm install --save-dev @tvpipe/party`), then make the built files
