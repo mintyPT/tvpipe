@@ -249,7 +249,8 @@ naming its host, TV and phone pages. Design and protocols:
   listener) fills the slot first when no game was given, and again from
   the host page's "Other game". The next game closes the relay's clients
   with 4014 (phones go to their join link, now the next game's) and the
-  pages follow a `game` event. A folder of games (or several paths) is
+  pages follow a `game` event; its TV page goes into the running cast's
+  tab (`Session::navigate`: the receivers keep their sessions). A folder of games (or several paths) is
   listed first, the online list below.
 - **Tunnels**: OpenTunnel first (its identity is made once and reused, so
   frequent runs create nothing), Cloudflare if it fails; `--no-tunnel`.

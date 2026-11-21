@@ -578,6 +578,8 @@ impl Options {
     pub(crate) fn share_options(&self, url: Option<&str>) -> ShareOptions {
         let page = url.map(|u| PageOptions {
             url: u.to_owned(),
+            // `Session::navigate`.
+            control: Some(crate::opts::PageControl::default()),
             ..self.page.clone().unwrap_or_default()
         });
         ShareOptions {

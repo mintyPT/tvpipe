@@ -158,7 +158,7 @@ pub(super) struct St {
     discovery: Option<Box<dyn Discover>>,
     devices: Value,
     pairs: HashMap<String, (Box<dyn Pair>, Value)>,
-    cast: Option<(Box<dyn Cast>, Value)>,
+    cast: Option<Casting>,
     /// When the last API socket went away (none open), or when the run
     /// started if none came yet.
     apis_gone_since: Option<Instant>,
@@ -239,6 +239,26 @@ fn parse_resolution(v: &Value) -> Result<Resolution> {
     v.as_str().and_then(Resolution::parse).ok_or_else(|| {
         Error::usage("resolution is auto, 720p, 1080p or 2160p").with_code("bad-resolution")
     })
+}
+
+/// The running cast: the job, its last status, and what it shows where
+/// (another page for the same TVs and picture goes into its tab).
+pub(super) struct Casting {
+    job: Box<dyn Cast>,
+    last: Value,
+    to: Vec<String>,
+    picture: Picture,
+}
+
+/// The same receivers, in any order.
+fn same_receivers(a: &[String], b: &[String]) -> bool {
+    let norm = |l: &[String]| {
+        let mut v: Vec<String> = l.iter().map(|s| s.trim().to_lowercase()).collect();
+        v.sort();
+        v.dedup();
+        v
+    };
+    norm(a) == norm(b)
 }
 
 /// The pseudo-receiver for a browser tab on this computer.
@@ -878,8 +898,8 @@ impl Hub {
             "tvsync.set" => self.tvsync_set(params),
             "cast.stop" => {
                 let old = self.lock().cast.take();
-                if let Some((c, _)) = old {
-                    c.stop();
+                if let Some(c) = old {
+                    c.job.stop();
                 }
                 self.event("cast", Value::object().with("state", "stopped"));
                 self.progress(Progress::CastStopped);
@@ -1171,9 +1191,37 @@ impl Hub {
             resolution: (!manifest.tv_fixed).then_some(resolution),
         };
         let url = format!("{}{page}", self.local_origin());
-        let old = self.lock().cast.take();
-        if let Some((c, _)) = old {
-            c.stop();
+        // The same TVs and picture: the page goes into the running tab,
+        // the receivers keep their sessions (a game's next TV page, the
+        // next game's: docs/game-switching.md).
+        let running = self.lock().cast.take();
+        let old = match running {
+            Some(mut c) if same_receivers(&c.to, &to) && c.picture == picture => {
+                let state = c.job.status();
+                let live = matches!(
+                    state.get("state").and_then(Value::as_str),
+                    Some("starting" | "streaming")
+                );
+                match live.then(|| c.job.navigate(&url)) {
+                    Some(Ok(())) => {
+                        info!("playshare: the TVs show {page} now");
+                        let status = self.status_with_display(state);
+                        self.event("cast", status.clone().with("to", to.clone()));
+                        c.last = status.clone();
+                        self.lock().cast = Some(c);
+                        return Ok(status);
+                    }
+                    Some(Err(e)) => {
+                        debug!("playshare: cast anew ({e})");
+                        Some(c)
+                    }
+                    None => Some(c),
+                }
+            }
+            other => other,
+        };
+        if let Some(c) = old {
+            c.job.stop();
         }
         self.event(
             "cast",
@@ -1191,7 +1239,12 @@ impl Hub {
                     return Err(Error::closed("playshare is ending"));
                 }
                 let status = self.status_with_display(job.status());
-                self.lock().cast = Some((job, Value::Null));
+                self.lock().cast = Some(Casting {
+                    job,
+                    last: Value::Null,
+                    to,
+                    picture,
+                });
                 Ok(status)
             }
             Err(e) => {
@@ -1249,7 +1302,7 @@ impl Hub {
             st.pairs.remove(&d);
         }
         let mut progress = None;
-        if let Some((job, last)) = st.cast.as_mut() {
+        if let Some(Casting { job, last, .. }) = st.cast.as_mut() {
             let v = self.status_with_display(job.status());
             if v != *last {
                 let was = last.get("state").and_then(Value::as_str).map(str::to_owned);
@@ -1318,9 +1371,9 @@ impl Hub {
         for (_, (p, _)) in pairs {
             p.cancel();
         }
-        if let Some((c, _)) = cast {
+        if let Some(c) = cast {
             info!("playshare: stopping the cast");
-            c.stop();
+            c.job.stop();
         }
         self.surfaces_stop_all();
         let st = self.lock();

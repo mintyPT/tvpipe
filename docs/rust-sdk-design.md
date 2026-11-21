@@ -324,7 +324,7 @@ writers for other threads.
 | `play(input, options)` | `play` (`files`/`ffmpeg`) | `Session` |
 | `test_pattern(options)` | `debug pattern` (`h264`) | `Session` |
 | `preview(input, options)` | `preview` (`player`) | `Session` with `player_url()` |
-| `share(url, options)` | `share` (`share`/`headless`) | `Session` with `share_url()` |
+| `share(url, options)` | `share` (`share`/`headless`) | `Session` with `share_url()`; with a URL, `navigate(url)` shows another page in the same tab (the receivers keep their sessions) |
 
 `Input` for `play`: `Input::path(..)`, `Input::url(..)`,
 `Input::ffmpeg(args)`.

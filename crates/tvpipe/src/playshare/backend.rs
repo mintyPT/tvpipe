@@ -30,6 +30,12 @@ pub trait Cast: Send {
     fn status(&mut self) -> Value;
     /// TEARDOWN to the receivers, the headless browser quits.
     fn stop(self: Box<Self>);
+    /// Shows another page in the same tab: the receivers keep their
+    /// sessions (docs/game-switching.md). `Err`: cast it anew.
+    fn navigate(&mut self, url: &str) -> Result<()> {
+        let _ = url;
+        Err(crate::error::Error::unsupported("this cast shows one page"))
+    }
 }
 
 /// What a surface streams (docs/playshare-design.md §17).
@@ -191,6 +197,11 @@ impl Cast for RealCast {
     fn stop(self: Box<Self>) {
         let s = self.session.into_inner().unwrap_or_else(|e| e.into_inner());
         let _ = s.stop();
+    }
+
+    fn navigate(&mut self, url: &str) -> Result<()> {
+        let s = self.session.get_mut().unwrap_or_else(|e| e.into_inner());
+        s.navigate(url)
     }
 }
 

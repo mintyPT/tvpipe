@@ -1987,6 +1987,7 @@ mod tests {
                 reload: Some(Duration::from_secs(30)),
                 browser: Some("/opt/chrome".into()),
                 resolution: Some(tvpipe::Resolution::Auto),
+                control: None,
             })
         );
         let (_, cmd) = parse_from(&["share", "--to", "TV", "file:///tmp/x.html"]).unwrap();

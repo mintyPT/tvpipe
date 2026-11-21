@@ -673,6 +673,23 @@ fn a_game() {
     snapshot("game.plain", &raw);
 }
 
+/// `tvpipe game play games/`: the window opens on the list first, the
+/// game comes after the title line.
+#[test]
+fn a_game_picked_in_the_window() {
+    let mut script = game();
+    let at = script
+        .iter()
+        .position(|(_, i)| matches!(i, Event(Event::Progress(Progress::Game { .. }))))
+        .unwrap();
+    let (_, picked) = script.remove(at);
+    script.insert(5, (1500, picked));
+    let raw = run(Caps::plain(), Kind::Game, None, &script);
+    assert!(raw.starts_with("tvpipe · Playing a game\n"), "{raw}");
+    assert!(raw.contains("• Now playing Drawbluff\n"), "{raw}");
+    assert!(raw.contains("• Now playing Krakel\n"), "{raw}");
+}
+
 #[test]
 fn a_tunnel_and_discovery() {
     let script = vec![

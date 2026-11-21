@@ -571,6 +571,7 @@ fn browser_to_cast_and_player(bin: String, headed: bool, view: fn(&str, &str)) {
                     },
                     profile: None,
                     reload: Some(Duration::from_secs(4)),
+                    control: None,
                 },
                 server.handle(),
                 STOP.clone(),
@@ -725,6 +726,7 @@ fn chrome_browser_4k_to_cast() {
                     },
                     profile: None,
                     reload: None,
+                    control: None,
                 },
                 server.handle(),
                 STOP.clone(),
@@ -817,16 +819,66 @@ fn firefox_browser_survives_crashes() {
     browser_survives_crashes(bin, kill_firefox_twice);
 }
 
+/// `share URL` shows other pages in its tab (`Session::navigate`): the
+/// receiver's session goes on, the page is loaded (a fragment of the same
+/// document too) and shares again. `TVPIPE_TEST_CHROME=PATH`.
+#[test]
+#[ignore]
+fn chrome_browser_goes_to_another_page() {
+    let Ok(bin) = std::env::var("TVPIPE_TEST_CHROME") else {
+        eprintln!("TVPIPE_TEST_CHROME not set");
+        return;
+    };
+    let control = crate::opts::PageControl::default();
+    let c = control.clone();
+    let seen = browser_driven(
+        bin,
+        Some(control),
+        Box::new(
+            move |_dir: &std::path::Path, tally: &SharedTally, base: &str| {
+                wait_frames(tally, 30, "at the start");
+                c.navigate(format!("{base}next#k=1"));
+                let gap = wait_frames(tally, 30, "after the navigation");
+                eprintln!("30 frames {} ms after the navigation", gap.as_millis());
+                // The same document with another fragment: loaded again.
+                c.navigate(format!("{base}next#k=2"));
+                std::thread::sleep(Duration::from_millis(1500));
+                wait_frames(tally, 30, "after the second navigation");
+            },
+        ),
+    );
+    let count = |p: &str| seen.iter().filter(|s| s.as_str() == p).count();
+    assert_eq!((count("/"), count("/next")), (1, 2), "{seen:?}");
+}
+
 /// `share URL` with browser `bin` while `crash(profile, tally)` crashes
 /// it.
 fn browser_survives_crashes(bin: String, crash: fn(&std::path::Path, &SharedTally)) {
+    browser_driven(bin, None, Box::new(move |dir, tally, _| crash(dir, tally)));
+}
+
+/// What a driver does to the browser of profile `dir` while it shares
+/// (`base`: the site's URL).
+type Drive = Box<dyn FnOnce(&std::path::Path, &SharedTally, &str) + Send + std::panic::UnwindSafe>;
+
+/// `share URL` with browser `bin` while `drive` acts on it; the paths the
+/// site served.
+fn browser_driven(
+    bin: String,
+    control: Option<crate::opts::PageControl>,
+    drive: Drive,
+) -> Vec<String> {
     if std::env::var("TVPIPE_TEST_BROWSER_DEBUG").is_ok() {
         crate::log::set_level(crate::log::Level::Debug);
     }
-    static STOP: std::sync::LazyLock<crate::util::stop::Stop> =
-        std::sync::LazyLock::new(crate::util::stop::Stop::new);
-    STOP.clear();
-    let handler: crate::net::httpd::Handler = std::sync::Arc::new(|_| {
+    let stop = crate::util::stop::Stop::new();
+    let seen = std::sync::Arc::new(Mutex::new(Vec::<String>::new()));
+    let log = seen.clone();
+    let handler: crate::net::httpd::Handler = std::sync::Arc::new(move |req| {
+        let path = req.target.split('?').next().unwrap_or("").to_owned();
+        if path != "/favicon.ico" {
+            log.lock().unwrap().push(path);
+        }
         crate::net::httpd::Reply::Response(crate::net::httpd::response(
             200,
             "OK",
@@ -850,6 +902,7 @@ fn browser_survives_crashes(bin: String, crash: fn(&std::path::Path, &SharedTall
     };
     let profile = std::sync::Arc::new(Mutex::new(None));
     let driver = Mutex::new(None);
+    let drive = Mutex::new(Some(drive));
     let launcher =
         |server: &ShareServer, vp: (u32, u32), scale: f64| -> Result<Box<dyn std::any::Any>> {
             let h = crate::browser::headless::Headless::start(
@@ -865,18 +918,23 @@ fn browser_survives_crashes(bin: String, crash: fn(&std::path::Path, &SharedTall
                     },
                     profile: None,
                     reload: None,
+                    control: control.clone(),
                 },
                 server.handle(),
-                STOP.clone(),
+                stop.clone(),
             )?;
             let dir = h.profile_dir().to_path_buf();
             *profile.lock().unwrap() = Some(dir.clone());
             let tally = tally.clone();
-            *driver.lock().unwrap() = Some(std::thread::spawn(move || {
-                let r = std::panic::catch_unwind(|| crash(&dir, &tally));
-                STOP.request();
-                r
-            }));
+            let base = page_url.clone();
+            let stop = stop.clone();
+            if let Some(drive) = drive.lock().unwrap().take() {
+                *driver.lock().unwrap() = Some(std::thread::spawn(move || {
+                    let r = std::panic::catch_unwind(move || drive(&dir, &tally, &base));
+                    stop.request();
+                    r
+                }));
+            }
             Ok(Box::new(h))
         };
     let o = ShareOptions {
@@ -886,7 +944,7 @@ fn browser_survives_crashes(bin: String, crash: fn(&std::path::Path, &SharedTall
         }),
         ..browse_opts(vec![rx.addr.to_string()])
     };
-    let r = browse::browse_with(&o, &connect, &Ctx::from(STOP.clone()), &launcher);
+    let r = browse::browse_with(&o, &connect, &Ctx::from(stop.clone()), &launcher);
     let drove = driver.lock().unwrap().take().map(|h| h.join().unwrap());
     if let Some(Err(panic)) = drove {
         std::panic::resume_unwind(panic);
@@ -898,6 +956,8 @@ fn browser_survives_crashes(bin: String, crash: fn(&std::path::Path, &SharedTall
     assert!(!dir.exists(), "{} is still there", dir.display());
     let left = processes_with(&dir.to_string_lossy());
     assert!(left.is_empty(), "browser processes left: {left:#?}");
+    let seen = seen.lock().unwrap().clone();
+    seen
 }
 
 /// Kills Firefox's content processes (the page's among them: they are

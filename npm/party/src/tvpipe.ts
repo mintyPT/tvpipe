@@ -403,7 +403,9 @@ export class Tvpipe extends Emitter<TvpipeEvents> {
 
   /**
    * Casts a page of this game (a path with its fragment) to `to`, at
-   * `resolution` (default: the selection's). Replaces a running cast.
+   * `resolution` (default: the selection's). Replaces a running cast;
+   * for the same TVs and picture the page goes into its tab instead (the
+   * TVs keep their sessions).
    */
   cast(opts: { page: string; to?: string[] | undefined; resolution?: Resolution | undefined }): Promise<CastStatus> {
     const params: Record<string, unknown> = { page: opts.page };

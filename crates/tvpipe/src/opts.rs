@@ -232,6 +232,36 @@ pub enum ScreenEngine {
     Ffmpeg,
 }
 
+/// Asks a running `share URL` to show another page in the same tab
+/// (`Session::navigate`): the receivers keep their sessions, the tab
+/// shares again after the navigation. The latest request wins.
+#[derive(Clone, Default)]
+pub struct PageControl(std::sync::Arc<std::sync::Mutex<Option<String>>>);
+
+impl PageControl {
+    /// Asks for `url` (checked by the caller).
+    pub fn navigate(&self, url: String) {
+        *self.0.lock().unwrap_or_else(|e| e.into_inner()) = Some(url);
+    }
+
+    /// The page asked for since the last call, if any.
+    pub fn take(&self) -> Option<String> {
+        self.0.lock().unwrap_or_else(|e| e.into_inner()).take()
+    }
+}
+
+impl std::fmt::Debug for PageControl {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("PageControl")
+    }
+}
+
+impl PartialEq for PageControl {
+    fn eq(&self, other: &PageControl) -> bool {
+        std::sync::Arc::ptr_eq(&self.0, &other.0)
+    }
+}
+
 /// `share URL`: the page and tvpipe's browser.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PageOptions {
@@ -248,6 +278,8 @@ pub struct PageOptions {
     /// layout following the receivers' limits (the SDK's default, a
     /// game's `tv.resolution: "fixed"`).
     pub resolution: Option<crate::types::Resolution>,
+    /// Another page for the same tab while it runs (`Session::navigate`).
+    pub control: Option<PageControl>,
 }
 
 #[derive(Debug, Clone)]

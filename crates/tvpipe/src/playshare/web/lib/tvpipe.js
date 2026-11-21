@@ -247,7 +247,9 @@ export class Tvpipe extends Emitter {
     }
     /**
      * Casts a page of this game (a path with its fragment) to `to`, at
-     * `resolution` (default: the selection's). Replaces a running cast.
+     * `resolution` (default: the selection's). Replaces a running cast;
+     * for the same TVs and picture the page goes into its tab instead (the
+     * TVs keep their sessions).
      */
     cast(opts) {
         const params = { page: opts.page };

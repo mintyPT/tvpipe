@@ -75,8 +75,9 @@ pub struct Renderer {
     command: String,
     title: Option<String>,
     title_shown: bool,
-    /// A game's links were shown (the next game of the run: a note).
-    game_shown: bool,
+    /// The game being played (the status line); its links were shown
+    /// with the first one (the next game of the run: a note).
+    game: Option<String>,
     out: String,
     /// The last line printed is blank (or nothing is printed yet).
     blank: bool,
@@ -129,7 +130,7 @@ impl Renderer {
             command: command.to_owned(),
             title,
             title_shown: false,
-            game_shown: false,
+            game: None,
             out: String::new(),
             blank: true,
             drawn: false,
@@ -437,13 +438,18 @@ impl Renderer {
                     ));
                 }
             }
-            Progress::Game { title, .. } if self.game_shown => {
+            Progress::Game { title, .. } if self.game.is_some() => {
                 // The next game of the run: the links stay the same.
+                self.game = Some(title.clone());
                 self.note(&format!("Now playing {title}"));
             }
             Progress::Game { title, local, lan } => {
-                self.game_shown = true;
+                self.game = Some(title.clone());
                 self.set_title(title);
+                // Picked in the window: the title line went out before.
+                if self.title_shown && self.title.as_deref() != Some(title.as_str()) {
+                    self.note(&format!("Now playing {title}"));
+                }
                 self.since.get_or_insert(now);
                 self.link("Play in a browser on this computer", local, false, None);
                 if let Some(lan) = lan {
@@ -927,7 +933,10 @@ impl Renderer {
             }
             Kind::Game => {
                 let since = self.since?;
-                let mut parts = vec![format!("{dot} Running")];
+                let mut parts = vec![match &self.game {
+                    Some(g) => format!("{dot} {g}"),
+                    None => format!("{dot} Running"),
+                }];
                 parts.push(match self.phones {
                     0 => "no phones yet".to_owned(),
                     1 => "1 phone".to_owned(),

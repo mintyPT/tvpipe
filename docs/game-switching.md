@@ -1,7 +1,6 @@
 # Switching games, and games from a folder
 
-Status: built (keeping the TVs' sessions across a switch is a later
-step, below). Extends playshare-design.md (§4, §5, §6.4, §7, §10) and
+Status: built. Extends playshare-design.md (§4, §5, §6.4, §7, §10) and
 game-catalog.md.
 
 Before this, one `tvpipe game play` ran one game: the hub held the
@@ -72,17 +71,30 @@ people are in the room, and a game's own removal is the game's.
    gets the event `game` `{name, title, url}`. `url` is the new game's
    host page when TVs are chosen, else its launcher.
 4. Pages on the API go to `url` (the `Tvpipe` client does it for top
-   level pages). The new host page casts to the same TVs (the TVs restart
-   their picture, as with the cast picker).
+   level pages). The new host page casts to the same TVs: the running
+   cast's tab goes to the new TV page (below).
 5. Phones (`PartyClient`, players in a browser) take 4014 (or a `bye
    next-game`) as "the room goes on with another game": the identity
    they had moves to the **carried** record, and the page goes to its
    join link `/?r=CODE#k=KEY`, which is the new game's phone page now.
 
+### The TVs keep their sessions
+
 The cast keeps running until the new host page casts (the old TV page
-says its game ended meanwhile). Keeping the receivers' sessions and only
-navigating the headless tab (the share session re-injects its capture
-after every navigation) is a later step.
+says its game ended meanwhile, a second or so). A `cast.start` for the
+same TVs (in any order) and the same picture (the layout, fixed or not,
+the resolution) while the cast is starting or streaming does not start a
+new one: the page goes into the running tab (`Cast::navigate`, the share
+session's `Session::navigate`, a `PageControl` the browser's keeper
+takes). The AirPlay and Cast sessions, the `browser` receiver's player
+tab and the headless browser stay; the tab loads the page (a document
+with only another fragment, as every game's `/screen/index.html#…`, is
+loaded again, not just re-hashed), its capture shares again, and the
+receivers see the last picture for about 250 ms (measured with Chrome:
+"video again after a 250 ms gap"; `chrome_browser_goes_to_another_page`:
+30 frames 1.2 s after the navigation). Other TVs, another resolution, a
+failed or stopped cast: a new cast, as before. The cast picker's Apply
+with the same TVs and resolution reloads the TV page the same way.
 
 ### Stale pages
 

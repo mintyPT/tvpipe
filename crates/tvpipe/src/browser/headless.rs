@@ -78,6 +78,8 @@ pub struct HeadlessOptions {
     pub profile: Option<PathBuf>,
     /// `--reload MIN`.
     pub reload: Option<Duration>,
+    /// Another page for the tab while it runs (`Session::navigate`).
+    pub control: Option<crate::opts::PageControl>,
 }
 
 /// Refuses URLs tvpipe must not automate. Google Meet refuses automated
@@ -265,6 +267,11 @@ impl Drop for Headless {
     fn drop(&mut self) {
         self.stop();
     }
+}
+
+/// A URL without its `#fragment`.
+fn without_fragment(url: &str) -> &str {
+    url.split_once('#').map_or(url, |(u, _)| u)
 }
 
 /// What the page's capture is doing (`globalThis.__tvpipe`).
@@ -934,10 +941,39 @@ impl Keeper {
         None
     }
 
-    /// Periodic work: reloads and the page's share state.
+    /// Periodic work: another page asked for, reloads and the page's
+    /// share state.
     fn tick(&mut self) -> Option<Exit> {
         let now = Instant::now();
         let tab = self.tab.as_mut()?;
+        if let Some(url) = self.opts.control.as_ref().and_then(|c| c.take()) {
+            // The same document with another fragment would only change
+            // the hash: load it for real (a game's next TV page).
+            let same_doc = without_fragment(&url) == without_fragment(&tab.url);
+            info!("browser: opening {url} in the same tab");
+            let r =
+                tab.navigate(&url, false).and_then(
+                    |()| {
+                        if same_doc {
+                            tab.reload()
+                        } else {
+                            Ok(())
+                        }
+                    },
+                );
+            if let Err(e) = r {
+                warn!("browser: {e}");
+            }
+            tab.url = url.clone();
+            tab.started = None;
+            tab.sharing = false;
+            tab.fits = 0;
+            tab.next_poll = now + POLL_STARTING;
+            // A browser started again opens this one.
+            self.opts.url = url;
+            self.failures = 0;
+            return None;
+        }
         if let (Some(at), Some(every)) = (self.next_reload, self.opts.reload) {
             if now >= at {
                 self.next_reload = Some(now + every);

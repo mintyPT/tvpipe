@@ -145,6 +145,8 @@ impl Shared {
 pub struct Session {
     shared: Arc<Shared>,
     stop: Stop,
+    /// `share` of a URL: another page for its tab.
+    page: Option<crate::opts::PageControl>,
     thread: Option<JoinHandle<()>>,
     dispatcher: Option<JoinHandle<()>>,
 }
@@ -186,6 +188,10 @@ impl Session {
         mut callback: Option<Callback>,
     ) -> Result<Session> {
         crate::util::timer::raise_resolution();
+        let page = match &cmd {
+            Command::Share(o) => o.page.as_ref().and_then(|p| p.control.clone()),
+            _ => None,
+        };
         let shared = Arc::new(Shared {
             state: Mutex::new(State::default()),
             cv: Condvar::new(),
@@ -234,6 +240,7 @@ impl Session {
         Ok(Session {
             shared,
             stop,
+            page,
             thread: Some(thread),
             dispatcher,
         })
@@ -336,6 +343,26 @@ impl Session {
     /// The public links (`tunnel`), once they work.
     pub fn tunnel_urls(&self) -> Vec<String> {
         self.shared.lock().tunnel_urls.clone()
+    }
+
+    /// [`share`](crate::share) of a URL: shows `url` in the same tab
+    /// instead (an `http(s)://` or `file://` URL, or a file). The
+    /// receivers keep their sessions and the browser's window stays; the
+    /// picture pauses while the page loads and shares again, a second or
+    /// so, instead of the receivers starting over. The latest request
+    /// wins; the page is opened by the browser's keeper within a moment.
+    #[cfg(feature = "headless")]
+    pub fn navigate(&self, url: &str) -> Result<()> {
+        let page = self.page.as_ref().ok_or_else(|| {
+            Error::usage("navigate: only a share of a URL shows pages").with_code("unsupported")
+        })?;
+        if self.shared.lock().finished {
+            return Err(Error::closed("navigate: the session is over"));
+        }
+        let url = crate::browser::headless::page_url(url)?;
+        crate::browser::headless::check_url(&url)?;
+        page.navigate(url);
+        Ok(())
     }
 
     /// A handle that stops the session from another thread.

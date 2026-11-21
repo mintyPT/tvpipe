@@ -102,6 +102,7 @@ pub(super) fn browse(opts: ShareOptions, ctx: &Ctx) -> Result<()> {
                     },
                     profile: o.profile.clone(),
                     reload: o.reload,
+                    control: o.control.clone(),
                 },
                 server.handle(),
                 stop.clone(),

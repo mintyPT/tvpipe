@@ -208,6 +208,8 @@ fn embedded_files_match_the_directory() {
 #[derive(Default)]
 pub(crate) struct Log {
     pub casts: Vec<(String, Vec<String>)>,
+    /// Pages a running cast was sent to instead.
+    pub navigations: Vec<String>,
     pictures: Vec<super::resolution::Picture>,
     stopped: usize,
     pins: Vec<String>,
@@ -271,6 +273,10 @@ impl Cast for FakeCast {
     }
     fn stop(self: Box<Self>) {
         self.log.lock().unwrap().stopped += 1;
+    }
+    fn navigate(&mut self, url: &str) -> crate::error::Result<()> {
+        self.log.lock().unwrap().navigations.push(url.to_owned());
+        Ok(())
     }
 }
 
@@ -1093,6 +1099,35 @@ fn resolution_is_chosen() {
             "{method}"
         );
     }
+    // The same TVs and picture: the next page goes into the running tab.
+    let r = call(
+        &mut w,
+        "cast.start",
+        Value::object()
+            .with("page", "/tv.html#k=next")
+            .with("resolution", "720p"),
+    );
+    assert_eq!(r.get("ok").and_then(Value::as_bool), Some(true), "{r}");
+    {
+        let log = s.log.lock().unwrap();
+        assert_eq!(
+            log.navigations,
+            [format!("http://127.0.0.1:{}/tv.html#k=next", s.local())]
+        );
+        assert_eq!((log.casts.len(), log.stopped), (2, 1));
+    }
+    // Other TVs: a cast of their own.
+    let r = call(
+        &mut w,
+        "cast.start",
+        Value::object()
+            .with("page", "/tv.html")
+            .with("to", vec!["Kitchen"])
+            .with("resolution", "720p"),
+    );
+    assert_eq!(r.get("ok").and_then(Value::as_bool), Some(true), "{r}");
+    assert_eq!(s.log.lock().unwrap().casts.len(), 3);
+    s.log.lock().unwrap().pictures.pop();
     assert_eq!(
         s.log.lock().unwrap().pictures,
         [
