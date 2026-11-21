@@ -23,7 +23,7 @@ import { palette, seeded } from "../../game/rules.ts";
  * The host page's random seed (`play.ts --seed`): it decides who is dealt
  * which prompt and which drawing comes first (the order of the titles on
  * the TV varies a little from run to run). With this one Phil draws the
- * snowman and the first vote is Noah's laser eyes, as the alt texts in
+ * snowman and the first vote is Zoe's seagull with the sandwich, as the alt texts in
  * site/static/games.json say.
  */
 export const SEED = 5;
