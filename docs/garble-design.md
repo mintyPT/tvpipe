@@ -162,6 +162,17 @@ TV only, all through one master gain and a compressor (nothing clips
 when cues overlap); a watch page opened by hand gets its sound with the
 first tap.
 
+Words players read (the word to draw and the two to pick from, the
+vote's "cat → submarine", the reveal's layer words and guess cards, the
+gallery's chains, the best move) are never cut off with an ellipsis and
+never broken in the middle ("Außerirdi-scher"): they carry `data-fit`
+and get smaller until they fit (`phone/fit.js`, Krakel's, for the phone
+and the TV); a typed guess gets smaller in its field instead of
+scrolling out of sight. Under `prefers-reduced-motion` nothing blinks or
+loops (the phone's last seconds, the passed page flying off, the TV's
+bobbing logo and wiggling pages). Counts, plurals and lists of names
+follow the language (`Intl`: "waiting for Ada, Bo and Cy").
+
 The phone is made for thumbs: the pad as large as the screen allows,
 the word to draw above it, the tools under the thumb; the guess screen
 keyboard-aware, the picture as large as fits above the field. A layer

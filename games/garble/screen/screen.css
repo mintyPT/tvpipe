@@ -219,7 +219,7 @@ body::after { /* grain */
   transform: rotate(var(--r, -1deg)); border-left: 1.4vh solid var(--c); border-radius: .4vh;
 }
 .ltag .n { position: absolute; left: -1.4vh; top: .7vh; width: 1.4vh; text-align: center; font-family: "Anton", sans-serif; font-size: 1.7vh; line-height: 1; color: #fff; }
-.ltag .word { font-family: "Special Elite", monospace; font-size: var(--fs); line-height: 1.05; overflow-wrap: anywhere; }
+.ltag .word { display: block; min-width: 0; font-family: "Special Elite", monospace; font-size: var(--fs); line-height: 1.05; }
 .ltag .by { display: flex; align-items: center; gap: .7vh; font-family: "Special Elite", monospace; font-size: calc(var(--fs) * .42 + .5vh); opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ltag .by i { width: 1.4vh; height: 1.4vh; border-radius: 50%; background: var(--c); flex: none; }
 .ltag .blank { font-family: "Special Elite", monospace; font-size: 1.6vh; opacity: .6; }
@@ -234,7 +234,7 @@ body::after { /* grain */
 }
 .gcard.fly { animation: fly .55s cubic-bezier(.2, 1.3, .4, 1) both; }
 @keyframes fly { from { transform: translate(18vh, -6vh) rotate(14deg); opacity: 0; } }
-.gcard .text { font-family: "Caveat", cursive; font-weight: 700; font-size: calc(var(--fs) * 1.3); line-height: 1; color: #1f2a6b; overflow-wrap: anywhere; }
+.gcard .text { display: block; min-width: 0; font-family: "Caveat", cursive; font-weight: 700; font-size: calc(var(--fs) * 1.3); line-height: 1; color: #1f2a6b; }
 .gcard .text.none { color: #a59f90; font-size: var(--fs); }
 .gcard .text.writing { animation: write .8s steps(20) both; }
 @keyframes write { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
@@ -263,7 +263,7 @@ body::after { /* grain */
 .art { width: 100%; aspect-ratio: 1; padding: 0; overflow: hidden; transform: rotate(var(--r, -1deg)); }
 .tile:nth-child(odd) .art { --r: 1.2deg; }
 .art canvas { width: 100%; height: 100%; display: block; }
-.tile .chain { font-size: 2vh; line-height: 1.25; text-align: center; max-width: 100%; overflow-wrap: anywhere; background: var(--paper); color: var(--ink); padding: .3vh .9vh; border-radius: .3vh; }
+.tile .chain { font-size: 2vh; line-height: 1.25; text-align: center; max-width: 100%; background: var(--paper); color: var(--ink); padding: .3vh .9vh; border-radius: .3vh; }
 .foot { display: flex; align-items: center; gap: 3vh; margin: 1vh 0 1vh; }
 .voters { display: flex; gap: 1vh; }
 .voter { position: relative; opacity: .45; transition: opacity .3s; }
@@ -281,7 +281,8 @@ body::after { /* grain */
 .winner .ltag { min-height: 0; max-width: 100%; padding: 1vh 2.4vh 1.2vh 2.6vh; --fs: 4.6vh; align-items: flex-start; gap: .2vh; }
 .winners.n3 .ltag { --fs: 3.8vh; }
 .winner .ltag .was { font-family: "Special Elite", monospace; font-size: 2.2vh; opacity: .6; }
-.winner .ltag .word { overflow-wrap: break-word; }
+.winner .ltag .was { max-width: 100%; }
+.winner .ltag .word { max-width: 100%; }
 .winner .by { display: flex; align-items: center; gap: 1.4vh; font-family: "Caveat", cursive; font-weight: 700; font-size: 4.4vh; line-height: 1; }
 .winner .by b { font-family: "Anton", sans-serif; font-weight: 400; font-size: 3.4vh; color: var(--marker); }
 
@@ -341,4 +342,10 @@ body::after { /* grain */
 /* tvpipe's join badge (bottom right, low: data-tvpipe-join and its room on <html>) on paper, like the lobby's code. */
 [data-tvpipe-join$="right"] .story { --sh: calc(86vh - max(10vh, var(--tvpipe-join-h) + 2vh)); }
 :root { --tvpipe-join-bg: var(--paper); --tvpipe-join-fg: var(--ink); --tvpipe-join-accent: #c0392b; --tvpipe-join-font: "Special Elite", monospace; }
+/* Words that must be read whole: never cut off, never broken in the middle; fit.js makes them smaller instead. */
+[data-fit] { overflow-wrap: normal; word-break: normal; hyphens: manual; -webkit-hyphens: manual; }
+[data-fit="1"] { white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) {
+  .logo span, .page.busy { animation: none; }
+}
 #status { position: absolute; left: 0; right: 0; bottom: 0; background: var(--red); text-align: center; padding: 1vh; z-index: 30; }

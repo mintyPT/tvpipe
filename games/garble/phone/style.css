@@ -55,6 +55,9 @@ header {
 
 /* ---------------------------------------------------------------- cards */
 main { padding: 6px 16px 24px; max-width: 34rem; margin: 0 auto; overflow-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; }
+/* Words that must be read whole: never cut off, never broken in the middle; fit.js makes them smaller instead. */
+[data-fit] { overflow-wrap: normal; word-break: normal; hyphens: manual; -webkit-hyphens: manual; }
+[data-fit="1"] { white-space: nowrap; }
 .card { background: var(--paper); color: var(--ink); border-radius: 6px; padding: 20px 18px; margin-top: 10px; box-shadow: 0 2px 4px rgba(0, 0, 0, .2), 0 10px 24px rgba(0, 0, 0, .3); position: relative; }
 .card.tilt { transform: rotate(-.6deg); }
 .card.dark { background: rgba(255, 255, 255, .06); color: var(--paper); box-shadow: none; border: 1px solid rgba(255, 255, 255, .1); }
@@ -152,7 +155,7 @@ canvas.pad, canvas.view { width: 100%; height: 100%; display: block; border-radi
   background: var(--manila); color: var(--ink); transform: rotate(-1deg); box-shadow: 0 3px 8px rgba(0, 0, 0, .35);
 }
 .top .wordtag .label { flex: none; display: inline; font-family: "Special Elite", monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink); opacity: .65; }
-.wordtag .word { min-width: 0; font-family: "Special Elite", monospace; font-size: min(30px, 7.6vw); line-height: 1.05; overflow-wrap: anywhere; hyphens: manual; -webkit-hyphens: manual; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.wordtag .word { display: block; min-width: 0; font-family: "Special Elite", monospace; font-size: min(30px, 7.6vw); line-height: 1.05; }
 .top .side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
 .steps { display: flex; gap: 4px; }
 .steps i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, .18); }
@@ -168,6 +171,7 @@ canvas.pad, canvas.view { width: 100%; height: 100%; display: block; border-radi
   min-height: 84px; padding: 14px 16px; border-radius: 4px; text-align: left; background: var(--manila); color: var(--ink);
   font-family: "Special Elite", monospace; font-size: 21px; line-height: 1.2; box-shadow: 0 6px 14px rgba(0, 0, 0, .35);
 }
+.choices button span { display: block; min-width: 0; }
 .choices button:nth-of-type(1) { transform: rotate(-1.2deg); }
 .choices button:nth-of-type(2) { transform: rotate(1deg); }
 
@@ -202,7 +206,7 @@ canvas.pad, canvas.view { width: 100%; height: 100%; display: block; border-radi
 .cands { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .cand { display: flex; flex-direction: column; gap: 4px; padding: 5px 5px 6px; border-radius: 6px; background: rgba(255, 255, 255, .07); border: 3px solid transparent; text-align: left; color: var(--paper); min-width: 0; }
 .cand canvas { width: 100%; aspect-ratio: 1; border-radius: 3px; background: var(--paper); display: block; }
-.cand .w { font-family: "Special Elite", monospace; font-size: 13px; line-height: 1.15; overflow-wrap: anywhere; hyphens: manual; -webkit-hyphens: manual; }
+.cand .w { display: block; min-width: 0; font-family: "Special Elite", monospace; font-size: 13px; line-height: 1.15; }
 @media (max-width: 360px) { .cands { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .cand .w s { opacity: .55; }
 .cand .by { display: flex; align-items: center; gap: 5px; font-family: "Caveat", cursive; font-weight: 700; font-size: 18px; line-height: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -210,7 +214,7 @@ canvas.pad, canvas.view { width: 100%; height: 100%; display: block; border-radi
 .cand.on { border-color: var(--marker); background: rgba(255, 225, 74, .14); transform: rotate(-1deg); }
 .cand.mine { opacity: .45; }
 .verdict-bar { position: sticky; bottom: 0; padding: 12px 0 max(4px, env(safe-area-inset-bottom)); background: linear-gradient(transparent, var(--mat) 30%); }
-.verdict-bar .btn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; line-height: 56px; padding: 0 12px; }
+.verdict-bar .btn { overflow: hidden; white-space: nowrap; display: block; line-height: 56px; padding: 0 12px; }
 
 /* Scores */
 .score { font-family: "Anton", sans-serif; font-size: 64px; line-height: 1; margin: 4px 0; }
@@ -228,4 +232,8 @@ ul.gains li b { font-family: "Anton", sans-serif; font-weight: 400; }
   .full-grid .top { grid-area: top; align-items: flex-start; }
   .full-grid .padbox { grid-area: pad; }
   .full-grid .tools, .full-grid .guess-form { grid-area: tools; height: auto; flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .secs.low { animation: none; }
+  .slip { animation: none; transform: rotate(-4deg); }
 }

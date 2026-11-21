@@ -9,7 +9,8 @@
  */
 
 import { PartyClient } from "/_tvpipe/lib/client.js";
-import { browserLang, num, pickLang } from "./i18n.js";
+import { watchFit } from "./fit.js";
+import { browserLang, format, pickLang } from "./i18n.js";
 import { drawInk, drawLayers, fit, GRID, INK, Live, MAX_POINTS, MAX_STROKES, OLD_INK, WIDTHS } from "./ink.js";
 import { strings } from "./strings.js";
 
@@ -63,12 +64,14 @@ function roomLang() {
 }
 let lang = ownLang() ?? roomLang();
 let t = strings(lang);
+let fmt = format(lang);
 document.documentElement.lang = lang;
 function useLang() {
   const l = ownLang() ?? roomLang();
   if (l === lang) return false;
   lang = l;
   t = strings(l);
+  fmt = format(l);
   document.documentElement.lang = l;
   return true;
 }
@@ -119,6 +122,39 @@ function h(tag, attrs = {}, ...kids) {
 function show(...nodes) {
   app.replaceChildren(...nodes.filter((n) => n !== null));
 }
+/** @type {CanvasRenderingContext2D | null} */
+let ruler = null;
+/**
+ * Keeps what is typed in a field readable whole: when the text gets
+ * longer than the field, its font gets smaller (down to `min` px)
+ * instead of the text scrolling out of sight.
+ * @param {HTMLInputElement} input
+ * @param {number} [min]
+ */
+function fitField(input, min = 12) {
+  input.style.fontSize = "";
+  const text = input.value;
+  if (!text || !input.clientWidth) return;
+  const cs = getComputedStyle(input);
+  const base = parseFloat(cs.fontSize);
+  ruler ??= document.createElement("canvas").getContext("2d");
+  if (!ruler || !base) return;
+  ruler.font = `${cs.fontWeight} ${base}px ${cs.fontFamily}`;
+  const spacing = parseFloat(cs.letterSpacing) || 0;
+  const width = (ruler.measureText(text).width + spacing * [...text].length) * 1.04;
+  const room = input.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 2;
+  if (width <= room || room <= 0) return;
+  input.style.fontSize = `${Math.max(min, (base * room) / width).toFixed(2)}px`;
+}
+// Every field: while typing, when it comes into view with text in it, and when the screen turns or the keyboard comes up.
+document.addEventListener("input", (e) => e.target instanceof HTMLInputElement && fitField(e.target));
+document.addEventListener("focusin", (e) => e.target instanceof HTMLInputElement && fitField(e.target));
+addEventListener("resize", () => {
+  for (const input of document.querySelectorAll("input")) fitField(input);
+});
+// Words players read (data-fit): smaller instead of cut off or broken.
+watchFit();
+
 /** @param {string | null} text */
 function setBanner(text) {
   banner.hidden = !text;
@@ -257,7 +293,7 @@ function render(view) {
   const room = view.room ?? {};
   const mine = (view.roster ?? []).find((/** @type {any} */ r) => r.id === client.you?.id);
   if (useLang()) shown = "";
-  const scoreText = typeof me.score === "number" && me.task !== "lobby" && me.of > 0 ? ` · ${num(lang, me.score)}` : "";
+  const scoreText = typeof me.score === "number" && me.task !== "lobby" && me.of > 0 ? ` · ${fmt.n(me.score)}` : "";
   who.replaceChildren(...(mine ? [h("span", { class: "dot", style: { "--c": colorOf(mine.id) } }), h("b", {}, `${mine.vip ? "★ " : ""}${mine.name}`), scoreText] : []));
   const key = keyOf(me, room);
   if (key !== shown) {
@@ -395,7 +431,7 @@ function final() {
       "section",
       { class: "card tilt" },
       h("h1", {}, me.rank === 1 && me.of > 0 ? t.won : t.gameOver),
-      h("p", { class: "score" }, num(lang, me.score ?? 0), h("small", {}, t.points)),
+      h("p", { class: "score" }, fmt.n(me.score ?? 0), h("small", {}, t.points)),
       h("p", { class: "typed" }, me.of ? t.rank(me.rank ?? 0, me.of) : ""),
       again,
       err,
@@ -555,7 +591,7 @@ function draw(me) {
   const canvas = /** @type {HTMLCanvasElement} */ (h("canvas", { class: "pad" }));
   const err = h("p", { class: "error" });
   const first = Array.isArray(me.choices);
-  const wordEl = h("span", { class: "word" }, first ? "…" : (me.word ?? ""));
+  const wordEl = h("span", { class: "word", "data-fit": "2" }, first ? "…" : (me.word ?? ""));
   const tag = h("div", { class: "wordtag" }, h("span", { class: "label" }, first ? t.drawA : t.makeIt), wordEl);
   const hint = first ? null : h("p", { class: "ontop" }, t.onTop);
   const paper = h("div", { class: "paperbox" }, canvas, hint);
@@ -634,7 +670,7 @@ function draw(me) {
               done.disabled = false;
             },
           },
-          c,
+          h("span", { "data-fit": "2" }, c),
         ),
       ),
     );
@@ -784,7 +820,7 @@ function vote(me, room) {
   const err = h("p", { class: "error" });
   /** @type {string | null} */
   let pick = null;
-  const confirm = /** @type {HTMLButtonElement} */ (h("button", { class: "btn", type: "button", disabled: true }, t.vote));
+  const confirm = /** @type {HTMLButtonElement} */ (h("button", { class: "btn", type: "button", disabled: true, "data-fit": "1" }, t.vote));
   /** @type {{ id: string, el: HTMLElement }[]} */
   const cards = [];
   /** @type {(() => void)[]} */
@@ -812,7 +848,7 @@ function vote(me, room) {
           },
         },
         c,
-        h("span", { class: "w" }, k > 0 ? h("s", {}, layers[k - 1]?.word ?? "") : null, k > 0 ? " → " : null, l.word ?? ""),
+        h("span", { class: "w", "data-fit": "w" }, k > 0 ? h("s", {}, layers[k - 1]?.word ?? "") : null, k > 0 ? " → " : null, l.word ?? ""),
         h("span", { class: "by" }, h("span", { class: "dot", style: { "--c": l.by?.color ?? colorOf(l.by?.id) } }), mine ? t.mineTag : (l.by?.name ?? "")),
       );
       cards.push({ id, el });
@@ -861,7 +897,7 @@ function best(me) {
       "section",
       { class: "card tilt" },
       h("h1", {}, t.bestTitle),
-      me.won ? h("p", { class: "score" }, `+${num(lang, me.points ?? 0)}`) : null,
+      me.won ? h("p", { class: "score" }, `+${fmt.n(me.points ?? 0)}`) : null,
       h("p", { class: "big" }, me.won ? t.bestWon : me.picked ? t.bestPicked : t.bestNot),
     ),
     h("h2", {}, t.react),
@@ -881,10 +917,10 @@ function scoreCard(me, room) {
       "section",
       { class: "card tilt" },
       h("h2", { style: { "margin-top": "0" } }, `${t.roundN(room.round ?? 1)} · ${t.thisRound}`),
-      h("p", { class: "score" }, `+${num(lang, me.delta ?? 0)}`),
-      h("ul", { class: "gains" }, ...kinds.filter((k) => e[k] > 0).map((k) => h("li", {}, h("span", {}, t.kinds[k]), h("b", {}, `+${num(lang, e[k])}`)))),
+      h("p", { class: "score" }, `+${fmt.n(me.delta ?? 0)}`),
+      h("ul", { class: "gains" }, ...kinds.filter((k) => e[k] > 0).map((k) => h("li", {}, h("span", {}, t.kinds[k]), h("b", {}, `+${fmt.n(e[k])}`)))),
       me.counts ? h("p", { class: "wordline" }, t.counts(me.counts)) : null,
-      h("p", { class: "typed", style: { "margin-top": "14px" } }, `${num(lang, me.score ?? 0)} ${t.points} · ${me.of ? t.rank(me.rank ?? 0, me.of) : ""}`),
+      h("p", { class: "typed", style: { "margin-top": "14px" } }, `${fmt.n(me.score ?? 0)} ${t.points} · ${me.of ? t.rank(me.rank ?? 0, me.of) : ""}`),
     ),
   );
 }

@@ -11,7 +11,8 @@
  */
 
 import { joinText, PartyClient, qrSvg } from "/_tvpipe/lib/client.js";
-import { num, pickLang } from "../phone/i18n.js";
+import { watchFit } from "../phone/fit.js";
+import { format, pickLang } from "../phone/i18n.js";
 import { drawLayers, fit, replay, replayTime } from "../phone/ink.js";
 import { strings } from "./strings.js";
 
@@ -24,6 +25,9 @@ const reactions = /** @type {HTMLElement} */ (document.getElementById("reactions
 
 let lang = pickLang(undefined);
 let t = strings(lang);
+let fmt = format(lang);
+// Words to read (data-fit): smaller instead of cut off or broken.
+watchFit();
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -264,6 +268,7 @@ function render(view) {
   if (relang) {
     lang = l;
     t = strings(l);
+    fmt = format(l);
     document.documentElement.lang = l;
   }
   const key = keyOf(view);
@@ -663,7 +668,7 @@ function reveal(s) {
       "div",
       { class: "paper manila ltag", style: { "--c": c, "--r": `${(jitter(`tag${k}`) * 1.4).toFixed(1)}deg` } },
       h("span", { class: "n" }, String(k + 1)),
-      h("span", { class: "word" }, l.word ?? ""),
+      h("span", { class: "word", "data-fit": "2" }, l.word ?? ""),
       h("span", { class: "by" }, h("i", { style: { "--c": c } }), t.drewIt(l.by?.name ?? "")),
       l.drawing?.strokes?.length > 0 ? null : h("span", { class: "blank" }, t.blank),
     );
@@ -679,7 +684,7 @@ function reveal(s) {
     const r = rows[k];
     if (!r || r.querySelector(".gcard")) return;
     const g = l.guess;
-    const text = h("span", { class: `text${g?.text ? "" : " none"}` }, g?.hidden ? t.hiddenGuess : g?.text || t.noGuess);
+    const text = h("span", { class: `text${g?.text ? "" : " none"}`, "data-fit": "2" }, g?.hidden ? t.hiddenGuess : g?.text || t.noGuess);
     const card = h(
       "div",
       { class: `paper gcard${animate ? " fly" : ""}`, style: { "--r": `${(jitter(`g${k}`) * 2.4).toFixed(1)}deg` } },
@@ -817,7 +822,7 @@ function vote(s) {
         // What it began as and what it ended as.
         h(
           "div",
-          { class: "chain typed" },
+          { class: "chain typed", "data-fit": "w" },
           ...((/** @type {any[]} */ ls) => {
             const word = (/** @type {any} */ l) => h("span", { style: { color: inkOf(l.by) } }, l.word ?? "");
             if (ls.length <= 2) return ls.flatMap((l, k) => [k > 0 ? " → " : "", word(l)]);
@@ -861,8 +866,8 @@ function best(s) {
       "div",
       { class: "winner", style: { "--d": `${0.3 + i * 0.25}s` } },
       h("div", { class: "paper sheet tape" }, c, h("span", { class: "stamp blue", style: { "--rot": "-8deg", "--fs": "4.4vh" } }, t.votes(w.votes ?? 0))),
-      h("div", { class: "paper manila ltag", style: { "--c": inkOf(l.by) } }, prev ? h("span", { class: "was" }, `${prev.word ?? ""} →`) : null, h("span", { class: "word" }, l.word ?? "")),
-      h("div", { class: "by" }, avatar(l.by, "5vh"), h("span", {}, t.bestBy(l.by?.name ?? "")), h("b", {}, `+${num(lang, w.points ?? 0)}`)),
+      h("div", { class: "paper manila ltag", style: { "--c": inkOf(l.by) } }, prev ? h("span", { class: "was", "data-fit": "1" }, `${prev.word ?? ""} →`) : null, h("span", { class: "word", "data-fit": "2" }, l.word ?? "")),
+      h("div", { class: "by" }, avatar(l.by, "5vh"), h("span", {}, t.bestBy(l.by?.name ?? "")), h("b", {}, `+${fmt.n(w.points ?? 0)}`)),
     );
     row.append(card);
     // The earlier layers faded, this one drawing itself in its colour.
@@ -910,12 +915,12 @@ function confetti(n = 70) {
 
 /** Counts a number up in an element. @param {HTMLElement} el @param {number} from @param {number} to @param {number} delay */
 function countUp(el, from, to, delay) {
-  el.textContent = num(lang, from);
+  el.textContent = fmt.n(from);
   later(delay, () => {
     const t0 = performance.now();
     const step = () => {
       const p = Math.min(1, (performance.now() - t0) / 1200);
-      el.textContent = num(lang, Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3))));
+      el.textContent = fmt.n(Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3))));
       if (p < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
@@ -933,7 +938,7 @@ function scores(s) {
     last = l.score;
     const pts = h("span");
     const e = l.earned ?? {};
-    const gains = /** @type {const} */ (["drawn", "read", "best"]).filter((k) => e[k] > 0).map((k) => h("span", { class: `gain ${k}` }, `+${num(lang, e[k])} ${t.kinds[k]}`));
+    const gains = /** @type {const} */ (["drawn", "read", "best"]).filter((k) => e[k] > 0).map((k) => h("span", { class: `gain ${k}` }, `+${fmt.n(e[k])} ${t.kinds[k]}`));
     ledger.append(
       h(
         "div",
@@ -942,7 +947,7 @@ function scores(s) {
         avatar(l),
         h("span", { class: "nm" }, l.name),
         h("span", { class: "mid" }, ...gains),
-        h("span", { class: "pts" }, pts, l.delta ? h("small", {}, `+${num(lang, l.delta)}`) : null),
+        h("span", { class: "pts" }, pts, l.delta ? h("small", {}, `+${fmt.n(l.delta)}`) : null),
       ),
     );
     countUp(pts, l.score - (l.delta ?? 0), l.score, 600 + i * 80);
@@ -965,11 +970,11 @@ function final(s) {
         { class: `step p${i + 1}`, style: { "--d": `${[0.5, 0.2, 0.8][i]}s` } },
         avatar(l),
         h("div", { class: "nm" }, l.name),
-        h("div", { class: "paper block" }, h("b", {}, String(i + 1)), h("span", {}, num(lang, l.score))),
+        h("div", { class: "paper block" }, h("b", {}, String(i + 1)), h("span", {}, fmt.n(l.score))),
       );
     }),
   );
-  const rest = h("div", { class: "rest" }, ...lines.slice(3).map((l, i) => h("span", {}, `${i + 4}. ${l.name} · ${num(lang, l.score)}`)));
+  const rest = h("div", { class: "rest" }, ...lines.slice(3).map((l, i) => h("span", {}, `${i + 4}. ${l.name} · ${fmt.n(l.score)}`)));
   const el = h("div", { class: "scene final" }, h("h1", {}, t.gameOver), podium, rest, h("div", { class: "again" }, t.playAgain), confetti(90));
   later(500, sfx.win);
   return { el };

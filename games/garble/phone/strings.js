@@ -5,9 +5,10 @@
  * text.
  */
 
-/** @typedef {typeof EN} Strings */
+import { format } from "./i18n.js";
 
-const EN = {
+/** @param {import("./i18n.js").Format} f */
+const en = (f) => ({
   otherLang: "Deutsch",
   connecting: "Connecting…",
   scanToJoin: "Scan the QR code on the TV to join.",
@@ -40,7 +41,7 @@ const EN = {
   players: "Players",
   vip: "VIP",
   start: "Start the game",
-  vipWait: (/** @type {number} */ n) => (n === 1 ? "Waiting for 1 more player." : `Waiting for ${n} more players.`),
+  vipWait: (/** @type {number} */ n) => f.p(n, { one: "Waiting for # more player.", other: "Waiting for # more players." }),
   vipReady: "Everybody here? Start when you're ready.",
   waitVip: "The VIP starts the game.",
   settings: "Settings",
@@ -50,9 +51,9 @@ const EN = {
   off: "off",
   on: "on",
   undoLine: ["Every stroke counts", "Undo your own strokes"],
-  lengthLine: (/** @type {number} */ n) => `Each picture gets ${n} layers (at most one less than the players).`,
+  lengthLine: (/** @type {number} */ n) => f.p(n, { one: "Each picture gets # layer.", other: "Each picture gets # layers (at most one less than the players)." }),
   rulesLine: (/** @type {number} */ rounds, /** @type {number} */ layers, /** @type {boolean} */ undo) =>
-    `${rounds === 1 ? "1 round" : `${rounds} rounds`} · ${layers} layers · ${undo ? "undo on" : "no undo"}`,
+    `${f.p(rounds, { one: "# round", other: "# rounds" })} · ${f.p(layers, { one: "# layer", other: "# layers" })} · ${undo ? "undo on" : "no undo"}`,
   howTitle: "How it works",
   how: [
     "Pick a word and draw it. Your picture goes to the next player.",
@@ -98,25 +99,27 @@ const EN = {
   voteFor: (/** @type {string} */ name) => `Vote for ${name}`,
   voted: "Voted. Look at the TV!",
   mineTag: "yours",
-  pictureN: (/** @type {number} */ n, /** @type {string} */ name) => `${n}. started by ${name}`,
+  pictureN: (/** @type {number} */ n, /** @type {string} */ name) => `${f.n(n)}. started by ${name}`,
   bestWon: "Your move won!",
   bestPicked: "You picked the winner.",
   bestNot: "Look at the TV",
   // Scores
-  roundN: (/** @type {number} */ n) => `Round ${n}`,
+  roundN: (/** @type {number} */ n) => `Round ${f.n(n)}`,
   thisRound: "this round",
   kinds: { drawn: "your layers read right", read: "you read right", best: "best move" },
   counts: (/** @type {{ drawn: number, drew: number, read: number, wrote: number }} */ c) =>
-    `Read right: ${c.drawn} of your ${c.drew} layers · you read ${c.read} of ${c.wrote}`,
-  rank: (/** @type {number} */ r, /** @type {number} */ of) => `#${r} of ${of}`,
+    `Read right: ${f.n(c.drawn)} of your ${f.p(c.drew, { one: "# layer", other: "# layers" })} · you read ${f.n(c.read)} of ${f.n(c.wrote)}`,
+  rank: (/** @type {number} */ r, /** @type {number} */ of) => `#${f.n(r)} of ${f.n(of)}`,
   points: "points",
   won: "You won!",
   gameOver: "Game over",
   playAgain: "Play again",
-};
+});
 
-/** @type {Strings} */
-const DE = {
+/** @typedef {ReturnType<typeof en>} Strings */
+
+/** @type {(f: import("./i18n.js").Format) => Strings} */
+const de = (f) => ({
   otherLang: "English",
   connecting: "Verbinde…",
   scanToJoin: "Scanne den QR-Code am Fernseher, um mitzuspielen.",
@@ -148,7 +151,7 @@ const DE = {
   players: "Spieler",
   vip: "VIP",
   start: "Spiel starten",
-  vipWait: (n) => (n === 1 ? "Warte auf 1 weitere Person." : `Warte auf ${n} weitere Personen.`),
+  vipWait: (n) => f.p(n, { one: "Warte auf # weitere Person.", other: "Warte auf # weitere Personen." }),
   vipReady: "Alle da? Starte, wenn ihr bereit seid.",
   waitVip: "Der VIP startet das Spiel.",
   settings: "Einstellungen",
@@ -158,8 +161,8 @@ const DE = {
   off: "aus",
   on: "an",
   undoLine: ["Jeder Strich zählt", "Eigene Striche rückgängig machen"],
-  lengthLine: (n) => `Jedes Bild bekommt ${n} Schichten (höchstens eine weniger als Spieler).`,
-  rulesLine: (rounds, layers, undo) => `${rounds === 1 ? "1 Runde" : `${rounds} Runden`} · ${layers} Schichten · ${undo ? "Rückgängig an" : "kein Rückgängig"}`,
+  lengthLine: (n) => f.p(n, { one: "Jedes Bild bekommt # Schicht.", other: "Jedes Bild bekommt # Schichten (höchstens eine weniger als Spieler)." }),
+  rulesLine: (rounds, layers, undo) => `${f.p(rounds, { one: "# Runde", other: "# Runden" })} · ${f.p(layers, { one: "# Schicht", other: "# Schichten" })} · ${undo ? "Rückgängig an" : "kein Rückgängig"}`,
   howTitle: "So geht's",
   how: [
     "Wähle ein Wort und zeichne es. Dein Bild geht an die nächste Person.",
@@ -199,22 +202,26 @@ const DE = {
   voteFor: (name) => `${name} wählen`,
   voted: "Gewählt. Schau auf den Fernseher!",
   mineTag: "deine",
-  pictureN: (n, name) => `${n}. begonnen von ${name}`,
+  pictureN: (n, name) => `${f.n(n)}. begonnen von ${name}`,
   bestWon: "Dein Zug hat gewonnen!",
   bestPicked: "Du hast den Sieger gewählt.",
   bestNot: "Schau auf den Fernseher",
-  roundN: (n) => `Runde ${n}`,
+  roundN: (n) => `Runde ${f.n(n)}`,
   thisRound: "diese Runde",
   kinds: { drawn: "deine Schichten erkannt", read: "du hast erkannt", best: "bester Zug" },
-  counts: (c) => `Erkannt: ${c.drawn} von deinen ${c.drew} Schichten · du hast ${c.read} von ${c.wrote} erkannt`,
-  rank: (r, of) => `Platz ${r} von ${of}`,
+  counts: (c) => `Erkannt: ${f.n(c.drawn)} von ${f.p(c.drew, { one: "deiner # Schicht", other: "deinen # Schichten" })} · du hast ${f.n(c.read)} von ${f.n(c.wrote)} erkannt`,
+  rank: (r, of) => `Platz ${f.n(r)} von ${f.n(of)}`,
   points: "Punkte",
   won: "Gewonnen!",
   gameOver: "Spielende",
   playAgain: "Nochmal spielen",
-};
+});
 
-/** @param {string} lang */
+/**
+ * The phone's strings in a language.
+ * @param {string} lang
+ * @returns {Strings}
+ */
 export function strings(lang) {
-  return lang === "de" ? DE : EN;
+  return lang === "de" ? de(format("de")) : en(format("en"));
 }
