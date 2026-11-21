@@ -900,6 +900,9 @@ export class PartyClient {
   drop(opts: { away?: number; forget?: boolean } = {}): void {
     if (opts.forget) this.#forget();
     this.#holdUntil = Date.now() + (opts.away ?? 0);
+    // Not open from here on: the socket's close event comes later (on
+    // Windows long enough for a check of `status` to see it still open).
+    if (this.#ws && this.status === "open") this.#setStatus(this.you ? "reconnecting" : "connecting");
     try {
       this.#ws?.close(4999, "dropped");
     } catch {}

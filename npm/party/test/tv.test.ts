@@ -140,7 +140,8 @@ test("actions carry when they were sent, clamped to the second before they arriv
     ws.send(JSON.stringify({ t: "act", id: 3, type: "buzz", at: "soon" }));
     await until(() => sent.length === 4);
     const [, old, future, junk] = sent as [number, number, number, number];
-    assert.ok(now - old >= 990 && now - old < 1100, `old ${now - old}`);
+    // The host clamps to a second before it got the action, which is at or after `now`.
+    assert.ok(now - old > 900 && now - old <= 1000, `old ${now - old}`);
     assert.ok(Math.abs(future - now) < 100, `future ${future - now}`);
     assert.ok(Math.abs(junk - now) < 100, `junk ${junk - now}`);
     ws.close();

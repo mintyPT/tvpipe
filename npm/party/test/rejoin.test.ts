@@ -155,7 +155,7 @@ test("dropOuts.stop names a phone that could not come back", async () => {
     await a.join("Ann");
     const chaos = dropOuts([a], { every: 1, kinds: ["device"], away: [0, 0] });
     await until(() => chaos.counts.device > 0);
-    await assert.rejects(chaos.stop(300), /phones did not come back: p1 \(closed, name-taken/);
+    await assert.rejects(chaos.stop(2000), /phones did not come back: p1 \(closed, name-taken/);
   } finally {
     await s.close();
   }
