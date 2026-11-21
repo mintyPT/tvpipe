@@ -129,60 +129,80 @@ function textures() {
 textures();
 
 // ---------------------------------------------------------------------------
-// Sound: short synthesized cues (the preview is muted: the TV plays them).
+// Sound: short synthesized cues (the preview is muted: the TV plays them),
+// all through one master gain and a compressor (as Drawbluff's and Jinx's
+// TVs), so nothing clips when cues overlap.
 
 const MUTED = params.get("mute") === "1";
-/** @type {AudioContext | null} */
+/** @type {{ ctx: AudioContext, out: GainNode, noise: AudioBuffer } | null} */
 let audio = null;
 function ac() {
   if (MUTED) return null;
   try {
-    audio ??= new AudioContext();
-    if (audio.state === "suspended") void audio.resume();
+    if (!audio) {
+      const ctx = new AudioContext();
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -14;
+      comp.knee.value = 12;
+      comp.ratio.value = 4;
+      comp.attack.value = 0.003;
+      comp.release.value = 0.2;
+      const out = ctx.createGain();
+      out.gain.value = 0.8;
+      out.connect(comp).connect(ctx.destination);
+      // One second of white noise for every burst (made once).
+      const noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+      const d = noise.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      audio = { ctx, out, noise };
+    }
+    if (audio.ctx.state === "suspended") void audio.ctx.resume();
     return audio;
   } catch {
     return null;
   }
 }
+/** A watch page opened by hand gets its sound with the first tap or click. */
+addEventListener("pointerdown", () => void ac(), { once: true });
 /** @param {number[]} notes @param {number} [len] @param {OscillatorType} [type] @param {number} [vol] */
 function chime(notes, len = 0.12, type = "triangle", vol = 0.2) {
   const a = ac();
   if (!a) return;
-  let at = a.currentTime + 0.02;
+  let at = a.ctx.currentTime + 0.02;
   for (const f of notes) {
-    const o = a.createOscillator();
-    const gn = a.createGain();
+    const o = a.ctx.createOscillator();
+    const gn = a.ctx.createGain();
     o.type = type;
     o.frequency.value = f;
     gn.gain.setValueAtTime(0.0001, at);
     gn.gain.exponentialRampToValueAtTime(vol, at + 0.01);
     gn.gain.exponentialRampToValueAtTime(0.0001, at + len);
-    o.connect(gn).connect(a.destination);
+    o.connect(gn).connect(a.out);
     o.start(at);
     o.stop(at + len + 0.02);
     at += len * 0.85;
   }
 }
-/** A noise burst through a filter: stamps (low), snips and swishes (high). @param {number} freq @param {number} len @param {number} [vol] */
-function noise(freq, len, vol = 0.5) {
+/** A noise burst through a filter, dying away over `len`: stamps (low), snips and swishes (high). @param {number} freq @param {number} len @param {number} [vol] */
+function noise(freq, len, vol = 0.4) {
   const a = ac();
   if (!a) return;
-  const buf = a.createBuffer(1, Math.ceil(a.sampleRate * len), a.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
-  const src = a.createBufferSource();
-  src.buffer = buf;
-  const f = a.createBiquadFilter();
+  const at = a.ctx.currentTime + 0.005;
+  const src = a.ctx.createBufferSource();
+  src.buffer = a.noise;
+  const f = a.ctx.createBiquadFilter();
   f.type = freq < 1000 ? "lowpass" : "bandpass";
   f.frequency.value = freq;
-  const gn = a.createGain();
-  gn.gain.value = vol;
-  src.connect(f).connect(gn).connect(a.destination);
-  src.start();
+  const gn = a.ctx.createGain();
+  gn.gain.setValueAtTime(vol, at);
+  gn.gain.exponentialRampToValueAtTime(0.0001, at + len);
+  src.connect(f).connect(gn).connect(a.out);
+  // A different stretch of the noise each time.
+  src.start(at, Math.random() * Math.max(0, a.noise.duration - len), len);
 }
 const sfx = {
   phase: () => chime([523, 659, 784]),
-  stamp: () => noise(180, 0.18, 0.9),
+  stamp: () => noise(180, 0.18, 0.5),
   light: () => noise(420, 0.08, 0.35),
   scratch: () => noise(2600, 0.5, 0.08),
   right: () => chime([660, 990], 0.1, "triangle", 0.16),
@@ -190,7 +210,7 @@ const sfx = {
   swish: () => noise(1800, 0.35, 0.18),
   win: () => chime([523, 659, 784, 1047], 0.16),
   drum: () => {
-    for (let i = 0; i < 10; i++) setTimeout(() => noise(220, 0.05, 0.25 + i * 0.04), i * 70);
+    for (let i = 0; i < 10; i++) setTimeout(() => noise(220, 0.05, 0.12 + i * 0.022), i * 70);
   },
   pop: () => chime([880], 0.05, "sine", 0.12),
 };

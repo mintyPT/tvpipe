@@ -158,7 +158,9 @@ words typed (Special Elite) on manila tags, guesses handwritten
 (Caveat) on index cards, headings in Anton. During play the ink is
 black; in the reveal each layer is in its drawer's colour (the player
 colours, dark enough to read on paper). Short synthesized sounds on the
-TV only.
+TV only, all through one master gain and a compressor (nothing clips
+when cues overlap); a watch page opened by hand gets its sound with the
+first tap.
 
 The phone is made for thumbs: the pad as large as the screen allows,
 the word to draw above it, the tools under the thumb; the guess screen
