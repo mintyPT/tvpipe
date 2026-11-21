@@ -64,10 +64,11 @@ async function setup(
     dealt?: { en?: string[]; de?: string[] };
     records?: Record<number, number>;
     tvDelay?: number;
+    moderate?: (text: string) => string | false | undefined;
   } = {},
 ) {
   const relay = new MemoryRelay();
-  const party = new Party({ grace: 100, maxPlayers: 8, tvDelay: o.tvDelay }).listen(relay);
+  const party = new Party({ grace: 100, maxPlayers: 8, tvDelay: o.tvDelay, moderate: o.moderate && ((text, ctx) => (ctx.kind === "name" ? undefined : o.moderate!(text))) }).listen(relay);
   const g = new Jinx(party, {
     lang: o.lang,
     words: { en: WORDS, de: WORDS_DE },
@@ -335,6 +336,45 @@ test("clue checks: too close, own clue, replacing, late; guess rules", async () 
     assert.equal((party.screen.peek() as { bank: { chips: number } }).bank.chips, 6);
     const author = players.find((p) => p.client.you!["id"] === best[1]!.author)!;
     await until(() => (author.client.view["me"]?.parts ?? []).includes("best"));
+  } finally {
+    close();
+  }
+});
+
+test("clues and guesses go through the party's moderate hook: refused, or replaced and checked as typed", async () => {
+  const seen: string[] = [];
+  const moderate = (text: string) => {
+    seen.push(text);
+    if (/rude/i.test(text)) return false;
+    return text.replace(/heck/gi, "gosh");
+  };
+  const { party, g, players, close } = await setup(3, { bot: () => ({ silent: true }), moderate, timings: { write: 5000, decide: 5000 } });
+  try {
+    await players[0]!.client.act("start");
+    await until(() => g.phase === "write");
+    const guesser = (party.screen.peek() as { guesser: string }).guesser;
+    const [a, b] = players.filter((p) => p.client.you!["id"] !== guesser);
+    const gp = players.find((p) => p.client.you!["id"] === guesser)!;
+    await assert.rejects(a!.client.act("clue", { text: "rude", bold: false, slot: 0 }), (e: { code: string }) => e.code === "refused");
+    assert.deepEqual(await a!.client.act("clue", { text: "heck", bold: false, slot: 0 }), { text: "gosh", bold: false });
+    for (const p of [a!, b!]) for (let slot = 0; slot < 2; slot++) if (p !== a || slot > 0) await p.client.act("clue", { text: ["orbit", "meadow", "thunder"][slot + (p === b ? 1 : 0)]!, bold: false, slot });
+    await until(() => g.phase === "reveal", 10_000);
+    const words = (party.screen.peek() as { cards: { word?: string }[] }).cards;
+    assert.ok(words.every((c) => c.word === undefined));
+    const card = (party.screen.peek() as { cards: { id: string }[] }).cards[0]!.id;
+    await gp.client.act("pick", { card });
+    // The draft on the TV, as moderated.
+    gp.client.input({ draft: "heck" });
+    await until(() => (party.screen.peek() as { draft: string }).draft === "gosh");
+    gp.client.input({ draft: "rude" });
+    await until(() => (party.screen.peek() as { draft: string }).draft === "");
+    await assert.rejects(gp.client.act("guess", { text: "rude" }), (e: { code: string }) => e.code === "refused");
+    await gp.client.act("guess", { text: "heck" });
+    await until(() => g.phase === "verdict");
+    const v = party.screen.peek() as { guess?: string; cards: { word: string }[] };
+    assert.equal(v.guess, "gosh");
+    assert.ok(v.cards.some((c) => c.word === "gosh") && !v.cards.some((c) => /heck|rude/.test(c.word)));
+    assert.ok(seen.includes("rude") && seen.includes("heck"));
   } finally {
     close();
   }

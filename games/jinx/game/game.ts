@@ -858,9 +858,12 @@ export class Jinx extends Emitter<JinxEvents> {
     if (typeof text !== "string" || text.length > 200) throw new PartyError("empty", "Type a clue");
     if (typeof slot !== "number" || !Number.isInteger(slot) || slot < 0 || slot >= r.each) throw new PartyError("bad-slot", "No such clue slot");
     const bold = o["bold"] === true;
+    // The clue is shown on the TV and the phones: the party's moderate hook first (a replacement is checked as typed).
+    const said = this.party.moderate(text, "clue", from);
+    if (said === false) throw new PartyError("refused", "Try another one");
     const own = slots.filter((s, i): s is Slot => s !== null && i !== slot).map((s) => s.clue);
     const { m, opt } = this.#here;
-    const res = m.checkSubmit(text, r.secret, { ...opt, banned: r.entry.banned, alsoRight: r.entry.alsoRight, own });
+    const res = m.checkSubmit(said, r.secret, { ...opt, banned: r.entry.banned, alsoRight: r.entry.alsoRight, own });
     // The reason rides in the code ("too-close:plural"): a phone in another
     // language than the room's says it in its own words.
     if (!res.ok) throw new PartyError(res.reason ? `${res.code}:${res.reason}` : res.code, res.message);
@@ -981,7 +984,8 @@ export class Jinx extends Emitter<JinxEvents> {
   /** A decision ran out: the draft as the guess, else a random card, else a pass. */
   #timeout(r: Round): void {
     if (r.typing && r.turns > 0) {
-      const c = this.#here.m.clean(r.draft);
+      const said = this.party.moderate(r.draft, "guess", r.guesser);
+      const c = this.#here.m.clean(said === false ? "" : said);
       if (c.ok) return this.#judge(r, c.clue);
       return this.#finish(r, { result: "pass" });
     }
@@ -1057,7 +1061,10 @@ export class Jinx extends Emitter<JinxEvents> {
     const r = this.#revealTurn(from);
     if (r.turns === 0) throw new PartyError("no-card", "Turn a card first");
     const text = obj(d)["text"];
-    const c = this.#here.m.clean(typeof text === "string" ? text.slice(0, 200) : "");
+    // The guess is shown on the TV: the party's moderate hook first.
+    const said = typeof text === "string" && text.trim() !== "" ? this.party.moderate(text.slice(0, 200), "guess", from) : "";
+    if (said === false) throw new PartyError("refused", "Try another one");
+    const c = this.#here.m.clean(said);
     if (!c.ok) throw new PartyError(c.error, c.error === "empty" ? "Type a guess" : c.message);
     r.draft = [...c.clue.display].slice(0, MAX_DRAFT).join("");
     this.#judge(r, c.clue);
@@ -1086,7 +1093,7 @@ export class Jinx extends Emitter<JinxEvents> {
       clearTimeout(this.#draftTimer);
       this.#draftTimer = undefined;
       this.#draftAt = Date.now();
-      this.#screenSet({ draft, typing: true, deadline: r.deadline });
+      this.#screenSet({ draft: this.#shownDraft(r), typing: true, deadline: r.deadline });
       r.guesser.state.set({ deadline: r.deadline });
       this.#wake();
       return;
@@ -1094,14 +1101,21 @@ export class Jinx extends Emitter<JinxEvents> {
     const wait = this.#draftAt + this.timings.draftEvery - Date.now();
     if (wait <= 0) {
       this.#draftAt = Date.now();
-      this.#screenSet({ draft });
+      this.#screenSet({ draft: this.#shownDraft(r) });
     } else if (!this.#draftTimer) {
       this.#draftTimer = setTimeout(() => {
         this.#draftTimer = undefined;
         this.#draftAt = Date.now();
-        if (this.#round === r && this.#phase === "reveal" && !r.outcome) this.#screenSet({ draft: r.draft });
+        if (this.#round === r && this.#phase === "reveal" && !r.outcome) this.#screenSet({ draft: this.#shownDraft(r) });
       }, wait);
     }
+  }
+
+  /** The draft as the TV shows it: through the party's moderate hook (refused: nothing). */
+  #shownDraft(r: Round): string {
+    if (r.draft === "") return "";
+    const said = this.party.moderate(r.draft, "guess", r.guesser);
+    return said === false ? "" : [...said].slice(0, MAX_DRAFT).join("");
   }
 
   // -------------------------------------------------------------------------

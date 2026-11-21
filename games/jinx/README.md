@@ -80,7 +80,7 @@ German word list against the German matcher (`test/words-de.test.ts`), the
 rules (`test/rules.test.ts`: the pot, the bank, dealing, guesser order, titles and goals,
 awards, the web), and whole games with bots on `@tvpipe/party`'s relay
 in memory (`test/game.test.ts`): 3 and 4 players, play again, clue
-refusals and replacing, all clues jinxed, wrong guesses and passes (the bank never below 0), the bank, best clues and the record, the VIP's settings from the phone (refusals), timers
+refusals and replacing, the moderate hook on clues, drafts and guesses, all clues jinxed, wrong guesses and passes (the bank never below 0), the bank, best clues and the record, the VIP's settings from the phone (refusals), timers
 for a silent or disconnected guesser, a late joiner, a room closed to latecomers, a player who leaves,
 a guesser who leaves, too few left (the game ends), closing a game mid-round,
 a closed bot, the secrecy of the word on the TV and the guesser's

@@ -418,6 +418,12 @@ time, difficulty, latecomers), `screen/` (the TV page), `phone/` (the phone page
 - The guess draft: the guesser's phone sends its field's text as an
   action on every change (throttled to about 20 per second); the host
   copies it into the screen view. Only the submitted guess is judged.
+- Free text the TV and the phones show goes through the party's
+  `moderate` hook (party-design §6): a clue (kind `clue`) and the guess
+  (`guess`) before they are checked (a replacement is checked as if
+  typed; refused: `refused`, the phone asks for another), and the draft
+  on its way to the TV (refused: the TV's tape stays empty). Names are
+  the library's.
 - Bots (for tests; the host page shows their buttons only with
   `?bots`) write clues from a
   per-word list of plausible clues, so jinxes happen, and guess the word

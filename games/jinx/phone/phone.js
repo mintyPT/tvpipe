@@ -446,7 +446,7 @@ const ENVELOPE = `<svg viewBox="0 0 200 130" aria-hidden="true"><rect x="4" y="4
 // Errors
 
 /** Refusals of the clue action that are the game's, not the matcher's. */
-const CLUE_GAME_CODES = new Set(["late", "not-asked", "bad-slot", "not-player"]);
+const CLUE_GAME_CODES = new Set(["late", "not-asked", "bad-slot", "not-player", "refused"]);
 
 /**
  * A refusal in this phone's language, by its code. A refused clue's

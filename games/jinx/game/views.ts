@@ -434,14 +434,15 @@ export interface Actions {
   /**
    * A clue-giver, write phase: send (or replace) the clue in `slot` (0, or 1
    * with 3 players). Refused with code `too-close:REASON`, `own-clue:REASON`
-   * (`REASON` a {@link Reason}: "too-close:plural"), `empty`, `too-long`,
+   * (`REASON` a {@link Reason}: "too-close:plural"), `refused` (the
+   * party's moderate hook), `empty`, `too-long`,
    * `too-many-words`, `not-english` (or the matcher's other input codes;
    * the message says why, in the room's language) or `late`.
    */
   clue: { text: string; bold: boolean; slot: number };
   /** The guesser, reveal: turn this card. */
   pick: { card: string };
-  /** The guesser, reveal: the one guess (after at least one turned card). */
+  /** The guesser, reveal: the one guess (after at least one turned card; `refused` by the moderate hook). */
   guess: { text: string };
   /** The guesser, reveal: no guess. */
   pass: null;
