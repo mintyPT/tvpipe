@@ -60,15 +60,15 @@ dino in der straßenbahn | dinosaurier im schulbus | der drache fährt regionalz
 ein tintenfisch als schülerlotse | tintenfisch regelt den verkehr | der krake dirigiert | spinne als lehrerin
 giraffe im kleinwagen | giraffe im cabrio | strauß im bollerwagen | giraffe in telefonzelle
 meerjungfrau im hallenbad | die meerjungfrau in der badewanne | seehund im spaßbad | nixe ärgert den bademeister
-cowboy auf dem rasenmäher | ein cowboy reitet den staubsauger | ritter auf traktor | bauer auf dem rodeostier
+cowboy auf dem rasenmäher | cowboy reitet den staubsauger | ritter auf traktor | bauer auf dem rodeostier
 der yeti im freibad | yeti im waschsalon | ein bär am badesee | yeti rutscht
 kochen in der schwerelosigkeit | koch auf dem schiff im sturm | jongleur in der raumstation | astronaut backt pizza
 ein löwe beim elternabend | löwe im vorstellungsgespräch | der kater beim schulfest | lehrerkonferenz mit löwe
-elch im möbelhaus | elch im baumarkt | hirsch im porzellanladen | ein rentier in der küchenabteilung
+elch im möbelhaus | elch im baumarkt | hirsch im porzellanladen | rentier in der küchenabteilung
 wikinger auf der kirmes | ein wikinger auf dem weihnachtsmarkt | schützenfest mit wikinger | pirat auf dem jahrmarkt
 pfau auf dem standesamt | pfau auf dem abschlussball | truthahn bei der hochzeit | pfau beim fotografen
 ein wal im planschbecken | wal in der badewanne | delfin im kinderbecken | der seehund im aquarium
-zyklop mit lesebrille | zyklop mit monokel | ein zyklop beim augenarzt | riese mit lupe
+zyklop mit lesebrille | zyklop mit monokel | zyklop beim augenarzt | riese mit lupe
 pirat in der stadtbibliothek | pirat bucht urlaub | ein pirat in der schatzkammer | räuber im lesesaal
 astronaut im schrebergarten | astronaut im gewächshaus | taucher im gemüsebeet | imker im schrebergarten
 roboter auf dem bauernhof | der roboter im kuhstall | ritter auf dem bauernhof | roboter melkt kühe
@@ -76,29 +76,123 @@ ein sumoringer auf dem schwebebalken | sumoringer auf dem drahtseil | ein ringer
 mumie beim wellness | eine mumie beim friseur | die mumie wird massiert | patient im gipsverband
 krokodil beim kaffeekränzchen | krokodil im seniorentreff | drache beim kaffeeklatsch | krokodil feiert geburtstag
 zauberer am fahrkartenautomaten | der zauberer hebt geld ab | magier am kaugummiautomaten | wichtel am getränkeautomaten
-unterseeboot im gartenteich | ein unterseeboot in der badewanne | dampfer im aquarium | taucher im goldfischglas
+unterseeboot im gartenteich | unterseeboot in der badewanne | dampfer im aquarium | taucher im goldfischglas
 der bär an der käsetheke | bär an der wursttheke | ein bär kauft honig | maus an der käsetheke
 ritterrüstung in der disco | rüstung beim tanzkurs | roboter tanzt | ritter beim karaoke
 vogelscheuche auf dem laufsteg | fotoshooting mit vogelscheuche | vogelscheuche beim casting | model im kornfeld
 eine schnecke beim stadtlauf | schnecken beim radrennen | schildkröte beim staffellauf | die schnecke beim hürdenlauf
-könig im autoscooter | ein könig im kettenkarussell | prinz im tretboot | könig fährt kart
+könig im autoscooter | könig im kettenkarussell | prinz im tretboot | könig fährt kart
 außerirdischer auf dem flohmarkt | alien im supermarkt | ein marsmensch auf dem schrottplatz | roboter auf dem wochenmarkt
 flamingo beim schlittschuhlaufen | flamingo auf rollschuhen | storch beim eisstockschießen | ballerina auf dem zugefrorenen see
 ein goldfisch in der achterbahn | goldfisch im riesenrad | wasserrutsche mit goldfisch | der hamster in der achterbahn
-pferd im aufzug | pferd im wandschrank | ein esel im fahrstuhl | pony unter der dusche
+pferd im aufzug | pferd im wandschrank | esel im fahrstuhl | pony unter der dusche
 nilpferd im ballett | eiskunstlauf mit nilpferd | ein elefant in der tanzschule | nilpferd macht yoga
 ein kamel in der skihütte | kamel auf der skipiste | das dromedar im iglu | lama am kachelofen
 ninja beim kindergeburtstag | topfschlagen mit ninja | dieb auf der geburtstagsfeier | ninja auf der hochzeit
-pantomime im fußballstadion | ein pantomime im wartezimmer | clown auf der tribüne | schiri ohne pfeife
+pantomime im fußballstadion | pantomime im wartezimmer | clown auf der tribüne | schiri ohne pfeife
 gorilla beim klavierkonzert | gorilla in der oper | der gorilla stimmt klavier | bär beim orgelkonzert
 ein hai im nichtschwimmerbecken | hai im springbrunnen | ein hai beim seepferdchenkurs | krokodil im whirlpool
 igel in der hüpfburg | igel im luftballonladen | kaktus auf dem trampolin | bällebad mit igel
 eisbär in der sauna | der eisbär in der wüste | schaf in der sauna | eisbär auf heizdecke
-walross im kino | ein walross im theater | seehund in der oper | walross beim zahnarzt
+walross im kino | walross im theater | seehund in der oper | walross beim zahnarzt
 eine kuh auf dem eiffelturm | kuh auf dem kirchturm | ziege auf dem strommast | die kuh im riesenrad
-kaktus im wasserbett | kaktus auf luftmatratze | ein igel im himmelbett | schlafsack mit kaktus
+kaktus im wasserbett | kaktus auf luftmatratze | igel im himmelbett | schlafsack mit kaktus
 dackel auf dem laufband | der dackel fährt rolltreppe | hamster im laufrad | wurst auf dem fließband
 vampir beim blutspenden | vampir beim hausarzt | fledermaus im krankenhaus | vampir sonnt sich
+hexe an der tankstelle | hexe in der waschanlage | eine fee an der zapfsäule | zauberin im parkhaus
+ein känguru in der hängematte | känguru im liegestuhl | ein beuteltier auf der schaukel | hase im hängesessel
+ein feuerwehrmann im puppenhaus | ein feuerwehrmann im vogelhaus | polizist im kaninchenstall | mann zwängt sich ins spielhaus
+ein eichhörnchen am geldautomaten | eichhörnchen am kaugummiautomaten | ein biber am fahrkartenschalter | maus am snackautomaten
+opa im skatepark | opa auf dem skateboard | rentner auf dem tretroller | ein großvater auf rollschuhen
+nashorn im glashaus | nashorn im porzellanladen | büffel im spiegelkabinett | nashorn im fahrstuhl
+schaf auf der schaukel | ein schaf auf der wippe | wolke auf dem spielplatz | lamm auf dem karussell
+die prinzessin auf der baustelle | prinzessin fährt bagger | eine königin im rohbau | prinzessin mit presslufthammer
+bauarbeiter im ballettsaal | ein bauarbeiter beim spitzentanz | handwerker tanzt vor dem spiegel | maurer beim bauchtanz
+ein papagei im gerichtssaal | ein papagei als zeuge | papagei auf der richterbank | wellensittich im klassenzimmer
+elefant auf dem einrad | ein elefant auf dem dreirad | nilpferd auf dem tretroller | zirkuselefant balanciert
+das huhn im cockpit | huhn im fesselballon | hahn auf dem traktor | die ente als pilotin
+maulwurf auf dem skilift | ein maulwurf im sessellift | maulwurf mit skibrille | hamster am schlepplift
+der weihnachtsmann am strand | ein weihnachtsmann im liegestuhl | nikolaus beim sonnenbaden | weihnachtsmann surft
+ein osterhase im schneesturm | osterhase im iglu | ein hase auf der skipiste | osterhase baut schneemann
+storch auf dem sprungturm | storch auf dem startblock | reiher am beckenrand | flamingo springt ins becken
+taucher im getreidefeld | taucher im heuhaufen | froschmann auf dem acker | taucher mäht rasen
+die zahnfee im tresorraum | zahnfee knackt den tresor | eine elfe in der bank | fee im schließfach
+klavier im ruderboot | klavier im kanu | flügel auf dem floß | pianist rudert
+badewanne auf der autobahn | eine badewanne im stau | waschbecken auf der landstraße | badewanne mit rädern
+ein kühlschrank auf dem gletscher | ein kühlschrank im eis | gefriertruhe auf dem eisberg | herd auf der skipiste
+regenschirm im hallenbad | ein regenschirm unter der dusche | sonnenschirm im schwimmbad | mann mit schirm im becken
+das faultier bei der feuerwehr | ein faultier an der feuerwehrstange | faultier löscht brand | koala im feuerwehrauto
+biber in der möbelfabrik | ein biber im baumarkt | biber baut regal | specht im sägewerk
+ein mönch im fitnessstudio | mönch auf dem laufband | ein mönch beim gewichtheben | pfarrer an der hantelbank
+nonne auf dem motorrad | eine nonne auf dem mofa | nonnen beim motocross | oma auf dem roller
+polizist auf dem karussell | polizist im kettenkarussell | polizist reitet holzpferd | schaffner auf dem karussell
+hamster fährt bagger | ein hamster im kran | maus am steuer | meerschweinchen auf dem gabelstapler
+spinne spielt harfe | spinne an der gitarre | spinne im netz aus saiten | krake am klavier
+eine qualle im kaufhaus | eine qualle auf der rolltreppe | qualle in der umkleide | wackelpudding im kaufhaus
+ein seestern auf dem schulhof | ein seestern beim fangenspielen | seestern am klettergerüst | krebs auf dem pausenhof
+ein mammut im kühlhaus | ein mammut in der tiefkühltruhe | wollnashorn im kühlraum | elefant im kühlschrank
+höhlenmensch im großraumbüro | höhlenmensch am computer | steinzeitmensch im meeting | neandertaler am kopierer
+engel am kiosk | engel kauft eis | engel an der imbissbude | fee am zeitungsstand
+ein drache in der eisdiele | drache schmilzt die eiskugeln | drache beim eisverkäufer | ein dinosaurier in der eisdiele
+einhorn im parkhaus | einhorn in der waschstraße | einhorn sucht parkplatz | pony im parkhaus
+zwerge im basketballteam | ein zwerg beim hochsprung | wichtel am basketballkorb | zwerge beim volleyball
+der frosch fährt rennwagen | ein frosch in der seifenkiste | kröte auf der rennstrecke | frosch im autoscooter
+ente beim golfen | eine gans beim minigolf | ente mit hockeyschläger | ente spielt krocket
+schwan auf dem eishockeyfeld | schwan im eishockeytor | gans beim eishockey | schwäne auf schlittschuhen
+maus auf dem motorrad | eine maus auf dem rasenmäher | ratte auf dem roller | maus beim motocross
+eine katze im hundesalon | eine katze in der hundeschule | katze im hundekorb | katze bei der hundeschau
+hund am rednerpult | ein hund als nachrichtensprecher | hund am mikrofon | dackel als bürgermeister
+schweine im schaumbad | schwein in der badewanne | ferkel im whirlpool | nilpferd im seifenwasser
+ziege auf dem autodach | eine ziege auf dem lieferwagen | ziege auf dem wohnmobil | schaf auf der motorhaube
+lama im reisebüro | lama an der rezeption | alpaka am flughafen | lama mit koffer
+tiger in der kita | ein tiger beim kinderturnen | tiger beim mittagsschlaf | tigerbaby beim basteln
+schildkröte auf dem skateboard | schildkröte im skatepark | schildkröte auf rollschuhen | schnecke auf dem skateboard
+ein strauß im tennisclub | strauß als balljunge | emu auf dem tennisplatz | ein flamingo beim federball
+ein koala am bahnhof | ein koala im speisewagen | koala wartet auf den zug | faultier am bahnsteig
+panda im fotoautomaten | panda in der umkleidekabine | panda macht ein selfie | pandas im aufzug
+specht im geigenunterricht | ein specht mit geige | specht klopft am notenständer | amsel beim musikunterricht
+eule im fußballtor | eule im basketballkorb | eule im handballtor | uhu hält elfmeter
+der waschbär beim juwelier | ein waschbär im schmuckladen | waschbär klaut ringe | elster im juweliergeschäft
+stinktier in der parfümerie | stinktier am duftregal | stinktier im blumenladen | dachs kauft parfüm
+bienen im stau | eine biene in der waschstraße | hummeln im berufsverkehr | wespe an der ampel
+schmetterling im windkanal | schmetterling vor dem föhn | schmetterling im sturm | motte vor dem ventilator
+regenwurm beim seilspringen | ein regenwurm als springseil | würmer beim tauziehen | schlange beim seilspringen
+tausendfüßler im schuhladen | tausendfüßler kauft schuhe | tausendfüßler beim schuhe binden | raupe im sockenladen
+hummer beim handball | ein hummer beim tischtennis | krebs beim handball | hummer im tor
+eine oma auf dem surfbrett | eine oma auf der luftmatratze | oma auf der welle | omas beim wellenreiten
+baby im chefsessel | ein baby im büro | baby leitet die konferenz | kleinkind am schreibtisch
+lehrer in der sandkiste | lehrer im planschbecken | lehrer baut sandburg | schuldirektor im bällebad
+ein hausmeister im raumschiff | hausmeister auf dem mond | ein hausmeister im weltall | putzmann in der rakete
+postbote im labyrinth | postbote im maisfeld | zeitungsbote im irrgarten | postbote sucht hausnummer
+schornsteinfeger im iglu | ein schornsteinfeger auf dem iglu | schornsteinfeger im schnee | schornsteinfeger am südpol
+kapitän auf dem schlauchboot | admiral in der badewanne | kapitän auf der luftmatratze | matrose im planschbecken
+ein bergsteiger im treppenhaus | ein bergsteiger an der hauswand | kletterer an der wohnungstür | bergsteiger an der leiter
+skispringer auf der rutsche | ein skispringer auf dem spielplatz | skifahrer auf der wasserrutsche | rodler auf der rutsche
+opernsänger in der telefonzelle | opernsänger im aufzug | sängerin in der duschkabine | opernsänger im kleiderschrank
+dirigent im hühnerhof | ein dirigent im ententeich | dirigent im kuhstall | hahn dirigiert
+der torwart beim eierlauf | ein torwart mit eierlöffel | torwart beim sackhüpfen | schiedsrichter beim eierlauf
+surfer im wasserglas | ein surfer in der teetasse | surfer im kochtopf | surfer im goldfischglas
+feuerspucker im heuschober | feuerspucker im kornfeld | feuerspucker im holzlager | drache im heuschober
+palme am nordpol | eine palme im schnee | palme auf der eisscholle | pinguin unter palmen
+leuchtturm mitten im wald | leuchtturm in den bergen | leuchtturm auf der alm | leuchtturm im maisfeld
+mähdrescher in der fußgängerzone | ein mähdrescher im kreisverkehr | traktor vor dem rathaus | mähdrescher im einkaufszentrum
+eiswagen im regenwald | eiswagen auf der safari | eiswagen in der wüste | affen am eiswagen
+sandburg im wohnzimmer | eine sandburg auf dem teppich | sandburg in der badewanne | sandkasten in der küche
+ein schaukelpferd auf der rennbahn | ein schaukelpferd beim springreiten | schaukelpferd im galopp | steckenpferd auf der rennbahn
+gartenzwerg auf der kreuzfahrt | gartenzwerg im rettungsboot | gartenzwerge an deck | gartenzwerg angelt vom deck
+bäcker im kohlebergwerk | ein bäcker in der tropfsteinhöhle | bäcker im tunnel | bergmann in der backstube
+friseur im affenhaus | friseur im löwenkäfig | affe beim friseur | friseur kämmt gorilla
+detektiv im bällebad | detektiv im planschbecken | lupe im bällebad | spion im kinderland
+jongleur in der porzellanabteilung | ein jongleur in der spülküche | jongleur mit tellern | kellner jongliert teller
+trompeter in der bibliothek | trompeter im wartezimmer | trompeter beim mittagsschlaf | tubaspieler in der kirche
+ein dachdecker auf dem eisberg | ein dachdecker auf der eisscholle | dachdecker am gletscher | maurer auf dem eisberg
+angler am wasserhahn | angler an der badewanne | angler am waschbecken | angler im badezimmer
+ein heißluftballon im tunnel | ein heißluftballon in der garage | zeppelin im tunnel | ballon im treppenhaus
+hubschrauber auf dem spielplatz | hubschrauber im sandkasten | hubschrauber landet auf der wippe | flugzeug auf dem schulhof
+schulbus im burggraben | ein schulbus vor der burg | bus auf der zugbrücke | schulbus im schlossteich
+ein fahrrad auf dem meeresgrund | ein fahrrad im aquarium | radfahrer unter wasser | taucher auf dem fahrrad
+staubsauger am sandstrand | ein staubsauger in der wüste | staubsauger saugt die düne | putzfrau am strand
+bagger im blumenbeet | bagger im gemüsegarten | bagger pflückt blumen | kran im blumenbeet
 
 [idiom]
 tomaten auf den augen | augen größer als der magen | ein auge zudrücken | mit rosaroter brille
@@ -162,13 +256,134 @@ der apfel fällt nicht weit vom stamm | äpfel mit birnen vergleichen | in den s
 ein ass im ärmel | dastehen wie pik sieben | den trumpf ausspielen | zaubertrick mit karten
 jemandem die daumen drücken | um den finger wickeln | die stange halten | anhalter an der landstraße
 die beleidigte leberwurst | armes würstchen | die wurst vom brot nehmen | würstchen im schlafrock
+die flinte ins korn werfen | das handtuch werfen | die brocken hinschmeißen | ein jäger macht feierabend
+mit dem zaunpfahl winken | auf die pauke hauen | den kürzeren ziehen | ein bauer grüßt den nachbarn
+die kurve kratzen | die fliege machen | den abflug machen | eine katze an der rennstrecke
+auf keinen grünen zweig kommen | auf dem holzweg sein | den ast absägen auf dem man sitzt | ein vogel findet keinen platz
+jemanden auf den arm nehmen | jemanden auf händen tragen | jemandem unter die arme greifen | ein papa trägt sein kind
+etwas auf die lange bank schieben | die arbeit liegen lassen | auf der ersatzbank schmoren | umzug im stadtpark
+sich wie ein schneekönig freuen | wie ein honigkuchenpferd grinsen | im siebten himmel | ein schneemann mit krone
+die schau stehlen | im rampenlicht stehen | die erste geige spielen | ein dieb klaut den vorhang
+das kind mit dem bade ausschütten | baden gehen | ins kalte wasser springen | eine ente im spülwasser
+den vogel abschießen | ins schwarze treffen | den bogen überspannen | ein jäger auf dem schützenfest
+das schwarze schaf | die graue maus | ein schaf beim kaminkehrer | schäfchen zählen
+jemandem den wind aus den segeln nehmen | das ruder herumreißen | gegen windmühlen kämpfen | flaute auf dem baggersee
+unter die haube kommen | unter den hammer kommen | den hut nehmen | oma beim friseur
+den braten riechen | die nase rümpfen | wo der hase im pfeffer liegt | ein hund vor dem backofen
+das ist ein dicker hund | ein fetter happen | der mops im glück | ein hund nach weihnachten
+den bock zum gärtner machen | einen bock schießen | null bock | eine ziege im gemüsebeet
+ein hühnchen rupfen | da lachen ja die hühner | federn lassen | eine kissenschlacht im hühnerstall
+jemandem einen floh ins ohr setzen | die flöhe husten hören | jemandem das ohr abkauen | ein hund flüstert ein geheimnis
+wie die made im speck | leben wie gott in frankreich | im schlaraffenland | ein wurm im käsebrot
+da ist der wurm drin | sand im getriebe | die sache hat einen haken | ein apfel mit untermieter
+stumm wie ein fisch | weder fisch noch fleisch | keinen piep sagen | ein goldfisch beim karaoke
+krokodilstränen | heulsuse | tränen lachen | ein krokodil schneidet zwiebeln
+leeres stroh dreschen | dumm wie bohnenstroh | viel lärm um nichts | ein bauer ohne ernte
+eine eselsbrücke bauen | störrisch wie ein esel | den bogen raus haben | ein bauarbeiter mit langen ohren
+jemandem die kalte schulter zeigen | den rücken kehren | auf dem absatz kehrtmachen | ein schneemann ist beleidigt
+die nase voll haben | die nase hoch tragen | mir steht's bis hier | ein clown mit schnupfen
+über beide ohren verliebt | hals über kopf | auf rosen gebettet | ein elefant mit herzchen
+ein dickes fell haben | ein dickhäuter | das lässt mich kalt | ein schaf vor der schur
+die haare stehen zu berge | gänsehaut bekommen | unter strom stehen | eine katze im gewitter
+an einem seidenen faden hängen | in der luft hängen | auf der kippe stehen | eine spinne am kronleuchter
+sich den kopf zerbrechen | mir platzt der schädel | die köpfe rauchen | ein roboter mit kurzschluss
+den kopf waschen | jemandem die leviten lesen | eine standpauke halten | friseur mit schlechter laune
+das wasser steht bis zum hals | ins schwimmen geraten | land unter | eine giraffe im hochwasser
+die ärmel hochkrempeln | in die hände spucken | sich ins zeug legen | ein zauberer ohne trick
+sich etwas aus den fingern saugen | am daumen lutschen | lange finger machen | ein baby erfindet geschichten
+sich die finger verbrennen | heiße eisen anfassen | die kastanien aus dem feuer holen | ein koch ohne topflappen
+daumen drehen | die hände in den schoß legen | auf der faulen haut liegen | warten auf den bus
+hand und fuß haben | mit händen und füßen reden | zwei linke füße | ein handschuh für zehen
+alle hände voll zu tun | viel um die ohren | auf allen hochzeiten tanzen | ein krake im büro
+sich die beine in den bauch stehen | wurzeln schlagen | sich die hacken ablaufen | ein storch an der bushaltestelle
+ein bein stellen | über die eigenen füße stolpern | auf die nase fallen | ein foul beim fußball
+etwas unter den teppich kehren | viel staub aufwirbeln | eine weiße weste haben | der hausmeister macht es sich leicht
+das fass zum überlaufen bringen | der tropfen auf den heißen stein | das maß ist voll | ein regentropfen bei der weinlese
+ein fass ohne boden | ein loch in der kasse | wie ein sieb | der eimer ist kaputt
+stille wasser sind tief | mit allen wassern gewaschen | eine ruhige kugel schieben | ein u boot im dorfteich
+ein schlag ins wasser | ein reinfall | ins leere laufen | ein bauchklatscher im freibad
+über den berg sein | das schlimmste hinter sich | auf dem gipfel des glücks | ein wanderer macht brotzeit
+vom stuhl fallen | aus den latschen kippen | auf den hintern fallen | ein opa beim gruselfilm
+die zelte abbrechen | die koffer packen | die brücken hinter sich abbrechen | camping im regen
+mit der tür ins haus fallen | offene türen einrennen | zwischen tür und angel | ein elefant zu besuch
+aufs dach steigen | eins aufs dach bekommen | den hausfrieden stören | ein wütender dachdecker
+eine schraube locker | nicht alle tassen im schrank | einen sprung in der schüssel | ein roboter beim arzt
+den stuhl vor die tür stellen | auf der straße sitzen | in die wüste schicken | der sperrmüll kommt montag
+das ist ein alter hut | olle kamellen | so ein bart | ein zauberer in rente
+alles unter einen hut bringen | viele bälle in der luft | den spagat schaffen | ein hut voller kaninchen
+wie ein ei dem anderen gleichen | wie zwei erbsen in der schote | ein herz und eine seele | zwillinge im kinderwagen
+wie auf eiern gehen | auf zehenspitzen | auf leisen sohlen | ein storch im hühnerhof
+seinen senf dazugeben | jemandem die meinung geigen | das letzte wort haben | ein hotdog mit sprechblase
+das ist doch alles käse | quatsch mit soße | das gelbe vom ei | eine maus im paradies
+das ist nicht meine baustelle | mein name ist hase | da bin ich raus | ein bauarbeiter macht pause
+abwarten und tee trinken | einen gang zurückschalten | die ruhe weg haben | oma am fenster
+auf den putz hauen | die puppen tanzen lassen | die wände wackeln | party im rohbau
+bis in die puppen | die nacht zum tag machen | bis der hahn kräht | kinderzimmer um mitternacht
+den gürtel enger schnallen | auf sparflamme kochen | von der hand in den mund | die hose rutscht beim tanzen
+über die stränge schlagen | an einem strang ziehen | aus der reihe tanzen | ein pferd beim ausbüxen
+alle register ziehen | in die tasten hauen | den ton angeben | der organist dreht durch
+nach jemandes pfeife tanzen | die fäden in der hand halten | ein tänzchen wagen | schlangenbeschwörer auf dem markt
+aus dem letzten loch pfeifen | auf dem zahnfleisch gehen | die luft ist raus | ein fahrrad mit platten
+etwas auf dem schirm haben | den durchblick haben | auf dem radar | ein fernseher im regen
+mit dem latein am ende | am ende der fahnenstange | ein buch mit sieben siegeln | ein römer im matheunterricht
+das steht in den sternen | unter einem guten stern | in die röhre gucken | die wahrsagerin am fernrohr
+hinter dem mond leben | in den mond gucken | den mond anheulen | ein astronaut ohne handy
+kein meister vom himmel gefallen | übung macht den meister | aller anfang ist schwer | fallschirmspringer am ersten tag
+wie ein blitz aus heiterem himmel | ein donnerwetter | wie vom donner gerührt | gewitter beim picknick
+der zug ist abgefahren | auf den zug aufspringen | den anschluss verpassen | ein schaffner winkt zum abschied
+die notbremse ziehen | auf die bremse treten | die reißleine ziehen | ein hamster stoppt das laufrad
+grünes licht geben | freie fahrt haben | die ampel springt um | ein frosch regelt den verkehr
+jemandem den marsch blasen | mit pauken und trompeten | jemandem die ohren langziehen | eine blaskapelle weckt die nachbarn
+gegen den strom schwimmen | querschießen | sich treiben lassen | ein lachs auf dem heimweg
+im selben boot sitzen | klar schiff machen | volle kraft voraus | familienausflug zum tretbootverleih
+die ratten verlassen das sinkende schiff | land in sicht | rette sich wer kann | eine kreuzfahrt nur für mäuse
+etwas übers knie brechen | mit der brechstange | mit heißer nadel gestrickt | ein holzfäller in eile
+rot sehen | auf hundertachtzig | ein rotes tuch | stier beim erdbeerpflücken
+schwarz sehen | alles grau in grau | schwarzmalerei | ein maulwurf mit sonnenbrille
+das gras wachsen hören | auf der lauer liegen | die ohren spitzen | ein hase mit hörrohr
+unkraut vergeht nicht | zäh wie leder | nicht kleinzukriegen | löwenzahn im asphalt
+etwas durch die blume sagen | kein blatt vor den mund nehmen | zwischen den zeilen lesen | ein gärtner macht ein geständnis
+jemanden in die pfanne hauen | sein fett wegkriegen | in die suppe spucken | spiegelei mit überraschung
+auf holz klopfen | toi toi toi | auf gut glück | ein specht beim schreiner
+ich fress einen besen | ich glaub mich laust der affe | ich glaub mein schwein pfeift | eine hexe beim frühstück
+ein neuer besen kehrt gut | frischer wind | vor der eigenen tür kehren | die neue hausmeisterin legt los
+wo sich fuchs und hase gute nacht sagen | mitten in der pampa | am ende der welt | ein waldfest ohne gäste
+aufs falsche pferd setzen | das pferd von hinten aufzäumen | auf dem hohen ross sitzen | ein jockey auf einem esel
+wie der ochs vorm berg | wie die kuh vorm neuen tor | keinen plan haben | ein stier vor dem gipfelkreuz
+die sau durchs dorf treiben | viel wirbel machen | die gerüchteküche brodelt | ein schweinerennen auf dem marktplatz
+gänsefüßchen | im gänsemarsch | krähenfüße | spuren im schnee
+wie ein storch im salat | auf stelzen gehen | steif wie ein brett | ein flamingo im gemüsebeet
+adleraugen haben | mit argusaugen | augen wie ein luchs | ein vogel mit fernglas
+das fünfte rad am wagen | überflüssig wie ein kropf | ein ersatzrad zu viel | das rad neu erfinden
+jemanden auf die palme bringen | aus der haut fahren | die wände hochgehen | ein affe im wutanfall
+eine harte nuss | auf granit beißen | sich die zähne ausbeißen | ein eichhörnchen mit nussknacker
+mit dem ist nicht gut kirschen essen | die kirschen in nachbars garten | eine kratzbürste | zoff am obstbaum
+eins auf die birne | jemandem geht ein licht auf | mir brummt der schädel | ein kronleuchter fällt herunter
+mit fliegenden fahnen untergehen | haushoch verlieren | den bach runtergehen | ein piratenschiff im planschbecken
+den mantel nach dem wind hängen | sein fähnchen im wind | wie ein wetterhahn | eine vogelscheuche im sturm
+schiffbruch erleiden | auf grund laufen | in seenot geraten | ein seemann auf der insel
+jemandem steine in den weg legen | stolpersteine | über stock und stein | ein maulwurf baut eine mauer
+mir fällt ein stein vom herzen | das herz auf der zunge tragen | der knoten ist geplatzt | bergsteiger nach dem gipfel
+das herz rutscht in die hose | weiche knie bekommen | zittern wie espenlaub | ein gespenst im kleiderschrank
+kohldampf schieben | bärenhunger haben | der magen knurrt | ein riese vor dem kühlschrank
+da wird der hund in der pfanne verrückt | da staunt der laie | da platzt mir der kragen | ein dackel im wok
+jetzt schlägt's dreizehn | fünf vor zwölf | die stunde schlägt | eine kuckucksuhr spinnt
+das kommt nicht in die tüte | schicht im schacht | ende der durchsage | ein dackel in der brötchentüte
+wo drückt der schuh | jemandem etwas in die schuhe schieben | umgekehrt wird ein schuh draus | eine blase am wandertag
+wie die ölsardinen | dicht an dicht | da passt kein blatt dazwischen | ein fahrstuhl voller clowns
+das tüpfelchen auf dem i | das sahnehäubchen | die kirsche auf der torte | ein marienkäfer auf dem kopf
+auf achse sein | hans dampf in allen gassen | immer auf trab | ein lkw mit beinen
+die stadt unsicher machen | um die häuser ziehen | einen draufmachen | ein cowboy in der fußgängerzone
+in die luft gehen | hochgehen wie eine rakete | dampf ablassen | ein luftballon wird wütend
+dicke luft | gewitterstimmung | da braut sich was zusammen | ein büro voller gewitterwolken
+hinter schwedischen gardinen | hinter gittern | im kittchen | ein schwede beim vorhangkauf
 
 [wort]
 ohrwurm | ein ohrenschmaus | lauschangriff | der wurm hört mit
-glückspilz | pilzkopf | ein sonntagskind | pilz lacht sich schlapp
+glückspilz | pilzkopf | sonntagskind | pilz lacht sich schlapp
 der pechvogel | regenpfeifer | ein schräger vogel | gerupftes huhn
 angsthase | der osterhase | prüfungsangst | frierender hase
-leseratte | eine bibliotheksmaus | besserwisser | ratte lernt lesen
+leseratte | bibliotheksmaus | besserwisser | ratte lernt lesen
 eine naschkatze | kaffeetante | schmusekatze | die katze am kuchenbuffet
 drahtesel | der packesel | drahtseilakt | esel auf rädern
 stubenhocker | nesthocker | der dauergast | einsiedler
@@ -176,22 +391,22 @@ der schmutzfink | distelfink | ein pfützenspringer | vogel im matsch
 spaßvogel | paradiesvogel | so ein komischer kauz | vogel feiert karneval
 schlafmütze | zipfelmütze | siebenschläfer | zwerg macht nickerchen
 ein bücherwurm | das lesezeichen | holzwurm | wurm in der schule
-zankapfel | zwei streithähne | ein tauziehen | der letzte apfel
+zankapfel | zwei streithähne | tauziehen | der letzte apfel
 kummerspeck | winterspeck | der seelentröster | mein waschbärbauch
 ein morgenmuffel | frühaufsteher | der brummbär | montag früh im büro
 frostbeule | eine kältewelle | eiszapfen | jemand ohne mütze
 hasenfuß | plattfuß | glücksbringer | hase läuft barfuß
 der faulpelz | faultier | ein pelzmantel | bär macht pause
 wasserratte | bisamratte | das seepferdchen | ratte im freibad
-dickkopf | ein eierkopf | kürbiskopf | der schlaumeier
+dickkopf | eierkopf | kürbiskopf | der schlaumeier
 ein grünschnabel | grünspecht | ein vogelküken | küken im salat
 hans guck in die luft | suppenkaspar | mit dem kopf in den wolken | der sterngucker
-schreihals | das großmaul | brüllaffen | ein marktschreier
+schreihals | das großmaul | brüllaffen | marktschreier
 trantüte | eine wundertüte | meine schultüte | tüte im regen
 sauwetter | schlammbad | glücksschwein | ferkel mit regenschirm
 ein katzensprung | katzenbuckel | der luftsprung | katze auf dem zaun
 katzenjammer | die katzenmusik | katzenwäsche | kater in liebesnot
-hundewetter | ein hundeleben | begossener pudel | gassi gehen im regen
+hundewetter | hundeleben | begossener pudel | gassi gehen im regen
 der geizhals | sparschwein | ein schatzsucher | drache bewacht seinen schatz
 nachtschwärmer | die nachteule | schlafwandler | motte liebt die lampe
 wolkenkratzer | luftschloss | himmelsstürmer | giraffe im nebel
@@ -205,11 +420,102 @@ der innere schweinehund | die innere stimme | sportmuffel | mops will nicht jogg
 gänsehaut | hühnerauge | gänseblümchen | der schüttelfrost
 hamsterkauf | das hamsterrad | schnäppchenjäger | vorrat für den winter
 bärenhunger | ein vielfraß | bär am kühlschrank | der honigdieb
-mit affenzahn | pauken und trompeten | affenliebe | ein affe im rennwagen
+mit affenzahn | pauken und trompeten | affenliebe | affe im rennwagen
 eselsbrücke | hängebrücke | brückentag | esel steht am fluss
 ein schlitzohr | ohrloch | der briefkasten | fuchs mit ohrring
 brummschädel | ein brummkreisel | bienenstock | montag nach der party
 schneckenpost | die flaschenpost | brieftauben | paket für die schnecke
+handschuh | schuhlöffel | der fingerhut | pantoffelheld
+der fallschirm | gleitschirm | schirm fliegt davon | der sturzflug
+der zitronenfalter | zitronenpresse | ein origamikünstler | der faltenrock
+ein hosenträger | der kofferträger | wäscheleine | möbelpacker
+die baumschule | ein klassenzimmer im wald | förster als lehrer | waldkindergarten
+luftzug | zeppelin | lokomotive fliegt | die dampflok
+ohrfeige | feigenblatt | ohrring | obst am ohr
+eine schildkröte | der kampffrosch | ritter im teich | kröte zieht in den kampf
+nacktschnecke | schnecke zieht um | ein leeres haus | wohnungssuche
+der hausschuh | schuhkarton | das hexenhaus | haus geht spazieren
+der kaffeeklatsch | tassen streiten sich | ein teekränzchen | die tortenschlacht
+fernseher | fernglas | der leuchtturmwärter | pirat im ausguck
+zahnstocher | zahnfee mit speer | der musketier | die zahnspange
+eine zeitlupe | der uhrmacher | detektiv mit uhr | eine taschenuhr
+ein staubsauger | strohhalm | durstiger roboter | die staubwolke
+kronleuchter | eine königskrone | leuchtreklame | könig mit taschenlampe
+der flohmarkt | ein flohzirkus | wochenmarkt der käfer | marienkäfer kaufen ein
+ein wasserhahn | gießkanne | der springbrunnen | hahn duscht
+ein fliegenpilz | ein ufo | pilz mit flügeln | der heißluftballon
+hochstapler | der bauklotzturm | tellerjongleur | kisten bis zur decke
+eine seifenoper | badewannenkonzert | ein schaumschläger | der duschsänger
+ein muskelkater | kraftprotz | der gewichtheber | tiger beim training
+eine brillenschlange | der klassenstreber | eine lesebrille | kobra beim optiker
+geldwäsche | die waschmaschine | sparstrumpf | münzen in der badewanne
+schneebesen | schneeschieber | hexe im winter | besen im schneesturm
+fischstäbchen | essstäbchen | eine angelrute | fisch geht wandern
+der kugelschreiber | die bowlingkugel | wütender ball | kanonenkugel
+kopfsalat | perücke | gemüsehut | die vogelscheuche
+tintenfisch | ein füllfederhalter | fisch macht hausaufgaben | die qualle malt
+ein maulwurf | spuckwettbewerb | kirschkernspucken | der weitwurf
+bärlauch | teddy im gemüsebeet | ein grünkohlmonster | der kräutergarten
+zugvögel | die schaffnermöwe | vogelnest im waggon | spatzen auf reisen
+brotzeit | toaster mit wecker | der frühstückswecker | eine kuckucksuhr
+milchstraße | milchpfütze | der milchlaster kippt | kuh auf der autobahn
+computermaus | maus tippt briefe | die tastatur | ein hackerhamster
+kabelsalat | spaghettiteller | die salatschüssel | stromkabel zum mittag
+der nachtisch | ein sternenhimmel | der nachttisch | tisch schläft
+der fleischwolf | metzger | der hungrige wolf | wolf am grill
+ein wetterfrosch | der wettermann | frosch mit regenschirm | ein laubfrosch
+backpfeife | pfeiferaucher | der bäckerlehrling | großvater am ofen
+wolkenbruch | ein regenguss | die gewitterwolke | wolke beim arzt
+sitzfleisch | schnitzel auf dem sofa | faule bratwurst | der sofakönig
+pferdeschwanz | ein zopf | das schaukelpferd | mädchen mit pony
+flaschenhals | giraffe | die vase | flasche mit schal
+sternzeichen | die sternwarte | stern mit pinsel | himmel als leinwand
+eine kopfnuss | eine walnuss | der nussknacker | eichhörnchen schlägt zu
+eine wasserwaage | aquarium | die badezimmerwaage | fisch auf der waage
+seemannsgarn | ein strickender pirat | wollknäuel | der matrose häkelt
+hausdrache | der kaminofen | haustier aus dem märchen | echse im sessel
+bettwäsche | bett in der badewanne | die waschanlage | das wasserbett
+mondschein | ein geldschein | der vollmond kauft ein | mond am geldautomaten
+die sonnenbrille | sonne am strand | sonnenbrand | der coole mond
+schuhcreme | ein eisbecher | die sahnetorte | stiefel isst nachtisch
+rabeneltern | vogelnest | krähenfamilie | papa vogel kocht
+eierlauf | das hühnerrennen | ein frühstücksei | wettrennen der kartoffeln
+die gummibärchen | teddybär | der gummiball | bär im schwimmreifen
+hängematte | ein fußabtreter | teppichstange | fliegender teppich
+sackgasse | der kartoffelhändler | mehl im hinterhof | säcke beim umzug
+kuhhandel | ein viehmarkt | kuh am kiosk | der milchmann
+waschbär | badetag | die wäscherei | teddy im waschsalon
+ein spiegelei | ein eitles huhn | ei beim friseur | der schminktisch
+eisberg | die eiswaffel | eisdiele am gipfel | der skihang aus vanille
+kopfhörer | lauscher | der neugierige nachbar | ohr an der wand
+der regenbogen | bogenschütze | wolke schießt pfeile | die wasserpistole
+das nashorn | ein trompeter | nase spielt tuba | das jagdhorn
+grashüpfer | rasenmäher | gärtner tanzt | das trampolin
+eine glühbirne | der glühwurm | obst unter strom | eine heiße kartoffel
+hufeisen | pferd auf schlittschuhen | eisstadion | das pony rutscht aus
+die brieftasche | ein postsack | der briefträger | umschlag mit henkel
+ein mauerblümchen | graffiti | die efeuranke | blume im gefängnis
+taschenrechner | rucksack in mathe | die schultasche | koffer zählt geld
+geisterfahrer | ein laken am steuer | der fahrlehrer erschrickt | gespensterbus
+der zaunkönig | gartenzwerg | könig auf der mauer | der hofnarr
+schlüsselkind | ein schlüsselbund | der schlüsseldienst | kind mit dietrich
+trauerweide | baum im regen | trauriger kaktus | die tränendrüse
+honigkuchenpferd | ein lebkuchenmann | das karussellpferd | pony im bienenstock
+zuckerwatte | verband | die wolke am stiel | krankenschwester mit bonbons
+der hausmeister | der baumeister | ein schloss mit medaille | häuser beim sportfest
+tafelrunde | klassenzimmer | kreisel aus kreide | ritter lernt rechnen
+spürnase | ein detektiv | die lupe | nase mit hut
+eine nervensäge | holzfäller | die laubsäge | baum hat angst
+schlafsack | müder kartoffelsack | der weihnachtsmannsack | sack mit schlafmaske
+stimmgabel | der dirigent | besteck im chor | ein löffel jodelt
+ein nagelbett | fakir | igel im bett | das kaktusbett
+sturmfrei | ein orkan im urlaub | blauer himmel | die windstille
+eintagsfliege | der abreißkalender | mücke hat geburtstag | fliegenklatsche
+die schwimmflügel | ein pinguin | ente lernt schwimmen | die badekappe
+wanderdüne | sandsturm | kamel auf reisen | die wüstenwanderung
+fahrstuhl | sessel auf rädern | ein bürostuhlrennen | die seifenkiste
+eine stachelbeere | igel im obstkorb | die kastanie | der seeigel
+bohnenstange | ein riese | der laternenpfahl | hans und die bohne
 
 [feeling]
 sonntagabendgefühl | endlich freitagnachmittag | angst vorm wecker | das ende der ferien
@@ -222,12 +528,12 @@ torschlusspanik | midlifecrisis | unter zeitdruck | die angst vorm zuspätkommen
 schadenfreude | lachkrampf | die genugtuung | fremdschämen beim zuschauen
 angst vorm zahnarzt | die angst vorm friseur | panik vor der spritze | zahnweh am wochenende
 peinliche stille | der witz geht daneben | funkstille | wie hieß der nochmal
-anfängerglück | glückstreffer | ein erfolgserlebnis | lehrling ist stolz
+anfängerglück | glückstreffer | erfolgserlebnis | lehrling ist stolz
 ein schlechtes gewissen | gleich werd ich erwischt | eine faule ausrede | reue nach dem naschen
 gähnende langeweile | bleierne müdigkeit | vortrag ohne ende | das lange warten
 kribbeln vorm urlaub | stress beim kofferpacken | wo ist der reisepass | das zappeln vor der klassenfahrt
 der letzte schultag | zeugnisausgabe | der erste ferientag | abschlussfeier in der aula
-zuckerschock | heißhungerattacke | kindergeburtstag eskaliert | ein koffeinkick
+zuckerschock | heißhungerattacke | kindergeburtstag eskaliert | koffeinkick
 gute laune | endlich zahltag | der sommer fängt an | lachanfall
 endlich hitzefrei | schulfrei wegen schnee | erster tag im freibad | die hitzewelle im klassenzimmer
 der erste schnee | erster frost | wintermärchen | die weiße weihnacht
@@ -242,7 +548,7 @@ der sinn des lebens | auf der suche nach dem glück | das rätsel des universums
 frühlingsgefühle | frühjahrsputz | die frühjahrsmüdigkeit | heuschnupfen
 die ruhe vor dem sturm | im auge des orkans | stille nach dem knall | das wetterleuchten
 gebrochenes herz mit pflaster | lebkuchenherz mit riss | ein herz nach der operation | erste hilfe für die liebe
-bester tag aller zeiten | der schönste sommer meines lebens | geburtstag mit pony | ein tag ohne sorgen
+bester tag aller zeiten | der schönste sommer meines lebens | geburtstag mit pony | tag ohne sorgen
 fauler sonntag | verregneter sonntag | krank im bett | der winterschlaf
 termin der eine mail sein könnte | konferenz die keiner braucht | die präsentation die nie endet | sitzung kurz vor feierabend
 erleichtert nach der prüfung | stolz aufs zeugnis | die angst vor dem ergebnis | abi geschafft
@@ -251,6 +557,84 @@ ungeduldig im wartezimmer | langeweile auf dem amt | die schlange an der kasse |
 gemütlichkeit | die wärmflasche | winterabend am kamin | hüttenromantik
 der weltschmerz | klimaangst | weltfrieden | die schwermut
 angst vor spinnen | die angst vor mäusen | krabbeltier im bett | angst vorm dunklen keller
+heimlich verliebt | ein liebesbrief unter der bank | schwarm in der pause | rot werden beim vorlesen
+neid aufs größere stück kuchen | der streit ums letzte stück | gierige schwester | geschwister teilen gerecht
+sturmfreie bude | eltern im urlaub | die hausparty | allein zu haus
+wutanfall im supermarkt | das trotzige kleinkind | papa verliert die nerven | süßigkeiten verboten
+hungrig und schlecht gelaunt | der knurrende magen | brummiger bär | warten aufs essen
+der neujahrsvorsatz | die erste joggingrunde | fitnessstudio im januar | guter vorsatz hält nicht
+die nostalgie beim fotoalbum | alte fotos auf dem dachboden | das erste babyfoto | oma erzählt von früher
+stolz wie oskar | der pokal im regal | papa ist stolz | ein stolzer hahn
+ausrutschen vor der ganzen klasse | stolpern beim schulball | der sturz in die pfütze | die bananenschale
+gefangen im hamsterrad | der alltagstrott | hamster beim joggen | laufband im büro
+die qual der wahl | ratlos vor dem eisregal | eine riesige speisekarte | kind im spielzeugladen
+das blinde vertrauen | der sturz rückwärts | augen zu und durch | blinde kuh
+ein hoffnungsschimmer | licht am ende des tunnels | der leuchtturm | die kerze im dunkeln
+nervenkitzel auf der kirmes | die geisterbahn | ein wilder autoscooter | schwindelig vom kettenkarussell
+höhenangst | auf dem zehnmeterturm | die leiter wackelt | katze auf dem baum
+kälteschock im see | eisbader im winter | frieren an der bushaltestelle | eiszapfen an der nase
+dankbarkeit | blumen für die nachbarin | ein dankesbrief | die umarmung
+endlich eine toilette gefunden | schlange vorm klohäuschen | das klopapier ist alle | die raststätte ist zu
+verirrt im maisfeld | labyrinth ohne ausgang | die karte steht kopf | navi sagt bitte wenden
+ein schlechter verlierer | das brettspiel fliegt durchs zimmer | opa schummelt beim kartenspiel | die beleidigte schwester
+die aufregung vor dem ersten date | das erste rendezvous | nervös vor dem spiegel | blumenstrauß hinterm rücken
+geborgenheit | ein kind im arm der mama | kuscheln unter der decke | die höhle aus kissen
+die wehmut beim umzug | die leere wohnung | der letzte karton | abschied vom kinderzimmer
+der lagerkoller | eingeschneit in der hütte | zu viert im zelt | die familie im wohnwagen
+das schnäppchenfieber | der wühltisch | omas auf dem flohmarkt | kampf um die letzte hose
+kochen vor wut | der wasserkessel pfeift | roter kopf | dampf aus den ohren
+die neugierige nachbarin | spion hinter der gardine | oma mit fernglas | das schlüsselloch
+der erste sprung vom dreier | ein bauchklatscher | kind auf dem sprungbrett | mutig ins becken
+sind wir bald da | kinder auf dem rücksitz | die lange fahrt an die ostsee | papa verfährt sich
+nervös vorm referat | der spickzettel | die kreide bricht | blackout an der tafel
+stolz mit der schultüte | abc schütze | der ranzen ist zu schwer | einschulung im regen
+die unschuldsmiene | der kuchen ist weg | krümel an der schnauze | ein zerkauter schuh
+warten aufs update | der ladebalken | eingefrorener computer | drucker streikt
+die süße versuchung | die keksdose ganz oben | ein naschkater | finger im kuchenteig
+der herbstblues | laub fegen im regen | trauriger kürbis | der letzte sonnentag
+luftsprung vor freude | trampolinspringen | der hampelmann | känguru im garten
+freudentränen | heulen beim zwiebelschneiden | ein wasserfall im gesicht | die hochzeit
+einsamer leuchtturmwärter | der letzte mensch auf der insel | schiffbrüchiger | wächter am meer
+mist verschlafen | der wecker ist kaputt | im schlafanzug zum bus | hektik am morgen
+satt und zufrieden | ein schlafender löwe | opa nach dem sonntagsbraten | dicker bauch nach dem buffet
+das fremdelnde baby | baby schreit bei opa | die schüchterne tochter | kind versteckt sich hinter mama
+nervenkrieg beim elfmeter | der torwart zittert | schuss in die wolken | jubel in der kurve
+enttäuschung beim auspacken | socken zum geburtstag | ein leerer karton | das falsche geschenk
+keine lust auf wandertag | blasen an den füßen | der berg ist zu steil | rucksack voller steine
+das kopfkino | der träumer im matheunterricht | popcorn fürs gehirn | gedankenkarussell
+der hexenschuss | hexe mit pfeil und bogen | opa kommt nicht hoch | das kreuz beim unkrautjäten
+spannung beim krimi | kissen vorm gesicht | gruseln auf dem sofa | wer war der täter
+nachts allein im wald | die nachtwanderung | geräusche im gebüsch | die eule ruft
+trauer um den goldfisch | goldfischbeerdigung | das leere aquarium | fisch im himmel
+glück mit dem welpen | kind kuschelt mit hund | die erste gassirunde | kinderaugen leuchten
+chaos beim familienfest | streit um die sitzordnung | die tante kneift in die wange | der onkel erzählt witze
+die reisekrankheit | übel auf der fähre | eine spucktüte im bus | seekrank im schlauchboot
+die zeitverschiebung | hellwach um mitternacht | eine eule im pyjama | schlaflos im hotel
+ein schluckauf in der kirche | der hustenanfall im konzert | kichern in der kirche | niesen beim vorstellungsgespräch
+kitzlige füße | die feder am fuß | lachen beim fußpfleger | katze leckt die zehen
+rapunzel langweilt sich | prinzessin im turm | ein zopf aus dem fenster | die hexe kommt zu besuch
+der neid der stiefschwestern | der zu kleine schuh | aschenputtel auf dem ball | die böse stiefmutter
+ritter fürchtet sich im dunkeln | ritter mit taschenlampe | die rüstung quietscht | gespenst im schloss
+die eitelkeit | pfau vor dem spiegel | der schönheitswettbewerb | ein hahn macht sich schick
+die sammelleidenschaft | regal voller tassen | opa und seine briefmarken | das album mit aufklebern
+freude über pfandgeld | der flaschenautomat | ein sack voller flaschen | reich durch leergut
+tage zählen bis zu den ferien | der kalender an der wand | striche an der zellenwand | türchen am adventskalender
+frostige stimmung | eisige blicke | pinguine beim streit | ehepaar dreht sich den rücken zu
+die ruhe selbst | ein meditierender mönch | faultier in der hängematte | yoga auf dem gipfel
+hektik am bahnsteig | der zug fährt ab | rennen mit koffer | die tür geht zu
+verwöhnt wie ein kaiser | der pascha auf dem sofa | dicker kater mit krone | frühstück im bett
+die geduld des anglers | angler im regen | der fisch beißt nicht | stundenlang am see
+heimlichtuerei | das verschlossene tagebuch | tuscheln in der pause | kinder mit geheimbund
+fernbeziehung | telefonieren über den ozean | die videokonferenz | brieftauben mit liebespost
+der übermut | kind auf dem dach | ein kalb auf der weide | fahrrad freihändig
+putzwut | mama mit dem staubsauger | glänzender boden | die blitzblanke küche
+opas knie spürt den regen | opa mit wetterfrosch | gewitter im anmarsch | die wetterhexe
+das gefühl beobachtet zu werden | augen im gebüsch | ein porträt schaut zurück | die eule am fenster
+die rache des kleinen bruders | wasserbombe vom balkon | der streich mit der zahnpasta | furzkissen auf dem stuhl
+die selbstzweifel | ein spiegel mit fragezeichen | grübeln auf der bettkante | der denker im schlafanzug
+männerschnupfen | papa jammert unter der decke | die erkältung des jahrhunderts | fieber messen beim helden
+die trotzphase | kleinkind liegt auf dem boden | der kleine sturkopf | die bockige prinzessin
+platzangst im aufzug | eingeklemmt in der telefonzelle | die sardinenbüchse | der überfüllte kleiderschrank
 
 [moment]
 das eis fällt runter | eiskugel rollt davon | der hund sieht das eis zuerst | kind verliert lutscher
@@ -291,6 +675,82 @@ handy fällt ins klo | das handy fällt in die suppe | schlüssel im gully | gol
 wenn der pinguin ausrutscht | pinguin lernt fliegen | der eisbär bricht ein | pinguine auf schlittschuhen
 die milch kocht über | kakao schwappt über | nudeln kleben am topf | die suppe brennt an
 beim kippeln umfallen | der lehrer sieht das kippeln | stuhl bricht zusammen | sich neben den stuhl setzen
+pfandautomat spuckt die flasche aus | der kaugummiautomat klemmt | flaschenpost am strand | getränkeautomat verschluckt das geld
+der hausmeister holt den ball vom dach | ball landet beim nachbarn | die katze sitzt auf dem dach fest | dachdecker findet einen fußball
+wenn die wespe in die limo krabbelt | biene im saftglas | fliege in der suppe | der strohhalm ist besetzt
+rasenmäher springt nicht an | der opa zieht am seil | motorsäge streikt | wenn der rasen zu hoch ist
+das riesenrad bleibt oben stehen | die achterbahn hält kopfüber | seilbahn hängt fest | gondel schaukelt im wind
+zuckerwatte klebt im gesicht | bart aus zuckerwatte | rosa wolke frisst ein kind | schaf auf der kirmes
+stau vor dem urlaub | die ganze familie muss aufs klo | wohnwagen bleibt am berg hängen | wenn alle gleichzeitig hupen
+der hamster büxt aus | hamster im staubsauger | die maus flieht vor der katze | ein hamsterrad ohne hamster
+wandertag fällt ins wasser | klassenfahrt im regen | lehrer hat sich verlaufen | die gummistiefel laufen voll
+ein frosch hüpft auf den teller | der frosch im brunnen | frosch springt in die badewanne | kröte am buffet
+trickkerzen gehen immer wieder an | wenn das geburtstagskind pustet | die torte brennt | drache pustet die kerzen aus
+der ritter fällt vom pferd | der ritter reitet rückwärts | rüstung rostet im regen | der esel sagt nein
+das baby sagt das erste wort | das baby ruft nach dem hund | mama weint vor glück | der opa ist sprachlos
+wenn man die brille auf dem kopf sucht | opa sucht den schlüssel | die brille liegt im kühlschrank | zwei brillen auf der nase
+füller kleckst aufs diktat | tinte an der hand | der klecks sieht aus wie ein hund | wenn die patrone leer ist
+zeugnis nach hause bringen | der elternabend | papa liest die mathenote | das zeugnis verschwindet im ofen
+kuh steht mitten auf der straße | traktor blockiert die landstraße | die kühe wollen nicht weiter | ein schaf an der ampel
+die waschmaschine frisst eine socke | die socke ist allein | der trockner schrumpft den pulli | wenn die socken weglaufen
+die pizza klebt am karton | pizzabote klingelt falsch | der käse zieht fäden | pizza landet kopfüber
+ketchup spritzt aufs hemd | senf auf der hose | die ketchupflasche ist leer | wenn die tomate platzt
+gurkenglas geht nicht auf | opa öffnet das glas mit dem hammer | der deckel fliegt durch die küche | marmeladenglas klemmt
+beim zwiebelschneiden weinen | der koch weint in die suppe | traurige zwiebel | die taucherbrille in der küche
+ein tor in der letzten minute | der ball landet im netz | torwart fliegt ins leere | die fans stürmen den platz
+elfmeter geht über das tor | ball fliegt ins publikum | der schütze rutscht aus | ball im vogelnest
+skifahrer verliert einen ski | der skilift ist weg | die mütze fliegt den hang runter | snowboarder überholt oma
+schlitten fährt ohne kind los | der schlitten landet im busch | papa rodelt allein | wenn der hang zu steil ist
+das trampolin schießt zu hoch | ein kind landet auf dem dach | papa springt zu hoch | hüpfburg verliert luft
+kette springt vom fahrrad | der reifen ist platt | fahrradklingel klemmt | die hose in der kette
+ampel springt auf rot | wenn alle gleichzeitig bremsen | fußgänger rennt los | die ampel bleibt ewig grün
+der esel will nicht weiter | bauer schiebt den esel | pony setzt sich hin | die ziege ist störrisch
+schaf haut beim scheren ab | nacktes schaf im schnee | die wolle fliegt überall | pudel beim frisör
+die bienen schwärmen aus | imker rennt weg | der bienenkorb fällt runter | wenn der honig klebt
+ein eichhörnchen vergisst sein versteck | die nüsse sind weg | eichhörnchen buddelt überall | maulwurf gräbt am falschen ort
+igel rollt sich zusammen | kaktus auf dem weg | das igelbaby niest | wenn der fuchs am igel schnüffelt
+papagei plappert das geheimnis aus | der papagei lacht wie opa | wellensittich spricht mit oma | ein papagei verrät den dieb
+der weihnachtsbaum kippt um | die katze im christbaum | lametta überall | tannenbaum im aufzug
+das geschenk passt nicht durch die tür | sofa im treppenhaus | ein paket für riesen | der weihnachtsmann steckt im kamin
+osterei im blumentopf vergessen | der osterhase verliert ein ei | ei im gummistiefel | eiersuche im regen
+die laterne fängt feuer | laternenumzug im regen | eine laterne fliegt weg | das pferd frisst die laterne
+der kürbis grinst zurück | gruselige rübe | die kürbissuppe lebt | mond mit zähnen
+rakete fliegt in nachbars garten | der böller zündet nicht | silvester im schlafanzug | wenn der hund das feuerwerk hört
+kostüm vom fasching passt nicht mehr | das prinzessinnenkleid platzt | clown in zu kleiner hose | der cowboyhut rutscht über die augen
+wenn das klopapier alle ist | die letzte rolle im laden | mama ruft nach papier | eine klorolle als fernglas
+zahnpasta auf dem spiegel | die tube platzt | bart aus zahnschaum | der bruder putzt mit seife
+staubsauger saugt den teppich ein | teppich hat einen hügel | der saugroboter jagt die katze | rüssel saugt am sofa
+bügeleisen bleibt auf dem hemd | das dampfbügeleisen zischt | ein hemd mit dreieck drauf | wenn die hose klebt
+kaffee kippt über die tastatur | die tasse ist leer | kakao im laptop | wenn die maus nass wird
+katze im videoanruf | hund bellt ins meeting | das kind winkt in die kamera | katze auf der tastatur
+kuli läuft in der hemdtasche aus | tinte auf der jacke | ein blauer fleck am herzen | die mine bricht ab
+die wassermelone platzt | der kürbis explodiert | melone fällt vom tisch | bowlingkugel rollt weg
+spaghetti spritzen soße | nudel klatscht ins gesicht | die tomatensoße an der wand | wenn die gabel sich dreht
+der pfannkuchen klebt an der decke | ein pfannkuchen fällt auf den hund | papa wendet zu hoch | spiegelei an der lampe
+die bratwurst fällt durch den rost | die wurst brennt an | würstchen rollt vom teller | papa grillt im regen
+bauchklatscher vom dreimeterbrett | seehund springt ins becken | die badekappe platzt | der bademeister pfeift
+badehose rutscht beim sprung | handtuch weht weg | bikini im baum | wenn das wasser zu kalt ist
+qualle am strand | glibber im sand | eine qualle mit sonnenbrille | wackelpudding am meer
+krebs zwickt in den zeh | der krebs klaut die sandale | hummer im planschbecken | krabbe winkt
+sonnencreme vergessen | krebsroter tourist | der rücken glüht | tomate am strand
+luftmatratze treibt aufs meer | schwimmring treibt ab | das schlauchboot verliert luft | eine ente auf dem see
+fremder koffer auf dem band | der rucksack ist weg | katze im koffer | der koffer platzt am flughafen
+der hund frisst die hausaufgaben | das heft im napf | hund mit brille rechnet | katze zerreißt das buch
+die kreide quietscht an der tafel | lehrer kratzt mit den nägeln | ein schwamm fliegt durch die klasse | die tafel klappt um
+klassenfoto mit geschlossenen augen | kind zieht eine grimasse | der fotograf niest | das kind ist zu klein fürs foto
+eine prinzessin küsst den frosch | frosch wird zum prinzen | die königin küsst einen fisch | frosch mit krone
+rapunzel lässt das haar runter | die leiter aus zöpfen | prinz klettert am turm | der zopf reißt ab
+der wolf klopft bei den geißlein | sieben geißlein im uhrenkasten | wolf mit kreidestimme | ein schaf öffnet die tür
+trojanisches pferd wird reingezogen | holzpferd vor dem tor | das schaukelpferd ist zu groß | soldaten im pferdebauch
+seefahrer sieht land | pirat sucht den schatz | piraten finden eine insel | ein schiff auf grund
+die ersten schritte auf dem mond | der astronaut stolpert | kuh springt über den mond | hase auf dem mond
+mammut taut auf | das eis bricht | ein dino im kühlschrank | höhlenmensch findet ein mammut
+regenbogen nach dem gewitter | goldtopf am regenbogen | die sonne kommt raus | wenn zwei regenbögen kommen
+blitz schlägt in den baum | der baum fällt aufs auto | ein gewitter über dem zelt | wenn der donner kracht
+nebel verschluckt das auto | geist auf der straße | die scheinwerfer im dunst | wenn man nichts mehr sieht
+hagel trifft das gartenfest | die gäste fliehen ins haus | erbsen fallen vom himmel | schneeballschlacht im sommer
+das navi schickt uns in den see | auto fährt in den acker | die karte ist falsch rum | wenn das navi schweigt
+tankdeckel auf der falschen seite | der schlauch ist zu kurz | tankstelle im nirgendwo | ein auto trinkt benzin
 
 [secret]
 was mein kühlschrank nachts treibt | kleiderschrank auf nachtschicht | mitternachtsparty im eisfach | der kühlschrank kann nicht schlafen
@@ -307,7 +767,7 @@ die sockensammlung der waschmaschine | socken flüchten aus der trommel | die wa
 bleistift in rente | radiergummi im ruhestand | bleistiftstummel im schaukelstuhl | der bleistift hat hexenschuss
 uhr will mal pause machen | uhr die gern tanzen würde | sanduhr hat keine lust mehr | uhr läuft lieber rückwärts
 der regenschirm im sommerurlaub | sonnenschirm im winterurlaub | regenschirm spielt sonnenschirm | ein schirm wartet auf regen
-reise des verlorenen handschuhs | abenteuer eines ofenhandschuhs | ein handschuh winkt zum abschied | handschuh sucht partner
+reise des verlorenen handschuhs | abenteuer eines ofenhandschuhs | handschuh winkt zum abschied | handschuh sucht partner
 spiegel denkt sich seinen teil | was das fenster wirklich sieht | der spiegel lacht sich kaputt | spiegel mit schlechter laune
 geheimtreffen der leitkegel | partyhüte treffen sich heimlich | leitkegel gründen einen verein | das gruppenfoto der leitkegel
 das versteck der fernbedienung | wo der autoschlüssel steckt | fernbedienung ist ausgezogen | das sofa frisst die fernbedienung
@@ -327,11 +787,79 @@ tagebuch einer teekanne | das kochbuch einer gießkanne | teekanne schreibt lieb
 salz und pfeffer sind verliebt | essig und öl wollen heiraten | streit im gewürzständer | die hochzeit auf dem esstisch
 die ampelmännchen tanzen | ampelmännchen beim sport | das ampelmännchen hat einen krampf | tanzende verkehrsschilder
 briefkasten liest heimlich mit | was der mülleimer heimlich sammelt | der briefkasten hat liebeskummer | briefkasten frisst die post
+schultafel schreibt heimlich gedichte | die tafel kritzelt sich selbst voll | kreide dichtet in der pause | das whiteboard schreibt einen roman
+vogelscheuche füttert die krähen | krähen kämmen die vogelscheuche | die vogelscheuche lädt zum picknick | eine scheuche mit vogelnest im hut
+pfandflaschen auf weltreise | leergut geht auf reisen | die flaschen fliehen aus dem kasten | pfandautomat spuckt flaschen aus
+der rauchmelder hört heimlich musik | rauchmelder mit kopfhörern | rauchmelder singt unter der decke | der feueralarm hat schluckauf
+kissen erzählen gruselgeschichten | kissenschlacht ohne kinder | die bettdecke hat albträume | kuscheltiere am lagerfeuer
+parkbank vermisst die rentner | die bank hält ein nickerchen | tauben besuchen die parkbank | eine parkbank wartet auf besuch
+die laterne löst kreuzworträtsel | straßenlaterne mit lesebrille | laterne liest ein buch | der mond löst rätsel
+hamster gräbt einen tunnel | der hamster will ins freie | ein maulwurf im käfig | meerschweinchen auf der flucht
+die gummistiefel springen in pfützen | gummistiefel ohne kind | regenstiefel beim weitsprung | die stiefel gehen spazieren
+kaugummis wohnen unterm schultisch | die kaugummisammlung unterm pult | kaugummi klebt am stuhl fest | kaugummifamilie unterm tisch
+der koffer will nicht verreisen | koffer versteckt sich im schrank | ein koffer mit reisefieber | reisetasche bleibt lieber daheim
+wäscheklammern beim turnen | wäscheklammern machen klimmzüge | die wäscheleine als trapez | klammern spielen zirkus
+die heizung hält winterschlaf | heizkörper im sommerschlaf | ein heizkörper friert | heizung kuschelt mit der katze
+die stehlampe tanzt mit dem besen | besen und stehlampe beim walzer | ein mopp tanzt tango | die lampe fordert den besen auf
+computermaus trifft echte maus | die maus besucht die computermaus | maus knabbert am kabel | katze jagt die computermaus
+handy kuschelt mit dem ladekabel | das ladekabel fesselt das handy | handy im schlafsack | tablet hängt am tropf
+der schulranzen packt sich selbst | ranzen räumt allein auf | ein rucksack packt seine sachen | schulranzen schwänzt die schule
+der schlitten schwitzt im sommer | schlitten im liegestuhl | ein schneeschieber sonnt sich | rodel wartet auf schnee
+schornstein mit schnupfen | der kamin niest ruß | ein schornstein mit schal | schornsteinfeger kitzelt den kamin
+der wetterhahn hat einen drehwurm | wetterhahn sucht den wind | windrad mit drehwurm | der wetterhahn tanzt im sturm
+leuchtturm spielt nachts disco | leuchtturm mit discokugel | der leuchtturm sucht ein schiff | ein leuchtturm blinzelt müde
+strandkörbe tuscheln über touristen | strandkorb mit sonnenbrand | die strandkörbe halten händchen | liegestühle lästern am pool
+krabben ziehen in die sandburg | die sandburg bekommt besuch | krabbe als burgherrin | muscheln bauen ein schloss
+adventskalender nascht selbst | der adventskalender ist leer | die türchen öffnen sich allein | kalender hat bauchweh
+der tannenbaum bleibt bis ostern | tannenbaum mit osterkörbchen | christbaum versteckt eier | der osterhase schmückt die tanne
+kürbisse üben grimassen | kürbis schneidet fratzen | kürbisse beim fotografen | ein kürbis vor dem spiegel
+wanderschuhe gehen allein wandern | die schuhe laufen ohne füße | stiefel auf dem gipfel | wanderschuhe machen ein gipfelfoto
+landkarte wehrt sich gegen papa | papa ringt mit dem stadtplan | die karte verknotet sich | zeltplane fesselt den vater
+gummibärchen machen eine räuberleiter | die gummibären turnen | gummibär klettert aus der tüte | gummibären am schwimmbecken
+die keksdose hat eine alarmanlage | keksdose mit vorhängeschloss | das keksglas bellt | ein wachhund für kekse
+haltestelle läuft dem bus hinterher | das wartehäuschen steigt ein | der bus nimmt die haltestelle mit | schild rennt dem bus nach
+feuerlöscher langweilt sich | der feuerlöscher gähnt | feuerlöscher spielt solitär | feuerlöscher zählt schäfchen
+der duschvorhang spielt theater | duschvorhang als bühnenvorhang | die dusche gibt eine vorstellung | ein vorhang verbeugt sich
+klopapierrollen bauen eine pyramide | klopapierturm im bad | die rollen spielen kegeln | pyramide aus klorollen
+goldfisch schaut nachts fernsehen | goldfisch bewacht das wohnzimmer | fische gucken in die stube | ein goldfisch mit fernbedienung
+der dackel hat sturmfrei | dackel tanzt auf dem sofa | die katze schmeißt eine party | hund mit partyhut
+katze arbeitet im homeoffice | die katze am laptop | kater schreibt emails | ein kater im büro
+die hühner zählen ihre eier | henne führt buch | hühner beim kassensturz | ein huhn mit taschenrechner
+kühe spielen fußball auf der weide | eine kuh im tor | die schafe spielen fußball | kuhfußball beim bauern
+regenwürmer feiern unter der erde | die regenwurmdisco | maulwurf tanzt im tunnel | party im erdloch
+die zootiere feiern nach ladenschluss | der zoo nach feierabend | löwe und zebra tanzen | affen machen eine polonaise
+das dinoskelett tanzt nachts im museum | das mammut läuft durchs museum | ein dino macht nachtwache | skelette spielen fangen im museum
+mumie im waschsalon | die mumie wäscht ihre binden | gespenst bügelt sein laken | mumie an der wäscheleine
+der hexenbesen hat flugangst | hexenbesen fegt lieber den hof | ein besen mit fallschirm | die hexe geht zu fuß
+frosch will kein prinz werden | der frosch wirft die krone weg | kröte bewirbt sich als prinz | frosch versteckt sich vor der prinzessin
+rapunzels zopf als seilbahn | prinz rutscht am zopf herunter | zopf als feuerwehrstange | rapunzel lässt eine leiter runter
+karussellpferde galoppieren davon | die holzpferde reißen aus | ein karussell ohne pferde | pferde vom karussell auf der weide
+das riesenrad rollt vom rummel | riesenrad auf der autobahn | ein riesenrad rollt ins tal | kirmes ohne riesenrad
+sandkastenförmchen eröffnen bäckerei | förmchen backen sandkuchen | bäckerei im sandkasten | die schaufel verkauft kuchen
+trampolin will zum mond | ein trampolin hüpft über den zaun | das trampolin übt weitsprung | gummiball will ins weltall
+turnmatten machen mittagsschlaf | die turnmatte schnarcht | sprungbock döst | bock schläft in der turnhalle
+autos tratschen im parkhaus | parkhaus als kaffeeklatsch | die autos halten eine konferenz | ein parkplatzgespräch
+traktor träumt vom autorennen | traktor auf der rennstrecke | traktor mit rennstreifen | mähdrescher beim großen preis
+der gartenschlauch spielt schlange | gartenschlauch erschreckt die katze | eine schlange im blumenbeet | schlauch verknotet sich vor angst
+wolken spielen formen raten | die wolke macht ein schaf nach | wolke als hase | wolken verkleiden sich
+schneeflocken bei der modenschau | eiskristalle beim schönheitswettbewerb | die schneeflocke trägt eine krone | eine flocke auf dem laufsteg
+eine briefmarke schickt urlaubsgrüße | briefmarke im liegestuhl | die postkarte schreibt zurück | briefmarke auf weltreise
+kartoffeln pokern im keller | kartoffeln beim würfeln | die zwiebeln spielen skat | knollen spielen mau mau
+der brotkasten ist ein hotel | brötchen im etagenbett | toastbrot mit schlafmütze | der brotkorb als schlafsaal
+das geodreieck als segelboot | schulheft als papierschiff | ein lineal als planke | geodreieck kentert im tintenfass
+was der hausmeister im keller macht | hausmeister züchtet tomaten | der hausmeister baut ein ufo | hausmeister mit modelleisenbahn
+was im lehrerzimmer passiert | lehrer spielen verstecken | die lehrer machen kissenschlacht | ein lehrer auf dem kickertisch
+osterhase in der nebensaison | der hase bemalt eier im keller | osterhase beim angeln | hase beim urlaubsfoto
+das feuerwehrauto spielt springbrunnen | feuerwehr gießt die blumen | löschzug als rasensprenger | eine feuerwehrleiter als rutsche
+pinguine rodeln auf dem bauch | robben auf der rutschbahn | pinguin auf dem schlitten | die pinguine fahren bob
+das kamel versteckt wasser im höcker | kamel mit wasserflaschen | ein dromedar mit tankstelle | kamel trinkt einen eimer leer
+fledermäuse an der wäscheleine | fledermäuse schlafen wie wäsche | fledermaus als regenschirm | die fledermäuse machen yoga
+spinne webt eine hängematte | spinne häkelt ein netz | die spinne strickt socken | käfer in der hängematte
 
 [invented]
 der wolkenbildhauer | wolkenschäfer | nebelfriseur bei der arbeit | ein zuckerwattekünstler
 feiertag des mittagsschlafs | welttag der hängematte | die meisterschaft im dösen | wenn der wecker frei hat
-schach unter wasser | unterwasserpuzzeln | fische spielen skat | ein brettspiel für fische
+schach unter wasser | unterwasserpuzzeln | fische spielen skat | brettspiel für fische
 kissenschlacht wm | die schneeballschlacht em | trampolin wm | zoff im schlafsaal
 der sockensortierer | handschuhe zählen | ein sockendetektiv | waschmaschinenflüsterer
 olympiade im versteckspielen | meisterschaft im stillstehen | die olympiade im baumklettern | turnier im topfschlagen
@@ -341,7 +869,7 @@ ein regenbogenreparaturdienst | brückenbauer für wolken | der buntstiftanspitz
 drachensitter | krokodilsitter | der drachendompteur | mein hund speit feuer
 eichhörnchen als fluglotse | vogelverkehrspolizist | der baumkronenschaffner | schiedsrichter beim nusswurf
 welttag der kaktusumarmung | igel knuddeln | das fest der pieksigen freundschaft | feiertag der zimmerpflanzen
-luftpolsterfolie testen | der waffelmusterkontrolleur | knisterpapierprüfer | ein berufsnoppenzähler
+luftpolsterfolie testen | der waffelmusterkontrolleur | knisterpapierprüfer | berufsnoppenzähler
 der traumlieferdienst | schäfchenzählservice | kissenkurier | ein gutenachtgeschichtenbote
 berufsniesfänger | der taschentuchjongleur | schnupfentorwart | pollen wegpusten
 rückwärtsmarathon | wettlauf im krebsgang | der verkehrte staffellauf | alle rennen zur startlinie
@@ -356,7 +884,7 @@ wahl zur grummeligsten katze | der faulste kater | wettbewerb der bösen blicke 
 schneeflockendesigner | eiskristalle schleifen | sternchenbastler | wolkendeckchen häkeln
 ein vulkanschornsteinfeger | vulkanfeuerwehrmann | bergsteiger mit besen | der kraterreinigungsdienst
 meisterschaft im pfützenspringen | regentanzen um die wette | die gummistiefelolympiade | großes platschen im regen
-wellenfaltfabrik | eine meeresbügelei | strandtücher weben | wassermatratzenfabrik
+wellenfaltfabrik | meeresbügelei | strandtücher weben | wassermatratzenfabrik
 der tag an dem alles kopfsteht | alles schwebt | welt im handstand | das fest der verkehrten welt
 mondbowling | das sternenkegeln | murmeln mit planeten | kometenboccia
 schlaflieder für eulen singen | weckdienst für fledermäuse | ein vorleser für nachteulen | chorleiter für uhus
@@ -366,6 +894,80 @@ butterbrotarchitekt | toasttürme bauen | lebkuchenhausbauer | käsebrückenkons
 ein fitnesstrainer für goldfische | yoga für kaulquappen | der bademeister im aquarium | goldfisch auf dem laufband
 der fahrstuhlmusikkomponist | wartezimmergeiger | liftboy mit trompete | ein warteschleifensänger
 dirigent für hupkonzerte | verkehrspolizist mit taktstock | der stauorchesterleiter | schiedsrichter im stau
+pfandflaschenflüsterer | leergutzauberer | ein dosensammler im park | der flaschendirigent
+wanderführer für schnecken | schneckenwandertag mit fähnchen | der schneckenpostbote | schildkrötenausflug
+ein hausmeister für baumhäuser | baumhausbauer | der vogelhäuschenwart | specht repariert das dach
+der regenschirmtester | ein duschkopfprüfer | mann unter der gießkanne | der wolkenbruchbeauftragte
+staubsaugerrennen | wettputzen im wohnzimmer | die putzolympiade | besenritt um die wette
+der laubhaufenspringer | blätterhüpfen im herbst | ein laubbläser im einsatz | herbstweitsprung
+seifenblasen um die wette pusten | kaugummiblasenwettkampf | luftballons aufpusten im akkord | die blubberblasenmeisterin
+die warteschlangentrainerin | geduldslehrerin | ein ampelwartekurs | anstellen für profis
+türsteher beim kindergeburtstag | bodyguard im sandkasten | der rausschmeißer im bällebad | sicherheitsdienst am kuchenbuffet
+der kuckucksuhrenstimmer | vogelhausuhrmacher | ein uhrenvogeltrainer | kuckuck lernt singen
+skilehrer für pinguine | pinguine beim rodeln | eisbärenskischule | robbe auf dem snowboard
+der fahrradklingelstimmer | klingelkonzert am radweg | ein glockenspieler auf dem rad | radwegorchester
+ein aushilfsosterhase | der weihnachtsmann versteckt eier | hasenkostümträger | eierfärber in nöten
+laternenlauf der glühwürmchen | ein lichterumzug im wald | die taschenlampenparade | glühbirnen auf wanderschaft
+nikolausstiefelpolierer | der wichtel im schuhregal | gummistiefelputzdienst | schuhputzwichtel
+türchenöffner vom dienst | adventskalender plündern | der schokoladenvorkoster | ein wichtel mit brecheisen
+der böllerkehrer am neujahrsmorgen | konfettisauger | straßenfeger nach der party | der glitzerbeseitiger
+ein gartenzwergwächter | zwergenpolizei im beet | der beetsheriff | zwergenkindergarten
+maulwurfshügelplattmacher | der rasenbügler | ein hügelstampfer | erdhaufenpolizist
+wetterfrosch als nachrichtensprecher | kröte liest nachrichten | der quakende moderator | regenvorhersage mit laubfrosch
+der kopfkissenaufschüttler | ein bettenflüsterer | deckenfalter | kissenboxer im hotel
+die milchschaumkünstlerin | kakaobildhauerin | ein sahnehäubchenmaler | kaffeetassenmalerei
+der sandburgenstatiker | ein strandbaumeister | eimerturmprüfer | wattwurmarchitekt
+fischbrötchenwächter | ein möwenverscheucher | der pommesbodyguard | wächter am strandkorb
+strandkorbschieben | liegestuhlrennen | strandkorb auf rollen | sonnenschirmstafette
+quietscheentendressur | ein entenrennen in der wanne | badewannenzirkus | die gummienteninstruktorin
+die kinderwagenrallye | rollatorrennen | buggywettfahren | die schubkarrenrallye
+rasenmäherballett | traktortanzen | mähroboter tanzt | gartengeräte im takt
+bügelbrettsurfen | surfen auf der tischplatte | ein wäschekorbkanu | wohnzimmerwellenreiten
+einkaufswagenslalom | parkplatzbobfahren | supermarktrennen | der rollwagenparcours
+treppenhausrodeln | eine teppichrutschbahn | rutschen auf dem tablett | das flurschlittenrennen
+wäscheleinentanz | socken beim trocknen | sockenseiltänzer | trapez im garten
+mückenboxen | fliegenfechten | ein wespenringkampf | schattenboxen im zelt
+hochzeitsplaner für schwäne | entenhochzeit | der schwanentrauzeuge | brautstrauß im teich
+die pudelstylistin | schafscherer | die hundeföhnerin | lockenwickler für pudel
+ein katzenübersetzer | miauwörterbuch | der hundedolmetscher | die katzenschreibmaschine
+vorratsberater für hamster | hamster mit taschenrechner | ein backenfüllcoach | die nusssparkasse
+der schlafwandlerlotse | nachtwächter für träumer | ein pyjamapolizist | mondsüchtiger mit taschenlampe
+der hausaufgabenretter | heftchenbeschützer | ein schulranzenbodyguard | aufsatzfeuerwehrmann
+der radiergummibildhauer | bleistiftschnitzer | die kreidekünstlerin | anspitzerakrobat
+kreidestaubklopfer | die tafelputzmeisterin | schwammausklopfer auf dem schulhof | ein schulhoftrommler
+pausenbrottauschbörse | brotdosenflohmarkt | frühstückshändler | der apfelbanker
+der wandertagsmotivator | bergaufschieberin | eine rucksackträgerin | jammerkontrolleur
+kuhschmückerin | blumenkranzflechterin | der kuhglockenstimmer | almabtrieb mit krönchen
+der hühnerdetektiv | eierdieb auf der spur | ein fuchsfahnder | der eierzähler im stall
+der suhlbadmeister | schlammpackungsfee | ein schweinewellnesshotel | matschbademeister
+spinnennetzreparatur | fischernetzflicker | die häkelspinne | webmeister im gartenzaun
+marienkäferpunktezähler | ein käferbemaler | die punktekontrolle | fliegenpilztupfer
+der honigtopfwächter | bärentürsteher | die honigpolizei | bienenbodyguard
+eiszapfenförster | ein frostgärtner | die eisblumenpflückerin | zapfenpflücker im winter
+der schneemannschneider | der karottennasenhändler | schneemannmodedesigner | mützenstrickerin für schneemänner
+gewitterschlichter | ein blitzableiterbauer | der donnerdämpfer | wolkenstreitschlichterin
+der sonnenanknipser | hahn mit wecker | ein morgendämmerungsdirektor | sonnenaufgangswecker
+pilzsammelweltcup | die schwammerljagd | ein korbrennen im wald | waldbeerenturnier
+kastanienmännchenfabrik | eichelfigurenwerkstatt | der herbstbastelbetrieb | bastelstunde im herbstwald
+ein nussknackerausbilder | eine walnussschule | holzsoldatendrill | der zinnsoldatenfeldwebel
+haarpflegerin für rapunzel | turmfriseur | die zopfflechterin im schloss | prinzessin mit langer mähne
+froschkussberaterin | prinzenfinderin am teich | ein krötenknutscher | die froschprinzenvermittlung
+die hexenhausmaklerin | knusperhausvermieterin | ein süßigkeitenimmobilienbüro | der lebkuchendachdecker
+erbsenprüfer für prinzessinnen | matratzentesterin im schloss | ein bettenstapler | die königliche schlafprobe
+siebenmeilenstiefelverleih | riesenschuhmacher | der kater beim schuster | turnschuhe für riesen
+ritterrüstungsöler | ein blechdosenmechaniker | der rostschutzknappe | quietschtürenölerin
+der pyramidenaufzugsführer | mumienpförtner | die pyramidenrutsche | kamelparkplatzwächter
+mammutfellkämmerin | schafschererin der steinzeit | der höhlenfriseur | urzeitstylist
+höhlenmalerlehrling | ein steinzeitgraffiti | der mammutzeichner | felswandschmiererin
+wikingerschiffwaschanlage | bootsputzer mit helm | der drachenbootpolierer | schiffsspülmaschine
+robotergassigeher | ein staubsaugerausführer | die roboterhundeleine | blechhundsitter
+der ladekabelentwirrer | kabelsalatköchin | ein knotenlöser | spaghettisortierer
+brillenputzer für maulwürfe | der maulwurfoptiker | sonnenbrille für dachse | ein brillenverkäufer im erdloch
+zugvogelreiseleiterin | storchenreiseführerin | der kranichkapitän | gänse im formationsflug
+die koffersitzerin | koffereinstampfer | ein reißverschlusskämpfer | mama schließt den koffer
+raststättengourmetkritiker | autobahnfeinschmecker | der tankstellenkoch | bratwurstjurorin
+sonnencremeverteiler | eine rückeneincremerin | der strandmaler | schaumschläger am meer
+die achterbahntesterin | karussellprüfer | das geisterbahngespenst | zuckerwattenprüfer
 
 [contra]
 schüchternes feuerwerk | verlegene sternschnuppe | eine errötende pusteblume | feuerwerk vor publikum
@@ -374,7 +976,7 @@ höflicher tornado | zuvorkommender kreisel | der galante staubsauger | wirbelst
 winziger riese | ein riesiger zwerg | kurzsichtiger zyklop | zwerg auf zehenspitzen
 der traurige clown | weinender zauberer | mürrischer zirkusdirektor | ein clown ohne publikum
 leises gewitter | blitz hat schluckauf | gewitter in der bibliothek | eine wolke mit kopfschmerzen
-fauler gepard | gemütlicher leopard | ein schlafender windhund | gepard in hängematte
+fauler gepard | gemütlicher leopard | schlafender windhund | gepard in hängematte
 sanfter monstertruck | der zärtliche bagger | kuscheliger geländewagen | traktor voller blumen
 kaltes lagerfeuer | eiskalter grill | der frierende kamin | marshmallows am eiszapfen
 mutige maus in rüstung | hamster mit helm | maus beim ritterturnier | igel mit schwert und schild
@@ -383,19 +985,19 @@ ein furchtloses huhn | tapferer truthahn | huhn jagt fuchs | eine ente mit super
 unordentlicher roboter | verwirrte roboter | schlampiger kühlschrank | der roboter in der pubertät
 der hahn verschläft | heiserer hahn | ein gähnender truthahn | hahn mit schlafmaske
 rennwagen in zeitlupe | rennwagen im stau | rakete im rückwärtsgang | ein rennauto beim einparken
-gemütliches spukhaus | ein freundliches hexenhaus | geister beim kaffeekränzchen | fledermaushöhle mit sofa
+gemütliches spukhaus | freundliches hexenhaus | geister beim kaffeekränzchen | fledermaushöhle mit sofa
 grummelige sonnenblume | schlecht gelaunte sonne | das mürrische gänseblümchen | blume hasst regen
 eine fröhliche regenwolke | gut gelaunter platzregen | ein lachender wasserfall | wolke gießt blumen
 ordentliches chaos | aufgeräumte rumpelkammer | der sortierte wäscheberg | kinderzimmer nach dem besuch
-bescheidener pfau | ein eitler spatz | schüchterner truthahn | pfau ohne spiegel
+bescheidener pfau | eitler spatz | schüchterner truthahn | pfau ohne spiegel
 wasserscheuer hai | seekranker delfin | der hai mit regenschirm | hai beim sonnenbaden
 ein ritter mit nachtlicht | ritter mit kuscheltier | drache mit taschenlampe | ein wächter mit laterne
 kerze fürchtet das auspusten | luftballon mit angst vor nadeln | streichholz mit lampenfieber | kerze will nicht ins bett
-kaktus will kuscheln | ein igel der gern schmust | stachelschwein auf partnersuche | distel mit kuscheltier
+kaktus will kuscheln | igel der gern schmust | stachelschwein auf partnersuche | distel mit kuscheltier
 ein vampir der knoblauch liebt | vampir geht sonnenbaden | der graf beim zwiebelschneiden | fledermaus mit zwiebelkranz
 gespenst gruselt sich | ein gespenst das sich verlaufen hat | monster mit angst vorm dunkeln | geist sieht sich im spiegel
 ameise beim bodybuilding | käfer stemmen gewichte | spinne im fitnessstudio | ameise trägt apfel
-schneemann liebt den sommer | schneemann mit sonnenbrand | pinguin im wüstenurlaub | ein eisbär der die hitze liebt
+schneemann liebt den sommer | schneemann mit sonnenbrand | pinguin im wüstenurlaub | eisbär der die hitze liebt
 fisch kann nicht schwimmen | ein fisch mit schwimmflügeln | goldfisch beim seepferdchen | fisch geht lieber spazieren
 schildkröte in eile | schnecke auf der flucht | schildkröte läuft marathon | igel verpasst den bus
 elefant hat angst vor mäusen | nashorn mit angst vor spinnen | der bär flieht vor bienen | elefant auf dem küchenstuhl
@@ -404,12 +1006,96 @@ baby mit bart | opa im kinderwagen | der zwerg mit schnuller | weihnachtsmann al
 besen mit stauballergie | ein staubsauger mit schnupfen | wischmopp hat wasserangst | kitzliger staubwedel
 wecker verschläft | kuckucksuhr ohne kuckuck | wecker im urlaub | gähnende sanduhr
 ein sportliches faultier | ehrgeiziger koala | durchtrainierter panda | das faultier beim klimmzug
-vulkan im winterschlaf | schnarchender berg | ein vulkan mit wärmflasche | geysir macht mittagspause
+vulkan im winterschlaf | schnarchender berg | vulkan mit wärmflasche | geysir macht mittagspause
 superheld mit heuschnupfen | superheld im blumenladen | zauberer mit katzenallergie | ein ritter mit schnupfen
 der kleinste elefant der welt | die größte maus der welt | kleinster wal der welt | elefant im puppenhaus
 winziger könig auf riesigem thron | kleiner kaiser auf großem pferd | zwerg auf dem chefsessel | kind auf opas lieblingssessel
 unglückliche geburtstagstorte | die beleidigte hochzeitstorte | keiner schneidet die torte an | muffin mit liebeskummer
 ein stummer papagei | heiserer tukan | schweigsame wellensittiche | ein papagei mit halsschmerzen
+ein bademeister mit wasserangst | ein rettungsschwimmer im schlauchboot | bademeister auf dem trockenen | lehrer zittert am beckenrand
+glatzköpfiger friseur | friseur mit perücke | kahler gärtner | der friseur kämmt seine glatze
+förster verläuft sich | förster mit landkarte | pfadfinder ohne kompass | jäger sucht den ausgang
+unmusikalische nachtigall | amsel mit ohrstöpseln | spatz mit kopfhörern | krähe im kirchenchor
+ängstlicher feuerwehrmann | feuerwehrmann hinter dem baum | zitternder polizist | der feuerwehrmann ruft hilfe
+ein lauter pantomime | pantomime mit megafon | clown mit trompete | ein schreiender schauspieler
+eine flüsternde blaskapelle | blaskapelle mit ohrenschützern | trompeter mit schalldämpfer | ein orchester ohne töne
+schüchterner löwe | ein löwe versteckt sich | verlegener tiger | löwe hinter dem vorhang
+pinguin fliegt | pinguin mit propeller | strauß hebt ab | fliegende ente im frack
+regen fällt nach oben | tropfen fliegen in die wolke | ein springbrunnen im himmel | wolke saugt wasser auf
+ein glatter igel | igel nach dem föhnen | ein gekämmtes stachelschwein | kartoffel mit gesicht
+katze planscht in der badewanne | ein kater beim tauchen | hund in der wanne | katze mit schnorchel
+eine giraffe ohne hals | giraffe zieht den kopf ein | ein pferd mit flecken | giraffe mit schal
+ein langsamer blitz | blitz mit krücken | schleichender donner | ein blitz macht pause
+zug kommt zu früh | der schaffner schläft noch | zug vor dem bahnhof | pünktliche lokomotive
+der lehrer schreibt ab | lehrer liest heimlich comics | schüler korrigiert den lehrer | der lehrer mit spickzettel
+ein dieb bringt alles zurück | einbrecher mit geschenken | der dieb repariert die tür | dieb putzt die wohnung
+pirat wird seekrank | pirat über der reling | kapitän mit eimer | grüner matrose
+koch verbrennt wasser | ein koch löscht den topf | brennender kochtopf | der koch ruft die feuerwehr
+müde kaffeetasse | gähnende kaffeekanne | tasse im bett | espresso mit schlafmütze
+frierende heizung | heizkörper mit wollmütze | zitternder ofen | heizung trinkt tee
+langweilige achterbahn | eine flache achterbahn | gähnende fahrgäste | karussell im schneckentempo
+ein schüchterner schlagzeuger | schlagzeuger mit wattestäbchen | trommler flüstert | ein trommler unter dem tisch
+sanfter boxer | ein boxer streichelt den gegner | boxer mit kuschelhandschuhen | ringer verteilt blumen
+ein vorsichtiger stuntman | stuntman mit helm und kissen | ein stuntman auf dem dreirad | stuntfrau springt ins planschbecken
+der wolf hütet schafe | schäferhund mit wolfsohren | ein wolf mit hirtenstab | wolf zählt schafe
+hexe mit flugangst | hexe klammert sich am besen fest | hexe fährt lieber bus | zauberin mit fallschirm
+weihnachtsmann ohne bart | ein rasierter weihnachtsmann | nikolaus beim friseur | weihnachtsmann mit schnurrbart
+osterhase mit eierallergie | der osterhase niest | hase meidet den eierkorb | huhn mit heuschnupfen
+heißes speiseeis | eis dampft in der waffel | ein eisbecher auf dem herd | eiskugel mit kerze
+der gestresste urlauber | urlauber mit laptop am strand | ein telefonierender tourist | strandkorb voller akten
+stiller kindergeburtstag | kindergeburtstag in der bibliothek | ein flüsterndes partyspiel | kinder schweigen vor der torte
+graziöses nilpferd | nilpferd im tutu | walross auf spitzenschuhen | nashorn tanzt ballett
+eine katze die bellt | hund miaut | ein kater mit hundemarke | katze jagt den postboten
+weitsichtiger maulwurf | maulwurf mit fernrohr | maulwurf auf dem hochsitz | eule mit fernglas
+fledermaus schläft im bett | eine fledermaus unter der decke | fledermaus mit kopfkissen | vampir im himmelbett
+marienkäfer ohne punkte | gestreifter marienkäfer | käfer verliert seine punkte | kirsche mit fühlern
+biene ekelt sich vor honig | biene mit leerem honigtopf | bär verschmäht honig | wespe hasst marmelade
+ein ungeduldiger angler | angler im aquarium | angler springt ins wasser | ein angler mit stoppuhr
+ein gestresster yogalehrer | yogalehrer schreit | meditation im stau | ein mönch mit drei telefonen
+zerstreuter detektiv | ein detektiv sucht seine lupe | detektiv verliert die spur | kommissar ohne brille
+navi fragt nach dem weg | ein navi mit landkarte | auto fragt passanten | taxifahrer verirrt sich
+wasserdichter teebeutel | teebeutel im regenmantel | teebeutel mit taucherbrille | zuckerwürfel mit gummistiefeln
+regenschirm sucht unterschlupf | ein schirm unter dem vordach | regenschirm mit kapuze | schirm unter einem schirm
+stubenhockender zugvogel | storch im ohrensessel | kranich mit hausschuhen | schwalbe ohne koffer
+rakete bleibt am boden | rakete mit stützrädern | ein flugzeug im parkhaus | rakete in der garage
+ein amboss aus glas | gläserner hammer | eine glühbirne als hammer | schmied mit porzellan
+nadelbaum ohne nadeln | ein kahler tannenbaum | weihnachtsbaum im herbst | tanne mit glatze
+marathon im wohnzimmer | marathon um das sofa | läufer auf dem teppich | wettrennen im flur
+ein frecher butler | butler legt die füße hoch | ein diener im liegestuhl | butler isst vom tablett
+kichernder wachsoldat | wachposten mit clownsnase | wachsoldat mit kitzelfeder | soldat erzählt witze
+ein flaches hochhaus | hochhaus im liegen | wolkenkratzer unter dem bett | ein bungalow mit aufzug
+ein schwarzer schimmel | pony im kohlenkeller | schimmel mit schuhcreme | ein rappe im mehl
+eine lachende trauerweide | eine kichernde birke | trauerweide hört einen witz | baum mit grinsen
+eine gerade banane | banane mit lineal | eine gebügelte gurke | banane steht stramm
+quadratische wassermelone | würfelmelone | melone in der kiste | ein eckiger kürbis
+saure zuckerwatte | zuckerwatte mit zitrone | kind verzieht das gesicht | saure wolke am stiel
+sauna mit eiswürfeln | frierende saunagäste | ein iglu mit aufguss | sauna im kühlschrank
+blitzsauberer schornsteinfeger | schornsteinfeger in weiß | schornsteinfeger mit staubwedel | bäcker auf dem dach
+der briefträger beißt den hund | ein dackel flieht vor der post | postbote mit maulkorb | hund versteckt sich im briefkasten
+ein zierlicher sumoringer | sumoringer im ballettkleid | ein dünner ringer | ringer auf der waage
+finsterer leuchtturm | leuchtturm im stromausfall | ein leuchtturm mit schlafmaske | laterne ohne licht
+hüpfburg aus beton | steinharte hüpfburg | kinder hüpfen auf ziegeln | trampolin aus holz
+strenger teddybär | teddy mit trillerpfeife | ein kuscheltier schimpft | teddy als polizist
+gartenzwerg auf weltreise | gartenzwerg mit koffer | zwerg am flughafen | gartenzwerg im liegestuhl
+schmutzige seife | seife im matsch | ein schokoriegel im bad | schwamm mit schlammflecken
+dusche spuckt sand | trockene dusche | brause voller staub | sanduhr im badezimmer
+eine zahnfee mit gebiss | die zahnfee hat keine zähne | eine fee beim zahnarzt | zahnfee putzt prothesen
+frosch hasst pfützen | frosch mit handtuch | kröte springt über die pfütze | frosch unter dem regenschirm
+kurzsichtiger adler | adler mit dicker brille | falke fliegt gegen den baum | eule mit lupe
+eine stinkende rose | eine rose riecht nach socken | blume mit wäscheklammer | strauß mit fliegen
+arzt fürchtet spritzen | ein arzt versteckt sich | ärztin mit zitternder hand | doktor sieht weg
+unbeweglicher schlangenmensch | steifer akrobat | schlangenmensch mit hexenschuss | turner kommt nicht an die zehen
+zauberer erschrickt vor seinem hasen | zauberer flieht vor dem kaninchen | ein hase im zylinder lacht | magier fällt vom stuhl
+süße zitrone | zitrone mit zuckerguss | lächelnde limette | zitrone als bonbon
+knuspriger pudding | pudding mit kruste | ein pudding knackt | wackelpudding aus keks
+strandurlaub im büro | liegestuhl am schreibtisch | sonnenschirm im großraumbüro | chef mit schwimmreifen
+lauter spion | ein spion mit tröte | spion im clownskostüm | detektiv mit blaulicht
+freundlicher türsteher | türsteher verteilt umarmungen | türsteher mit blumen | wachmann winkt alle rein
+baukran mit höhenangst | ein kran klammert sich fest | kran schaut nicht runter | bagger auf der leiter
+ein krummes lineal | ein lineal als bogen | schiefe wasserwaage | lineal mit knick
+ein durstiger brunnen | brunnen trinkt aus der flasche | ein springbrunnen mit strohhalm | brunnen ohne wasser
+farbloser regenbogen | regenbogen in schwarz und weiß | ausgewaschener regenbogen | grauer brückenbogen
+sonne mit taschenlampe | eine sonne mit nachtlicht | die sonne friert | glühbirne mit taschenlampe
 
 [view]
 butterbrot sieht dir beim essen zu | käsebrot schaut beim kochen zu | die stulle wartet auf den ersten biss | pausenbrot vermisst seinen besitzer
@@ -429,7 +1115,7 @@ im maul eines wals | im krokodilbauch | der rachen eines drachen | in einer musc
 kühlschrank beim mitternachtssnack | die keksdose um mitternacht | kühlschrank beim großeinkauf | einbrecher in der speisekammer
 ein tennisball im hundemaul | stöckchen im hundemaul | wollknäuel in katzenpfoten | ein apfel im pferdemaul
 karotte beobachtet einen hasen | salatkopf beobachtet schnecke | die möhre versteckt sich im beet | hase sieht karotten wachsen
-schneeflocke auf dem weg nach unten | regentropfen auf dem weg zum boden | eine schneeflocke landet auf der nase | fallende feder
+schneeflocke auf dem weg nach unten | regentropfen auf dem weg zum boden | schneeflocke landet auf der nase | fallende feder
 das fenster sieht dem gewitter zu | gardine schaut dem regen zu | blitzableiter wartet auf blitze | die katze am fenster beim gewitter
 waschmaschine von innen | der trockner von innen | bullauge auf hoher see | teller in der spülmaschine
 schuh beim spaziergang im matsch | socke im regen | der hund nach dem matschspaziergang | schuh will nicht in den schlamm
@@ -447,6 +1133,76 @@ welt durchs hamsterlaufrad | riesenrad von innen | das leben in der schneekugel 
 die welt durch ein schlüsselloch | welt durchs fernglas | die nachbarn durch den türspion | garten durch ein astloch
 unterm tisch beim familienessen | unterm sofa beim fernsehen | unterm bett beim kindergeburtstag | der hund wartet auf krümel
 das schwimmbad vom beckenboden aus | badesee aus fischsicht | das sprungbrett aus sicht des wassers | taucher sucht seine brille
+die kirmes aus sicht des autoscooters | autoscooter beim zusammenstoß | das karussell von oben | ein riesenrad im regen
+matheunterricht aus tafelsicht | die kreide hat lampenfieber | tafelschwamm vor der pause | lehrer malt an die tafel
+glühbirne beobachtet den hausmeister | die lampe beim birnenwechsel | hausmeister auf der wackelleiter | deckenlampe aus mückensicht
+blaskapelle aus tubasicht | die trompete beim festumzug | tuba beim schützenfest | trommel beim umzug
+die pfandflasche im automaten | eine dose im pfandautomaten | flasche auf dem förderband | flaschenpost im altglas
+wandertag aus rucksacksicht | der rucksack auf dem gipfel | wanderschuhe nach zehn kilometern | brotdose im rucksack
+reh beäugt den hochsitz | hirsch vor dem jägerstand | eule beäugt den förster | reh auf der lichtung
+die autobahn aus sicht der leitplanke | leitplanke im stau | die brücke über der autobahn | stau von oben
+rodelberg aus schlittensicht | die skipiste aus sicht der gondel | schlitten vor der abfahrt | ein kind auf dem rodelberg
+der weihnachtsbaum beim auspacken | die krippe an heiligabend | tannenbaum beim schmücken | geschenk unterm baum
+osterei sieht die kinder suchen | ein ei im blumentopf | osternest hinterm sofa | der hase versteckt die eier
+im toaster kurz vorm sprung | brotscheibe im brotkasten | waffeleisen von innen | der toast springt raus
+die welt aus der hosentasche | der blick aus der handtasche | kaugummi in der jeans | maus guckt aus der tasche
+kino hinter einer giraffe | konzert hinter einem großen mann | das theater aus der letzten reihe | giraffe mit kinokarte
+das klassenfoto aus kamerasicht | familienfoto aus sicht des stativs | alle sagen käse | eine klasse schneidet grimassen
+sturmnacht aus leuchtturmsicht | schiff im nebel | leuchtturmwärter beim nachtdienst | die boje im sturm
+glatze aus fliegensicht | eine mücke auf der nasenspitze | marienkäfer auf dem finger | fliege landet im suppenteller
+gassirunde aus sicht der leine | der hund zieht an der leine | spaziergang aus sicht des flohs | die leine wickelt sich um den baum
+das wohnzimmer vom schrank aus | die katze auf dem kleiderschrank | küche aus sicht der deckenlampe | papagei auf der gardinenstange
+das kassenband aus sicht der banane | gurke an der supermarktkasse | der einkaufswagen von innen | eine banane fährt rolltreppe
+landschaft aus dem zugfenster | aussicht vom riesenrad | kühe am bahndamm | zug fährt durch die felder
+das flugzeug aus sicht der wolke | die wolke kitzelt den flieger | zeppelin aus vogelsicht | ein flugzeug im regenbogen
+blumenwiese aus bienensicht | biene im blumenbeet | sonnenblume aus käfersicht | schmetterling sucht die tulpe
+die ritterburg aus drachensicht | der drache bewacht die burg | burggraben aus krokodilsicht | ritter auf der zugbrücke
+rapunzels turm von innen | der zopf aus turmsicht | turm voller haare | hexe klettert am zopf hoch
+das hexenhaus aus sicht der hexe | lebkuchenhaus beim knabbern | die kinder am lebkuchenzaun | hexe sieht ihr dach schrumpfen
+im bauch des wolfs | im magen eines drachen | der wolf hat bauchweh | sieben geißlein im wolf
+gehweg aus schneckensicht | schnecke beim wettrennen | die gartenmauer aus raupensicht | eine schnecke auf dem salatblatt
+wassertropfen unterm mikroskop | die zelle unterm vergrößerungsglas | bakterien bei der party | lupe über einem marienkäfer
+schaufensterpuppe beobachtet passanten | die schaufensterpuppe beim feierabend | puppe zählt die kunden | kind drückt die nase ans glas
+klassenzimmer aus papierkorbsicht | der papierkorb nach der klassenarbeit | lehrerpult aus schülersicht | papierflieger im klassenzimmer
+zehnmeterturm von ganz oben | das sprungbrett vor dem sprung | kletterturm von oben | ein kind traut sich nicht
+die kegelbahn aus sicht des kegels | kegel vor dem volltreffer | kugel rollt in die rinne | der letzte kegel wackelt
+korb aus sicht des basketballs | der ball auf dem korbrand | basketball fliegt aufs dach | ein korb voller äpfel
+zirkus vom trapez aus | die manege von oben | löwe springt durch den reifen | akrobat über dem publikum
+gullydeckel von unten | die kanalratte schaut nach oben | kanaldeckel bei regen | ball fällt in den gully
+affen gucken zoobesucher an | besucher hinter gittern | der zoo aus sicht des zebras | die familie im affengehege
+eisscholle aus pinguinsicht | der pinguin auf der eisscholle | eisbär auf treibeis | eine scholle schmilzt in der sonne
+die sandburg sieht die flut | sandburg vor der welle | welle rollt aufs handtuch | die möwe auf dem strandkorb
+wasserrutsche aus sicht des reifens | die rutsche im freibad | ein reifen im wildwasser | rutschbahn aus kindersicht
+eiskugel kurz vorm absturz | seehund balanciert eine kugel | eis in der sonne | eiskugel auf dem gehweg
+laternenumzug aus laternensicht | die laterne im regen | martinsumzug von oben | ein laternenstab brennt
+das kinderzimmer aus sicht der zahnfee | zahnfee sucht den zahn | zahn unterm kissen | das schlafzimmer aus mondsicht
+der stiefel am nikolausmorgen | ein schuh voller schokolade | stiefel vor der tür | stiefel wartet auf süßes
+schornsteinfeger aus kaminsicht | der weihnachtsmann im schornstein | storch auf dem schornstein | ruß im gesicht
+das dorf vom kirchturm aus | storchennest auf dem kirchturm | die glocke beim läuten | dorf aus spielzeughäusern
+der campingplatz aus mückensicht | das zelt im gewitter | mücke vor dem moskitonetz | ein lagerfeuer aus funkensicht
+das büro aus sicht des kopierers | kaffeemaschine am montagmorgen | der drucker frisst papier | schlange vor dem kopierer
+tauben beobachten den bahnsteig | taube auf der bahnhofsuhr | der zug fährt ein | reisende rennen zum gleis
+katze schaut tierfilm | hund guckt kochshow | papagei vor dem fernseher | die katze jagt den bildschirm
+ritter blickt durchs visier | taucher blickt durch die maske | der ritter mit beule im helm | rüstung mit guckloch
+ein dinosaurier sieht den kometen | der saurier und die sternschnuppe | dino schaut in den himmel | ein meteor fällt aufs nest
+höhle aus sicht der fledermaus | fledermaus hängt kopfüber | die tropfsteinhöhle von oben | höhlenforscher mit stirnlampe
+kinderwagen aus babysicht | baby wirft den schnuller | buggy im park | baby schaut in die rassel
+kaffeetafel aus sicht der sahne | die torte beim kaffeeklatsch | sahnehäubchen auf dem kakao | oma verteilt den kuchen
+der schulbus im rückspiegel | die letzte bank im bus | busfahrer zählt die kinder | ein bus voller kinder
+kreuzung aus ampelsicht | ampel im feierabendverkehr | fußgänger warten auf grün | verkehrspolizist auf dem podest
+dächer aus sicht des wetterhahns | der hahn auf der kirchturmspitze | ein wetterhahn im sturm | katze auf dem dach
+das kasperletheater von hinten | kinder rufen nach kasper | das krokodil wartet auf kasper | vorhang beim applaus
+die bühne aus sicht des souffleurs | der souffleur im kasten | schauspieler vergisst den text | theater aus dem orchestergraben
+im paket auf dem weg zur oma | das paket im postauto | karton auf dem förderband | paket vor der falschen tür
+verschwommen ohne brille | opa sucht seine brille | die zeitung ohne lesebrille | alles doppelt nach dem karussell
+plätzchen hinter der ofentür | die pizza hinter der ofenscheibe | kekse warten aufs abkühlen | kind klebt an der ofentür
+marsmännchen sieht die erde | alien winkt der erde | die erde aus raketensicht | astronaut auf dem mars
+die stube aus sicht des kuckucks | kuckuck springt aus der uhr | der kuckuck hat verschlafen | ein vogel im uhrenkasten
+urlaub aus kofferperspektive | der koffer auf dem gepäckband | koffer quillt über | koffer am strand
+himmel von der schaukel aus | kind schaukelt bis zu den wolken | die wippe von oben | schaukel im sturm
+hund guckt durch seine halskrause | katze mit lampenschirm | der dackel im megafon | ein hund mit trichterhut
+schuhbank aus tausendfüßlersicht | tausendfüßler im schuhgeschäft | raupe vor dem schuhregal | schuhregal für hundert füße
+das schloss aus sicht des gespensts | ein gespenst in der ritterrüstung | geist im spiegelsaal | die burgmauer bei vollmond
 
 [drama]
 kampf ums letzte plätzchen | jagd auf den goldtaler | zwei hände ein lebkuchenherz | das tauziehen am kuchenblech
@@ -454,8 +1210,8 @@ schneckenrennen | schildkröten laufen marathon | überholmanöver im salatbeet 
 sandburg wird angegriffen | krebs erobert strandschloss | die flut und der burggraben | ritter verteidigt seine festung
 der große streit um die fernbedienung | tauziehen ums telefon | der kampf um den besten sofaplatz | geschwister und ein schokoriegel
 goldfisch macht schluss | karpfen verlässt den teich | der goldfisch zieht aus | fisch schreibt liebesbrief
-möwe klaut pommes | eine taube klaut das eis | pelikan am imbiss | möwen bestellen pommes
-ein eichhörnchen überfällt die bank | ein waschbär knackt den tresor | eichhörnchen hortet nüsse im safe | eichhörnchen auf der parkbank
+möwe klaut pommes | taube klaut das eis | pelikan am imbiss | möwen bestellen pommes
+eichhörnchen mit sturmhaube | ein waschbär knackt den tresor | eichhörnchen hortet nüsse im safe | eichhörnchen auf der parkbank
 vordrängler an der eisdiele | drängler an der würstchenbude | der millionste kunde der eisdiele | streit um die letzte waffel
 toaster gegen brötchen | der toast schlägt zurück | waffeleisen gegen pfannkuchen | toaster spuckt ein brötchen aus
 die katze und die gurke | hund und banane | die katze und der staubsauger | katze isst gemüse
@@ -469,7 +1225,7 @@ hund versteckt die beweise | mein hund frisst die hausaufgaben | die katze war e
 die große flucht des hamsters | rennmaus auf großer reise | hamster macht urlaub | der wellensittich bricht aus
 möwe mit fischbrötchen | der pelikan und die sardine | taube klaut käsebrot | fischer beim frühstück
 kissenburg wird belagert | die deckenhöhle stürzt ein | hund erobert die kuschelecke | zeltlager im wohnzimmer
-papagei verrät geheimnisse | ein papagei als zeuge vor gericht | rabe erzählt klatsch | der vogel und das flüstertelefon
+papagei verrät geheimnisse | papagei als zeuge vor gericht | rabe erzählt klatsch | der vogel und das flüstertelefon
 der weihnachtsmann streikt | der osterhase macht blau | weihnachtsmann mit schnupfen | rentier hat keine lust zu fliegen
 sockenpuppenaufstand | die rache der handpuppen | sockenkrieg im wäschekorb | kasperletheater streikt
 die ameisen und der zuckerwürfel | bienen am honigtopf | der umzug in den ameisenhügel | ameisen tragen den keks heim
@@ -477,7 +1233,7 @@ entenstau auf der landstraße | gänsemarsch über die kreuzung | ein traktor im
 spinne in der badewanne | die maus in der speisekammer | krake unter der dusche | spinne nimmt ein schaumbad
 der bauer will dame werden | turm will reiten lernen | der könig hat keine lust mehr | pferd springt vom brett
 ein dieb klaut den mond | angler fängt einen stern | ein riese pflückt sterne | mann im mond zieht aus
-quietscheente allein auf see | papierschiff im sturm | eine ente sucht ihre familie | schwimmreifen treibt davon
+quietscheente allein auf see | papierschiff im sturm | ente sucht ihre familie | schwimmreifen treibt davon
 preiskampf der limostände | konkurrenz am kuchenbasar | der handelskrieg der eisbuden | kinder spielen kaufladen
 kühlschranktür bleibt offen | pinguin im kühlschrank | der kühlschrank gähnt | die butter macht einen ausflug
 fliege die nicht gehen will | mücke die einen nicht schlafen lässt | biene findet den weg nicht | die fliege auf dem butterbrot
@@ -487,6 +1243,81 @@ das schiff will aus der flasche | flaschengeist will raus | segelboot im goldfis
 wer kriegt die armlehne | wer sitzt am fenster | der kampf um die rückbank | zwei ellbogen beim armdrücken
 handtuchschlacht am pool | wäscheleine im hotelgarten | der bademeister hat frei | bademantelparade im hotel
 zwei autos eine parklücke | zwei busse und eine haltestelle | einparken vor der eisdiele | laster in der garage
+opa verliert sein gebiss | das gebiss im wasserglas | oma sucht ihre brille | hund trägt die zahnspange
+stau vor dem freibad | schlange am sprungturm | die badegäste warten | menschenmenge vor dem kino
+ein maulwurf ruiniert den rasen | der maulwurf auf dem fußballplatz | wühlmaus im gemüsebeet | gärtner sieht nur hügel
+wäsche fliegt von der leine | socke fliegt davon | die hose hängt im baum | unterhosen am fahnenmast
+eine mücke im zelt | ein falter in der laterne | camper jagt die schnake | die taschenlampe nachts im schlafsack
+kuckucksuhr ruft zu früh | der hahn kräht um mitternacht | wecker klingelt im urlaub | kuckuck verschläft
+gartenzwerg wird entführt | reh klaut die gießkanne | der zwerg sitzt im kofferraum | gnom auf weltreise
+zu viele leute im aufzug | aufzug bleibt stecken | das elefantenbaby im fahrstuhl | sardinen in der dose
+die torte rutscht vom tisch | der kuchen kippt beim tragen | kellner stolpert mit tablett | geburtstagstorte im gesicht
+kerzen auspusten klappt nicht | die trickkerze geht wieder an | geburtstagskind ohne puste | der kuchen brennt
+strandkorb ist schon besetzt | der liegestuhl ist reserviert | badetuch auf der sonnenliege | ein seehund im strandkorb
+der rucksack ist zu schwer | ein schulranzen voller steine | schnecke mit riesenhaus | wanderer kippt nach hinten
+wandertag im regen | klassenfahrt in die pfütze | der lehrer verläuft sich | regenjacken im gänsemarsch
+kuh blockiert den wanderweg | ein stier vor dem gatter | schaf steht auf der brücke | die kühe machen picknick
+schützenfest ohne treffer | der schütze trifft die luftballons | kind gewinnt den teddy | die schießbude ist leer
+rasensprenger erwischt den postboten | der gartenschlauch spritzt opa nass | kinder springen durchs wasser | die gießkanne hat ein loch
+papierflieger landet beim direktor | der zettel fliegt zur lehrerin | papierkugel trifft den rektor | ein flugzeug im lehrerzimmer
+der spickzettel fliegt auf | schummeln bei der mathearbeit | die antwort steht auf dem arm | lehrer mit fernglas
+ferkel im schlammbad | das schwein will nicht baden | schwein im wellnessbad | nilpferd macht eine schlammmaske
+ritter kommt nicht aus der rüstung | der ritter ist eingerostet | der helm klemmt | dose geht nicht auf
+der wolf kann nicht pusten | das strohhaus hält doch | schwein lacht den wolf aus | der wolf hat asthma
+rotkäppchen hat das navi vergessen | der wolf zeigt den weg | hänsel sucht die brotkrumen | oma schickt eine wegbeschreibung
+hexe mit plattem besen | ein zauberer ohne hasen | die hexe muss laufen | besen landet im baum
+storch bringt das falsche baby | storch liefert ein krokodil | das paket fürs nachbarhaus | storch bringt einen pinguin
+bär plündert den bienenstock | ein bär klaut den picknickkorb | bären am mülleimer | die bienen jagen den bären
+eine wolke über dem picknick | gewitter über dem grillfest | die regenwolke verfolgt opa | schatten über der decke
+würstchen fallen in die glut | würstchen als holzkohle | der grill brennt | papa grillt das steak schwarz
+der fußball im nachbargarten | ein ball im gewächshaus | frisbee auf dem garagendach | kind klettert über den zaun
+zunge klebt am laternenpfahl | kind küsst den laternenpfahl | die nase klebt am fenster | kind leckt am eiszapfen
+der postbote rutscht aus | briefträger beim eiskunstlauf | ein kellner auf der bananenschale | pakete fliegen durch die luft
+sonnenbrand mit muster | rücken mit handabdruck | der krebs am strand | ein mann rot wie eine tomate
+stromausfall beim fußballspiel | fernseher geht beim tor aus | familie vor dem schwarzen bildschirm | papa schreit den fernseher an
+akku leer beim selfie | das handy stirbt im urlaub | die kamera macht nicht mehr mit | selfie mit dem eisbär
+zeugnis unter der matratze | das diktat im mülleimer | kind versteckt die fünf | die schlechte note im blumentopf
+geschenk in der falschen größe | der pullover ist viel zu groß | opa im riesenpulli | die mütze passt nur dem hund
+der schüler schläft in mathe | die lehrerin schnarcht | kissen auf dem pult | der wecker klingelt im unterricht
+platter reifen auf der radtour | das fahrrad verliert die kette | einrad im schlagloch | papa schiebt das tandem
+das fehlende puzzleteil | puzzleteil im staubsauger | ein loch im bild | der hund frisst ein puzzlestück
+der würfel rollt unters sofa | die murmel verschwindet im gully | der knopf rollt unter den schrank | papa sucht unter der couch
+ein fremder auf meinem platz | der hund sitzt am fenster | schaffner auf dem schoß | bär im großraumabteil
+der wind zerstört den laubhaufen | igel wohnt im laubhaufen | ein kind springt ins laub | hausmeister gegen herbststurm
+stinkbombe im lehrerzimmer | der käse im rucksack | das pausenbrot von letzter woche | alle halten sich die nase zu
+tauschhandel auf dem schulhof | salamibrot gegen apfel | der pausenhof als marktplatz | kinder tauschen sammelkarten
+ufo landet beim dorffest | raumschiff auf dem marktplatz | aliens beim blasmusikkonzert | bürgermeister begrüßt grüne männchen
+die tuba macht keinen ton | ein spatz wohnt in der trompete | der dirigent verliert den stab | tubaspieler mit roten backen
+traktor zieht das auto aus dem schlamm | der trecker rettet den sportwagen | pferd schleppt den bus | auto steckt im matsch fest
+das erste rad ist eckig | steinzeitmann mit eckigem reifen | höhlenmensch erfindet die schubkarre | ein mammut zieht den wagen
+mumie wickelt sich ab | die mumie bleibt am nagel hängen | klopapierrolle rollt davon | gespenst verliert sein laken
+der vampir verpasst die nacht | eine fledermaus im tageslicht | graf zieht die vorhänge zu | vampir mit sonnenschirm
+pirat verliert die schatzkarte | seeräuber gräbt am falschen strand | pirat buddelt im sandkasten | die karte treibt im meer
+der leuchtturm geht aus | leuchtturmwärter verschläft | ein schiff fährt gegen den felsen | die lampe im leuchtturm flackert
+eigentor im finale | der torwart jubelt zu früh | spieler schießt den schiri ab | ball prallt vom pfosten ab
+federball auf dem dach | drachen hängt in der leitung | der ball in der dachrinne | kind wirft den schuh hinterher
+die hantel ist zu schwer | der gewichtheber kippt um | ein zwerg stemmt einen kürbis | opa an der klimmzugstange
+der friseur schneidet zu viel ab | pony viel zu kurz | ein schaf nach dem scheren | papa mit topfhaarschnitt
+der hammer trifft den daumen | papa hängt ein bild auf | zu viele löcher in der wand | der nagel fliegt durchs zimmer
+die tapete rollt sich ein | tapezieren mit dem hund | kleister überall | ein maler klebt an der wand
+der kuchen geht im ofen nicht auf | der auflauf fällt zusammen | brot bleibt ganz flach | konditor weint vor dem backofen
+die brille auf der stirn | der bleistift hinter dem ohr | der hut auf dem hinterkopf | lehrerin sucht ihre kreide
+frisbee im teich | ring im brunnen | frisbee auf der tanne | hund taucht nach dem teller
+nudeln kochen über | der kochtopf explodiert | milch läuft über den herd | der reis brennt an
+ein glas zerbricht beim anstoßen | ein trinkspruch geht schief | sektgläser klirren zu laut | die vase fällt um
+schaukel schwingt zu hoch | kind fliegt von der wippe | überschlag auf der schaukel | der spielplatz hebt ab
+der bäcker hat keine brezeln mehr | die letzte semmel ist weg | brezelbäcker macht urlaub | bäckerin schließt zu früh
+kopfhörer verknotet | kabelsalat in der tasche | wollknäuel nach dem stricken | das ladekabel im knoten
+lichterkette geht nicht an | der christbaum bleibt dunkel | eine birne ist kaputt | papa entwirrt die lampen
+garage zugeschneit | iglu vor der haustür | schneewehe vor dem fenster | die hütte unter dem schnee
+gitarrensaite reißt | geige quietscht | die harfe hat ein loch | rockstar ohne stimme
+pilzsammler findet nur giftpilze | körbchen voller fliegenpilze | pilze wachsen im schuh | wichtel unter dem pilz
+ein nasser pudel schüttelt sich | ein nasses schaf im salon | pudel nach dem bad | wasser spritzt auf die gäste
+teddy fällt in die pfütze | puppe im matsch | das kuscheltier im regenfass | teddy braucht ein bad
+ein ohrring im staubsauger | der ring im abfluss | die perle rollt weg | oma sucht im beutel
+schluckauf in der bibliothek | ein nieser in der kirche | lachanfall im theater | die bibliothekarin sagt pst
+rakete startet nicht | silvesterrakete fällt um | die zündschnur ist nass | astronaut wartet umsonst
+brausepulver im mund | knisterzucker im hals | schaum vor dem mund | der kleine vulkan
 
 [title]
 herr der zwiebelringe | könig der donuts | die rückkehr der bagels | hobbit am imbiss
@@ -528,39 +1359,117 @@ rotkäppchen und der lieferdienst | der wolf und die sieben pakete | oma bestell
 hänsel und gretel auf diät | hänsel und gretel beim zahnarzt | die hexe im fitnessstudio | lebkuchenhaus aus brokkoli
 die bremer stadtmusikanten im tonstudio | stadtmusikanten auf tour | der esel nimmt gesangsstunden | vier tiere gründen eine boyband
 schneewittchens neuer spiegel | aschenputtels neuer schuh | spieglein im badezimmer | die königin macht ein selfie
+der kleine bademeister | der junge rettungsschwimmer | kind mit trillerpfeife | ein winziger strandwächter
+das parfum der turnschuhe | der duft der käsefüße | stinkender schuh am fenster | nase im schuhschrank
+die verwandlung in ein bügeleisen | mann wird zum föhn | bügeleisen mit krawatte | der roboter im schlafanzug
+moby dick in der badewanne | ein wal im schaumbad | kapitän jagt die badeente | seeungeheuer in der wanne
+pippi langschläfer | das mädchen mit den zöpfen schläft | zöpfe auf dem kopfkissen | starkes mädchen gähnt
+die biene im homeoffice | eine hummel am laptop | wespe in der videokonferenz | fliege mit kopfhörern
+romeo und julia im aufzug | liebespaar im fahrstuhl | ständchen im treppenhaus | der kuss zwischen zwei etagen
+odyssee zum bäcker | irrfahrt zur bushaltestelle | der lange weg zum kiosk | seefahrer sucht brötchen
+titanic in der pfütze | papierschiff sinkt | das untergehende spielzeugboot | eisberg im planschbecken
+allein im kaufhaus | ein kind schläft im schaufenster | vergessen im möbelhaus | der junge im bällebad
+dinosaurierpark im schrebergarten | saurier zwischen den beeten | dino gießt tomaten | urzeitechse im gemüsebeet
+findet die fernbedienung | suche nach dem handy | papa wühlt im sofa | der verlorene schlüssel
+könig der wellensittiche | der kaiser der kanarienvögel | ein papagei mit krone | spatz auf dem thron
+eiskönigin im hochsommer | schneefrau am strand | die prinzessin schmilzt | eisprinzessin mit ventilator
+das gespenst vom campingplatz | spuk im zelt | geist im wohnwagen | ein bettlaken am lagerfeuer
+räuber hotzenplotz beim elternabend | ein bandit im klassenzimmer | der räuber auf dem kinderstuhl | pirat beim lehrer
+das doppelte schaukelpferd | zwei schaukelpferde | die zwillingspferde | pferd und sein spiegelbild
+emil und die dackel | ein junge mit drei hunden | kinder und die hundebande | der junge und die würstchen
+lukas der traktorfahrer | der bauer auf dem trecker | lokführer auf dem acker | traktor mit dampfwolke
+raupe nimmersatt am buffet | eine raupe im restaurant | der wurm am salatbuffet | raupe isst alles auf
+robinson auf der verkehrsinsel | gestrandet im kreisverkehr | schiffbrüchiger an der ampel | einsame insel auf der autobahn
+gulliver im puppenhaus | ein riese im spielzeugzimmer | der riese und die puppenstube | großer mann im kleinen haus
+der seewolf mit schwimmflügeln | wolf im wasser | seeräuber am badesee | der hund im rettungsring
+krieg und frieden im sandkasten | streit um die schaufel | die schlacht um die sandburg | zwei kinder vertragen sich
+das nibelungenlied beim karaoke | ritter singen karaoke | drache am mikrofon | die heldensage auf der bühne
+wilhelm tell und die birne | apfel auf dem kopf | ein pfeil in der birne | die glühbirne auf dem hut
+frau holle schüttelt konfetti | oma schüttelt das kissen | schnee aus dem fenster | frau wirft federn
+der froschkönig im freibad | ein frosch mit krone am beckenrand | die prinzessin im schwimmbad | kröte auf dem sprungbrett
+rumpelstilzchen mit namensschild | zwerg mit visitenkarte | der wichtel am empfang | männchen trägt ein schild
+der gestiefelte hamster | maus in gummistiefeln | ein meerschwein im regen | der hamster mit hut
+des kaisers neue socken | der könig im schlafanzug | kaiser zeigt seine füße | krone und ringelsocken
+der mückenfänger von hameln | flötenspieler und die fliegen | der musikant mit dem netz | insektenparade durch die stadt
+sterntaler mit regenschirm | ein mädchen fängt münzen | regen aus goldstücken | das kind mit dem schirm
+das tapfere schneiderlein gegen wespen | der schneider mit der fliegenklatsche | mann kämpft mit der nadel | nähen gegen den bienenschwarm
+neunundneunzig luftmatratzen | ein haufen schwimmreifen | luftballons im schwimmbad | himmel voller gummitiere
+der schuh des hausmeisters | die pantoffeln des direktors | stiefel im flur | hausmeister sucht seinen schuh
+oma rennt | großmutter beim marathon | eine oma sprintet | rentnerin am start
+leben der regenwürmer | würmer unter der erde | die wohnung im komposthaufen | tag im blumentopf
+momo und die sockendiebe | mädchen jagt die waschmaschine | die räuber der wäscheleine | grauer herr klaut socken
+nachts im hallenbad | die quietscheenten erwachen | gespenster im schwimmbecken | bademeister schläft am beckenrand
+zeitmaschine aus pappkarton | ein raumschiff aus kartons | der pappkarton fliegt | kind im karton mit lenkrad
+frankensteins kuscheltier | das zusammengenähte stofftier | teddy mit schrauben | flickenhase
+dracula im sonnenstudio | ein vampir mit sonnencreme | der blasse mann am strand | fledermaus unter der höhensonne
+der glöckner vom kuhstall | kuh mit glocke | der bauer läutet zum melken | die glocke im stall
+fünf freunde auf der hüpfburg | vier kinder und ein hund springen | die bande auf dem trampolin | kindergeburtstag in der hüpfburg
+der mit dem schaf tanzt | ein schäfer beim walzer | tanzstunde auf der weide | die mit der ziege schunkelt
+zurück in die grundschule | opa auf der schulbank | erwachsener am kindertisch | papa mit schultüte
+der pate vom spielplatz | der boss der sandkiste | kind mit sonnenbrille auf der rutsche | die bande vom klettergerüst
+tausendundeine nacht im zeltlager | ein fliegender teppich überm zelt | märchenstunde im schlafsack | der flaschengeist beim camping
+zauberberg aus wäsche | bügelberg im wohnzimmer | wäscheberg mit gipfelkreuz | der riesige kleiderhaufen
+die blechtrommel um mitternacht | kind trommelt auf dem topf | nachbarn halten sich die ohren zu | ein lärmender junge
+der schimmelreiter im brotkasten | ritter auf dem schimmeligen brot | pferd im brotkasten | der reiter auf dem käse
+im kühlschrank nichts neues | gähnende leere im kühlschrank | einsames ei im fach | der leere vorratsschrank
+der besuch der alten tante | oma kommt mit koffer | die tante klingelt | dame mit hut an der tür
+schuld und schokolade | das kind mit dem schokomund | die leere pralinenschachtel | ertappt am süßigkeitenschrank
+vier jahreszeiten im kleiderschrank | der schrank mit badehose und schal | winterjacke neben bikini | ein schrank voller mützen und sandalen
+der nussknacker beim kieferorthopäden | der soldat mit der zahnspange | holzfigur beim zahnarzt | nüsse knacken mit spange
+schwanensee auf dem dorfteich | enten tanzen ballett | ballerina im ententeich | die gans im tutu
+die zauberflöte in der musikschule | die verhexte tröte | schlangenbeschwörer in der musikstunde | kind spielt flöte für eine schlange
+alle meine entchen im stau | entenfamilie an der ampel | enten auf der autobahn | ein auto bremst für enten
+der hase und der igel am skilift | igel auf skiern | wettrennen im schnee | der hase fährt schlitten
+ameise im großraumbüro | ameisen am kopierer | marienkäfer mit krawatte | der käfer am schreibtisch
+hans im glück auf dem flohmarkt | junge tauscht seine kuh | trödelmarkt mit goldklumpen | der händler mit dem schwein
+die kleine hexe in der fahrschule | ein besen mit fahrlehrer | hexe macht führerschein | die zauberin beim fahrlehrer
+pinocchio beim förster | holzjunge im wald | die nase als ast | förster misst die nase
+peter pan hat höhenangst | ein junge klammert sich an die wolke | fee mit fallschirm | der fliegende junge zittert
+das wandern ist des mopses frust | hund mit rucksack hechelt | müder hund auf dem gipfel | der wanderhund will heim
+oh tannenbaum am strand | weihnachtsbaum mit sonnenbrille | ein christbaum im liegestuhl | palme mit lametta
+der fänger im kornfeld | die vogelscheuche mit kescher | jagd auf den hamster im feld | bauer mit schmetterlingsnetz
+der schatz im baggersee | taucher findet einen einkaufswagen | die truhe unter wasser | goldsuche im badesee
+winnetou auf dem ponyhof | ein cowboy auf dem pony | federschmuck im reitstall | reiter mit zu kleinem pferd
+die wilden omas | rentnerinnen auf dem bolzplatz | omas spielen fußball | die strickgang
+das wunder vom bolzplatz | tor in letzter sekunde | kinder jubeln am fußballplatz | der ball fliegt ins netz
+wüstenplanet im katzenklo | katze im sandsturm | die düne im badezimmer | kamel im katzenklo
+das fliegende planschbecken | pool im himmel | die schwimmende wolke | kinder baden über den dächern
+mumie im wäscheschrank | mann aus klopapier | der verband im schrank | das gespenst aus handtüchern
+schlaflos im etagenbett | das kind zählt schafe | nachtwache im hochbett | zwei geschwister flüstern
+der mann im mond beim fensterputzen | ein astronaut putzt den mond | der mond wird poliert | fensterputzer im weltall
 
 [animal]
-katze macht die steuererklärung | hund schreibt lebenslauf | eine katze füllt lottoschein aus | die katze liest zeitung
+katze macht die steuererklärung | hund schreibt lebenslauf | katze füllt lottoschein aus | die katze liest zeitung
 giraffe mit halsschmerzen | giraffe hat schluckauf | ein schwan mit steifem nacken | giraffe beim ohrenarzt
 der tintenfisch lernt stricken | tintenfisch jongliert | krake entwirrt kopfhörer | ein tintenfisch am schlagzeug
-faultier beim speeddating | faultiere beim staffellauf | eine schnecke beim blind date | faultier verpasst sein date
+faultier beim speeddating | faultiere beim staffellauf | schnecke beim blind date | faultier verpasst sein date
 igel beim friseur | igel beim zahnarzt | stachelschwein beim barbier | ein igel will eine glatze
 taube will bürgermeisterin werden | möwe will kapitänin werden | spatz als schulsprecher | tauben eröffnen das stadtfest
 ein bär quetscht sich in eine jeans | bär im schlafsack | nilpferd probiert badeanzug an | der bär in der umkleide
-hund hält einen vortrag | hochzeitsrede vom hund | seehund liest nachrichten | ein hund erklärt das wetter
+hund hält einen vortrag | hochzeitsrede vom hund | seehund liest nachrichten | hund erklärt das wetter
 eichhörnchen sucht seine nüsse | eichhörnchen sucht den schlüssel | ein eichhörnchen pflanzt einen baum | ostereiersuche im park
 lama beim passfoto | das klassenfoto mit lama | schaf im fotoautomaten | alpaka beim bewerbungsfoto
 ente in der fahrschule | gans in der flugschule | enten im autoscooter | huhn parkt ein
 eine kuh beim yoga | kuh beim ballett | die kuh macht den spagat | turnendes pferd
-nashorn in der drehtür | nashorn im karussell | ein nilpferd in der katzenklappe | nashorn steckt fest
+nashorn in der drehtür | nashorn im karussell | nilpferd in der katzenklappe | nashorn steckt fest
 koala will nicht aufstehen | ein koala kann nicht einschlafen | koala umarmt den wecker | koala klammert sich ans kissen
 eine eule mit frühschicht | eule mit jetlag | uhu beim frühstücksfernsehen | die eule verschläft den bus
 spinne bindet sich die schuhe | spinne zieht socken an | tausendfüßler kauft turnschuhe | schuhe putzen mit acht beinen
-fledermaus hängt wäsche auf | fledermaus macht kopfstand | ein faultier an der wäscheleine | fledermaus bügelt flügel
+fledermaus hängt wäsche auf | fledermaus macht kopfstand | faultier an der wäscheleine | fledermaus bügelt flügel
 ein krebs der vorwärts läuft | krebs parkt rückwärts ein | hummer beim marathon | der krebs läuft im zickzack
 regenwurm macht liegestütze | regenwurm bei klimmzügen | ein regenwurm stemmt gewichte | raupe im fitnessstudio
 frosch dirigiert ein orchester | der frosch in der oper | frösche im kirchenchor | grashüpfer spielt geige
 eine robbe balanciert einen kuchen | robbe jongliert torten | seelöwe serviert hochzeitstorte | die robbe feiert geburtstag
-pinguin kauft einen frack | ein pinguin geht zum abschlussball | pinguin als oberkellner | pinguin will bunten anzug
+pinguin kauft einen frack | pinguin geht zum abschlussball | pinguin als oberkellner | pinguin will bunten anzug
 schildkröte zieht um | schnecke sucht wohnung | eine schildkröte macht urlaub | schildkröten auf klassenfahrt
 känguru mit unordentlichem beutel | känguru verliert den schlüssel | das känguru räumt die handtasche aus | känguru sucht sein handy
 ein zebra am zebrastreifen | zebra im schwarzweißfilm | das zebra an der ampel | zebra auf dem schachbrett
 mücke auf diät | mücke im feinkostladen | vegetarische mücke | mücken im fitnesskurs
-elch schmückt sein geweih | ein hirsch als garderobe | elch als weihnachtsbaum | elch baut vogelnest
+elch schmückt sein geweih | hirsch als garderobe | elch als weihnachtsbaum | elch baut vogelnest
 ein papagei als komiker | papagei als dolmetscher | karaoke mit papagei | der tukan als bauchredner
 hund führt herrchen gassi | katze geht mit frauchen spazieren | ein hund wirft das bällchen | blindenhund bei der arbeit
 pferd im schuhgeschäft | pferd probiert stöckelschuhe | esel beim schuster | pferd beim hufschmied
-hamster trainiert für olympia | hamster läuft marathon | ein meerschweinchen im hamsterrad | der hamster flieht
+hamster trainiert für olympia | hamster läuft marathon | meerschweinchen im hamsterrad | der hamster flieht
 schwein im schlammbad | schweine in der sauna | ein nilpferd im whirlpool | wellnesstag mit gesichtsmaske
 ein biber baut ein hochhaus | biber baut eine brücke | der biber als architekt | biber fällt den maibaum
 specht mit kopfschmerzen | specht beim zahnarzt | specht mit gehirnerschütterung | specht klopft an die falsche tür
@@ -568,10 +1477,86 @@ die schlange strickt einen schal | schlange als schal | raupe strickt mütze | e
 maulwurf mit brille | ein maulwurf mit taschenlampe | maulwurf beim augenarzt | maulwurf liest zeitung
 dackel in lederhosen | der dackel im trachtenverein | dackel auf dem oktoberfest | schuhplattelnder dackel
 eine kuh mit sonnenbrand | kuh im liegestuhl | ein schwein mit sonnenbrand | kuh mit masern
+kamel mit rückenschmerzen | dromedar beim physiotherapeuten | kamel schleppt zu viele koffer | kamel mit wärmepflaster
+ein krokodil mit zahnspange | ein krokodil beim kieferorthopäden | alligator putzt sich die zähne | krokodil mit maulkorb
+flamingo im wartezimmer | flamingos an der bushaltestelle | storch wartet auf den arzt | flamingo liest alte zeitschriften
+storch im stau | störche an der baustelle | ein kranich im verkehrschaos | storch hupt
+gorilla im homeoffice | affe in der videokonferenz | gorilla vor dem laptop | schimpanse mit headset
+der löwe verliert seine mähne | löwe mit lockenwicklern | ein löwe beim haareschneiden | löwe im sturm
+tiger muss zum elternabend | tiger auf dem kinderstuhl | leopard beim elternsprechtag | tigermama schimpft
+ein wal sucht einen parkplatz | wal parkt in zweiter reihe | der wal im parkhaus | delfin sucht die ausfahrt
+delfin macht das seepferdchen | delfin mit schwimmflügeln | ein delfin beim schwimmkurs | seehund bekommt eine urkunde
+eine qualle mit liebeskummer | qualle hört traurige lieder | die qualle weint ins meer | seestern schreibt liebesbriefe
+schnecke kommt zu spät zur arbeit | schnecke an der stechuhr | die nacktschnecke verpasst den zug | schnecke im großraumbüro
+ameisen beim wandertag | ameisen auf klassenausflug | eine ameisenstraße im wald | ameisen machen picknick
+biene macht überstunden | biene am schreibtisch | biene schläft in der blüte ein | hummel macht feierabend
+schmetterling mit flugangst | ein schmetterling im flugzeug | falter klammert sich an die blume | schmetterling mit fallschirm
+ein fuchs beim nachsitzen | fuchs schreibt eine strafarbeit | der fuchs an der tafel | fuchs im klassenzimmer
+hase mit heuschnupfen | hase niest auf der wiese | kaninchen mit taschentuch | hase gegen möhren allergisch
+eine maus mit lampenfieber | maus auf der bühne | eine maus beim krippenspiel | die maus vergisst den text
+eine ratte im kochkurs | ratte rührt die suppe | eine ratte als chefkoch | ratten in der großküche
+waschbär macht die wäsche | waschbär an der waschmaschine | ein waschbär im waschsalon | waschbär sortiert socken
+otter vermisst seinen lieblingsstein | otter im fundbüro | otter sammelt kieselsteine | otter jongliert steine
+dachs streitet mit dem nachbarn | dachs am gartenzaun | dachs beschwert sich | dachse schreien über die hecke
+wildschwein im supermarkt | ein wildschwein an der kasse | wildschwein mit einkaufswagen | wildschweine im gemüseregal
+esel macht abitur | esel mit doktorhut | esel in der prüfung | esel schwitzt über mathe
+schaf zählt menschen | schaf zählt bauern im bett | ein schaf mit schlafmaske | schaf guckt schäfchen im fernsehen
+ein huhn auf dem flohmarkt | hühner verkaufen eier | das huhn feilscht um den preis | huhn beim sperrmüll
+truthahn beim tanzkurs | truthähne beim walzer | strauß in der tanzschule | truthahn tritt auf füße
+strauß steckt den kopf ins handy | strauß mit dem kopf im sand | ein strauß sucht wlan | strauß schaut unters sofa
+ein kolibri trinkt zu viel kaffee | kolibri mit espresso | ein kolibri an der kaffeemaschine | zappelnder kolibri
+adler mit höhenangst | adler auf der leiter | ein adler klammert sich an den ast | geier traut sich nicht runter
+der rabe sammelt pfandflaschen | rabe am pfandautomaten | ein rabe sammelt glitzerkram | krähe mit einkaufswagen
+möwe muss sich anstellen | möwen in der warteschlange | eine möwe an der imbisskasse | möwe zieht eine wartenummer
+chamäleon findet sein outfit nicht | chamäleon vor dem kleiderschrank | chamäleon auf der tapete | chamäleon im karierten pullover
+ein gecko putzt fenster | gecko klebt am kühlschrank | eidechse mit putzlappen | ein gecko an der glastür
+nilpferd in der achterbahn | nilpferd im kettenkarussell | nilpferd auf der kirmes | nilpferd auf der wildwasserbahn
+ein panda mit augenringen | panda nach der nachtschicht | ein panda mit sonnenbrille | panda kann nicht schlafen
+eisbär hat hitzefrei | eisbär vor dem ventilator | eisbär im freibad | der eisbär schwitzt
+walross beim bartwettbewerb | ein walross kämmt seinen bart | walross beim barbier | seelöwe mit schnauzer
+seepferdchen beim reitturnier | seepferdchen springt über hürden | seepferdchen mit sattel | seepferdchen beim pferderennen
+der goldfisch hat langeweile | goldfisch zählt runden | ein goldfisch schaut fernsehen | goldfisch sieht die katze
+lachs nimmt die falsche rolltreppe | lachs im treppenhaus | ein lachs springt über die schranke | lachse beim treppenlauf
+heringe in der straßenbahn | sardinen im bus | heringe im aufzug | fischschwarm in der bahn
+die auster sucht ihre perle | eine auster beim juwelier | auster trägt eine kette | muschel mit schmuckkästchen
+glühwürmchen mit wackelkontakt | glühwürmchen beim elektriker | glühwürmchen ohne strom | flackerndes glühwürmchen
+libelle macht den hubschrauberschein | libelle beim pilotenkurs | eine libelle im tower | libelle als rettungshubschrauber
+eine heuschrecke beim weitsprung | heuschrecke beim stabhochsprung | ein grashüpfer auf dem trampolin | heuschrecke springt ins becken
+gürteltier nach dem festessen | gürteltier mit hosenträgern | ein gürteltier knöpft die hose auf | gürteltier am buffet
+erdmännchen im stadion | erdmännchen machen die welle | erdmännchenfamilie beim konzert | erdmännchen auf der tribüne
+die hyäne kichert in der kirche | hyäne lacht in der bibliothek | eine hyäne beim mittagsschlaf | hyänen im schulchor
+ein yak im skilift | yak auf dem sessellift | ein yak in der gondel | büffel beim skifahren
+büffel büffelt vokabeln | büffel mit karteikarten | ein büffel in der bibliothek | büffel schläft auf dem buch
+stinktier im aufzug | stinktier in der umkleide | stinktier im zugabteil | stinktier mit parfüm
+schnabeltier am zoll | schnabeltier mit koffer | ein schnabeltier am flughafen | ente am zollschalter
+ein pelikan als postbote | pelikan bringt pakete | ein pelikan mit zeitungen | storch liefert pizza
+wellensittich will ausziehen | wellensittich packt den koffer | ein kanarienvogel verlässt das nest | wellensittich mit umzugskarton
+kaninchen kündigt beim zauberer | kaninchen im zylinder | hase streikt im zirkus | kaninchen mit protestschild
+meerschweinchen im stuhlkreis | meerschweinchen beim basteln | ein meerschweinchen spielt mit knete | meerschweinchen in der kita
+ein frettchen am ersten schultag | frettchen mit schultüte | das frettchen auf dem klassenfoto | wiesel mit ranzen
+mammut kauft einen wintermantel | mammut mit wollschal | mammut in der boutique | mammut probiert mützen auf
+seestern mit fernrohr | seestern im planetarium | seestern guckt nach oben | seesterne zählen sterne
+hai verliert seinen milchzahn | hai mit zahnlücke | ein hai unterm kopfkissen | die zahnfee beim hai
+affen streiten um die fernbedienung | affen vor dem fernseher | affe zappt durch kanäle | gorillas beim fußballgucken
+luchs beim sehtest | luchs beim augenarzt | ein luchs liest die letzte zeile | luchs mit lupe
+ein mops beim treppensteigen | mops schnauft auf der treppe | ein mops im aufzug | mops am berg
+kater nach der party | kater mit eisbeutel | ein kater liegt auf dem sofa | kater nach dem geburtstag
+flöhe auf wohnungssuche | floh im hundefell | floh packt die koffer | flöhe beim umzug
+motte im kleiderschrank | motte frisst den pullover | eine motte mit lochsocken | motten beim festessen
+der kuckuck verpasst seinen einsatz | kuckucksuhr ohne vogel | ein kuckuck schläft in der uhr | kuckuck ruft zur falschen zeit
+kröte am geldautomaten | kröte zählt münzen | eine kröte im sparschwein | frosch am bankschalter
+zugvögel am gepäckband | schwalben mit rollkoffer | vogelschwarm an der passkontrolle | gänse warten aufs gepäck
+amsel singt zu früh | amsel mit megafon | eine amsel vorm schlafzimmerfenster | vogel weckt den nachbarn
+steinbock in der kletterhalle | steinbock an der boulderwand | gämse am seil | steinbock mit helm
+murmeltier will keinen frühling | murmeltier zieht die decke hoch | ein murmeltier mit wärmflasche | murmeltier drückt den wecker weg
+ein gepard kriegt einen strafzettel | gepard wird geblitzt | ein gepard an der radarfalle | gepard mit polizeikelle
+ein leguan im solarium | leguan unter der wärmelampe | ein leguan im liegestuhl | eidechse beim sonnenbaden
+schwan fährt tretboot | schwan im ruderboot | schwan mit paddel | enten im tretboot
+schlittenhunde ohne schnee | huskys ziehen ein fahrrad | schlittenhunde auf dem rasen | husky mit rollschuhen
 
 [food]
 eifersüchtige frikadelle | ein beleidigter kartoffelpuffer | frikadelle sieht ihren ex | neidischer pfannkuchen
-suppe schlägt zurück | eine suppe mit boxhandschuhen | müsli lernt boxen | der löffel verliert den kampf
+suppe schlägt zurück | suppe mit boxhandschuhen | müsli lernt boxen | der löffel verliert den kampf
 banane in verkleidung | die banane als detektiv | gurke mit schnurrbart | paprika trägt perücke
 brokkoli macht urlaub | blumenkohl auf weltreise | bäumchen am strand | brokkolis auf klassenfahrt
 eine currywurst im liegestuhl | bratwurst in hängematte | currywurst macht mittagspause | die pommes auf der sonnenliege
@@ -579,7 +1564,7 @@ brezel entknotet sich | eine nudel verknotet sich | brezel beim morgensport | cr
 spaghettiwasserfall | die spaghettidusche | nudelregen im gebirge | wasserfall aus wolle
 wackelpudding beim erdbeben | der wackelpudding auf dem trampolin | götterspeise fährt achterbahn | pudding mit schüttelfrost
 ein donut will ein bagel sein | rettungsring will donut sein | donut beim vorstellungsgespräch | der donut macht diät
-ei auf dem weg in die pfanne | ein ei auf dem schulweg | ei flüchtet vorm frühstück | fallschirmspringendes ei
+ei auf dem weg in die pfanne | ei auf dem schulweg | ei flüchtet vorm frühstück | fallschirmspringendes ei
 käse nur aus löchern | mäuse wohnen im käse | sieb wäre gern käse | emmentaler mit durchzug
 ein zerfallender burger | sandwichturm stürzt ein | der burger niest | sandwich im sturm
 melone mit helm | kürbis als ritter | eine melone auf der baustelle | orange fährt rad
@@ -588,7 +1573,7 @@ popcorn beim gruselfilm | das popcorn in der achterbahn | maiskörner beim feuer
 dinnerparty für gemüse | klassentreffen der tomaten | die hochzeit im gemüsebeet | festmahl im kühlschrank
 ein salat läuft davon | kohlkopf beim joggen | salat rennt dem bus hinterher | ein salatkopf mit beinen
 muffin mit geheimrezept | der muffin mit der schatzkarte | cupcake im tresor | kuchen verheimlicht was
-peperoni speit feuer | chili als drache | eine möhre spuckt feuer | paprika mit fieber
+peperoni speit feuer | chili als drache | möhre spuckt feuer | paprika mit fieber
 cornflakes beim synchronschwimmen | turmspringende cornflakes | müsliflocken im freibad | die chips beim wellenreiten
 eine gurke im wellnesshotel | zucchini in der sauna | gurke hält schönheitsschlaf | die gurke als gesichtsmaske
 würstchen im schlafsack | zeltende würstchen | eine raupe im winterschlaf | hotdog unter der bettdecke
@@ -606,22 +1591,94 @@ sauerkraut mit sonnenbrille | rotkohl mit sonnenhut | das sauerkraut als rocksta
 spiegelei beim sonnenbaden | ein spiegelei als sonnenuntergang | planschendes spiegelei | das spiegelei auf dem sprungbrett
 schlecht gelauntes brot | brötchen mit kopfweh | ziegelstein mit schmollmund | toast hat sich verbrannt
 ein schnitzel größer als der teller | pfannkuchen so groß wie der tisch | schnitzel als tischdecke | das schnitzel als fußmatte
+kartoffel beim friseur | knolle bekommt dauerwelle | kartoffel mit lockenwicklern | der kürbis beim haareschneiden
+eine erdbeere mit sommersprossen | erdbeere hat windpocken | die himbeere mit pickeln | marienkäfer ohne flügel
+pizza als ufo | die fliegende pizza | pizza kreist über dem dorf | ein ufo aus salami
+ananas mit punkfrisur | igel mit irokesenschnitt | ananas mit gel im haar | palme im blumentopf
+eine kokosnuss rasiert sich | haselnuss beim barbier | kokosnuss wird gekämmt | der igel beim rasieren
+avocado verliert ihren kern | avocado legt ein ei | pfirsich ohne stein | kern rollt unters sofa
+eine aubergine beim yoga | aubergine macht kopfstand | pflaume beim dehnen | die aubergine meditiert
+maiskolben mit zahnspange | ein maiskolben beim zahnarzt | grinsender maiskolben | gebiss aus maiskörnern
+erbsen streiten in der schote | drei erbsen auf der bank | die bohnen im zelt | zoff in der hülse
+bohnen auf der kirmes | hüpfende bohnen | bohnen im autoscooter | die linsen auf dem karussell
+ein fliegenpilz als regenschirm | ein pilz im regen | regenschirm mit punkten | zwerg unterm pilz
+radieschen heiraten | die radieschen am traualtar | rote bete auf hochzeitsreise | zwei rüben vor dem standesamt
+spargel beim stabhochsprung | lauch springt über die latte | der spargel als zaunpfahl | eine möhre beim speerwurf
+tomate wird rot vor scham | rote paprika ist verliebt | die tomate hat sonnenbrand | kirsche schämt sich
+die lasagne als hochhaus | ein stapel pfannkuchen als turm | lasagne mit balkonen | hochhaus aus waffeln
+pommes spielen mikado | streichhölzer auf dem teller | salzstangen spielen domino | die pommes als lagerfeuer
+leberkäse im fitnessstudio | leberkäse stemmt hanteln | ziegelstein beim krafttraining | toastbrot beim bankdrücken
+die weißwurst in lederhosen | eine bockwurst auf dem volksfest | leberwurst beim schuhplattler | wiener mit trachtenhut
+grillhähnchen fährt karussell | hähnchen dreht sich am spieß | die ente auf dem kinderkarussell | huhn im kettenflieger
+die ölsardinen im vollen bus | heringe in der dose | die sardinen im fahrstuhl | fische in der umkleide
+ein joghurt leckt seinen deckel ab | joghurt streckt die zunge raus | die katze leckt am deckel | becher beim zungezeigen
+butter schmilzt vor liebe | ein eiswürfel verliebt sich | butter auf dem heizkörper | die butter in der wüste
+marmelade bricht aus | pudding auf der flucht | glas läuft über | honig klettert aus dem topf
+das croissant am nachthimmel | eine banane als mond | hörnchen schläft auf der wolke | mondsichel aus teig
+lebkuchenmann verliert ein bein | keks humpelt zur ärztin | der lebkuchenmann mit gips | plätzchen mit krücken
+gummibärchen als menschenpyramide | bärchenturm im zirkus | die gummitiere beim turnen | eine pyramide aus bonbons
+eine eistüte mit sonnencreme | eiskugel unterm sonnenschirm | die waffeltüte mit schweißtropfen | eis beim sonnenbaden
+ein milchshake beim tauchen | strohhalm als schnorchel | erdbeere taucht im becher | der kakao im schwimmbecken
+kaffee kann nicht schlafen | eine kaffeetasse mit augenringen | tasse zählt schafe | die teekanne wach im bett
+teebeutel beim bungeesprung | teebeutel taucht in die tasse | jojo in der tasse | der teebeutel am seil
+sprudelwasser hat schluckauf | flasche mit schluckauf | blubbernde limo lacht | der sprudel kitzelt sich
+brotwürfel baden im käsefondue | croutons im schlammbad | ein marshmallow im schokobrunnen | die kekse im kakaobad
+eine maultasche plaudert | ravioli flüstern | die maultasche mit zahnlücke | teigtasche erzählt witze
+kaiserschmarrn mit krone | der pfannkuchen wird gekrönt | omelett als könig | rührei auf dem thron
+bienenstich sticht zu | kuchen mit stachel | die biene im kuchen | streuselkuchen mit fühlern
+kartoffelbrei als vulkan | ein vulkan aus grießbrei | der soßensee im püree | sahnehügel spuckt lava
+ingwer als hampelmann | wurzel tanzt | wurzelmännchen im beet | die alraune winkt
+oliven beim kegeln | eine olive als bowlingkugel | weintrauben kegeln | die erbse wirft alle neune
+kaugummi will nicht loslassen | kaugummi umarmt einen schuh | der kaugummi am fahrradreifen | klebriger kaugummi spielt fangen
+weintrauben als luftballonstrauß | ein traubenbündel auf dem jahrmarkt | luftballons in lila | die trauben fliegen weg
+eine rosine im altersheim | traube mit falten | backpflaume beim kaffeeklatsch | die rosinen beim seniorentanz
+zwei erdnüsse im doppelbett | erdnüsse kuscheln | eine schote mit zwillingen | die erdnüsse im kanu
+walnuss denkt nach | gehirn in der schale | walnuss löst rätsel | die nuss mit brille
+kirschen halten händchen | kirschenpaar beim spaziergang | ein paar ohrringe verliebt | die kirschen auf dem tandem
+eine birne als deckenlampe | glühbirne mit stiel | die mango als nachtlicht | apfel leuchtet im dunkeln
+heidelbeeren als murmeln | die trauben beim billard | kugelbahn für beeren | murmeln im obstsalat
+ein fischbrötchen geht angeln | ein toast mit angel | fisch angelt einen hering | der hering im ruderboot
+spinat mit muskeln | spinatblatt beim armdrücken | brokkoli als bodybuilder | die kresse zeigt bizeps
+knoblauchzehen im fußbad | ein fuß aus knoblauch | die zwiebel badet ihre füße | schalotten im planschbecken
+der kohlrabi vom mars | ein marsmännchen im beet | rübe mit antennen | knolle landet im garten
+der kürbis zieht grimassen | eine laterne lacht hämisch | kürbislaterne als clown | rübengeist mit zahnlücke
+pistazie gähnt | eine muschel gähnt | die nuss ist müde | auster wacht auf
+zuckerstange als spazierstock | opa mit gestreiftem stock | bonbon geht wandern | die lakritzstange als wanderstab
+lolli regelt den verkehr | ein lutscher als stoppschild | die kelle der schülerlotsin | bonbon an der kreuzung
+ein marzipanschwein im schlamm | glücksschwein aus zucker | das sparschwein aus marzipan | ferkel in der schokopfütze
+lakritzschnecke im schneckenrennen | zimtschnecken beim wettkriechen | weinbergschnecke in schwarz | die schnecke mit lakritzhaus
+christstollen im bergwerk | ein kuchen mit grubenlampe | rosinenbrot fährt lore | die bergleute beim kuchenessen
+ein hefezopf flechtet sich selbst | zopfbrot mit haarspange | die brezel beim flechten | teigschlange knotet sich
+kakao trägt schaumbart | ein becher mit bart | die tasse als weihnachtsmann | milchbart am henkel
+mein pausenbrot hat heimweh | mein schulbrot winkt zum abschied | butterbrot weint im ranzen | die brotdose als gefängnis
+wenn der apfel zurückbeißt | wenn die birne zubeißt | apfel mit haifischzähnen | der pfirsich schnappt zu
+die möhre beim sehtest | ein hase beim optiker | karotte mit brille | die rübe liest die buchstabentafel
+frühlingsrolle bei der rolle vorwärts | teigrolle beim purzelbaum | die biskuitrolle turnt | wurst beim bodenturnen
+ein rollmops an der leine | hering geht gassi | die gurke an der hundeleine | fisch beim hundefriseur
+sprühsahne malt graffiti | eine sahnedose als sprayer | senf malt ein gemälde | die sahnehaube als kunstwerk
+wassereis als zauberstab | die eiskerze leuchtet | eis am stiel zaubert | fackel aus eis
+chipstüte mit dickem bauch | ein kissen voller krümel | die tüte hat zu viel gegessen | luftballon voller chips
+studentenfutter in der vorlesung | nüsse im hörsaal | die rosinen schreiben eine prüfung | mandelkern mit doktorhut
+brausepulver hebt ab | eine brausetüte als rakete | die zuckertüte startet | feuerwerk im becher
+eine praline zieht ins nachbarfach | pralinen beim umzug | schokokugel mit umzugskarton | die bonbons räumen auf
+schokoriegel beim limbo | riegel unter der stange | banane beim limbo | keks tanzt limbo
+muscheln klatschen beifall | eine muschel applaudiert | die austern beim konzert | kastagnetten am strand
 
 [place]
-hotel für superhelden in rente | ein altersheim für zauberer | pension für zirkusopas | opa mit umhang im strandurlaub
+hotel für superhelden in rente | altersheim für zauberer | pension für zirkusopas | opa mit umhang im strandurlaub
 krankenhaus für kaputte regenschirme | pilze im krankenhaus | eine klinik für erkältete schneemänner | regenschirme liegen mit grippe im bett
 die schule für babydrachen | krokodile in der tanzschule | eine flugschule für junge echsen | kleine drachen beim diktat
 supermarkt unter wasser | aquarium im kaufhaus | fische kaufen fisch | einkaufen mit taucherbrille
 ballsaal voller seifenblasen | disko voller luftballons | erbsen tanzen im ballsaal | die königin badet im festsaal
 museum für langweilige dinge | ausstellung alter socken | eine galerie für graue steine | wärter schläft im museum
-restaurant mit katzen als kellner | imbiss mit hundeköchen | ein hotel mit füchsen als pagen | katze serviert fischsuppe
+restaurant mit katzen als kellner | imbiss mit hundeköchen | hotel mit füchsen als pagen | katze serviert fischsuppe
 schloss aus käse | die butterburg | palast aus kuchen | mäuse belagern eine burg
 ein spielplatz für großeltern | ein turnverein für omas | rentner im freibad | opa rutscht mit gehstock
 fitnessstudio für faule | turnhalle mit hängematten | yoga für schnarcher | die hantel liegt neben dem sofa
-baumhaus mit rolltreppe | ein vogelhaus mit fahrstuhl | hochsitz mit rutsche | eichhörnchen fahren aufzug
+baumhaus mit rolltreppe | vogelhaus mit fahrstuhl | hochsitz mit rutsche | eichhörnchen fahren aufzug
 eine tankstelle für pferde | waschstraße für kühe | kamele an der raststätte | ein pony an der zapfsäule
 iglu in der wüste | schneemann am strand | sandburg am nordpol | pinguin in der sahara
-tiere besuchen menschen im zoo | affen machen fotos im tierpark | ein aquarium in dem fische angeln | giraffen gucken durchs gitter
+tiere besuchen menschen im zoo | affen machen fotos im tierpark | aquarium in dem fische angeln | giraffen gucken durchs gitter
 parkplatz für fliegende teppiche | eine waschanlage für hexenbesen | teppichladen mit startbahn | stau über dem basar
 der flughafen für vögel | bahnhof für tauben | ein hotel für zugvögel | gänse am gepäckband
 friseursalon für schafe | pudel im waschsalon | schönheitssalon für alpakas | ein schaf mit lockenwicklern
@@ -631,17 +1688,85 @@ bäckerei auf einer wolke | eisdiele auf dem regenbogen | die himmelskonditorei 
 kindergarten für monster | krabbelgruppe für trolle | zeltlager für kleine aliens | monster machen mittagsschlaf
 das fundbüro des universums | die rumpelkammer der galaxis | wartezimmer im weltall | verlorene planeten im regal
 hochhaus aus kissen | ein turm aus matratzen | sofakissenburg | die prinzessin auf der erbse
-getränkeautomat auf dem gipfel | telefonzelle auf dem berg | ein kiosk am ende der welt | bergsteiger kauft limo
+getränkeautomat auf dem gipfel | telefonzelle auf dem berg | kiosk am ende der welt | bergsteiger kauft limo
 taxistand im dschungel | bushaltestelle in der savanne | taxi für gorillas | ampel im urwald
 skigebiet auf dem vulkan | eislaufen auf der sonne | ein schwimmbad im krater | snowboarder flieht vor lava
 ein garten auf dem busdach | ein gemüsebeet auf dem lastwagen | freibad auf einem schiff | sonnenblumen fahren bus
 pension für bienen | hotel für wespen | das hummelwohnheim | bienenstock mit zimmerservice
 büro im heißluftballon | klassenzimmer im zeppelin | teeküche in der gondel | der chef fliegt in den urlaub
-bücherei im zug | kino im schulbus | ein lesesaal auf dem schiff | lesen im speisewagen
+bücherei im zug | kino im schulbus | lesesaal auf dem schiff | lesen im speisewagen
 ein hotel im kaktus | wohnen in einer gurke | ein haus in einer ananas | igel als hochhaus
 kegelbahn für pinguine | tanzkurs für pinguine | eisstadion für robben | pinguine fallen wie dominosteine
 campingplatz auf dem mond | zelten auf dem mars | grillabend im weltall | der astronaut röstet marshmallows
 die jugendherberge für gespenster | schullandheim für vampire | ein ferienlager für mumien | kissenschlacht im spukschloss
+hühnerdisko | tanzender hahn | eine schafparty | der hahn legt auf
+ein wartezimmer beim weihnachtsmann | eine schlange vor dem nikolaus | wichtel in der sprechstunde | rentiere warten auf termin
+waschsalon für drachen | drachen in der waschtrommel | eine reinigung für dinos | wäscheleine voller flügel
+bahnhof im kinderzimmer | spielzeugbahn unterm bett | stellwerk im puppenhaus | züge im teddyland
+tierarzt für kuscheltiere | ein teddy wird geröntgt | die kuscheltierwäsche | hasen mit pflaster
+kiosk im ameisenhaufen | ameisen kaufen zucker | laden im termitenhügel | der käferkiosk
+kirmes im maulwurfshügel | riesenrad unter der erde | maulwürfe im autoscooter | ein jahrmarkt im kaninchenbau
+schützenfest der zwerge | zwerge beim maifest | gartenzwerg wird schützenkönig | die zwergenparade
+ein freizeitpark für schildkröten | achterbahn im schneckentempo | schildkröten im karussell | ein rummel für faultiere
+polizeiwache im puppenhaus | puppen hinter gittern | gefängnis aus bauklötzen | teddy wird verhaftet
+kühe im wolkenkratzer | bauernhof im aufzug | ein traktor auf dem dach | der stall im zwanzigsten stock
+ballettschule für nilpferde | nilpferde im tutu | tanzgruppe für walrosse | flusspferd auf zehenspitzen
+der himmel für verlorene socken | socken mit heiligenschein | eine wolke voller strümpfe | die waschmaschine im himmel
+postamt für flaschenpost | briefkasten am strand | möwen sortieren briefe | die poststelle im meer
+eine bibliothek für bücherwürmer | würmer im bücherregal | raupe liest zeitung | die bibliothek im apfel
+tierheim für dinosaurier | dino im hundekörbchen | pension für saurier | der t rex wartet auf frauchen
+kraftwerk mit hamsterrädern | hamster auf dem laufband | ein fitnessraum für mäuse | die stadt im laufrad
+das finanzamt der kobolde | kobolde zählen goldmünzen | die schatzkammer der wichtel | büro voller zipfelmützen
+ein spa für schnecken | schnecken mit gurkenmaske | massage für nacktschnecken | das schneckenhaus mit whirlpool
+rathaus auf stelzen | ein pfahlbau im stadtpark | bürgermeister auf langen beinen | die stadthalle im storchennest
+gummibärchengefängnis | gummibären im zoo | bonbons im kerker | die süßigkeitenpolizei
+eine autobahn für regenwürmer | würmer im stau | rennstrecke für raupen | der tunnelbau der würmer
+reparaturwerkstatt für zauberstäbe | zauberer beim mechaniker | zauberstab mit pflaster | die besenwerkstatt
+schwimmkurs im suppentopf | nudeln mit schwimmflügeln | ein bad in der tomatensuppe | erbsen lernen kraulen
+wohngemeinschaft im vogelnest | nest voller mitbewohner | spatzen streiten ums bad | eine wg im kuckucksnest
+die bank der eichhörnchen | eichhörnchen zählen nüsse | tresor voller eicheln | der nussautomat
+schrebergarten im wohnzimmer | gemüsebeet auf dem teppich | ein gartenzwerg vorm fernseher | der rasenmäher im flur
+eisdiele im backofen | eis schmilzt im ofen | eiswagen am lagerfeuer | die waffel brennt
+die hundeschule für goldfische | goldfisch macht sitz | ein fisch an der leine | die schwimmschule für dackel
+kuhstall mit kronleuchter | schweinestall mit himmelbett | die kuh im ballkleid | schloss für schweine
+tropfsteinhöhle mit wlan | höhlenmenschen am handy | eine fledermaus sucht netz | router in der grotte
+weihnachtsmarkt am badestrand | der nikolaus im liegestuhl | lebkuchenbude am meer | eine tanne im sand
+drive in für pferdekutschen | kutsche am schalter | pferd bestellt pommes | die raststätte für ritter
+umkleidekabine für riesen | riese im vorhang | anprobe für giganten | der riese passt nicht rein
+zwergenstadt im blumentopf | häuser auf dem fensterbrett | ein dorf in der gießkanne | die stadt im blumenbeet
+sprungturm im planschbecken | zehnmeterbrett in der pfütze | kopfsprung in die badewanne | der bademeister im eimer
+minigolf im schiffswrack | golfen mit haien | bowlingbahn im aquarium | taucher spielen murmeln
+schrottplatz für raketen | raketen auf dem flohmarkt | ein autofriedhof im weltall | astronauten suchen ersatzteile
+parkhaus für kinderwagen | tiefgarage für puppenwagen | babys suchen parkplatz | der kinderwagenstau
+stadion im schuhkarton | turnier in der keksdose | käfer spielen fußball | die arena im eierkarton
+schokoladenmine | zwerge schürfen kakao | bergwerk aus nougat | der kakaostollen
+ein hafen für gummienten | gummienten legen an | ein yachthafen in der badewanne | der kapitän ist eine ente
+reitstall für einhörner | einhorn beim hufschmied | pferdestall mit regenbogen | ponys mit glitzer
+die kantine der piraten | piraten an der essensausgabe | ein buffet an deck | der koch mit augenklappe
+skisprungschanze im treppenhaus | rodeln im flur | lift im hausflur | oma fährt ski die treppe runter
+waschküche im märchenschloss | die prinzessin bügelt | ein schloss voller wäscheleinen | drache am bügelbrett
+die eierfabrik des osterhasen | hasen am fließband | färberei für eier | der osterhase im büro
+hängebrücke aus spaghetti | eine brücke aus lakritz | nudelbrücke über der schlucht | ritter balanciert auf nudeln
+fußballplatz auf dem kirchturm | tor auf der turmspitze | der pfarrer im tor | kicken auf dem dachfirst
+pommesbude auf dem eisberg | imbissbude auf der eisscholle | pinguine essen currywurst | ein würstchenstand am südpol
+aussichtsturm für giraffen | turm für lange hälse | die giraffe im leuchtturm | kran mit flecken
+verkehrsübungsplatz für enten | enten am zebrastreifen | entenküken mit fahrradhelm | eine fahrschule für gänse
+die schatzkammer im sparschwein | drache bewacht das sparschwein | piraten im sparschwein | ein tresor im schweinestall
+bergbahn für ameisen | ameisen in der gondel | ein skilift am zuckerberg | die seilbahn am grashalm
+bahnsteig für weihnachtsschlitten | rentiere am gleis | der weihnachtsmann verpasst den zug | der nordpolexpress
+die mensa der zauberschule | hexen an der essensausgabe | eine eule serviert suppe | zaubertränke statt pudding
+gästezimmer im vogelkäfig | onkel auf der stange | omas besuch im käfig | der wellensittich hat besuch
+liegestuhlverleih auf dem gletscher | sonnenbaden auf dem eisberg | ein strandkorb im schnee | eisbären mit sonnenschirm
+ein knusperhaus mit alarmanlage | lebkuchenhaus mit kamera | die hexe hat einen wachhund | hänsel und gretel vor der klingel
+eine rutsche aus dem klassenzimmer | schüler rutschen in die pause | ein klettergerüst im lehrerzimmer | der hausmeister auf der rutsche
+wartehalle für zahnfeen | zahnfeen am schalter | fundbüro für milchzähne | die zahnfee im stau
+ein nagelstudio für bären | bären mit lackierten krallen | maniküre für tiger | ein igel beim frisör
+elternabend auf der burg | ritter auf kinderstühlen | eltern in rüstung | drache als klassensprecher
+ein klassenzimmer im wal | schüler im bauch des fisches | die schultafel im aquarium | ein wal mit ranzen
+ein wanderweg über den küchentisch | wandern über die tischdecke | ameisen auf dem wandertag | ein rucksack neben der butter
+zollstation am gartenzaun | kontrolle am zaun | ein schlagbaum vor dem beet | igel zeigt seinen ausweis
+ein sternenhimmel im kleiderschrank | lichterketten im schrank | der schrank ist ein weltall | sterne zwischen den pullis
+pizzeria im u boot | tauchen nach pizza | pizzaofen unter wasser | die pizza im periskop
 
 [gadget]
 hut der deine pflanzen gießt | hut mit eigener regenwolke | der gärtner gießt sich selbst | springbrunnenhut
@@ -658,7 +1783,7 @@ brille für die zukunft | durch wände gucken | das fernglas für gestern | lupe
 ein fahrrad für zehn personen | schaukel für die ganze klasse | familientandem | eine raupe fährt fahrrad
 helm mit scheibenwischern | brille mit scheibenwischern | helm mit blinker und hupe | motorradfahrer im platzregen
 leiter bis zu den wolken | rolltreppe in den himmel | mit dem aufzug zu den sternen | himmel putzen
-schuhe mit sprungfedern | trampolin für füße | hausschuhe mit turbo | ein känguru in turnschuhen
+schuhe mit sprungfedern | trampolin für füße | hausschuhe mit turbo | känguru in turnschuhen
 die brotdose mit alarmanlage | der kühlschrank hat einen türsteher | keksdose mit falltür | pausenbrot mit leibwächter
 antilangeweilemaschine | die gutelaunemaschine | kitzelmaschine | apparat für sonntagnachmittage
 ein vulkan im taschenformat | feuerwerk für die hosentasche | geysir im blumentopf | ein lagerfeuer zum mitnehmen
@@ -668,16 +1793,84 @@ ein föhn für katzen | staubsauger für hunde | katzenwaschsalon | der kater na
 tarnumhang mit loch | gespenst mit mottenloch | der zauberer ist halb weg | tarnkappe zu klein
 butterbrotkatapult | eine pfannkuchenkanone | toaster mit raketenantrieb | frühstücksseilbahn
 ein spiegel der komplimente macht | spiegel schneidet grimassen | das fenster sagt guten morgen | mein schrank feuert mich an
-tür nach überall | fenster nach nirgendwo | eine tür ohne haus | schrank voller welten
+tür nach überall | fenster nach nirgendwo | tür ohne haus | schrank voller welten
 hängematte für nilpferde | trampolin für elefanten | walross auf der schaukel | nilpferd macht mittagsschlaf
 stimmungsring für hunde | das halsband übersetzt | wetterbericht für dackel | armbanduhr für katzen
 der stift macht hausaufgaben | radiergummi frisst fehler | ein füller schreibt liebesbriefe | bleistift malt von allein
-telefon mit kilometerlangem kabel | dosentelefon über den ozean | ein ladekabel einmal um die welt | staubsauger mit endlosem schlauch
+telefon mit kilometerlangem kabel | dosentelefon über den ozean | ladekabel einmal um die welt | staubsauger mit endlosem schlauch
 teekanne mit periskop | die kaffeemaschine taucht ab | unterseeboot aus porzellan | gießkanne mit fernrohr
 briefkasten schießt konfetti | der briefkasten frisst rechnungen | mülltonne mit feuerwerk | postbote im glitzerregen
 eine nudelmaschine für spaghettieis | fleischwolf für zuckerwatte | die eismaschine macht nudelsuppe | springbrunnen aus vanillesoße
 sockenwiederfinder | schlüsselsuchhund | trockner frisst socken | wünschelrute für brillen
 schlüssel der pfeift wenn man ruft | die fernbedienung versteckt sich | schlüsselbund mit eigenem hund | portemonnaie ruft um hilfe
+ein navi für schnecken | eine landkarte für ameisen | schnecke mit blinker | die schnecke hat sich verfahren
+rasierapparat für pfirsiche | pfirsich beim friseur | nassrasur für kiwis | kiwi mit glatze
+torpfosten auf rädern | das tor läuft weg | fußballtor mit beinen | torwart auf rollschuhen
+ein weihnachtsbaum mit propeller | der tannenbaum hebt ab | hubschrauber mit lametta | christbaum im landeanflug
+schwimmflügel für goldfische | goldfisch lernt schwimmen | ein rettungsring fürs aquarium | fisch mit schwimmreifen
+kerzenauspustmaschine | windmaschine für torten | geburtstagspuster | oma pustet alle kerzen aus
+hundeleine mit lenkrad | dackel am steuer | gassigehen mit tempomat | leine mit gaspedal
+schaukelstuhl mit auspuff | opa im rennstuhl | ein sessel mit raketen | der großvater gibt gas
+ohrenschützer für hasen | hase mit stirnband | mütze mit ohrlöchern | schal für lange ohren
+kopfhörer für ohrwürmer | regenwurm hört musik | ein wurm mit mikrofon | disko für würmer
+rasenmäher für glatzköpfe | glatzenpoliermaschine | der friseur mäht | frisur mit gartenschere
+ein fahrstuhl für eichhörnchen | eichhörnchen im aufzug | der baum hat einen lift | seilbahn für nüsse
+schuhanzieher für tausendfüßler | tausendfüßler beim schuhkauf | raupe zieht stiefel an | ein schuhregal für käfer
+tafel die sich selbst wischt | die tafel putzt sich | schwamm mit propeller | lehrer mit wischmopp
+schulglocke mit schlummertaste | der gong verschläft | hausmeister mit schlafmaske | pausenklingel im bett
+eine rutsche vom bett zur küche | frühstück per rutschbahn | der morgen auf dem spielplatz | eine wasserrutsche ins müsli
+bügeleisen für pommes | pommes werden gebügelt | waffeleisen für würstchen | die pommes sind ganz glatt
+ein spinnrad für zuckerwatte | rumpelstilzchen auf der kirmes | zuckerwattemaschine im märchen | die prinzessin spinnt zucker
+bohnenranke mit aufzug | riese wartet auf den lift | leiter aus erbsen | bohnenstange mit treppe
+ein kühlschrank für eisbären | eisbär im gefrierfach | pinguin im eisfach | ein iglu mit steckdose
+luftmatratze mit außenbordmotor | das schlauchboot rast | oma auf dem motorboot | badeinsel mit auspuff
+badekappe mit schnorchel | eine duschhaube mit rüssel | elefant mit badekappe | schwimmen mit strohhalm
+trinkflasche mit wasserhahn | kanister mit dusche | die flasche tropft | thermoskanne mit brause
+ein strohhalm durchs ganze haus | eine wasserleitung zum kakao | der längste trinkhalm | limo aus dem keller trinken
+zebrastreifen zum ausrollen | der läufer für die straße | straße zum aufrollen | teppich mit streifen
+eine hupe für jogger | jogger mit blinker | läufer mit bremslicht | die oma hupt im wald
+sparschwein das münzen spuckt | das schwein niest geld | ein sparschwein mit schluckauf | geldautomat im schweinestall
+geldbörse mit igelstacheln | igel als portemonnaie | die börse beißt zurück | igel im einkaufskorb
+adventskalender mit tresor | ein tresor voller plätzchen | der nikolaus knackt den safe | schokoladentresor
+ein schlitten mit sitzheizung | rodeln mit wärmflasche | der schlitten mit ofenrohr | sofa auf kufen
+ritterrüstung mit klimaanlage | ein ritter im kühlschrank | rüstung mit ventilator | der ritter schwitzt
+eine kuckucksuhr mit adler | adler im uhrenhaus | uhr mit papagei | der kuckuck ist zu groß
+gartenzwerg mit radar | ein gartenzwerg mit fernglas | gartenzwerg blitzt nachbarn | zwerg mit satellitenschüssel
+ein rasensprenger für kakteen | ein kaktus unter der dusche | gießkanne in der wüste | kaktus mit regenschirm
+hamsterrad mit steckdose | ein hamster als kraftwerk | der hamster lädt das handy | hamster schwitzt für strom
+sanduhr mit turbo | eieruhr mit motor | die zeit rennt davon | sanduhr mit staubsauger
+fliegenklatsche mit fernsteuerung | fliege mit fernbedienung | die fliegenklatsche fliegt | mückendrohne
+kinderwagen mit spoiler | ein buggy mit rennstreifen | baby im rennwagen | der kinderwagen tankt
+ein bügelbrett zum surfen | wellenreiten auf dem tisch | das bügelbrett geht baden | surfbrett mit bügeleisen
+fernglas für ameisen | eine ameise mit lupe | ameise auf dem aussichtsturm | die ameise sieht alles
+ein fernseher für fische | fische gucken krimi | das aquarium mit antenne | fisch im kino
+flaschenpost mit motor | flasche mit propeller | flaschenpost per eilboot | die flasche schwimmt schnell
+pizzaschneider für fußböden | ein riesiger pizzaroller | die küche wird geschnitten | rasenwalze mit messer
+eine milchschaumkanone | sahnespritze für riesen | der kaffee schäumt über | schaumparty in der küche
+salatschleuder als karussell | karussell aus küchengeräten | kopfsalat auf der kirmes | die salatschüssel dreht durch
+nudelholz mit raupenketten | eine dampfwalze für teig | plätzchen aus der walze | der teig wird überrollt
+eierkocher mit sprungschanze | ei beim skispringen | das frühstücksei hebt ab | ei mit fallschirm
+ein baukran für sandburgen | bagger im sandkasten | ein kran am strand | sandburg mit gerüst
+strandkorb mit rädern | strandkorb im stau | der liegestuhl fährt weg | strandkorb mit anhänger
+zelt mit kronleuchter | ein schloss im zelt | camping mit butler | kronleuchter im wald
+ein vogelhaus mit klingel | vogel mit hausschlüssel | der specht klopft an | vogelnest mit briefkasten
+fahrkartenautomat für tauben | taube kauft ein ticket | die taube fährt bahn | ein kaugummiautomat für spatzen
+ein koffer mit sattel | koffer als pferd | reiten am flughafen | der koffer galoppiert
+rückenkratzmaschine | bär am baum | rücken kratzen mit dem bagger | besen am rücken
+nasenklammer gegen stinkesocken | eine wäscheklammer für die socke | socke mit gasmaske | der schuh riecht
+schneebesen für echten schnee | schneefräse in der küche | sahne im winter | rührgerät auf der piste
+ein buch mit mund | das märchenbuch spricht | buch mit lautsprecher | oma ist ein hörbuch
+zauberstab mit ladebalken | zauberer muss aufladen | der zauberer hat keinen saft mehr | ein zauberstab mit kabel
+hexenbesen mit blinker | hexe biegt ab | besen mit rücklicht | die hexe im stau
+kürbiskutsche mit nummernschild | kürbis mit kennzeichen | die kutsche wird geblitzt | gemüse im straßenverkehr
+wanderstock mit würstchengrill | stockbrot beim wandertag | grillen auf der wanderung | ein schaschlik am spazierstock
+pilzsuchgerät | metalldetektor im wald | förster mit staubsauger | die pilze verstecken sich
+eine ampel für den flur | stau im treppenhaus | der flur hat vorfahrt | verkehrsschild im kinderzimmer
+kuscheltier mit fernbedienung | ferngesteuerter teddy | der teddy fährt weg | plüschhase mit antenne
+eine schaukel für kühe | kuh auf dem spielplatz | die kuh wippt | ein karussell für schafe
+rollschuhe für schildkröten | schildkröte auf rädern | rennschildkröte | panzer mit rollen
+regenrinne für tränen | eimer für heulsusen | ein weinender springbrunnen | taschentuch mit abfluss
+mütze die popcorn macht | hut voller popcorn | maiskolben auf dem kopf | kopf explodiert vor freude
 
 [power]
 mit pflanzen reden | dem kaktus geheimnisse erzählen | kakteen zum lachen bringen | blumen ansingen
@@ -700,65 +1893,195 @@ die zeit anhalten für ein nickerchen | wecker per gedankenkraft ausschalten | d
 hundegedanken lesen | die träume von katzen sehen | mit dem hund rollen tauschen | bellen in allen sprachen
 tauben herbeirufen | möwen verscheuchen | die sprache der spatzen | statue voller tauben
 ein umhang auf der wäscheleine | superheldenkostüm im trockner | die flagge eines geheimen landes | umhang fliegt davon
-teleportieren aber immer in die küche | beamen nur ins badezimmer | verschwinden vorm abwasch | ein koch taucht aus dem nichts auf
+teleportieren aber immer in die küche | beamen nur ins badezimmer | verschwinden vorm abwasch | koch taucht aus dem nichts auf
 gähnen das bösewichte umhaut | niesen pustet bösewichte weg | monster wegschnarchen | müde heldin rettet die stadt
 eine superheldentruppe aus omas | rockband aus opas | der geheime strickverein | bingoabend wird gestürmt
 laseraugen die nur toast machen | laseraugen für kerzen | ein toaster mit superkräften | feuer spucken für marshmallows
 bösewicht hasst geburtstage | der bösewicht zersticht luftballons | schurke klaut alle kuchen | geburtstagsparty im versteck
 das fotoshooting des unsichtbaren | familienfoto ohne familie | bewerbungsfoto vom geist | der leere bilderrahmen im museum
-dritter arm für snacks | ein zweiter kopf für hausaufgaben | schwanz hält die chips | roboterarm am sofa
+dritter arm für snacks | zweiter kopf für hausaufgaben | schwanz hält die chips | roboterarm am sofa
 ein held auf dem tretroller | ritter auf dreirad | superheld im einkaufswagen | der bösewicht auf rollschuhen
 supergehör in der schulkantine | spürnase beim mittagessen | das gerücht vom schulhof | ohren wie suppenteller
 umhang aus gardinen | rüstung aus kochtöpfen | gespenst aus bettlaken | kostüm aus omas schrank
 eine superkraft die keiner bemerkt | der held den niemand erkennt | heimlicher held im büro | applaus für den falschen
 böser plan mit wachsmalstiften | schatzkarte mit wachsmalstiften | der bauplan der kissenburg | kritzelei an der kinderzimmerwand
+regen machen nur über dem grill | gewitter über der gartenparty | die wolke folgt dem papa | würstchen im platzregen
+hausmeister mit frostblick | der hausmeister mit taschenlampe | eiszapfen im schulflur | heizung per blick reparieren
+mit socken sprechen | socken streiten in der waschmaschine | die einsame socke | handpuppe erzählt witze
+spinat in schokolade verwandeln | brokkoli wird zu eis | ein zauberer am mittagstisch | das kind schummelt beim gemüse
+gummibeine beim wandertag | der lehrer auf stelzen | giraffe beim schulausflug | der längste schüler der welt
+wolken kneten | wolkenschaf auf der weide | himmel aus zuckerwatte | bildhauer im himmel
+eine oma die blitzschnell strickt | pullover in einer sekunde | die strickmaschine qualmt | wollknäuel auf der flucht
+magnetfinger im besteckkasten | gabeln kleben an der hand | ein roboter beim abwasch | der löffel verbiegt sich
+erdbeben durch schluckauf | der hicks lässt das haus wackeln | riese mit schluckauf | vulkan hat bauchweh
+kiemen nur in der badewanne | taucher in der wanne | goldfisch im schaumbad | schnorcheln im waschbecken
+spaghetti schweben lassen | die gabel tanzt allein | nudeln fliegen durch die küche | ein zauberer im restaurant
+beim versteckspiel zur stehlampe werden | das kind hinter dem vorhang | lampe mit turnschuhen | der schrank hat füße
+der weihnachtsmann kann sich klonen | hundert weihnachtsmänner am kamin | elf im kopierer | der stau im schornstein
+finger als wasserpistole | der gärtner gießt mit dem finger | ein elefant spritzt | wasserschlacht im büro
+bananen mit blicken schälen | affe mit laserblick | die banane zieht sich aus | obstsalat per gedankenkraft
+mein staubsauger ist mein bester freund | der staubsauger frisst die socke | ein roboter mit rüssel | elefant putzt das wohnzimmer
+schneebälle aus den ohren schießen | schneemann mit kanone | die ohren voller schnee | schneeschlacht im garten
+ein lehrer mit augen im hinterkopf | eine lehrerin mit brille im nacken | der schüler schummelt | eule an der tafel
+kekse herbeipfeifen | die oma pfeift nach plätzchen | hund bringt kekse | keksregen im wohnzimmer
+die heldin mit dem laubbläser | ein hausmeister im herbststurm | blätter fliegen davon | die frisur im wind
+fernsehen ohne fernseher | bilder an der wand träumen | kinoabend im kopf | der leere sessel
+an der decke schlafen | eine fledermaus im schlafanzug | das bett hängt oben | opa macht handstand
+panzer wie eine schildkröte | der held im rucksack | schildkröte im ritterkostüm | rüstung aus salatschüsseln
+trifft immer beim schützenfest | der schützenkönig mit augenklappe | rose vom schießstand | teddybär als hauptgewinn
+pfandflaschen aufspüren | ein flaschensammler mit radar | der hund findet flaschen | schatzsuche im park
+mama findet alles sofort | der schlüssel im kühlschrank | papa sucht die brille | detektivin mit lupe
+der ball gehorcht aufs wort | fußball an der leine | torwart schläft im tor | der ball folgt dem hund
+regenwürmer kommandieren | eine armee aus würmern | der wurm salutiert | maulwurf als general
+unendlich viele hosentaschen | die cargohose des jahres | känguru mit beutel | zauberer zieht ein kaninchen
+schnee schmilzt unter meinen füßen | fußspuren im matsch | drache im schnee | feuer in den stiefeln
+der briefträger ist überall gleichzeitig | ein briefträger mit flügeln | die post fliegt allein | briefe regnen vom himmel
+mücken prallen an mir ab | kraftfeld im zelt | die mücke mit helm | camping im glaskasten
+zwiebeln schneiden ohne weinen | ein koch mit taucherbrille | die zwiebel weint | tränen im kochtopf
+kühe verstehen | die kuh erzählt witze | bauer mit kopfhörern | kaffeeklatsch im kuhstall
+die heldin auf dem lastenrad | lastenrad voller kinder | der postbote auf dem dreirad | familie auf dem tandem
+die prinzessin spürt jede erbse | prinzessin auf hundert matratzen | die erbse unterm bett | hochbett im schloss
+kitzelstrahl gegen drachen | der lachende drache | ein ritter mit feder | feder als waffe
+der pharao faltet pyramiden | pyramide aus papier | das origami des königs | mumie bastelt
+siebenmeilenstiefel beim wandertag | die klasse bleibt zurück | riesenschritte über den berg | lehrerin mit riesenstiefeln
+die klasse auf pause stellen | fernbedienung für schüler | ein lehrer mit stoppuhr | alle erstarren beim tanzen
+dinos beruhigen | ein kind streichelt den saurier | schlaflied für den drachen | der zahme dino im garten
+die zahnfee mit superkräften | zahn mit flügeln | maus unterm kopfkissen | die zahnbürste fliegt
+alle schlüssel fliegen zu mir | der schlüsselbund als magnet | ein mann voller schlüssel | schlüsseldienst kommt zu spät
+riesige seifenblasen als gefängnis | der räuber in der seifenblase | hund in der blase | blase fliegt davon
+kopfrechnen schneller als ein computer | taschenrechner im kopf | zahlen fliegen aus den ohren | die schülerin besiegt den roboter
+jede versteckte nuss wiederfinden | eichhörnchen mit landkarte | die nuss im blumentopf | der vergessliche schatzsucher
+lachen lässt blumen blühen | die blumenwiese kichert | eine sonnenblume lacht | frühling auf knopfdruck
+beim lachen kommen schmetterlinge raus | mund voller schmetterlinge | die raupe auf der zunge | bienen im kinderzimmer
+mein opa fängt blitze | der opa mit dem blitzableiter | ein angler im gewitter | blitze im einmachglas
+der tourist versteht alle sprachen | ein dolmetscher am strand | tourist mit wörterbuch | sprechblasen am bahnhof
+immer die erste liege am pool | handtücher auf allen liegen | der wecker am pool | sprint zum liegestuhl
+ein bauer fliegt mit dem traktor | der traktor im heißluftballon | heuhaufen am himmel | die kuh im cockpit
+der torwart wird zur wand | ein torwart aus backsteinen | die mauer im tor | ball prallt ab
+der regen schmeckt nach limo | kinder trinken aus pfützen | glas im regen | die limonadenwolke
+die kraft der hühnersuppe | oma kocht zaubersuppe | der kranke held im bett | dampf als umhang
+die neun leben eines katers | neun katzen im korb | kater mit heiligenschein | der kater im krankenhaus
+handy laden durch handauflegen | eine heldin als steckdose | der akku mit herz | strom aus den fingern
+das wlan riechen | hund schnüffelt am router | die nase als antenne | der beste platz im haus
+in bilder hineinspazieren | ein mann im gemälde | der rahmen ohne bild | ausflug ins landschaftsbild
+die pausenklingel herbeizaubern | schüler läuten selbst | der hausmeister schläft | glocke mit flügeln
+die stimme lässt kuchen aufgehen | der singende bäcker | kuchen explodiert | oper in der backstube
+eltern auf taschenformat schrumpfen | mama in der hosentasche | papa im puppenhaus | familie in der streichholzschachtel
+über jeden zaun hüpfen | ein känguru im nachbargarten | der zaun ist zu klein | hund flieht über die hecke
+der goldfisch merkt sich alles | fisch mit notizblock | das aquarium als bibliothek | der weise goldfisch
 
 [then]
 höhlenmensch mit selfiestick | höhlenmensch mit angelrute | der urmensch filmt sein mammut | gruppenfoto in der steinzeit
 ein pharao am autoschalter | mumie tankt | pharao in der waschanlage | der könig am fahrkartenschalter
 wikinger bestellt latte | wikinger beim kaffeekränzchen | ritter bestellt einen kakao | ein seefahrer in der eisdiele
-ritter im stau | ein ritter im parkhaus | ritterparade auf der autobahn | ritter mit warndreieck
+ritter im stau | ritter im parkhaus | ritterparade auf der autobahn | ritter mit warndreieck
 die allererste pizzalieferung | erste tortenlieferung | erfindung des pizzakartons | die erste brieftaube mit paket
 dino lernt tippen | dinosaurier lernt klavier | krokodil an der schreibmaschine | dino schreibt bewerbungen
 höhlenmensch erfindet das eckige rad | erfindung des würfels | der urmensch baut das erste fahrrad | reifenwechsel in der steinzeit
 streitwagen mit plattfuß | streitwagen in der werkstatt | ein pferdewagen mit warnblinker | gladiator wechselt den reifen
-ritterburg mit wlan | eine burg mit fahrstuhl | burgturm mit funkmast | die ritterburg mit klimaanlage
+ritterburg mit wlan | burg mit fahrstuhl | burgturm mit funkmast | die ritterburg mit klimaanlage
 ein piratenschiff mit navi | piratenschiff mit rückspiegel | schatzkarte als app | ein wikingerboot mit blinker
 mona lisa in der mittagspause | mona lisa macht ein nickerchen | museumswärter beim pausenbrot | die mona lisa auf diät
-cowboy auf elektroroller | cowboy auf dem skateboard | ein sheriff auf dem tretroller | cowboy reitet einen staubsauger
+cowboy auf elektroroller | cowboy auf dem skateboard | sheriff auf dem tretroller | cowboy reitet einen staubsauger
 erster biss in eine zitrone | der erste schluck schwarzer kaffee | biss in eine chilischote | höhlenmensch probiert senf
 olympische spiele der steinzeit | die bundesjugendspiele der römer | steinzeitmarathon mit mammut | höhlenmenschen beim weitwurf
 mammut am badestrand | ein mammut im freibad | elefant im liegestuhl | mammut mit sonnenbrand
 zukunftsroboter im museum | roboter aus der zukunft im zoo | roboter bestaunt eine dampflok | außerirdischer im heimatmuseum
 ein zauberer mit laptop | zauberer mit taschenrechner | magier beim onlinekurs | der zauberer mit zauberbuch
-klingel an der zugbrücke | ein briefkasten am burggraben | türspion im burgtor | fußmatte vor der ritterburg
+klingel an der zugbrücke | briefkasten am burggraben | türspion im burgtor | fußmatte vor der ritterburg
 samurai im supermarkt | samurai an der käsetheke | ein ninja im baumarkt | samurai schneidet gemüse
 ein dinosaurier besucht sein skelett | dino im naturkundemuseum | dinosaurier beim röntgenarzt | ein hund findet einen riesenknochen
 neandertaler beim barbier | neandertaler beim zahnarzt | yeti beim hundefriseur | der neandertaler beim tätowierer
-astronaut im mittelalter | astronaut beim ritterturnier | ein taucher im mittelalter | ritter auf dem mond
+astronaut im mittelalter | astronaut beim ritterturnier | taucher im mittelalter | ritter auf dem mond
 ein gladiator im schaumbad | gladiator in der sauna | ritter im whirlpool | ein römer hat waschtag
 die erfindung der gabel | erfindung des kammes | der erste teller spaghetti | neptun beim abendessen
 hofnarr im meeting | hofnarr im großraumbüro | clown in der chefetage | könig bei der videokonferenz
-pyramide aus bauklötzen | pyramide aus zuckerwürfeln | ein pharao spielt mit bauklötzen | die sphinx im kinderzimmer
+pyramide aus bauklötzen | pyramide aus zuckerwürfeln | pharao spielt mit bauklötzen | die sphinx im kinderzimmer
 griechische statue beim joggen | eine griechische statue beim yoga | römische säule läuft marathon | standbild auf dem laufband
 erste ampel im wilden westen | das erste stoppschild im wilden westen | blitzer im wilden westen | sheriff regelt den verkehr
 ein roboter im alten rom | roboter auf der akropolis | staubsauger im alten rom | der ritter im alten rom
 höhlenmalerei mit pizza | höhlenmalerei mit hamburger | höhlenmalerei mit ufo | urmensch malt sein abendessen
-zeitreisender verpasst den bus | zeitreisender verpasst die kutsche | der ritter verpasst den bus | ein zeitreisender kommt zu früh
+zeitreisender verpasst den bus | zeitreisender verpasst die kutsche | der ritter verpasst den bus | zeitreisender kommt zu früh
 goethe mit kopfhörern | minnesänger mit mikrofon | ein mönch mit ohrenschützern | barockdichter am mischpult
 ritter beim tüv | pferd beim tüv | ritter beim ölwechsel | rüstung beim schmied
+die mumie beim wandertag | mumie auf klassenfahrt | ein verletzter beim wandertag | gespenst beim schulausflug
+ein ritter im autoscooter | ritter im kettenkarussell | ein ritter im riesenrad | rüstung in der geisterbahn
+wikinger am pfandautomaten | wikinger bringt leergut weg | pirat am pfandautomaten | der wikinger am fahrkartenautomaten
+ein römer beim schützenfest | römische soldaten im festzelt | ein legionär am schießstand | gladiatoren beim volksfest
+eine hexe mit laubbläser | hexe mit föhn | eine hexe mit rasenmäher | hexe fegt den hof
+burgfräulein unter der trockenhaube | burgfräulein mit lockenwicklern | eine prinzessin beim friseur | königin im astronautenhelm
+mönch schreibt eine sms | mönch schreibt mit federkiel | mönch mit taschenrechner | der mönch liest zeitung
+ein pirat mit rollkoffer | pirat mit schatzkiste | ein seemann mit seesack | pirat am gepäckband
+die erste fernbedienung | fernbedienung aus stein | der allererste taschenrechner | erfindung des lichtschalters
+der kaiser beim elternabend | ein könig in der schulbank | kaiser auf dem kinderstuhl | herrscher beim zeugnistag
+ein dodo im streichelzoo | dodo im vogelpark | ein truthahn im streichelzoo | dodo auf dem bauernhof
+eine sonnenuhr im keller | sonnenuhr bei nacht | eine uhr im kohlenkeller | sonnenuhr mit taschenlampe
+rauchzeichen mit smileys | rauchzeichen als gruppenchat | lagerfeuer lacht | wolken mit gesichtern
+eine postkutsche in der waschstraße | ein pferd unter der dusche | heuwagen in der waschstraße | die kutsche im regen
+alchemist mit mikrowelle | alchemist am backofen | zauberer mit toaster | hexenküche mit kochplatte
+druiden im gartencenter | druiden pflanzen bäume | gärtner kaufen misteln | ein druide mit schubkarre
+die sphinx beim quiz | sphinx beim kreuzworträtsel | eine katze beim quiz | löwe in der quizshow
+ein spartaner im fitnessstudio | spartaner auf dem laufband | soldat beim bankdrücken | ein krieger beim hanteltraining
+legionär mit sonnencreme | legionär am pool | soldat cremt sich ein | römer mit sonnenschirm
+hieroglyphen als einkaufszettel | hieroglyphen auf dem kühlschrank | bilderrätsel am kühlschrank | der pharao schreibt einen zettel
+steintafel mit touchscreen | eine steintafel mit ladekabel | keilschrift auf dem tablet | tablet aus lehm
+nachtwächter mit stirnlampe | nachtwächter mit taschenlampe | ein bergmann mit stirnlampe | laternenmann auf streife
+musketier im kindergarten | musketier beim kinderturnen | degen aus schaumstoff | fechter im sandkasten
+eine dampflok mit spoiler | dampflok mit flügeln | ein rennwagen mit schornstein | die eisenbahn mit heckflosse
+kanonenkugel beim kegeln | piraten beim kegeln | bombe auf der kegelbahn | ritter beim bowling
+steinzeitfamilie beim grillen | steinzeitfamilie am lagerfeuer | höhlenmenschen grillen würstchen | ein mammutsteak auf dem grill
+raubritter kassiert maut | raubritter mit blitzer | zöllner an der schranke | ritter an der mautstation
+der hofkoch macht pommes | hofkoch an der fritteuse | ein koch frittiert ein schwein | der burgkoch macht pfannkuchen
+schmied repariert handys | schmied mit smartphone | hufschmied am laptop | schmied schmiedet einen schlüssel
+fackel mit ladekabel | fackel an der steckdose | eine kerze mit ladekabel | taschenlampe mit flamme
+brieftauben im paketzentrum | brieftauben am fließband | taube sortiert pakete | tauben in der poststelle
+grammophon in der disco | grammophon im stadion | grammophon mit discokugel | tanzende oma mit schallplatte
+ein teenager mit wählscheibentelefon | jugendlicher mit festnetztelefon | ein kind mit kurbeltelefon | schüler telefoniert mit dosen
+diskette als untersetzer | diskette als fliese | kassette als untersetzer | tasse auf einer diskette
+die königin auf dem trampolin | eine königin auf der hüpfburg | prinz auf dem trampolin | königin springt seil
+ein minnesänger beim karaoke | minnesänger beim casting | ein barde im tonstudio | ritter singt unter der dusche
+puderperücke beim bungeesprung | perücke beim fallschirmsprung | ein adliger auf der achterbahn | perücke fliegt davon
+landsknechte beim ballett | landsknechte beim tanzkurs | soldaten im tutu | landsknecht auf spitzenschuhen
+kelten auf dem campingplatz | kelten beim picknick | ein krieger mit luftmatratze | wanderer im kettenhemd
+pferdekutsche mit blaulicht | krankenwagen mit pferden | kutsche mit sirene | feuerwehr mit pferdegespann
+eine rüstung in der waschmaschine | kettenhemd im schleudergang | ein ritter wäscht seine rüstung | topfdeckel in der waschmaschine
+lanzenturnier auf steckenpferden | kinder reiten steckenpferde | ein turnier auf schaukelpferden | ritterspiele im kindergarten
+neandertalerin an der kasse | urmensch zahlt mit muscheln | höhlenfrau auf dem flohmarkt | neandertalerin mit einkaufswagen
+ein sarkophag als wasserbett | sarkophag als badewanne | eine mumie im wasserbett | badewanne als himmelbett
+minotaurus im maislabyrinth | stier im maisfeld | minotaurus im spiegelkabinett | kuh im heckenlabyrinth
+medusa beim friseur | medusa mit lockenwicklern | medusa beim haarekämmen | ein schlangennest auf dem kopf
+höhlenkind mit schultüte | einschulung in der höhle | dino mit schultüte | steinzeitkind mit eistüte
+galeere mit außenbordmotor | galeere mit propeller | ein ruderboot mit motor | römerschiff mit tretpedalen
+katapult am flughafen | katapult wirft koffer | katapult als paketdienst | kran am flughafen
+eine sänfte im parkverbot | kutsche im halteverbot | eine sänfte im stau | königin wird abgeschleppt
+schlossgespenst im homeoffice | schlossgespenst am laptop | gespenst bei der videokonferenz | geist im büro
+burgwache mit warnweste | wachmann mit warnweste | ein ritter als schülerlotse | lotse in rüstung
+kaiserkrone als fahrradhelm | krone mit fahrradlicht | könig auf dem fahrrad | fahrradhelm mit zacken
+reifrock in der drehtür | reifrock im drehkreuz | eine prinzessin steckt in der tür | ballkleid im aufzug
+rittersaal mit bällebad | festsaal mit hüpfburg | thronsaal voller luftballons | bällebad im burgverlies
+saloontür mit bewegungsmelder | saloontür mit klingel | automatiktür im saloon | eine schwingtür mit türsteher
+ein goldgräber findet kronkorken | goldgräber findet eine münze | ein goldwäscher mit metalldetektor | goldgräber findet plastikspielzeug
+karawane an der ampel | kamele an der bushaltestelle | karawane am zebrastreifen | eine kamelherde im kreisverkehr
+kerker mit notausgangsschild | verlies mit wegweiser | gefängnis mit rutsche | kerker mit fluchtplan
+sanduhr am handgelenk | eine sanduhr als halskette | kompass am handgelenk | ritter schaut auf die sanduhr
+der burgturm mit rutsche | burgturm mit rolltreppe | ein turm mit wasserrutsche | prinzessin auf der rutsche
+ein müller im hamsterrad | hamster treibt die mühle an | ein bäcker im laufrad | mühlrad mit hamstern
+ein flugsaurier im landeanflug | flugsaurier auf der landebahn | ein drache am flughafen | flugsaurier mit fahrwerk
+amphore als thermoskanne | amphore mit trinkhalm | eine vase als gießkanne | römer mit kaffeebecher
+toga mit krawatte | toga mit fliege | bettlaken mit krawatte | römer im büro
+kettenhemden im sonderangebot | kettenhemden auf dem flohmarkt | rüstung zum halben preis | ritter beim umtausch
 
 [scene]
 opas erster videoanruf | oma macht ihr erstes selfie | opa redet mit dem fernseher | der enkel erklärt das tablet
 ein familienfoto im falschen moment | urlaubsfoto mit fremdem daumen | der selbstauslöser ist zu schnell | papa niest beim gruppenbild
 kleinkind leitet die besprechung | baby im vorstellungsgespräch | der chef bringt sein kind mit | baby hält die weihnachtsrede
-alle blinzeln beim klassenfoto | ein klassenfoto bei dem alle schlafen | ganze klasse beim augenarzt | chor singt falsch
+alle blinzeln beim klassenfoto | klassenfoto bei dem alle schlafen | ganze klasse beim augenarzt | chor singt falsch
 die hochzeitstorte kippt | geburtstagstorte schmilzt | brautpaar rutscht aus | der pfannkuchenturm fällt um
 zelten im dauerregen | camping bei hochwasser | ein picknick im wolkenbruch | zelt steht im see
 einkaufswagen fährt nur nach links | rollator fährt nur rückwärts | kinderwagen mit eigenem willen | einkaufswagen auf talfahrt
 grillen im hagel | picknick im schneesturm | sonnenbaden bei gewitter | die würstchen unterm schirm
 eine ziege auf dem rücksitz | schaf im kofferraum | hund lernt autofahren | die ziege fährt in den urlaub
-hund im feinen restaurant | katze in der oper | ein wolf beim ersten date | dackel bestellt kaviar
+hund im feinen restaurant | katze in der oper | wolf beim ersten date | dackel bestellt kaviar
 die erste fahrstunde | erster tag als taxifahrer | erste ausfahrt mit dem traktor | der fahrlehrer schreit
 feueralarm im schlafanzug | nachtwanderung in pantoffeln | probealarm in der badewanne | der rauchmelder piept nachts
 umzug mit klavier | umzug mit aquarium | klavierstunde im treppenhaus | die neue couch passt nicht
@@ -766,14 +2089,14 @@ schrank aufbauen ohne anleitung | bettaufbau mit falschen schrauben | eine schra
 ein haarschnitt vom kleinkind | haare schneiden im wackelnden bus | der hund war beim friseur | papa schneidet sich selbst die haare
 der drucker frisst das zeugnis | drucker frisst den liebesbrief | kopierer spuckt nur konfetti | der aktenvernichter hat hunger
 pyjamaparty ohne schlaf | kissenschlacht um mitternacht | schlafsack für drei kinder | gruselgeschichten im dunkeln
-katze läuft über die tastatur | eine katze schläft auf dem laptop | hamster spielt klavier | die katze mailt dem chef
+katze läuft über die tastatur | katze schläft auf dem laptop | hamster spielt klavier | die katze mailt dem chef
 schafe blockieren den feldweg | kühe auf der autobahn | ein schäfer im stau | herde will nicht über die brücke
 papa tanzt auf dem schulfest | opa tanzt auf der hochzeit | vater gewinnt beim sackhüpfen | der lehrer singt karaoke
 ein waschbär auf dem hochzeitsfoto | ein fuchs auf dem klassenfoto | eichhörnchen klaut den brautstrauß | dieb mit maske beim festmahl
 oma zockt alle ab | omas großer bingosieg | opa schummelt beim skat | der spieleabend eskaliert
 stromausfall beim kindergeburtstag | die kerzen gehen nicht aus | gruselparty bei kerzenlicht | zauberer macht das licht aus
 ein tourist mit riesiger landkarte | wanderer hat sich verlaufen | tourist im falschen land | ein urlauber mit zu großem koffer
-babys erste schritte | erste schritte auf dem mond | ein pinguin lernt laufen | baby flieht vor dem bad
+babys erste schritte | erste schritte auf dem mond | pinguin lernt laufen | baby flieht vor dem bad
 eine möwenbande am strand | taubenbande am bahnhof | die möwen planen den überfall | strandkorb voller krebse
 schlange an der einzigen kasse | stau vor der einzigen toilette | alle wollen das letzte brötchen | warten auf dem amt
 die einkaufstüte reißt vor der haustür | eier fallen im treppenhaus runter | schlüssel liegt in der einkaufstüte | der schirm klappt vor dem bus um
@@ -784,3 +2107,73 @@ ausgesperrt im bademantel | postbote kommt im handtuch | im morgenmantel zum bä
 nachbar mäht sonntags den rasen | der nachbar saugt um mitternacht | opa schneidet die hecke zu kurz | rasenmäher läuft von allein
 die bahn hat wieder verspätung | zug hält auf freier strecke | bahnsteig voller pendler | die straßenbahn fällt wieder aus
 vier mülltonnen und ein joghurtbecher | drei kochtöpfe und ein ei | mülltag wieder verpasst | ein roboter aus mülltonnen
+kaugummi in den haaren | kleber im bart | honig im fell der katze | die schere muss ran
+auf frische farbe gesetzt | hose klebt an der bank | gestreifter po | maler streicht den gast mit
+nudeln kleben an der decke | spaghetti am kronleuchter | papa testet die nudeln | ein pfannkuchen an der lampe
+lichterkette völlig verknotet | knäuel aus kabeln | wolle nach dem kätzchen | papa im kabelsalat
+schneemann verliert die nase | ein hase klaut die möhre | der schneemann schmilzt | schneemann ohne kopf
+schlitten landet im bach | rodeln in den gartenzaun | bob im eisloch | der schlitten fährt allein
+blasen am wandertag | wandern in neuen schuhen | ein pflaster an jedem zeh | lehrer trägt den rucksack
+nach dem karussell ist allen schlecht | kettenkarussell im sturm | grüne gesichter auf der kirmes | die achterbahn bleibt stehen
+toaster schießt den toast an die decke | toast fliegt aus dem fenster | brot als ufo | der toaster spielt tennis
+die waschmaschine wandert | waschmaschine tanzt im keller | der trockner hüpft | schrank auf rädern
+rote socke in der weißwäsche | ein rosa hochzeitskleid | papas hemd ist jetzt pink | wäsche voller farbe
+ein vogel kackt auf den hut | die taube trifft den bräutigam | klecks auf der glatze | vogel landet auf der frisur
+elternabend auf winzigen stühlen | papa auf dem kinderstuhl | riesen im kindergarten | lehrer auf dem dreirad
+sonnenbrand mit brillenabdruck | ein panda am strand | eule mit sonnenbrand | brille auf rotem gesicht
+tor ins eigene netz | torwart fängt eine taube | der schiri wird abgeschossen | die fans jubeln zu früh
+drachen hängt im baum | drache sitzt in der eiche | papa klettert hinterher | luftballon im geäst
+schnecken fressen den salat | raupen im kohl | ein hase im gemüsegarten | die gärtnerin weint
+maulwurf im fußballrasen | maulwurf beim golf | der platzwart rauft sich die haare | hügel auf dem spielfeld
+papa verbrennt die pfannkuchen | mama backt kohlen | rauchzeichen aus der küche | der rauchmelder jubelt
+dachbox geht auf der autobahn auf | koffer fliegen über die straße | unterhosen im fahrtwind | der kofferraum ist offen
+baby schreit im flugzeug | kleinkind brüllt im zug | der pilot singt schlaflieder | ein flug voller babys
+mein koffer kommt nicht | einsamer koffer auf dem band | mein gepäck ist in rom | das falsche gepäck abgeholt
+hotelzimmer mit blick auf die mauer | ein balkon zur baustelle | meerblick nur mit fernglas | das zimmer ist eine besenkammer
+ein handtuch auf jeder liege | liegestuhl als wäscheleine | der pool ist voller luftmatratzen | schlacht um den sonnenschirm
+die weihnachtsgans ist verkohlt | die gans hat sonnenbrand | der truthahn rennt weg | rauchwolken beim festessen
+das osterei wird im sommer gefunden | ein osterhase vergisst das versteck | schokoei im blumentopf | das nest ist leer
+silvesterrakete fliegt zur seite | rakete im briefkasten | böller im schneeball | wunderkerze am hosenbein
+einziger verkleideter im büro | ein pirat in der sitzung | clown beim zahnarzt | der hase beim chef
+die fahrradkette springt ab | ölverschmierte hände | platter reifen am berg | das rad kommt alleine an
+frisch gebadeter hund im matsch | ein schwein in der pfütze | der hund wälzt sich im mist | sauberes kind im sandkasten
+katze bringt eine maus ins bett | die katze schenkt einen vogel | maus im pantoffel | frühstück von der katze
+pferd frisst den strohhut | esel klaut die mütze | ziege frisst die zeitung | das pony knabbert am zopf
+opa auf dem trampolin | oma auf der hüpfburg | ein rentner springt zu hoch | dackel auf dem trampolin
+aschenputtel verliert beide schuhe | die prinzessin hinkt nach hause | schuh auf der treppe | prinz sammelt socken
+der elfmeter landet im publikum | ein ball im würstchenstand | der fan fängt den ball | torwart hechtet ins leere
+explosion im chemieunterricht | der lehrer hat keine augenbrauen | rauch aus dem klassenzimmer | vulkan im kunstunterricht
+die kaffeemaschine ist kaputt | alle stehen vor dem automaten | der chef schläft am schreibtisch | schlange vor der teekanne
+fenster putzen und dann regnet es | auto gewaschen und es hagelt | ein regenbogen am fenster | die scheibe ist dreckiger als vorher
+ein puzzleteil fehlt | das letzte stück passt nicht | der hund frisst das puzzle | puzzle aus lauter himmel
+angler fängt einen stiefel | fischer fängt eine socke | der haken hängt im baum | die angel fängt den hut
+der rasensprenger beim gartenfest | die gäste werden nass | der springbrunnen spinnt | wasserschlauch im festzelt
+kaktus beim umtopfen | ein igel im blumentopf | die handschuhe voller stacheln | rose sticht den gärtner
+schuhe am falschen fuß | socken über den schuhen | clown mit riesenschuhen | kind läuft wie eine ente
+die laterne brennt beim martinszug | eine fackel beim umzug | martinsgans auf der flucht | kürbis fängt feuer
+der adventskranz brennt | die feuerwehr am heiligabend | kuchen mit fackeln | opa löscht mit dem tee
+die zahnfee findet den zahn nicht | eine fee unterm kissen | der zahn liegt im kakao | die fee braucht eine taschenlampe
+die torte landet im gesicht | sahnekuchen trifft den clown | schaum im gesicht des chefs | eine pizza auf der nase
+ein presslufthammer am sonntagmorgen | bagger weckt die familie | specht am bettpfosten | der wecker ist ein bohrer
+selbstbedienungskasse piept ständig | der scanner hasst mich | ein roboter an der kasse | opa kämpft mit dem automaten
+kind wirft sich im supermarkt hin | trotzanfall vor dem süßigkeitenregal | papa liegt im gang | kleinkind im quengelgang
+der fahrstuhl bleibt stecken | kabine voller nachbarn | das licht geht im lift aus | hausmeister kurbelt
+wieder nur socken zu weihnachten | der dritte toaster zum geburtstag | ein pullover mit rentier | opa freut sich über krawatten
+der ventilator weht alles weg | föhn im büro | die zettel fliegen davon | wind im klassenzimmer
+empfang nur auf dem dach | ein mann auf dem schornstein | antenne auf dem kopf | opa telefoniert vom baum
+der stuhl bricht beim abendessen | gast kracht durch die bank | opa sitzt plötzlich auf dem boden | die gartenbank gibt nach
+planschbecken voller frösche | ein teich im kinderpool | frösche beim schwimmkurs | die kröten machen poolparty
+senf statt zahnpasta | mayo auf der zahnbürste | papa putzt mit creme die zähne | die tube war die falsche
+kind bemalt die wände | kunstwerk im flur | tapete mit tigermuster | die kleine schwester malt den hund an
+die dusche wird eiskalt | ein pinguin unter der dusche | badewanne voller eiswürfel | eiszapfen unter der brause
+kartenhaus und ein niesen | dominosteine fallen zu früh | kater wirft den kartenturm um | ein windstoß im kartenspiel
+die plätzchen sind steinhart | oma beißt sich am keks die zähne aus | ein lebkuchen als ziegelstein | kekse zum hämmern
+alle rutschen auf glatteis | eislaufen auf dem gehweg | der postbote macht pirouetten | eine rentnergruppe auf schlittschuhen
+ameisen stürmen die gartenparty | ameisenstraße zum kuchenbuffet | die ameisen tragen das sandwich weg | käfer auf dem käsebrett
+ein bienenschwarm im briefkasten | wespennest im vogelhaus | der briefträger flieht vor bienen | honig in der post
+die rutsche ist zu heiß | spiegelei auf dem spielplatz | der sandkasten glüht | barfuß über den heißen strand
+wasserbett ist undicht | springbrunnen im schlafzimmer | matratze schwimmt im zimmer | rohrbruch über dem bett
+im maislabyrinth verloren | eine familie im hohen gras | drei kinder im kornfeld | panik im heckenirrgarten
+geranien fallen vom balkon | blumentopf auf dem kopf | petunien springen in die tiefe | der balkonkasten kippt
+brot mit grünem fell | ein haariger käse | vergessener pausensnack | ein brot im tarnanzug
+das chili ist viel zu scharf | feuer aus dem mund | der gast trinkt die blumenvase leer | drache beim abendessen

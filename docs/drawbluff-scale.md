@@ -204,45 +204,53 @@ only one of its line with (or without) a leading article.
 
 | | prompts (en) | decoys (en) | prompts (de) | decoys (de) |
 |---|---|---|---|---|
-| a leading article | 85 % → 27 % | 88 % → 29 % | 78 % → 30 % | 81 % → 31 % |
-| the commonest first word | "a" 56 % → 14 % | "a" 67 % → "the" 14 % | "ein" 41 % → 10 % | "ein" 44 % → "der" 10 % |
-| at most three words | 13 % → 27 % | 9 % → 26 % | 26 % → 49 % | 19 % → 49 % |
-| words on average | 5.0 → 4.3 | 5.3 → 4.3 | 4.2 → 3.5 | 4.3 → 3.5 |
+| a leading article | 85 % → 31 % | 88 % → 33 % | 78 % → 33 % | 81 % → 35 % |
+| the commonest first word | "a" 56 % → 17 % | "a" 67 % → "the" 18 % | "ein" 41 % → 9 % | "ein" 44 % → 10 % |
+| at most three words | 13 % → 31 % | 9 % → 26 % | 26 % → 48 % | 19 % → 49 % |
+| words on average | 5.0 → 4.2 | 5.3 → 4.2 | 4.2 → 3.6 | 4.3 → 3.6 |
 
-The forms were rewritten by model agents per structure (the prompt's
-idea and drawing kept, the decoys still lies for the same drawing),
-reviewed by another pass, then linted; the adult files the same
-(English 23 % and 25 % with an article now, German 28 % and 29 %).
+(Now: the tripled files, below.) The forms were rewritten by model
+agents per structure (the prompt's idea and drawing kept, the decoys
+still lies for the same drawing), reviewed by another pass, then
+linted; the adult files the same (English 31 % and 32 % with an
+article now, German 31 % and 35 %).
 
 ### Prompts
 
 The first prompts were all one shape ("a nervous cactus": an adjective
 and a thing, or a thing in a place): quick to draw, quick to guess, and
 the lies all sounded alike. Then `data/prompts.txt` had 407 prompts in
-ten structures; now 665 in 17, and German has its own 698 in 18
-(`data/prompts.de.txt`, below), so a round mixes kinds of drawing and
-kinds of lie:
+ten structures, then 665 in 17, and German has its own (698 in 18,
+`data/prompts.de.txt`, below), so a round mixes kinds of drawing and
+kinds of lie. With up to 5 rounds a game the lists were tripled: 1993
+in English, 2091 in German, and 873 and 885 adult ones (291 and 295
+before), the new ones written per structure by model agents beside
+the old ones (new subjects; none a near duplicate of any prompt, none
+like a prompt or decoy of the file or, for the adult ones, of the
+family list), in the forms of players' lies, then reviewed by another
+pass (grammar, drawable, decoys that are not the prompt reworded) and
+linted:
 
 | Tag | Structure | Example | Prompts (en) | (de) |
 |---|---|---|---|---|
-| `odd` | odd combinations | lonely lighthouse at a party | 46 | 47 |
-| `idiom` | idioms taken literally | raining cats and dogs | 50 | 61 |
-| `wort` | German compounds taken literally | glückspilz | – | 46 |
-| `feeling` | abstract ideas and feelings | fear of mondays | 42 | 39 |
-| `moment` | the moment when … | the moment the ice cream falls | 38 | 38 |
-| `secret` | the secret lives of things | what my fridge does at night | 43 | 34 |
-| `invented` | invented jobs, sports, holidays | a puddle inspector | 40 | 37 |
-| `contra` | misleading or contradictory pairs | shy fireworks show | 42 | 42 |
-| `view` | an unusual point of view | the world seen by an ant | 42 | 35 |
-| `drama` | tiny dramas | last cookie standoff | 43 | 38 |
-| `title` | famous-sounding invented titles | the phantom of the bakery | 43 | 39 |
-| `animal` | animals with human problems | cat filing its taxes | 38 | 38 |
-| `food` | food with a life of its own | soup that fights back | 35 | 36 |
-| `place` | places that should not exist | a school for baby dragons | 33 | 34 |
-| `gadget` | inventions nobody needs | hat that waters your plants | 33 | 34 |
-| `power` | useless superpowers | sneezing glitter | 33 | 32 |
-| `then` | history mixed up | caveman with a selfie stick | 32 | 33 |
-| `scene` | everyday scenes gone wrong | grandpa's first video call | 32 | 35 |
+| `odd` | odd combinations | lonely lighthouse at a party | 138 | 141 |
+| `idiom` | idioms taken literally | raining cats and dogs | 150 | 182 |
+| `wort` | German compounds taken literally | glückspilz | – | 137 |
+| `feeling` | abstract ideas and feelings | fear of mondays | 126 | 117 |
+| `moment` | the moment when … | the moment the ice cream falls | 114 | 114 |
+| `secret` | the secret lives of things | what my fridge does at night | 129 | 102 |
+| `invented` | invented jobs, sports, holidays | a puddle inspector | 120 | 111 |
+| `contra` | misleading or contradictory pairs | shy fireworks show | 126 | 126 |
+| `view` | an unusual point of view | the world seen by an ant | 126 | 105 |
+| `drama` | tiny dramas | last cookie standoff | 129 | 113 |
+| `title` | famous-sounding invented titles | the phantom of the bakery | 129 | 117 |
+| `animal` | animals with human problems | cat filing its taxes | 114 | 114 |
+| `food` | food with a life of its own | soup that fights back | 103 | 108 |
+| `place` | places that should not exist | a school for baby dragons | 99 | 102 |
+| `gadget` | inventions nobody needs | hat that waters your plants | 99 | 102 |
+| `power` | useless superpowers | sneezing glitter | 99 | 96 |
+| `then` | history mixed up | caveman with a selfie stick | 96 | 99 |
+| `scene` | everyday scenes gone wrong | grandpa's first video call | 96 | 105 |
 
 All are written for Drawbluff, drawable, family friendly and in the
 display form.
@@ -293,15 +301,18 @@ display form.
 ### Variety: before and after
 
 (Measured when the structures came; the forms changed later, see
-"Titles look alike", which changed the word counts a little but not
-the structures, the near duplicates or the repeats.)
+"Titles look alike", and the lists were tripled, see above: 1993
+prompts in English with 2809 distinct content words, 2091 in German
+with 3059, still no near duplicates, and no repeat in a room's 5 games
+of 8 players and 5 rounds, nor in 3 of 50 players and 2 rounds.)
 
 `node scripts/prompts.ts [--lang de] [--file F] [--players N] [--rounds
 N] [--games N] [--spread N] [--near]` measures a prompts file; the
 lints in `test/prompts.test.ts` hold for both languages (display form,
 NFC, ≤ 40 characters, no word over 26, no two alike by `titleKey`, no
-near duplicates, at least 600 prompts, at least 15 structures of 30 or
-more, none over a tenth, no repeat in 5 games of 8 players).
+near duplicates, at least 1900 prompts (800 adult ones), at least 15
+structures of 30 or more, none over a tenth, no repeat in 5 games of 8
+players and 5 rounds).
 
 | | before (en) | after (en) | German |
 |---|---|---|---|

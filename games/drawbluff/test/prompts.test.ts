@@ -82,7 +82,7 @@ for (const lang of LANGS) {
   });
 
   test(`prompts (${lang}): many, in balanced structures`, () => {
-    assert.ok(prompts.length >= 600, String(prompts.length));
+    assert.ok(prompts.length >= 1900, String(prompts.length));
     assert.ok(prompts.every((p) => /^[a-z]+$/.test(p.tag)), "every prompt has a structure");
     const tags = perStructure(prompts);
     assert.ok(tags.size >= 15, `${tags.size} structures`);
@@ -92,8 +92,8 @@ for (const lang of LANGS) {
     }
   });
 
-  test(`prompts (${lang}): a room plays 5 games of 8 players, 2 rounds, without a repeat, 8 structures a round`, () => {
-    const s = { games: 5, players: 8, rounds: 2 };
+  test(`prompts (${lang}): a room plays 5 games of 8 players, 5 rounds, without a repeat, 8 structures a round`, () => {
+    const s = { games: 5, players: 8, rounds: 5 };
     assert.deepEqual(repeats(prompts, s, false, 20), { mean: 0, sessions: 0, mixed: 1 });
     // A fresh deck per game (as before) would repeat some.
     assert.ok(repeats(prompts, s, true, 20).mean > 0);
@@ -123,7 +123,7 @@ for (const lang of LANGS) {
   });
 
   test(`adult prompts (${lang}): enough, in balanced structures`, () => {
-    assert.ok(prompts.length >= 240, String(prompts.length));
+    assert.ok(prompts.length >= 800, String(prompts.length));
     assert.ok(prompts.every((p) => /^[a-z]+$/.test(p.tag)), "every prompt has a structure");
     const tags = perStructure(prompts);
     assert.ok(tags.size >= 8, `${tags.size} structures`);
@@ -133,8 +133,8 @@ for (const lang of LANGS) {
     }
   });
 
-  test(`adult prompts (${lang}): a room plays 3 games of 8 players, 2 rounds, without a repeat`, () => {
-    assert.equal(repeats(prompts, { games: 3, players: 8, rounds: 2 }, false, 20).mean, 0);
+  test(`adult prompts (${lang}): a room plays 3 games of 8 players, 5 rounds, without a repeat`, () => {
+    assert.equal(repeats(prompts, { games: 3, players: 8, rounds: 5 }, false, 20).mean, 0);
   });
 }
 
