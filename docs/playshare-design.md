@@ -163,7 +163,7 @@ ignored, or `unknown-method`.
 | `pair.cancel` | `{device}` | |
 | `cast.start` | `{page, to?, resolution?}` → `{}` | `page`: a path on the local origin with its fragment (the TV page and its screen key); `to`: device names (default: the selection), `"browser"` for a tab on this computer; `resolution` (default: the selection's; ignored when fixed). Replaces a running cast (the TVs restart the picture). `cast` events `{state: starting\|streaming\|failed\|stopped, receivers: [{name, protocol?, state, delayMs?, error?, code?}], player?, resolution?, error?}` (`delayMs`: the receiver's playout delay once connected, which the library's `tvDelay` follows: docs/party-design.md §8.1) |
 | `cast.stop` | | the TVs get TEARDOWN; the headless browser quits |
-| `tvsync.set` | `{device, displayMs}` → `{device, displayMs?}` | a TV's display lag as tapped along in the launcher (0–2000 ms; `null` forgets it), kept in the storage (`tv-lag`); devices and statuses carry it as `displayMs` (docs/party-design.md §8.1) |
+| `tvsync.set` | `{device, displayMs}` → `{device, displayMs?}` | a TV's display lag as matched in the launcher's Sync (0–2000 ms; `null` forgets it), kept in the storage (`tv-lag`); devices and statuses carry it as `displayMs` (docs/party-design.md §8.1) |
 | `qr` | `{text}` → `{size, rows}` | tvpipe's QR encoder (`util::qr`): `rows` of `"0"`/`"1"` |
 | `relay.attach` | `{}` → `{public, local}` | this socket becomes the relay host (§6); a newer attach replaces it |
 | `shortlink` | `{url, code}` → `{url, code}` | a short link (`https://tvpipe.party/BCDF`) for the tunnel's join link `url` (only `https://TUNNEL-HOST/…`: else `bad-url`), `code` the room code to propose; `unavailable` without a tunnel, with `--no-short-link`/`TVPIPE_PARTY_URL=off` or when the service fails. One registration per run (the same url: no request), refreshed every 6 h, deleted at the end: [`short-links.md`](short-links.md) |
@@ -256,8 +256,8 @@ The window first shows **tvpipe's standard launcher**
   **"A browser tab on this computer"** (`browser`) for trying without a TV,
 - the picture's resolution (Auto, 720p, 1080p, 4K; §9.1) unless the game's
   `tv.resolution` is fixed,
-- **Sync** per TV: tapping along with flashes here and on the TV (the
-  page `/_tvpipe/tvsync/`, cast to it meanwhile) measures how far it is
+- **Sync** per TV: moving this page's flashes until they come with the
+  TV's (the page `/_tvpipe/tvsync/`, cast to it meanwhile) measures how far it is
   behind a phone, kept per TV (`tvsync.set`; docs/party-design.md §8.1),
 - multi-select, then **Start**: the chosen AirPlay TVs that need pairing
   are paired first, one after another (the PIN dialog; a cancel or a

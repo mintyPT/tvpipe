@@ -431,28 +431,35 @@ pressed rather than by their tunnels, bounded to the second before
 arrival (a phone's word, not proof). Since phones are with the TV,
 reaction times can be measured from what the TV showed.
 
-**Measuring a TV's own lag: tap along.** The 120 ms is a guess; a TV
-in its movie mode takes far more than in game mode, and nothing on the
-network tells. The launcher (and so the cast picker) has a **Sync**
-button per TV (`npm/party/src/tapsync.ts`, `launcher.ts`):
+**Measuring a TV's own lag: matching flashes.** The 120 ms is a guess;
+a TV in its movie mode takes far more than in game mode, and nothing on
+the network tells. The launcher (and so the cast picker) has a **Sync**
+button per TV (`npm/party/src/flashsync.ts`, `launcher.ts`):
 
 1. It casts tvpipe's sync page (`/_tvpipe/tvsync/`) to that TV: a
-   circle that flashes (and clicks) on the wall clock's beats, every
-   750 ms, every fourth accented.
-2. Meanwhile the person taps along (space bar, click, touch) with the
-   same flashes in the launcher, ten counted taps after two to find the
-   beat. The median offset is their habit plus this screen's lag.
-3. Then with the TV's flashes. Each tap belongs to the beat nearest to
-   where the TV is expected (its playout delay plus the current
-   estimate), so delays up to ±375 ms off the estimate count right.
-   Runs whose taps spread more than 60 ms (median absolute deviation)
-   are done again.
-4. The TV's median less this screen's is how much later the TV shows a
-   picture than a screen here, and so than a phone (the phone's own lag
-   cancels as this screen's does). Less the playout delay of the
-   receiver as it ran (the cast status's `delayMs`), that is the TV's
-   `displayMs` (render, capture and the TV itself), which stays right when
-   the budget changes (a Cast TV joins).
+   circle with a number that flashes white in a fixed pattern of seven
+   uneven intervals (0.5 to 1.1 s, 5.6 s a cycle) from the wall clock,
+   no sound.
+2. Once the cast streams, the launcher shows the same circle, late by
+   a lag on a slider (0 to 2000 ms; arrow keys 10 ms, with Shift 50),
+   which starts where tvpipe thinks the TV is: its playout delay plus
+   the saved lag or the estimate. A TV synced before flashes together
+   with this screen at once.
+3. The person moves the slider until both screens flash at the same
+   moment with the same number: this one first, right; the TV first,
+   left. The numbers show which screen is ahead even when far off.
+   The pattern is uneven on purpose: an even beat looks in step with a
+   copy one beat late (a TV 750 ms behind a 750 ms beat flashes
+   "together" with the computer), and no two runs of these intervals add
+   up to the same up to 2 s, so at any wrong lag the screens meet at
+   most once a cycle. Judging two flashes as together needs no rhythm
+   and no reaction from the person; their habit does not enter.
+4. The lag is how much later the TV shows a picture than this screen,
+   and so than a phone (whose own lag is about this screen's). Less
+   the playout delay of the receiver as it runs (the cast status's
+   `delayMs`), that is the TV's `displayMs` (render, capture and the TV
+   itself, at least 0), which stays right when the budget changes (a
+   Cast TV joins).
 5. **Save** keeps it with tvpipe (`tvpipe.setDisplayLag(device, ms)`,
    API `tvsync.set`; the storage's `tv-lag` item, per TV name, any
    case); **Forget** goes back to the estimate. Devices and cast and

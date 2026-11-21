@@ -587,7 +587,7 @@ fn local_listener_rules() {
         r.starts_with("HTTP/1.1 200") && r.contains("tvsync.js"),
         "{r}"
     );
-    assert!(get(s.local(), "/_tvpipe/tvsync/tvsync.js", &host, "").contains("../lib/tapsync.js"));
+    assert!(get(s.local(), "/_tvpipe/tvsync/tvsync.js", &host, "").contains("../lib/flashsync.js"));
     // tvpipe's look: the stylesheet and the browser player's fonts.
     let r = get(s.local(), "/_tvpipe/ui.css", &host, "");
     assert!(r.starts_with("HTTP/1.1 200"), "{r}");

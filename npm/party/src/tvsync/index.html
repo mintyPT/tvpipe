@@ -9,9 +9,10 @@
   html, body { margin: 0; height: 100%; background: #0d1828; color: #e9eef5; overflow: hidden;
                font: 500 2.2vmin/1.4 "IBM Plex Sans", system-ui, sans-serif; }
   body { display: grid; place-items: center; }
-  .beat { width: 46vmin; height: 46vmin; border-radius: 50%; border: 1.2vmin solid #2c3e57; box-sizing: border-box; }
-  .beat.flash { background: #ffffff; border-color: #ffffff; }
-  .beat.flash.accent { background: #e8743b; border-color: #e8743b; }
+  .beat { display: grid; place-items: center; width: 46vmin; height: 46vmin; border-radius: 50%;
+          border: 1.2vmin solid #2c3e57; box-sizing: border-box;
+          font: 600 24vmin/1 "IBM Plex Sans", system-ui, sans-serif; color: #5d7290; font-variant-numeric: tabular-nums; }
+  .beat.flash { background: #ffffff; border-color: #ffffff; color: #0d1828; }
   p { position: fixed; left: 0; right: 0; bottom: 6vmin; margin: 0; text-align: center; color: #9fb0c6; letter-spacing: .02em; }
   b { color: #e9eef5; font-weight: 600; }
 </style>
@@ -19,6 +20,6 @@
 </head>
 <body>
 <div class="beat" id="beat"></div>
-<p><b>TV sync</b> · tap along with the flashes on the computer</p>
+<p><b>TV sync</b> · on the computer, move the slider until its flashes come with these</p>
 </body>
 </html>

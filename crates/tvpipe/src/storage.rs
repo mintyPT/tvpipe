@@ -4,8 +4,8 @@
 //! block per paired receiver and one per receiver PTP failed with, the
 //! format of `airplay::credentials`) and `player-token` (the browser
 //! player page's token, so its URL stays the same across runs), both
-//! secret, and `tv-lag` (each TV's display lag as measured by tapping
-//! along in `tvpipe game play`: [`Storage::tv_lags`]).
+//! secret, and `tv-lag` (each TV's display lag as matched by its Sync
+//! in `tvpipe game play`: [`Storage::tv_lags`]).
 //!
 //! A program keeps them in its own directory by default
 //! ([`Storage::app`]); [`Storage::cli`] shares the `tvpipe` CLI's,
@@ -181,8 +181,8 @@ impl Storage {
     /// Each TV's display lag by its name (as discovered, as `--to`
     /// takes it): how much later than a phone or computer screen it
     /// shows a picture, beyond its receiver's playout delay (its picture
-    /// processing, and the page's frame), ms. Measured by tapping along
-    /// in `tvpipe game play`'s launcher; `@tvpipe/party` keeps phones in
+    /// processing, and the page's frame), ms. Measured by the Sync in
+    /// `tvpipe game play`'s launcher (matching flashes); `@tvpipe/party` keeps phones in
     /// step with the TV by it.
     pub fn tv_lags(&self) -> Result<BTreeMap<String, u32>> {
         Ok(self
@@ -324,7 +324,7 @@ fn parse_tv_lags(text: &str) -> BTreeMap<String, u32> {
 fn format_tv_lags(lags: &BTreeMap<String, u32>) -> String {
     let mut out = String::from(
         "# tvpipe: how much later each TV shows a picture than a phone, beyond its\n\
-         # receiver's playout delay, ms (tap-along sync in `tvpipe game play`)\n",
+         # receiver's playout delay, ms (the Sync in `tvpipe game play`)\n",
     );
     for (name, ms) in lags {
         out.push_str(&format!("{ms} {name}\n"));

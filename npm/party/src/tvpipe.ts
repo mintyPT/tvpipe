@@ -80,7 +80,7 @@ export interface Device {
   /** AirPlay: shows a PIN and has no pairing here yet. */
   needsPairing?: boolean;
   paired?: boolean;
-  /** The TV's display lag as measured by tapping along (`setDisplayLag`), ms. */
+  /** The TV's display lag as measured by the launcher's Sync (`setDisplayLag`), ms. */
   displayMs?: number;
 }
 
@@ -183,7 +183,7 @@ export interface ConnectOptions {
 
 /** tvpipe's standard launcher. */
 const LAUNCHER = "/_tvpipe/launcher/";
-/** The page the launcher casts to a TV to sync it (`tapsync.ts`). */
+/** The page the launcher casts to a TV to sync it (`flashsync.ts`). */
 export const TVSYNC_PAGE = "/_tvpipe/tvsync/";
 /** The message the launcher in change mode sends its parent page. */
 export const PICKER_MESSAGE = "tvpipe:cast-picker";
@@ -349,7 +349,7 @@ export class Tvpipe extends Emitter<TvpipeEvents> {
   /**
    * Keeps a TV's display lag (`ms`; `null` forgets it): how much later
    * than a phone it shows a picture beyond its playout delay, as the
-   * launcher's tap-along sync measures it (`tapsync.ts`). tvpipe stores it
+   * launcher's Sync measures it (`flashsync.ts`). tvpipe stores it
    * per TV; devices and cast statuses carry it as `displayMs`, and a
    * party's `tvDelay` follows.
    */

@@ -27,6 +27,7 @@ macro_rules! web {
 pub static FILES: &[Asset] = web![
     "lib/client.js",
     "lib/emitter.js",
+    "lib/flashsync.js",
     "lib/index.js",
     "lib/limits.js",
     "lib/names.js",
@@ -37,7 +38,6 @@ pub static FILES: &[Asset] = web![
     "lib/relay.js",
     "lib/surface.js",
     "lib/sync.js",
-    "lib/tapsync.js",
     "lib/testing.js",
     "lib/tvpipe.js",
     "launcher/index.html",

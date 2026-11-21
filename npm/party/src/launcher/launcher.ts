@@ -4,7 +4,7 @@
  * may bring its own launcher with the same API.
  */
 
-import { displayLag, eventTime, Metronome, SKIP_TAPS, TAPS, tapRun, type TapRun } from "../tapsync.ts";
+import { displayLag, Flasher, MAX_LAG_MS } from "../flashsync.ts";
 import {
   PICKER_MESSAGE,
   Tvpipe,
@@ -288,18 +288,14 @@ async function start(devicesToUse: string[]): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// TV sync: tapping along with flashes here, then on the TV (tapsync.ts)
-
-type SyncStep = "intro" | "here" | "wait" | "tv" | "result";
+// TV sync: this screen's flashes, moved until they come with the TV's (flashsync.ts)
 
 interface Sync {
   device: string;
-  step: SyncStep;
-  taps: number[];
-  here?: TapRun;
+  /** How far the TV is behind this screen, ms: the lag this screen's flashes run with. */
+  lag?: number;
   /** The playout delay the TV's receiver runs with (from the cast status). */
   delayMs?: number;
-  result?: { total: number; displayMs: number };
 }
 
 let sync: Sync | null = null;
@@ -307,8 +303,7 @@ let sync: Sync | null = null;
 let syncCast: CastStatus | null = null;
 /** In the cast picker: a sync replaced the game's picture, which must come back. */
 let recast = false;
-let audio: AudioContext | undefined;
-let metronome: Metronome | undefined;
+let flasher: Flasher | undefined;
 
 function syncTv(): { ready: boolean; error?: string; delayMs?: number } {
   const s = syncCast;
@@ -323,10 +318,9 @@ function syncTv(): { ready: boolean; error?: string; delayMs?: number } {
 
 function openSync(device: string): void {
   showError(null);
-  sync = { device, step: "intro", taps: [] };
+  sync = { device };
   syncCast = null;
   if (changing) recast = true;
-  // The TV starts its picture while people tap here (it takes seconds).
   tvpipe.cast({ page: TVSYNC_PAGE, to: [device] }).then(
     (st) => {
       syncCast ??= st;
@@ -344,7 +338,7 @@ function openSync(device: string): void {
 }
 
 function closeSync(): void {
-  metronome?.stop();
+  flasher?.stop();
   const was = sync;
   sync = null;
   const dlg = $("sync") as HTMLDialogElement;
@@ -354,105 +348,64 @@ function closeSync(): void {
   if (was && !changing) void tvpipe.stopCast().catch(() => {});
 }
 
-function syncTap(t: number): void {
-  if (!sync || (sync.step !== "here" && sync.step !== "tv")) return;
-  sync.taps.push(t);
-  const pad = $("sync-pad");
-  pad.classList.remove("tapped");
-  void pad.offsetWidth;
-  pad.classList.add("tapped");
-  if (sync.taps.length < SKIP_TAPS + TAPS) return renderSync();
-  if (sync.step === "here") {
-    const run = tapRun(sync.taps, 0);
-    sync.taps = [];
-    if (!run.ok) return renderSync(uneven(run));
-    sync.here = run;
-    metronome?.stop();
-    sync.step = syncTv().ready ? "tv" : "wait";
-    return renderSync();
-  }
-  const delayMs = sync.delayMs ?? 0;
-  const known = devices.find((d) => d.name === sync!.device)?.displayMs;
-  const run = tapRun(sync.taps, delayMs + (known ?? TV_RENDER_MS + TV_DISPLAY_MS));
-  sync.taps = [];
-  if (!run.ok) return renderSync(uneven(run));
-  sync.result = displayLag(sync.here!, run, delayMs);
-  sync.step = "result";
+/** Moves this screen's flashes (ms behind the clock, as far as the TV is). */
+function setLag(ms: number): void {
+  if (!sync || sync.lag === undefined) return;
+  sync.lag = Math.max(0, Math.min(MAX_LAG_MS, Math.round(ms)));
   renderSync();
-}
-
-function uneven(run: TapRun): string {
-  return `The taps were too uneven (±${Math.round(run.spread)} ms). Try once more, as steadily as you can.`;
 }
 
 function renderSync(error?: string): void {
   if (!sync) return;
   const s = sync;
   const tv = syncTv();
-  if (s.step === "wait" && tv.ready) s.step = "tv";
-  if (s.step === "tv" || s.step === "wait") s.delayMs = tv.delayMs ?? s.delayMs;
-  const failed = tv.error && s.step !== "result" ? tv.error : undefined;
-  const err = $("sync-error");
-  err.hidden = !(error ?? failed);
-  err.textContent = error ?? failed ?? "";
-  const text: Record<SyncStep, string> = {
-    intro:
-      "Phones show the game at once, the TV a little later. Tap along with flashes twice to measure how much: first with the flashes here, then with the flashes on the TV. Tap the circle, or press the space bar.",
-    here: "Tap along with the flashes here, on the beat.",
-    wait: `Starting the flashes on ${s.device}…`,
-    tv: `Now look at ${s.device} and tap along with its flashes (and clicks).`,
-    result: "",
-  };
-  if (s.step === "result" && s.result) {
-    const r = s.result;
-    text.result = `${s.device} shows a picture ${r.total} ms after this screen: ${s.delayMs ?? 0} ms the picture waits to stay smooth, ${r.displayMs} ms the TV itself takes. Save it, and phones keep in step with this TV from now on.`;
-  }
-  $("sync-text").textContent = text[s.step];
-  const counting = s.step === "here" || s.step === "tv";
-  const n = Math.max(0, s.taps.length - SKIP_TAPS);
-  const dots = $("sync-dots");
-  dots.hidden = !counting;
-  dots.replaceChildren(...Array.from({ length: TAPS }, (_, i) => el("span", i < n ? "on" : "")));
-  const pad = $("sync-pad") as HTMLButtonElement;
-  pad.disabled = !counting;
-  pad.dataset["step"] = s.step;
-  const go = $("sync-go") as HTMLButtonElement;
-  go.hidden = !(s.step === "intro" || s.step === "result");
-  go.textContent = s.step === "result" ? "Save" : "Start";
-  $("sync-again").hidden = s.step !== "result";
   const known = devices.find((d) => d.name === s.device)?.displayMs;
-  $("sync-forget").hidden = typeof known !== "number" || s.step === "result";
+  if (tv.ready) {
+    s.delayMs = tv.delayMs;
+    // Start where tvpipe thinks the TV is: right already, if it was synced before.
+    s.lag ??= Math.min(MAX_LAG_MS, (tv.delayMs ?? 0) + (known ?? TV_RENDER_MS + TV_DISPLAY_MS));
+  }
+  const ready = tv.ready && s.lag !== undefined;
+  flasher ??= new Flasher($("sync-beat"));
+  flasher.lag = s.lag ?? 0;
+  if (ready) flasher.start();
+  else flasher.stop();
+  const err = $("sync-error");
+  err.hidden = !(error ?? tv.error);
+  err.textContent = error ?? tv.error ?? "";
+  $("sync-text").textContent = ready
+    ? `Watch ${s.device} and this screen together and move the slider until both flash at the same moment with the same number. This one first: move right. The TV first: move left. (Arrow keys, Shift for bigger steps.)`
+    : tv.error
+      ? `The flashes could not start on ${s.device}.`
+      : `Starting the flashes on ${s.device}…`;
+  const range = $("sync-lag") as HTMLInputElement;
+  range.max = String(MAX_LAG_MS);
+  range.value = String(s.lag ?? 0);
+  for (const id of ["sync-lag", "sync-less", "sync-more", "sync-go"]) ($(id) as HTMLInputElement | HTMLButtonElement).disabled = !ready;
+  const value = $("sync-value");
+  if (ready) {
+    const delay = s.delayMs ?? 0;
+    const own = displayLag(s.lag!, delay);
+    value.replaceChildren(
+      "The TV is ",
+      el("b", "", `${s.lag} ms`),
+      s.lag! < delay
+        ? ` behind this screen, less than the ${delay} ms the picture waits to stay smooth: it counts as ${delay} ms.`
+        : ` behind this screen: ${delay} ms the picture waits to stay smooth, ${own} ms the TV itself.`,
+    );
+  } else value.textContent = "";
+  $("sync-forget").hidden = typeof known !== "number";
 }
 
 function setupSync(): void {
   const dlg = $("sync") as HTMLDialogElement;
+  const range = $("sync-lag") as HTMLInputElement;
+  range.addEventListener("input", () => setLag(Number(range.value)));
+  $("sync-less").onclick = () => setLag((sync?.lag ?? 0) - 10);
+  $("sync-more").onclick = () => setLag((sync?.lag ?? 0) + 10);
   $("sync-go").onclick = () => {
-    if (!sync) return;
-    if (sync.step === "intro") {
-      // A click: sound may start now.
-      try {
-        audio ??= new AudioContext();
-      } catch {
-        audio = undefined;
-      }
-      metronome ??= new Metronome($("sync-beat"), { audio });
-      metronome.start();
-      sync.step = "here";
-      sync.taps = [];
-      $("sync-pad").focus();
-      return renderSync();
-    }
-    if (sync.step === "result" && sync.result) {
-      const { device } = sync;
-      const ms = sync.result.displayMs;
-      tvpipe.setDisplayLag(device, ms).then(closeSync, (err) => renderSync((err as Error).message));
-    }
-  };
-  $("sync-again").onclick = () => {
-    if (!sync) return;
-    sync.step = syncTv().ready ? "tv" : "wait";
-    sync.taps = [];
-    renderSync();
+    if (!sync || sync.lag === undefined) return;
+    tvpipe.setDisplayLag(sync.device, displayLag(sync.lag, sync.delayMs ?? 0)).then(closeSync, (err) => renderSync((err as Error).message));
   };
   $("sync-forget").onclick = () => {
     if (!sync) return;
@@ -463,15 +416,12 @@ function setupSync(): void {
     ev.preventDefault();
     closeSync();
   });
-  $("sync-pad").addEventListener("pointerdown", (ev) => {
-    ev.preventDefault();
-    syncTap(eventTime(ev));
-  });
   dlg.addEventListener("keydown", (ev) => {
-    if (ev.key !== " " && ev.key !== "Enter") return;
-    if (!sync || (sync.step !== "here" && sync.step !== "tv")) return;
+    if (ev.key !== "ArrowLeft" && ev.key !== "ArrowRight") return;
+    if (!sync || sync.lag === undefined) return;
     ev.preventDefault();
-    if (!ev.repeat) syncTap(eventTime(ev));
+    const step = (ev.shiftKey ? 50 : 10) * (ev.key === "ArrowLeft" ? -1 : 1);
+    setLag(sync.lag + step);
   });
   tvpipe.on("cast", (st) => {
     if (!sync) return;

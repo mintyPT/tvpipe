@@ -94,12 +94,16 @@
   <span class="lbl">TV sync</span>
   <h2>Sync <span id="sync-device"></span></h2>
   <p id="sync-text"></p>
-  <button type="button" id="sync-pad" class="pad" aria-label="Tap on the beat"><span class="beat" id="sync-beat"></span></button>
-  <div class="dots" id="sync-dots" aria-hidden="true"></div>
+  <div class="pad" aria-hidden="true"><span class="beat" id="sync-beat"></span></div>
+  <div class="lag" id="sync-controls">
+    <button type="button" id="sync-less" class="btn small" aria-label="10 ms earlier">&minus;</button>
+    <input type="range" id="sync-lag" min="0" max="2000" step="5" value="0" aria-label="How far the TV is behind this screen">
+    <button type="button" id="sync-more" class="btn small" aria-label="10 ms later">+</button>
+  </div>
+  <p class="value" id="sync-value"></p>
   <p class="error bad" id="sync-error" hidden></p>
   <div class="buttons">
-    <button type="button" id="sync-go" class="btn primary">Start</button>
-    <button type="button" id="sync-again" class="btn" hidden>Again</button>
+    <button type="button" id="sync-go" class="btn primary" disabled>Save</button>
     <button type="button" id="sync-forget" class="btn" hidden>Forget</button>
     <button type="button" id="sync-close" class="btn">Close</button>
   </div>

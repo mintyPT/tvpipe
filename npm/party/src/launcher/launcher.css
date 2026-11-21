@@ -63,24 +63,19 @@ dialog input:focus { outline: none; border-color: var(--accent); }
 dialog .error { margin-top: 12px; }
 dialog .buttons { margin-top: 24px; }
 
-/* TV sync: tap along with the flashes, here and on the TV. */
+/* TV sync: this screen's flashes, moved until they come with the TV's. */
 .device .synced { font-size: 13.5px; color: var(--ink-2); }
 dialog.sync { width: min(520px, calc(100vw - 40px)); }
-.sync .pad { display: grid; place-items: center; width: 100%; height: 210px; margin: 22px 0 0; padding: 0;
-             border: 1px solid var(--rule); border-radius: 4px; background: var(--panel); cursor: pointer;
-             touch-action: manipulation; user-select: none; -webkit-user-select: none; }
-.sync .pad:disabled { cursor: default; }
-.sync .pad:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.sync .beat { width: 120px; height: 120px; border-radius: 50%; border: 6px solid var(--rule); box-sizing: border-box; }
-.sync .beat.flash { background: var(--ink); border-color: var(--ink); }
-.sync .beat.flash.accent { background: var(--accent); border-color: var(--accent); }
-.sync .pad[data-step="tv"] .beat { border-style: dashed; }
-.sync .pad.tapped .beat { animation: tapped .18s ease-out; }
-@keyframes tapped { from { transform: scale(.88); } to { transform: scale(1); } }
-.sync .dots { display: flex; gap: 6px; justify-content: center; margin-top: 14px; }
-.sync .dots span { width: 9px; height: 9px; border-radius: 50%; background: var(--rule); }
-.sync .dots span.on { background: var(--accent); }
-.sync .dots[hidden] { display: none; }
+.sync .pad { display: grid; place-items: center; height: 210px; margin: 22px 0 0;
+             border: 1px solid var(--rule); border-radius: 4px; background: var(--panel); }
+.sync .beat { display: grid; place-items: center; width: 140px; height: 140px; border-radius: 50%;
+              border: 6px solid var(--rule); box-sizing: border-box; color: var(--ink-3);
+              font-size: 64px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+.sync .beat.flash { background: var(--ink); border-color: var(--ink); color: var(--panel); }
+.sync .lag { display: flex; gap: 10px; align-items: center; margin-top: 18px; }
+.sync .lag input { flex: 1; accent-color: var(--accent); }
+.sync .value { margin: 8px 0 0; text-align: center; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.sync .value b { color: var(--ink); }
 
 @media (max-width: 720px) {
   .device { grid-template-columns: 18px minmax(0, 1fr); }
