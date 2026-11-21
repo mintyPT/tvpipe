@@ -18,7 +18,7 @@
 //! photographing the TV next to a millisecond clock gives the end-to-end
 //! latency.
 //!
-//! Sources: docs/slrw.md; PLAN §5.2; ITU-R BT.709-6 (bar
+//! Sources: docs/slrw.md; ITU-R BT.709-6 (bar
 //! colours via `media::convert`).
 
 use std::io::{self, Read};

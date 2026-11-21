@@ -137,13 +137,22 @@ jobs:
           git diff --exit-code -- ../../crates/tvpipe/src/playshare/web
           npm run check
           npm test
-      # The demo game, packed and checked the way games.yml releases it
+      # Every game, packed and checked the way games.yml releases it
       # (bash finds tvpipe.exe on Windows by this path too).
-      - working-directory: games/drawbluff
+      - shell: bash
         run: |
-          npm ci
-          npm run check
-          npm test
-          npm run build
-          ../../target/debug/tvpipe game pack . --strict -o "$RUNNER_TEMP/drawbluff.zip"
-          ../../target/debug/tvpipe game check "$RUNNER_TEMP/drawbluff.zip" --strict
+          set -euo pipefail
+          for dir in games/*/; do
+            name="$(basename "$dir")"
+            echo "::group::$name"
+            (
+              cd "$dir"
+              npm ci
+              npm run check
+              npm test
+              npm run build
+              ../../target/debug/tvpipe game pack . --strict -o "$RUNNER_TEMP/$name.zip"
+              ../../target/debug/tvpipe game check "$RUNNER_TEMP/$name.zip" --strict
+            )
+            echo "::endgroup::"
+          done

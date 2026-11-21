@@ -1,4 +1,4 @@
-//! Fanout: one encode to many sinks (PLAN §3 "fanout").
+//! Fanout: one encode to many sinks (ARCHITECTURE.md, "Fanout").
 //!
 //! Each sink gets a bounded queue and its own thread, so a slow receiver
 //! never stalls the demuxer or the other receivers. Policy per sink:
@@ -20,8 +20,8 @@
 //! after a stall or a jump), before any per-sink queueing, so every
 //! receiver gets the same capture instant for the same frame.
 //!
-//! Sources: PLAN §3, §5.1 (no keyframes on demand: skip to the next IDR),
-//! §5.3 (one budget for every receiver).
+//! Sources: ARCHITECTURE.md, "Fanout" (no keyframes on demand: skip to the
+//! next IDR), "Timing and Latency" (one budget for every receiver).
 
 use std::collections::VecDeque;
 use std::sync::{Arc, Condvar, Mutex, MutexGuard};

@@ -1,6 +1,6 @@
 //! The device model: one entry per physical receiver, merged from its
-//! AirPlay, RAOP and Cast advertisements (PLAN §6), plus name matching
-//! for `--to NAME` (PLAN §4).
+//! AirPlay, RAOP and Cast advertisements, plus name matching for
+//! `--to NAME` (ARCHITECTURE.md, "Discovery").
 //!
 //! Cast TXT keys and capability bits follow pychromecast (MIT):
 //! `pychromecast/discovery.py` and `CastCapability` in

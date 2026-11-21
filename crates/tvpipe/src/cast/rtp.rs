@@ -1,4 +1,4 @@
-//! Cast Streaming RTP (PLAN §8.3): frame ids, whole-frame AES-128-CTR, and
+//! Cast Streaming RTP: frame ids, whole-frame AES-128-CTR, and
 //! the Cast RTP packet format (packetizer and parser).
 //!
 //! Wire format (all big-endian):

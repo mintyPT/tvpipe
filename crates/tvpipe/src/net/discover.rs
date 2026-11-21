@@ -1,4 +1,5 @@
-//! `tvpipe discover` and `--to NAME` resolution (PLAN §4, §6).
+//! `tvpipe discover` and `--to NAME` resolution (ARCHITECTURE.md,
+//! "Discovery").
 
 use std::net::{IpAddr, Ipv4Addr};
 use std::time::Duration;

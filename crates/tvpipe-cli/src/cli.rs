@@ -1,4 +1,4 @@
-//! Command line specs and parse functions (PLAN §4).
+//! Command line specs and parse functions.
 
 use std::ffi::OsString;
 use std::time::Duration;

@@ -1,4 +1,5 @@
-//! `MirrorSink`: the AirPlay screen-mirroring [`Sink`] (PLAN §3, §7.4).
+//! `MirrorSink`: the AirPlay screen-mirroring [`Sink`]
+//! (docs/airplay-mirroring.md).
 //!
 //! [`connect_mirror`] pair-verifies, runs FairPlay and the session setup
 //! up to the audio SETUP ([`Session::establish`]), so the canvas and
@@ -25,7 +26,7 @@
 //! (PTP via response headers, or NTP) maps those to receiver time.
 //!
 //! Sources: docs/airplay-mirroring.md §4.8, §4.11, §4.13, §6, §7.4,
-//! §8.2–§8.8; PLAN §3, §5.3.
+//! §8.2–§8.8; ARCHITECTURE.md, "Timing and Latency".
 
 use std::collections::VecDeque;
 use std::io::{Read, Write};

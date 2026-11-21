@@ -1,5 +1,5 @@
 //! The sender's media clock: maps stream timestamps to monotonic
-//! [`Instant`]s (PLAN §5.3).
+//! [`Instant`]s (ARCHITECTURE.md, "Timing and Latency").
 //!
 //! The first observed frame anchors the clock: its media time corresponds
 //! to its arrival instant. Every later frame is observed too; if one
@@ -19,7 +19,7 @@
 //! instant plus the same playout budget. A sink used on its own (unit
 //! tests) anchors a private clock with the same rule.
 //!
-//! Sources: PLAN §5.3.
+//! Sources: ARCHITECTURE.md, "Timing and Latency".
 
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};

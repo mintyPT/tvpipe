@@ -1,5 +1,5 @@
-//! `tvpipe pair` / `unpair` (PLAN §4) and [`connect`], the
-//! authenticated control connection the mirroring sink (W7) starts from.
+//! `tvpipe pair` / `unpair` and [`connect`], the
+//! authenticated control connection the mirroring sink starts from.
 //!
 //! `connect` opens the control port, pair-verifies with stored
 //! credentials (or does transient pair-setup when the receiver allows
@@ -42,7 +42,7 @@ pub enum Auth {
 /// An authenticated, encrypted control connection.
 pub struct Control {
     pub client: SecureClient,
-    /// The pairing's shared secret (W7 derives stream keys from it).
+    /// The pairing's shared secret (the stream keys are derived from it).
     pub shared: Shared,
     pub addr: SocketAddr,
     pub auth: Auth,
@@ -160,7 +160,7 @@ pub fn connect_with(addr: SocketAddr, identity: &Identity, auth: Auth) -> Result
 
 /// Whether discovery says the receiver prefers legacy pairing (no
 /// CoreUtils pairing bit, or bit 26/51): its transient pair-setup starts
-/// with `X-Apple-HKP: 3` (W7, spec `airplay-mirroring.md` Appendix A).
+/// with `X-Apple-HKP: 3` (spec `airplay-mirroring.md` Appendix A).
 fn legacy_preferring(target: &Target) -> bool {
     target
         .device
@@ -212,7 +212,7 @@ pub fn connect_within(target: &Target, store: &Store, io: Duration) -> Result<Co
             ..Query::default()
         })
     });
-    // Legacy raw pairings are verified by `airplay::legacy_pair` (W7).
+    // Legacy raw pairings are verified by `airplay::legacy_pair`.
     match found.filter(|r| !r.raw) {
         // A pairing the receiver refuses (it forgot it, or it was reset)
         // needs a new one, like no pairing at all.
@@ -502,7 +502,7 @@ mod tests {
             .count()
     }
 
-    /// W7: transient HKP by receiver family, with one retry each for the
+    /// Transient HKP by receiver family, with one retry each for the
     /// HKP value and the SRP password (spec airplay-mirroring Appendix A).
     #[test]
     fn transient_hkp_and_password_retries() {

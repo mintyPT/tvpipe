@@ -1,4 +1,4 @@
-//! Cast Streaming RTCP (PLAN §8.3): Sender Reports we send, and the
+//! Cast Streaming RTCP: Sender Reports we send, and the
 //! receiver's compound packets we parse (Receiver Report, Receiver
 //! Reference Time XR, Cast feedback with NACKs and CST2 frame ACKs, PLI,
 //! receiver frame logs). The receiver-side builders exist for the fake

@@ -1,6 +1,6 @@
 //! Game input: SLRW records on stdin (see [`slrw`](super::slrw)) forwarded
 //! to ffmpeg over two localhost TCP connections, one per raw stream
-//! (PLAN §5.2). Works the same on every OS: no fd passing, no named pipes.
+//! (docs/slrw.md). Works the same on every OS: no fd passing, no named pipes.
 //!
 //! Threads: one reads SLRW and dispatches payloads into bounded queues; one
 //! per stream accepts ffmpeg's connection and writes. When ffmpeg falls
@@ -12,7 +12,7 @@
 //! gaps; audio is timed by its sample count. `pts_us` is used to log drift
 //! between the game's clock and arrival time.
 //!
-//! Sources: PLAN §5.2; ffmpeg-protocols(1) (tcp), ffmpeg-formats(1)
+//! Sources: docs/slrw.md; ffmpeg-protocols(1) (tcp), ffmpeg-formats(1)
 //! (rawvideo, pcm demuxers).
 
 use std::io::{self, Read, Write};

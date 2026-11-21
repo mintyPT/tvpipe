@@ -1,4 +1,4 @@
-//! `StreamingSink`: the Cast Streaming [`Sink`] (PLAN §3, §8).
+//! `StreamingSink`: the Cast Streaming [`Sink`] (ARCHITECTURE.md, "Cast").
 //!
 //! [`connect`] opens the control channel, launches the mirroring receiver
 //! app, connects to its transport, and runs OFFER/ANSWER; the sink then
@@ -32,7 +32,7 @@
 //! Sources: openscreen `cast/standalone_sender/looping_file_cast_agent.cc`
 //! (launch/connect/negotiate flow), `cast/streaming/sender_packet_router.cc`
 //! (burst pacing, RTCP priority), `cast/streaming/impl/sender_impl.cc`;
-//! PLAN §5.3, §8.
+//! ARCHITECTURE.md, "Timing and Latency", "Cast".
 
 use std::net::{IpAddr, SocketAddr, UdpSocket};
 use std::sync::atomic::{AtomicBool, Ordering};

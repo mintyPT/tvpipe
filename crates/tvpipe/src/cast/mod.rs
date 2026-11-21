@@ -1,6 +1,4 @@
-//! Google Cast Streaming sender (PLAN §8).
-//!
-//! Owner: W8.
+//! Google Cast Streaming sender (ARCHITECTURE.md, "Cast").
 //!
 //! - [`channel`]: TLS control channel, framing, heartbeat.
 //! - [`messages`]: `tp.connection` / `tp.heartbeat` / `receiver` payloads.

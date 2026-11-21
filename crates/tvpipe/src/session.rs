@@ -1,4 +1,5 @@
-//! Orchestration: connect → choose the input → fanout → teardown (PLAN §3).
+//! Orchestration: connect → choose the input → fanout → teardown
+//! (ARCHITECTURE.md, "Session Lifecycle").
 //!
 //! Owner: lead.
 //!
@@ -161,7 +162,7 @@ enum Target {
         /// The discovered device (for the credentials lookup).
         device: Option<Box<crate::net::device::Device>>,
     },
-    /// `--to browser`: a player page on 127.0.0.1 (W14). The options
+    /// `--to browser`: a player page on 127.0.0.1. The options
     /// are filled in once the budget is known ([`configure_browsers`]).
     Browser(Box<PlayerOptions>),
 }
@@ -1968,8 +1969,8 @@ struct Budget {
 /// burstiness and decoding.
 pub const BROWSER_LATENCY_MS: u32 = 100;
 
-/// One budget for every receiver (PLAN §5.3): `--latency L` is the
-/// delay from the shared capture instant to presentation on all of them.
+/// One budget for every receiver (ARCHITECTURE.md, "Timing and Latency"):
+/// `--latency L` is the delay from the shared capture instant to presentation on all of them.
 /// Without it, Cast uses [`DEFAULT_LATENCY_MS`] and AirPlay-only sessions
 /// keep the automatic profile; a session with both families gives
 /// AirPlay [`DEFAULT_LATENCY_MS`] as well, so the screens show a frame at

@@ -1,4 +1,4 @@
-//! `--to browser` (W14) in whole sessions, with a Rust WebSocket client
+//! `--to browser` in whole sessions, with a Rust WebSocket client
 //! as the page: `preview` of the built-in test pattern, and a browser
 //! next to a fake Cast receiver on one timeline, joining late.
 

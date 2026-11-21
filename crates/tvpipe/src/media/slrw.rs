@@ -1,4 +1,4 @@
-//! SLRW: the framing a game writes to `tvpipe play ... -` (PLAN §5.2).
+//! SLRW: the framing a game writes to `tvpipe play ... -` (docs/slrw.md).
 //!
 //! ```text
 //! "SLRW"                                   magic, once

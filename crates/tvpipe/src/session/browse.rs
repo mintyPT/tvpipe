@@ -1,4 +1,4 @@
-//! `tvpipe share URL` (W13): the share
+//! `tvpipe share URL`: the share
 //! pipeline with tvpipe's own browser as the page.
 //!
 //! 1. Resolve and connect the receivers first. With a resolution
@@ -9,7 +9,7 @@
 //!    docs/playshare-design.md §9.1). Without one (the SDK's default):
 //!    the stream's size is the receivers' screen shape at most 1920x1080
 //!    (or `--size`), within their limits, and the page is that at scale
-//!    1 (W12's sizing, `docs/share-protocol.md`).
+//!    1 (the share's sizing, `docs/share-protocol.md`).
 //! 2. Start the browser with its viewport at exactly the layout and the
 //!    scale (`browser::headless`), so the tab fills the frame (no bars),
 //!    and open URL; the page shares its tab to the [`ShareServer`] in

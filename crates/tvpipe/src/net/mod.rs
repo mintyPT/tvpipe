@@ -1,7 +1,5 @@
 //! Networking: mDNS/DNS, interface selection, HTTP/RTSP framing, discovery,
-//! and the loopback HTTP server and WebSocket used by the browser share (W12).
-//!
-//! Owner: W3 (PLAN §3, §6).
+//! and the loopback HTTP server and WebSocket used by the browser share.
 
 pub mod base64;
 #[cfg(feature = "tunnel")]

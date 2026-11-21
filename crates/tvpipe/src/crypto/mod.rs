@@ -1,7 +1,5 @@
 //! Hand-rolled crypto (AES, modes, bigint, SRP) and thin `ring` wrappers.
 //!
-//! Owner: W1 (PLAN §3, §9).
-//!
 //! - [`aes`]: AES-128/192/256 block cipher (T-tables).
 //! - [`modes`]: CTR (resumable keystream) and CBC (whole blocks).
 //! - [`bigint`]: 4096-bit unsigned integers with Montgomery modpow.

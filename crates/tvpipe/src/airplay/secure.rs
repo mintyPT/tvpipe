@@ -1,4 +1,4 @@
-//! The encrypted AirPlay control channel (PLAN §7.1).
+//! The encrypted AirPlay control channel.
 //!
 //! After pair-verify (or transient pair-setup) every byte on the control
 //! connection is framed as

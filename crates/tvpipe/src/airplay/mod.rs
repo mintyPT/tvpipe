@@ -1,8 +1,5 @@
-//! AirPlay mirroring sender (PLAN §7).
-//!
-//! Owners: W5 (pairing, secure channel, info, credentials), W6 (FairPlay:
-//! the LGPL `tvpipe-fairplay` crate), W7 (mirror, audio, timing, keys,
-//! sink).
+//! AirPlay mirroring sender (ARCHITECTURE.md, "AirPlay";
+//! docs/airplay-mirroring.md).
 
 #[cfg(feature = "airplay")]
 pub mod audio;

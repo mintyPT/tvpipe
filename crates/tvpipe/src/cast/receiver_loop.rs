@@ -11,8 +11,7 @@
 //! 2% of the packets in each direction; `TVPIPE_CAST_AUDIO=0` sends
 //! video only.
 //!
-//! The ffmpeg output is parsed here only because the W4 demuxer is not
-//! merged yet: Annex B H.264 with access unit delimiters, and Ogg Opus.
+//! The ffmpeg output is parsed here with a small parser of its own: Annex B H.264 with access unit delimiters, and Ogg Opus.
 
 use std::net::{SocketAddr, UdpSocket};
 use std::process::Command;

@@ -1,4 +1,4 @@
-//! HAP pairing over AirPlay's control connection (PLAN §7.1).
+//! HAP pairing over AirPlay's control connection.
 //!
 //! - **Pair-setup with a PIN** (`POST /pair-setup`, `X-Apple-HKP: 3`),
 //!   TLV8 M1–M6: SRP-6a (3072-bit, SHA-512, user `Pair-Setup`), then the
@@ -12,7 +12,7 @@
 //!   long-term keys; the X25519 result is the shared secret.
 //!
 //! The shared secret keys the control channel ([`secure::Keys::control`])
-//! and, for W7, the stream keys ([`Shared::secret`]).
+//! and the stream keys ([`Shared::secret`]).
 //!
 //! Each step is a pure function over TLV8 bodies so the transcripts are
 //! testable without a network; the drivers ([`pair_setup_pin`],
@@ -145,7 +145,7 @@ impl Shared {
         Shared(secret)
     }
 
-    /// The raw secret (W7 derives the stream keys from it).
+    /// The raw secret (the stream keys are derived from it).
     pub fn secret(&self) -> &[u8] {
         &self.0
     }
@@ -415,8 +415,8 @@ pub fn pair_setup_transient<T: Transport>(t: &mut T) -> Result<Shared> {
     pair_setup_transient_for(t, false)
 }
 
-/// The empty SRP password some senders use for transient pairing (W7,
-/// spec `airplay-mirroring.md` Appendix A).
+/// The empty SRP password some senders use for transient pairing
+/// (spec `airplay-mirroring.md` Appendix A).
 pub const TRANSIENT_PIN_EMPTY: &str = "";
 
 fn transport_failure(e: &Error) -> bool {
@@ -427,7 +427,7 @@ fn transport_failure(e: &Error) -> bool {
 }
 
 /// Transient pair-setup with the receiver-family rules of the spec
-/// (`airplay-mirroring.md` Appendix A, added by W7):
+/// (`airplay-mirroring.md` Appendix A):
 ///
 /// - `X-Apple-HKP`: 4 for Apple receivers, 3 for legacy-preferring ones
 ///   (`legacy_preferring`: no CoreUtils pairing bit, or bit 26/51); if

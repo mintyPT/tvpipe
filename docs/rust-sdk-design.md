@@ -189,7 +189,7 @@ From `docs/airplay-mirroring.md` §2.2 and §5:
 
 ### Ways to have FairPlay without linking it (later, if hardware says so)
 
-- **A clean-room FairPlay** (PLAN §10's original plan) removes the LGPL
+- **A clean-room FairPlay** (the original plan) removes the LGPL
   code altogether. The best outcome, the most work.
 - **A helper process**: `tvpipe-fairplay` also builds a tiny executable
   that answers `m1`/`m3`/`check_m4`/`wrap_key` over stdin/stdout; the

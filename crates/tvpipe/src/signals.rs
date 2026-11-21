@@ -1,7 +1,7 @@
 //! Ctrl-C and SIGTERM as a stop request, so a program can end its
 //! sessions cleanly: the receivers get their TEARDOWN/STOP and leave
-//! mirroring mode (PLAN §3 "Teardown"). Opt-in, with the `signals`
-//! feature; the library never installs a handler by itself.
+//! mirroring mode (ARCHITECTURE.md, "Session Lifecycle"). Opt-in, with
+//! the `signals` feature; the library never installs a handler by itself.
 //!
 //! ```no_run
 //! # fn main() -> tvpipe::Result<()> {

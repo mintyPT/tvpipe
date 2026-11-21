@@ -1,4 +1,4 @@
-//! `GET /info` (PLAN §7.2): the receiver's binary plist with its name,
+//! `GET /info`: the receiver's binary plist with its name,
 //! model, feature bits, long-term key, displays and audio formats, and its
 //! mapping to [`Capabilities`].
 //!
@@ -8,7 +8,7 @@
 //! ids, `features`, `pk`, `statusFlags`, `supportedFormats` bitmasks per
 //! stream type and `receiverHDRCapability`, but no `displays`,
 //! `audioFormats` or `audioLatencies`. Those are parsed when present
-//! (other receivers, or a richer request W7 may send) and otherwise
+//! (other receivers, or a richer request we may send) and otherwise
 //! [`Info::capabilities`] falls back to defaults. Every field is optional:
 //! unknown or mistyped values are ignored, never fatal.
 //!
@@ -70,8 +70,8 @@ pub struct AudioLatency {
     pub output_micros: Option<u64>,
 }
 
-/// `supportedFormats`: an audio-format bitmask per stream type (meaning of
-/// the bits is W7's business; kept raw).
+/// `supportedFormats`: an audio-format bitmask per stream type (the bits
+/// are not interpreted; kept raw).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct SupportedFormats {
     pub audio_stream: Option<u64>,
@@ -253,8 +253,8 @@ impl Info {
         if self.has(features::SCREEN_MULTI_CODEC) {
             video_codecs.push(VideoCodec::Hevc);
         }
-        // Realtime mirroring audio as ALAC 44.1 kHz stereo (PLAN §5.1);
-        // W7 refines this from `audioFormats` once the bits are specified.
+        // Realtime mirroring audio as ALAC 44.1 kHz stereo (ARCHITECTURE.md,
+        // "AirPlay"), until `audioFormats` is read once its bits are specified.
         let audio_formats = if self.has(features::AUDIO) || self.has(features::SCREEN) {
             vec![AudioFormat {
                 codec: AudioCodec::Alac,

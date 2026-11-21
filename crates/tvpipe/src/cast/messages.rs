@@ -1,4 +1,4 @@
-//! Cast v2 control messages (PLAN §8.1): namespaces, ids, and typed
+//! Cast v2 control messages: namespaces, ids, and typed
 //! builders/parsers for the JSON payloads of `tp.connection`,
 //! `tp.heartbeat` and `receiver`.
 //!

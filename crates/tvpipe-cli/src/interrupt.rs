@@ -1,5 +1,5 @@
 //! Stop requests from the person at the terminal, so `play` can send
-//! STOP/TEARDOWN before it exits (PLAN §3 "Teardown").
+//! STOP/TEARDOWN before it exits (ARCHITECTURE.md, "Session Lifecycle").
 //!
 //! Ctrl-C and SIGTERM come through the library's `tvpipe::signals` (the
 //! `signals` feature; the platform FFI lives there, see ARCHITECTURE.md,

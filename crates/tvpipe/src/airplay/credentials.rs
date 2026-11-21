@@ -1,4 +1,4 @@
-//! Persisted AirPlay pairing state (PLAN §4, §7.1): our controller identity
+//! Persisted AirPlay pairing state: our controller identity
 //! (an Ed25519 key pair plus a pairing identifier, generated once) and the
 //! receivers we paired with (their identifier and long-term public key).
 //!
@@ -17,7 +17,7 @@
 //! addr = 192.168.1.34:7000
 //! ```
 //!
-//! A receiver paired with the legacy raw (non-TLV) pair-setup (W7, spec
+//! A receiver paired with the legacy raw (non-TLV) pair-setup (spec
 //! `airplay-mirroring.md` Appendix A) additionally has `pairing = raw`;
 //! without that line a receiver is a HAP pairing, so older files load
 //! unchanged.

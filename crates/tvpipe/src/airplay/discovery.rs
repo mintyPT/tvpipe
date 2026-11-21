@@ -1,5 +1,5 @@
 //! AirPlay TXT record parsing for `_airplay._tcp` and `_raop._tcp`
-//! (PLAN §6).
+//! (ARCHITECTURE.md, "Discovery").
 //!
 //! Key names, the feature-string format and the bit meanings follow pyatv
 //! (MIT): `pyatv/protocols/airplay/utils.py` (`parse_features`,

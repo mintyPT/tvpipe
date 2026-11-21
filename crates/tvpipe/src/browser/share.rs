@@ -13,7 +13,7 @@
 //! back to the page as `keyframe` messages. The input ends when the share
 //! ends or the page goes away.
 //!
-//! With [`ShareServer::set_rejoin`] (the headless browser, W13) a source
+//! With [`ShareServer::set_rejoin`] (the headless browser) a source
 //! page that goes away mid-stream does not end the input: tvpipe's
 //! browser re-shares after a navigation, a reload or a crash, and the
 //! newest page that captures becomes the source and gets the same plan.
@@ -49,7 +49,7 @@ pub const PAGE_HTML: &str = include_str!("share.html");
 /// text; tvpipe starts the capture in it (`browser::screen`).
 pub const SCREEN_HTML: &str = include_str!("screen.html");
 /// The capture script: self-contained, also injected into pages by the
-/// headless-browser mode (W13).
+/// headless-browser mode.
 pub const CAPTURE_JS: &str = include_str!("capture.js");
 
 /// Records queued between the page's socket and the session.

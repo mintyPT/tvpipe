@@ -1,4 +1,4 @@
-//! Wire formats (owner: W2).
+//! Wire formats.
 //!
 //! - [`json`]: JSON value, parser and serializer (Cast payloads, CLI output).
 //! - [`bplist`]: binary property lists (AirPlay `/info`, RTSP SETUP bodies).

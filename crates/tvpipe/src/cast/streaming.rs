@@ -1,4 +1,4 @@
-//! Cast Streaming session negotiation (PLAN §8.2): the OFFER we send on the
+//! Cast Streaming session negotiation: the OFFER we send on the
 //! `urn:x-cast:com.google.cast.webrtc` namespace, the receiver's ANSWER,
 //! and what they mean for the encode ([`Negotiated::capabilities`]).
 //!

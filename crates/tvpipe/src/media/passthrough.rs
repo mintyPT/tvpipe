@@ -12,8 +12,8 @@
 //!   (so the log can say why ffmpeg is used).
 //!
 //! Sources: ISO/IEC 14496-3 §1.6.2.1 (AudioSpecificConfig, Table 1.16
-//! sampling frequencies); ITU-T H.264 §7.4.2.1.1, Annex E.2.1; PLAN §3, §5;
-//! docs/measurements.md.
+//! sampling frequencies); ITU-T H.264 §7.4.2.1.1, Annex E.2.1;
+//! ARCHITECTURE.md, "Inputs"; docs/measurements.md.
 
 use std::collections::VecDeque;
 use std::fmt;

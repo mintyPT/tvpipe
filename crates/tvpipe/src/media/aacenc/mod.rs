@@ -12,8 +12,6 @@
 //! noiseless coding clause 9, quantization 10, scalefactors 11, M/S 12.1,
 //! filterbank 15; tables from Annex A and clause 8.9, transcribed by
 //! `tests/vectors/aacenc/gen_tables.py`) and general MDCT literature.
-//!
-//! Owner: W10.
 
 mod bits;
 pub(crate) mod encoder;

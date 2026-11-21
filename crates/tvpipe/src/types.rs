@@ -1,7 +1,7 @@
-//! Core types shared by every workstream (PLAN §3).
+//! Core types shared by every module.
 //!
-//! **Frozen in M0.** Changing anything public here needs the lead's
-//! approval (ARCHITECTURE.md, "Code Conventions"). Adding helper methods
+//! Changing anything public here needs the owner's approval
+//! (ARCHITECTURE.md, "Code Conventions"). Adding helper methods
 //! is fine.
 
 use std::sync::Arc;

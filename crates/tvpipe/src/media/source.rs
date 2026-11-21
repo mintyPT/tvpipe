@@ -9,7 +9,8 @@
 //!
 //! Sources: RFC 9559 (CodecID, CodecPrivate, CodecDelay); ISO/IEC 14496-3
 //! §1.6.2.1 (AudioSpecificConfig); RFC 6716 §3.1 (Opus TOC byte); RFC 7845
-//! §5.1 (OpusHead); ISO/IEC 14496-15 §5.3.3.1; PLAN §3, §5.3.
+//! §5.1 (OpusHead); ISO/IEC 14496-15 §5.3.3.1;
+//! ARCHITECTURE.md, "Timing and Latency".
 
 use std::io::Read;
 use std::sync::Arc;

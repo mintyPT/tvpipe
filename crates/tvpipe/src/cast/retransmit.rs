@@ -1,4 +1,4 @@
-//! Per-stream Cast sender state (PLAN §8.3): the history of in-flight
+//! Per-stream Cast sender state: the history of in-flight
 //! frames, ACK/NACK handling, retransmission and kickstart, the
 //! max-frames-in-flight limits, PLI bookkeeping, round-trip time, and the
 //! Sender Report contents.

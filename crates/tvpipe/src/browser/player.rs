@@ -1,5 +1,5 @@
 //! `--to browser`: a receiver that plays tvpipe's stream in a browser tab
-//! (W14; protocol in docs/player-protocol.md).
+//! (protocol in docs/player-protocol.md).
 //!
 //! [`BrowserSink`] serves the player page (`player.html`, `player.js`,
 //! the fonts of [`fonts`]) on 127.0.0.1 with the same security as the

@@ -552,9 +552,16 @@ blocked `recv`, socket timeouts per handle, PowerShell pipes) are handled in por
   HAP profile gets the §5.3 placeholders (what the Apple TV accepts); the
   legacy profile, or a receiver refusing the session after FairPlay was
   skipped, fails with `fairplay-required`.
-- **Tainted sources.** doubletake, UxPlay, playfair and their derivatives
-  are read only by a dirty-room spec writer and by the FairPlay porter.
-  The spec is [`docs/airplay-mirroring.md`](docs/airplay-mirroring.md).
+- **Tainted sources** are read only by a dirty-room spec writer and by the
+  FairPlay porter; whoever writes code outside `crates/tvpipe-fairplay`
+  works from the spec, [`docs/airplay-mirroring.md`](docs/airplay-mirroring.md),
+  and its vectors:
+
+  | Class | Sources | Who may read them |
+  |---|---|---|
+  | Permissive: read and port with attribution | openscreen (BSD-3), pyatv (MIT), pychromecast (MIT), node-castv2 (MIT), rust_cast (MIT), RFCs and public specs | everyone |
+  | Tainted: dirty room only | doubletake (LGPL-3.0+), UxPlay and RPiPlay (GPL-3.0), playfair (GPL), airfry (MIT, but a port of doubletake), RottingApple (MIT, but bundles GPL playfair and a doubletake-derived helper), shairport-sync (check its license first) | spec writers and the FairPlay porter |
+  | Black box | running doubletake, its test receiver, UxPlay or an oracle harness as external processes | everyone (behaviour, not source) |
 - **Encoders** were written from ITU-T H.264 and ISO/IEC 14496-3; some
   tables come from openh264 (BSD-2) with attribution.
 - **AirPlay mirroring** was implemented from a reviewed prose spec plus test
@@ -590,7 +597,7 @@ blocked `recv`, socket timeouts per handle, PowerShell pipes) are handled in por
 - **Core types** in `crates/tvpipe/src/types.rs` (`EncodedFrame`, `VideoInfo`,
   `AudioInfo`, `Capabilities`, `Encoder`, the plans, `Sink`, …) are
   shared by every module. Changing anything public there goes through the
-  lead; adding helper methods is fine.
+  owner; adding helper methods is fine.
 - **Errors:** one crate-wide `Error { kind, msg, source }` with
   `ErrorKind` and `Result<T>` (`crates/tvpipe/src/error.rs`). Modules may use private
   error enums but convert at their public boundary. Malformed input is

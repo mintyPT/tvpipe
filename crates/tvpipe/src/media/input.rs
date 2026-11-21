@@ -2,7 +2,8 @@
 //! "Inputs").
 //!
 //! An [`Input`] yields the stream info the sinks start with and then
-//! [`EncodedFrame`]s in our conventions (PLAN §3). Implementations:
+//! [`EncodedFrame`]s in our conventions (ARCHITECTURE.md,
+//! "Code Conventions"). Implementations:
 //!
 //! - [`FfmpegInput`]: ffmpeg encodes (files, URLs, capture, test pattern,
 //!   raw SLRW through [`rawin`]); what `session.rs` did inline before.
@@ -19,7 +20,7 @@
 //! Every implementation returns `None` soon after a stop request
 //! (Ctrl-C), also while waiting for input.
 //!
-//! Sources: PLAN §3, §5; docs/slrw.md; docs/measurements.md.
+//! Sources: ARCHITECTURE.md, "Inputs"; docs/slrw.md; docs/measurements.md.
 
 use std::collections::VecDeque;
 use std::io::{self, Read, Write};

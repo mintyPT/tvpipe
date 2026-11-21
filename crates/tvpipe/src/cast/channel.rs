@@ -1,4 +1,4 @@
-//! The Cast v2 control channel (PLAN §8.1): TLS to the receiver (port 8009
+//! The Cast v2 control channel: TLS to the receiver (port 8009
 //! by default), `u32be length | CastMessage` framing, and the
 //! `tp.heartbeat` keep-alive.
 //!

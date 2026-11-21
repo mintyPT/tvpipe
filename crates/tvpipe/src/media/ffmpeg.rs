@@ -4,7 +4,7 @@
 //!
 //! Sources: ffmpeg documentation (ffmpeg(1), ffmpeg-formats(1) matroska
 //! muxer options, ffmpeg-codecs(1) encoder options, ffmpeg-filters(1)) and
-//! black-box behaviour of ffmpeg 8; PLAN §5.1, §5.2.
+//! black-box behaviour of ffmpeg 8; ARCHITECTURE.md, "Inputs".
 
 use std::collections::{BTreeSet, VecDeque};
 use std::ffi::{OsStr, OsString};
@@ -180,7 +180,7 @@ pub fn resolve_encoder(requested: Encoder, codec: VideoCodec, probe: &Probe) -> 
     }))
 }
 
-/// Raw game video arriving on a localhost TCP port (PLAN §5.2).
+/// Raw game video arriving on a localhost TCP port (docs/slrw.md).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RawVideoInput {
     pub width: u32,
