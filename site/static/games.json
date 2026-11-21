@@ -10,9 +10,9 @@
       "source": "gh:mitsuhiko/tvpipe/drawbluff@drawbluff-v*",
       "home": "https://github.com/mitsuhiko/tvpipe/tree/main/games/drawbluff",
       "screenshots": [
-        { "src": "static/games/drawbluff/tv-vote.png", "alt": "The TV showing a drawing of a masked superhero toasting bread with laser eyes and seven titles to vote on, one of them real", "kind": "tv" },
+        { "src": "static/games/drawbluff/tv-vote.webp", "alt": "The TV showing a drawing of a seagull flying off with a swimmer's sandwich in a gold frame and seven titles to vote on, one of them real", "kind": "tv" },
         { "src": "static/games/drawbluff/phone-draw.png", "alt": "Drawing a snowman sweating in a sauna for the prompt on a phone", "kind": "phone" },
-        { "src": "static/games/drawbluff/phone-vote.png", "alt": "Picking the real title of the laser-eyed superhero's drawing on a phone", "kind": "phone" }
+        { "src": "static/games/drawbluff/phone-vote.png", "alt": "Picking the real title of the seagull drawing on a phone", "kind": "phone" }
       ]
     },
     {
