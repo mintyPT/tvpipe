@@ -252,7 +252,7 @@ try {
 
   /**
    * Dropping out (not with --shots): at the first reveal a bot's phone
-   * goes for 9 s and comes back by name (its token lost, as on another
+   * goes for 15 s and comes back by name (its token lost, as on another
    * phone): the TV shows the rejoin badge, the host page a Rejoin button;
    * at the first scores Phil's phone forgets everything, reloads and
    * joins with the same name: his seat again.
@@ -263,12 +263,13 @@ try {
     if (shots) return;
     if (phase === "reveal" && !dropped.has("bot")) {
       dropped.add("bot");
-      const name = await win.eval<string>(`(() => { const b = garble.robots[0]; b.client.drop({ away: 9000, forget: true }); return b.name; })()`);
-      log(`${name}'s phone dropped out (back by name in 9 s)`);
+      const name = await win.eval<string>(`(() => { const b = garble.robots[0]; b.client.drop({ away: 15_000, forget: true }); return b.name; })()`);
+      log(`${name}'s phone dropped out (back by name in 15 s)`);
       await sleep(5500);
-      await tv.screenshot(`${out}/tv-${String(++n).padStart(2, "0")}-rejoin.png`);
+      // Both before the screenshot: with several windows a screenshot can take seconds.
       const badge = await tv.eval<string>(`document.querySelector("tvpipe-rejoin")?.shadowRoot.querySelector(".card.on")?.innerText ?? ""`);
       const button = await win.eval<boolean>(`[...document.querySelectorAll("button")].some((b) => b.textContent === ${JSON.stringify(rejoin)})`);
+      await tv.screenshot(`${out}/tv-${String(++n).padStart(2, "0")}-rejoin.png`);
       log(`the TV's rejoin badge: ${JSON.stringify(badge.replace(/\n/g, " / "))}; the host's Rejoin button: ${button}`);
       if (!badge.includes(name) || !button) throw new Error("no rejoin badge on the TV, or no Rejoin button");
       await win.eval(`[...document.querySelectorAll("button")].find((b) => b.textContent === ${JSON.stringify(rejoin)}).click(); true`);
