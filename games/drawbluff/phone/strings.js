@@ -16,6 +16,9 @@ const en = (f) => ({
   join: "Join",
   /** The other language, for the switch. */
   otherLang: "Deutsch",
+  /** The header's sound switch. */
+  soundOn: "Sound on",
+  soundOff: "Sound off",
   // Joining and leaving.
   nameTaken: "Someone already has that name. If that is you on another phone, close the game there first.",
   pickAnother: "Pick another name.",
@@ -165,6 +168,8 @@ const de = (f) => ({
   yourName: "Dein Name",
   join: "Mitspielen",
   otherLang: "English",
+  soundOn: "Ton an",
+  soundOff: "Ton aus",
   nameTaken: "Den Namen hat schon jemand. Bist du das auf einem anderen Handy? Dann schließ das Spiel dort zuerst.",
   pickAnother: "Nimm einen anderen Namen.",
   full: "Das Spiel ist voll.",

@@ -9,6 +9,7 @@
 
 import { PartyClient } from "/_tvpipe/lib/client.js";
 import { browserLang, pickLang } from "./i18n.js";
+import { Sfx } from "./sfx.js";
 import { strings } from "./strings.js";
 import { drawDrawing, drawStroke, FRAME_MS, framesOf, GRID, PALETTE } from "./strokes.js";
 
@@ -46,6 +47,7 @@ const banner = /** @type {HTMLElement} */ (document.getElementById("banner"));
 const timer = /** @type {HTMLElement} */ (document.getElementById("timer"));
 const who = /** @type {HTMLElement} */ (document.getElementById("who"));
 const langButton = /** @type {HTMLButtonElement} */ (document.getElementById("lang"));
+const soundButton = /** @type {HTMLButtonElement} */ (document.getElementById("sound"));
 const header = /** @type {HTMLElement} */ (document.querySelector("header"));
 
 // ---------------------------------------------------------------------------
@@ -77,6 +79,7 @@ function useLang() {
   lang = l;
   t = strings(l);
   document.documentElement.lang = l;
+  showSound();
   return true;
 }
 
@@ -101,6 +104,55 @@ langButton.addEventListener("click", () => {
     render(client.view);
   } else showSwitch(true);
 });
+
+// ---------------------------------------------------------------------------
+// Sound and touch: quiet cues (the TV plays the show), a buzz where the
+// phone can, both off with the switch in the header (kept on this phone).
+
+const SOUND_KEY = "drawbluff:sound";
+function soundOff() {
+  try {
+    return localStorage.getItem(SOUND_KEY) === "off";
+  } catch {
+    return false;
+  }
+}
+const sfx = new Sfx({ volume: 0.55, muted: soundOff() });
+/** @param {number | number[]} pattern */
+function buzz(pattern) {
+  if (sfx.muted) return;
+  try {
+    navigator.vibrate?.(pattern);
+  } catch {}
+}
+function showSound() {
+  const on = !sfx.muted;
+  soundButton.classList.toggle("off", !on);
+  soundButton.setAttribute("aria-label", on ? t.soundOn : t.soundOff);
+  soundButton.replaceChildren(icon(on ? SPEAKER : SPEAKER_OFF));
+}
+soundButton.addEventListener("click", () => {
+  sfx.muted = !sfx.muted;
+  try {
+    if (sfx.muted) localStorage.setItem(SOUND_KEY, "off");
+    else localStorage.removeItem(SOUND_KEY);
+  } catch {}
+  showSound();
+  if (!sfx.muted) sfx.play("tap");
+});
+// Audio starts with a tap (browsers allow it only then); every button clicks.
+document.addEventListener(
+  "pointerdown",
+  (e) => {
+    sfx.unlock();
+    const b = e.target instanceof Element ? e.target.closest("button") : null;
+    if (b && !(/** @type {HTMLButtonElement} */ (b).disabled) && b !== soundButton) {
+      sfx.play("tap", { pitch: b.classList.contains("primary") || b.classList.contains("done") ? 1.25 : 1 });
+      buzz(8);
+    }
+  },
+  { capture: true, passive: true },
+);
 
 /** The key of what is on screen: rebuilt only when it changes. */
 let shown = "";
@@ -231,6 +283,7 @@ function render(view) {
   if (useLang()) shown = "";
   const rank = typeof me.rank === "number" && typeof me.of === "number" && me.of > 0 && me.task !== "lobby" ? ` · ${t.rankShort(me.rank, me.of)}` : "";
   const dot = typeof me.color === "number" && Array.isArray(room.colors) ? room.colors[me.color] : undefined;
+  if (typeof dot === "string" && /^#[0-9a-f]{6}$/i.test(dot)) document.documentElement.style.setProperty("--me", dot);
   who.replaceChildren(
     ...(mine && typeof dot === "string" ? [h("span", { class: "dot", style: `background:${dot}` })] : []),
     mine ? `${mine.vip ? "★ " : ""}${mine.name}${rank}` : "",
@@ -245,8 +298,30 @@ function render(view) {
     document.body.classList.toggle("drawing", me.task === "draw" && !me.done);
     if (timer.parentElement !== header) header.append(timer);
     build(view);
+    cue(me);
   }
   refresh?.();
+}
+
+/** The task cued last (`task:key`): a cue once per task. */
+let cued = "";
+/**
+ * A cue for a new screen: your turn (draw, lie, vote) rings and buzzes,
+ * points won chime in coins.
+ * @param {any} me
+ */
+function cue(me) {
+  const key = `${me.task}:${me.key ?? ""}:${me.deadline ?? ""}:${me.note ?? ""}`;
+  if (key === cued) return;
+  cued = key;
+  if (["draw", "lie", "vote"].includes(me.task) && !me.done) {
+    sfx.play("chime", { vol: 0.8 });
+    buzz([25, 60, 25]);
+  } else if (me.note === "result" && me.result?.points > 0) {
+    sfx.play("coin");
+    sfx.play("coin", { at: 0.18, pitch: 1.12 });
+    buzz([15, 40, 15, 40, 15]);
+  }
 }
 
 /**
@@ -302,7 +377,20 @@ function build(view) {
  * @param {...Node} extra
  */
 function waiting(text, ...extra) {
-  show(h("section", { class: "card" }, h("p", { class: "big" }, text), ...extra));
+  show(h("section", { class: "card" }, h("p", { class: "big" }, text), doodle(), ...extra));
+}
+
+/** A pencil line that draws itself over and over (the card is waiting). */
+function doodle() {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("viewBox", "0 0 100 50");
+  svg.setAttribute("class", "doodle");
+  svg.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS(SVG_NS, "path");
+  path.setAttribute("pathLength", "1");
+  path.setAttribute("d", "M6 34 C 14 10, 26 10, 24 30 S 40 44, 46 22 S 62 6, 64 28 S 80 42, 94 16");
+  svg.append(path);
+  return svg;
 }
 
 /**
@@ -315,9 +403,9 @@ function scoreCard(title, me, ...extra) {
     h(
       "section",
       { class: "card" },
-      h("h1", {}, title),
+      title.startsWith("+") ? h("p", { class: "gain" }, title) : h("h1", {}, title),
       ...extra,
-      h("p", { class: "score" }, formatNumber(me.score ?? 0)),
+      h("p", { class: "score pop" }, formatNumber(me.score ?? 0)),
       h("p", { class: "muted" }, `${t.points(me.score ?? 0)} · ${me.of ? t.rank(me.rank ?? 0, me.of) : t.rankOnly(me.rank ?? 0)}`),
     ),
   );
@@ -410,7 +498,7 @@ function colorPicker(err) {
       b.classList.toggle("chosen", i === mine);
       b.classList.toggle("taken", i !== mine && (taken[i] ?? 0) > 0);
     });
-    pens.replaceChildren(...palette.map((c) => h("span", { class: "pen", style: `background:${c}` })));
+    pens.replaceChildren(...palette.map((c) => h("span", { class: "pen", style: `--c:${c}` })));
   };
   const was = refresh;
   refresh = () => {
@@ -540,7 +628,12 @@ function final(view) {
 async function act(type, data, err) {
   err.textContent = "";
   try {
-    return await client.act(type, data);
+    const out = await client.act(type, data);
+    if (type === "draw" || type === "lie" || type === "vote") {
+      sfx.play("send");
+      buzz(20);
+    }
+    return out;
   } catch (e) {
     err.textContent = message(e);
     throw e;
@@ -800,6 +893,8 @@ const UNDO = "M9 14L4 9l5-5|M4 9h10a6 6 0 0 1 0 12h-3";
 const PLAY = "M7 4.5v15l12-7.5z";
 const STOP = "M6 6h12v12H6z";
 const COPY = "M9 9h11v11H9z|M5 15H4V4h11v1";
+const SPEAKER = "M4 9h4l5-4v14l-5-4H4z|M16.5 8.5a5 5 0 0 1 0 7|M19.5 5.5a9 9 0 0 1 0 13";
+const SPEAKER_OFF = "M4 9h4l5-4v14l-5-4H4z|M17 9l5 6|M22 9l-5 6";
 /** The size buttons' dots, px. */
 const DOTS = [8, 14, 22];
 
@@ -833,7 +928,7 @@ function draw(me) {
   const p = new Pad(canvas, palette, nFrames);
   pad = p;
   const pens = palette.map((c, i) => {
-    const b = h("button", { style: `background:${c}`, "aria-label": t.colour(i + 1), onclick: () => pick(i) });
+    const b = h("button", { style: `--c:${c}`, "aria-label": t.colour(i + 1), onclick: () => pick(i) });
     swatches.append(b);
     return b;
   });
@@ -967,6 +1062,7 @@ let autoSubmit = null;
  */
 function mini(drawing) {
   const c = /** @type {HTMLCanvasElement} */ (h("canvas", { class: "mini" }));
+  const frame = h("div", { class: "mframe" }, h("div", {}, c));
   requestAnimationFrame(() => {
     const r = c.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
@@ -984,7 +1080,7 @@ function mini(drawing) {
       drawDrawing(ctx, drawing, 0, 0, r.width, { frame });
     }, FRAME_MS);
   });
-  return c;
+  return frame;
 }
 
 /** @param {any} me */
@@ -1039,12 +1135,17 @@ function lie(me) {
 function vote(options, drawing) {
   const err = h("p", { class: "error" });
   const list = h("div", { class: "options" });
-  for (const o of options) {
+  for (const [i, o] of options.entries()) {
     const b = h(
       "button",
       {
+        class: "in",
+        style: `animation-delay:${150 + i * 70}ms`,
         onclick: async () => {
-          list.querySelectorAll("button").forEach((x) => x.classList.toggle("chosen", x === b));
+          list.querySelectorAll("button").forEach((x) => {
+            x.classList.remove("in");
+            x.classList.toggle("chosen", x === b);
+          });
           try {
             await act("vote", { option: o.id }, err);
           } catch {}
@@ -1085,6 +1186,7 @@ document.addEventListener("visibilitychange", () => {
 // ---------------------------------------------------------------------------
 
 /** @type {HTMLElement} */ (app.querySelector(".big")).textContent = t.connecting;
+showSound();
 if (!client.room || !client.key) {
   show(h("section", { class: "card" }, h("p", { class: "big" }, t.scanToJoin)));
 } else if (client.canResume) {

@@ -77,6 +77,8 @@ const en = (f) => ({
   whichReal: "Which one is the real title?",
   /** @param {number} n */
   writingNext: (n) => f.p(n, { one: "Meanwhile # liar writes for the next drawing.", other: "Meanwhile # liars write for the next drawing." }),
+  /** The frame's plate before the reveal tells the title. */
+  untitled: "Untitled",
   // The reveal.
   answers: "The answers",
   votes: "Votes",
@@ -169,6 +171,7 @@ const de = (f) => ({
     f.p(n, { one: "Wie heißt das? Der Lügner denkt sich einen falschen Titel aus.", other: "Wie heißt das? # Lügner denken sich falsche Titel aus." }),
   whichReal: "Welcher Titel ist echt?",
   writingNext: (n) => f.p(n, { one: "Währenddessen schreibt # Lügner für die nächste Zeichnung.", other: "Währenddessen schreiben # Lügner für die nächste Zeichnung." }),
+  untitled: "Ohne Titel",
   answers: "Die Antworten",
   votes: "Stimmen",
   stampLie: "LÜGE",

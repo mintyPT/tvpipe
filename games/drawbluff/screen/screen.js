@@ -17,6 +17,7 @@
 
 import { PartyClient, qrSvg } from "/_tvpipe/lib/client.js";
 import { pickLang } from "../phone/i18n.js";
+import { Sfx } from "../phone/sfx.js";
 import { drawDrawing, FRAME_MS, framesOf, GRID, PALETTE, PAPER } from "../phone/strokes.js";
 import { strings } from "./strings.js";
 
@@ -75,37 +76,20 @@ function replay(el, cls) {
 const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // ---------------------------------------------------------------------------
-// Sound: short synthesized cues (tvpipe's browser allows autoplay).
+// Sound: the show's synthesized cues (phone/sfx.js; tvpipe's browser allows autoplay).
 
 /** The host window's preview has `#mute=1`: the TV plays the sound. */
 const MUTED = new URLSearchParams(location.hash.slice(1)).get("mute") === "1";
-/** @type {AudioContext | null} */
-let audio = null;
+const sfx = new Sfx({ muted: MUTED, volume: 0.9 });
+/** A watch page opened by hand gets its sound with the first click. */
+addEventListener("pointerdown", () => sfx.unlock(), { once: true });
+
 /**
- * @param {number[]} notes frequencies, played one after the other
- * @param {number} [len] seconds per note
- * @param {number} [vol] loudness, 0–1
+ * @param {import("../phone/sfx.js").SoundName} name
+ * @param {{ at?: number, vol?: number, len?: number, pitch?: number }} [o]
  */
-function beep(notes, len = 0.12, vol = 0.25) {
-  if (MUTED) return;
-  try {
-    audio ??= new AudioContext();
-    if (audio.state === "suspended") void audio.resume();
-    let t = audio.currentTime + 0.02;
-    for (const f of notes) {
-      const o = audio.createOscillator();
-      const g = audio.createGain();
-      o.type = "triangle";
-      o.frequency.value = f;
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(vol, t + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + len);
-      o.connect(g).connect(audio.destination);
-      o.start(t);
-      o.stop(t + len + 0.02);
-      t += len * 0.9;
-    }
-  } catch {}
+function play(name, o) {
+  sfx.play(name, o);
 }
 
 // ---------------------------------------------------------------------------
@@ -382,8 +366,19 @@ function drawIn(el, drawing, ms, delay = 0, done) {
 /** Drawings drawn in already (`round:spot:artist`): the vote keeps the lie's. */
 const drawnIn = new Set();
 
+/** Picture frames: a drawing gets one by its key, so it keeps it from the lie to the reveal. */
+const FRAMES = ["fr-gold", "fr-black", "fr-wood", "fr-silver", "fr-white"];
+/** @param {string} key */
+function frameOf(key) {
+  let x = 5;
+  for (let i = 0; i < key.length; i++) x = (Math.imul(x, 33) + key.charCodeAt(i)) >>> 0;
+  return FRAMES[x % FRAMES.length];
+}
+
 /**
- * The spotlight's drawing on paper, taped in its artist's colour.
+ * The spotlight's drawing, hung in a frame (a liner in its artist's
+ * colour) with a brass plate: "Untitled" and the artist, the title once
+ * the reveal has it ({@link nameplate}).
  * @param {Record<string, any>} s the screen view
  * @param {boolean} [still] never draw it in
  */
@@ -392,10 +387,34 @@ function paper(s, still = false) {
   const key = `${s.round}:${s.spot}:${s.artist?.id}`;
   const fresh = !still && !drawnIn.has(key);
   drawnIn.add(key);
-  const el = h("div", { class: `paper${fresh && !calm() ? " slide" : ""}` }, cv, h("i", { class: "tape a" }), h("i", { class: "tape b" }));
+  const plate = h("i", { class: "plate" }, h("b", {}, t.untitled), h("span", {}, t.by(s.artist?.name ?? "?")));
+  const el = h("div", { class: `paper frame ${frameOf(key)}${fresh && !calm() ? " slide" : ""}` }, h("div", { class: "mat" }, cv), h("i", { class: "glint" }), plate);
   tint(el, s.artist?.id ?? "");
-  drawIn(cv, s.drawing, fresh ? drawTime(s.drawing) : 0, fresh ? 650 : 0);
+  if (fresh && !calm()) later(520, () => play("drop", { vol: 1.3, pitch: 0.7 }));
+  drawIn(cv, s.drawing, fresh ? drawTime(s.drawing) : 0, fresh ? 750 : 0);
   return el;
+}
+
+/**
+ * The frame's plate turns over to the drawing's title, and a glint runs across the frame.
+ * @param {HTMLElement} frame from {@link paper}
+ * @param {string} title
+ */
+function nameplate(frame, title) {
+  const plate = frame.querySelector(".plate");
+  const b = plate?.querySelector("b");
+  if (!plate || !b) return;
+  if (calm()) {
+    b.textContent = title;
+    plate.classList.add("known");
+    return;
+  }
+  replay(plate, "turn");
+  later(270, () => {
+    b.textContent = title;
+    plate.classList.add("known");
+  });
+  replay(frame, "shine");
 }
 
 // ---------------------------------------------------------------------------
@@ -405,6 +424,42 @@ function paper(s, still = false) {
 let stinger = null;
 
 /**
+ * A brush stroke (an SVG, 1000×100 stretched to its box): ragged edges,
+ * bristle ends, a few streaks of lighter and darker paint.
+ * @param {number} seed
+ * @param {string} color
+ */
+function brushSvg(seed, color) {
+  let x = (seed * 2654435761 + 12345) >>> 0;
+  const rnd = () => ((x = (Math.imul(x, 1664525) + 1013904223) >>> 0) / 4294967296);
+  /** @type {string[]} */
+  const top = [];
+  /** @type {string[]} */
+  const bottom = [];
+  for (let k = 40; k <= 960; k += 40) {
+    top.push(`${k} ${(3 + rnd() * 7).toFixed(1)}`);
+    bottom.push(`${1000 - k} ${(97 - rnd() * 7).toFixed(1)}`);
+  }
+  // Bristle tips at both ends.
+  /** @type {string[]} */
+  const right = [];
+  /** @type {string[]} */
+  const left = [];
+  for (let k = 1; k < 9; k++) {
+    right.push(`${(1000 - (k % 2) * (10 + rnd() * 30)).toFixed(0)} ${(k * 11).toFixed(0)}`);
+    left.push(`${((k % 2) * (10 + rnd() * 30)).toFixed(0)} ${(100 - k * 11).toFixed(0)}`);
+  }
+  const d = `M0 8L${top.join("L")}L1000 6L${right.join("L")}L1000 95L${bottom.join("L")}L0 94L${left.join("L")}Z`;
+  let streaks = "";
+  for (let k = 0; k < 6; k++) {
+    const y = 14 + rnd() * 72;
+    const dark = k % 2 === 0;
+    streaks += `<path d="M${(rnd() * 200).toFixed(0)} ${y.toFixed(1)}L${(800 + rnd() * 200).toFixed(0)} ${(y + (rnd() - 0.5) * 6).toFixed(1)}" stroke="${dark ? "rgba(0,0,0,.13)" : "rgba(255,255,255,.18)"}" stroke-width="${(1 + rnd() * 2.5).toFixed(1)}" stroke-linecap="round" fill="none"/>`;
+  }
+  return `<svg viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" fill="${color}"/>${streaks}</svg>`;
+}
+
+/**
  * @param {string} label
  * @param {string} [sub]
  */
@@ -412,7 +467,13 @@ function sting(label, sub) {
   stinger?.remove();
   const cols = roomColors();
   const box = h("i", { class: "sting" });
-  for (let i = 0; i < 8; i++) box.append(h("i", { style: `left:${i * 14 - 10}%;background:${cols[i % cols.length]};transition-delay:${i * 30}ms` }));
+  const seed = Math.floor(Math.random() * 1000);
+  for (let i = 0; i < 8; i++) {
+    const stroke = h("i", { class: "bs", style: `top:${-14 + i * 16.5}%;height:23%;transition-delay:${i * 32}ms` });
+    stroke.innerHTML = brushSvg(seed + i, cols[i % cols.length]);
+    box.append(stroke);
+  }
+  play("whoosh");
   const word = h("b", {}, label);
   box.append(h("i", { class: "st" }, sub ? h("small", {}, sub) : null, word));
   document.body.insertBefore(box, joined);
@@ -422,8 +483,9 @@ function sting(label, sub) {
   if (word.scrollWidth > max) word.style.fontSize = `${(13 * max) / word.scrollWidth}vh`;
   requestAnimationFrame(() => requestAnimationFrame(() => box.classList.add("in")));
   setTimeout(() => {
-    box.querySelectorAll(":scope > i:not(.st)").forEach((b, i) => /** @type {HTMLElement} */ (b).style.setProperty("transition-delay", `${i * 25}ms`));
+    box.querySelectorAll(":scope > .bs").forEach((b, i) => /** @type {HTMLElement} */ (b).style.setProperty("transition-delay", `${i * 25}ms`));
     box.classList.add("out");
+    play("whoosh", { vol: 0.6, len: 0.4, pitch: 1.3 });
   }, 900);
   setTimeout(() => {
     box.remove();
@@ -489,8 +551,7 @@ function render(view) {
   }
   const key = `${lang}:${s.phase}:${s.round ?? ""}:${s.deadline ?? ""}:${s.artist?.id ?? ""}:${s.page ?? ""}`;
   if (s.phase !== lastPhase) {
-    if (s.phase === "draw" || s.phase === "lie" || s.phase === "vote" || s.phase === "gallery") beep([523, 659, 784]);
-    if (s.phase === "final") beep([523, 659, 784, 1047], 0.18);
+    if (s.phase === "draw" || s.phase === "lie" || s.phase === "vote" || s.phase === "gallery") play("chime", { at: 0.12, vol: 0.7 });
     if (s.phase === "draw") drawnIn.clear();
     lastPhase = s.phase;
     lastStep = 0;
@@ -690,7 +751,7 @@ function lobby(view) {
       if (b.was && !hide) replay(b.el, "flip");
       b.was = now;
     }
-    if (roster.length > lobbyCount) beep([660, 880]);
+    if (roster.length > lobbyCount && !first) play("join", { pitch: 1 + Math.min(roster.length, 12) * 0.03 });
     lobbyCount = roster.length;
     first = false;
   };
@@ -721,7 +782,10 @@ function ring() {
       last = sec;
       num.textContent = String(sec);
       el.classList.toggle("low", sec <= 10);
-      if (sec <= 10 && sec > 0) replay(el, "pulse");
+      if (sec <= 10 && sec > 0) {
+        replay(el, "pulse");
+        play(sec % 2 ? "tick" : "tock", { vol: sec <= 5 ? 0.9 : 0.5 });
+      }
     }
     return left;
   };
@@ -838,7 +902,7 @@ function draw(view) {
       c.pen.innerHTML = PENCIL;
       line.append(c.pen);
       c.stt = h("span", { class: "stt" });
-      c.el = h("div", { class: "dc" }, h("div", { class: "dc-top" }, avatar(id), h("span", { class: "nm" }, nameOf(id)), c.stt), line, h("i", { class: "stamp" }, t.stampDone));
+      c.el = h("div", { class: "dc" }, h("i", { class: "spiral" }), h("div", { class: "dc-top" }, avatar(id), h("span", { class: "nm" }, nameOf(id)), c.stt), line, h("i", { class: "stamp" }, t.stampDone));
     }
     tint(c.el, id);
     if (!calm()) {
@@ -910,7 +974,6 @@ function draw(view) {
     const sec = Math.ceil(left);
     if (hurry && left <= 5 && sec >= 1 && sec !== lastBig) {
       lastBig = sec;
-      beep([1175], 0.05, 0.15);
       if (!calm()) {
         big.textContent = String(sec);
         replay(big, "go");
@@ -928,7 +991,9 @@ function draw(view) {
       c.stt.classList.remove("hot");
       later(150, () => burst(c.el, [colorOf(c.id), "#ffd60a", "#fffdf6"], 12, 7, 0.1));
     } else if (!calm()) replay(c.el, "flash");
-    if (n <= 12) beep([784, 1047], 0.07, 0.15);
+    const k = cards.filter((x) => x.done).length;
+    if (n <= 12) play("done", { pitch: 1 + (k % 6) * 0.06 });
+    else play("pop", { vol: 0.5, pitch: 1 + (k % 8) * 0.05 });
   };
 
   let firstView = true;
@@ -945,6 +1010,7 @@ function draw(view) {
         c.msg = t.startedOver;
         c.msgUntil = now + 2500;
         if (c.stt) burst(c.el, ["#d9d4e8", "#fffdf6"], 9, 6, 0.12);
+        play("swish", { vol: 0.6 });
       }
       c.ink = x;
       if (done.has(c.id) && !c.done) {
@@ -976,9 +1042,11 @@ function gallery(view) {
   const cells = (s.items ?? []).map((/** @type {any} */ it, /** @type {number} */ i) => {
     const cv = /** @type {HTMLCanvasElement} */ (h("canvas"));
     const cap = h("div", { class: "cap" }, h("b", {}, it.prompt), h("span", {}, avatar(it.id, it.name), t.by(it.name)));
-    const pol = h("div", { class: `pol${calm() ? "" : " drop"}`, style: `--r:${(((i * 37) % 7) - 3).toFixed(1)}deg;animation-delay:${i * 110}ms` }, h("i", { class: "tape" }), cv, cap);
+    const frame = h("div", { class: `frame ${frameOf(`${s.round}:g:${it.id}`)}` }, h("div", { class: "mat" }, cv));
+    const pol = h("div", { class: `pol${calm() ? "" : " drop"}`, style: `--r:${(((i * 37) % 7) - 3).toFixed(1)}deg;animation-delay:${i * 110}ms` }, h("i", { class: "nail" }), frame, cap);
     tint(pol, it.id);
-    drawIn(cv, it.drawing, 1500, calm() ? 0 : 450 + i * 110, () => cap.classList.add("on"));
+    if (!calm()) later(i * 110 + 330, () => play("drop", { vol: 0.8, pitch: 0.9 + (i % 4) * 0.08 }));
+    drawIn(cv, it.drawing, 1500, calm() ? 0 : 650 + i * 110, () => cap.classList.add("on"));
     return pol;
   });
   stage.replaceChildren(
@@ -1030,15 +1098,20 @@ function guess(view) {
       waiting.length <= 12 ? h("div", { class: "lchips" }, ...chips.values()) : null,
     );
     stage.replaceChildren(pic, right);
+    let first = true;
     refresh = () => {
       const v = client.view.screen ?? {};
       const done = new Set(v.done ?? []);
       const typing = new Set(v.typing ?? []);
       for (const [id, c] of chips) {
-        if (done.has(id) && !c.classList.contains("done")) c.classList.add("done");
+        if (done.has(id) && !c.classList.contains("done")) {
+          c.classList.add("done");
+          if (!first) play("pop", { pitch: 1 + (done.size % 6) * 0.07 });
+        }
         c.classList.toggle("typ", typing.has(id) && !done.has(id));
       }
       count.textContent = t.done(waiting.filter((id) => done.has(id)).length, waiting.length);
+      first = false;
     };
   } else {
     const options = /** @type {any[]} */ (s.options ?? []);
@@ -1064,10 +1137,18 @@ function guess(view) {
       later(1100, () => rib.parentElement?.remove());
     }
     stage.replaceChildren(pic, right);
+    let first = true;
     refresh = () => {
       const v = client.view.screen ?? {};
       const done = new Set(v.done ?? []);
-      for (const [id, d] of dots) if (done.has(id) && !d.classList.contains("on")) d.classList.add("on");
+      let fresh = 0;
+      for (const [id, d] of dots) {
+        if (!done.has(id) || d.classList.contains("on")) continue;
+        d.classList.add("on");
+        fresh++;
+      }
+      if (fresh && !first) play("pop", { vol: 0.7, pitch: 1.1 + (done.size % 6) * 0.07 });
+      first = false;
       count.textContent = t.voted(waiting.filter((id) => done.has(id)).length, waiting.length);
     };
   }
@@ -1103,8 +1184,9 @@ function reveal(view) {
   const artistChip = chip(artist, s.artist?.name ?? "?");
   const list = h("div", { class: `ropts${many ? " many" : ""}` });
   const ballot = h("div", { class: "ballot" }, h("span", { class: "lbl" }, t.votes), h("div", { class: `bdots${ballots.length > 16 ? " many" : ""}` }, ...shownBallots.map((b) => b.el)));
+  const frame = paper(s, true);
   stage.replaceChildren(
-    paper(s, true),
+    frame,
     h(
       "div",
       { class: "col grow right" },
@@ -1174,6 +1256,12 @@ function reveal(view) {
       if (count > flying.length) more.textContent = `+${t.n(count - flying.length)}`;
       if (it.truth) {
         card.classList.add("truth");
+        if (animate) nameplate(frame, it.text);
+        else {
+          const b = frame.querySelector(".plate b");
+          if (b) b.textContent = it.text;
+          frame.querySelector(".plate")?.classList.add("known");
+        }
         if (animate) {
           burst(card, [colorOf(artist), "#ffd60a", "#2ec4b6", "#ff5d8f", "#fffdf6"], 22, 14);
           if (it.artistPoints > 0 && !calm()) {
@@ -1195,6 +1283,10 @@ function reveal(view) {
     const T = Math.max(900, Math.min(1600, stepMs * 0.6));
     const stagger = Math.min(60, (T * 0.25) / Math.max(1, flying.length));
     const flight = T * 0.34;
+    const landAt = T * 0.22 + flying.length * stagger + flight + 80;
+    play("reveal");
+    // The truth: a drum roll until it lands.
+    if (it.truth) play("drumroll", { at: 0.15, len: Math.max(0.5, landAt / 1000 - 0.2), vol: 0.9 });
     later(T * 0.22, () => {
       const box = stage.getBoundingClientRect();
       flying.forEach((b, j) => {
@@ -1220,10 +1312,13 @@ function reveal(view) {
       });
       for (const b of mine.slice(cap)) b.el.classList.add("gone");
     });
-    later(T * 0.22 + flying.length * stagger + flight + 80, () => {
+    later(landAt, () => {
       replay(card, "thud");
       land();
-      beep(it.truth ? [784, 988, 1175] : it.decoy ? [330, 262] : [392, 330]);
+      play("stamp");
+      if (it.truth) play(count ? "fanfare" : "wahwah", { at: 0.08 });
+      else if (it.decoy) play("wahwah", { at: 0.1, vol: 0.7 });
+      else if (count) play("coin", { at: 0.15, vol: 0.8 });
     });
   };
 
@@ -1324,9 +1419,14 @@ function scores(view) {
       r.fill.style.width = `${((100 * r.l.score) / max).toFixed(1)}%`;
       countUp(r.points, r.old, r.l.score, 1200, t.n);
     }
-    beep([523, 587, 659, 784], 0.09, 0.15);
+    play("coin", { vol: 0.8 });
+    play("coin", { at: 0.35, vol: 0.6, pitch: 1.12 });
   });
-  later(2800, settle);
+  later(900, () => rows.forEach((r, i) => r.delta && play("pop", { at: i * 0.07, vol: 0.6, pitch: 1 + i * 0.06 })));
+  later(2800, () => {
+    settle();
+    if (rows.some((r, i) => top.indexOf(r.l) !== i)) play("swish", { vol: 0.9, pitch: 0.8 });
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -1358,13 +1458,13 @@ function final(view) {
     const who = h(
       "div",
       { class: "pwho" },
-      place === 1 ? h("div", { class: "crown" }, "♛") : null,
+      place === 1 ? rosette() : null,
       avatar(line.id ?? "", line.name),
       h("span", { class: "n" }, line.name),
       h("span", { class: "s2" }, t.n(calm() ? line.score : 0)),
     );
     const block = h("div", { class: "pblock" }, String(place));
-    const col = h("div", { class: "pcol" }, who, block);
+    const col = h("div", { class: "pcol" }, place === 1 ? h("i", { class: "beam" }) : null, who, block);
     tint(col, line.id ?? "");
     podium.append(col);
     cols[place] = { who, block, height, line };
@@ -1388,6 +1488,7 @@ function final(view) {
       c.who.classList.add("on");
     }
     cols[1]?.who.querySelector(".crown")?.classList.add("on");
+    stage.querySelector(".beam")?.classList.add("on");
     hint.classList.add("on");
     return;
   }
@@ -1402,19 +1503,44 @@ function final(view) {
     later(at + ms * 0.7, () => {
       c.who.classList.add("on");
       countUp(/** @type {HTMLElement} */ (c.who.querySelector(".s2")), 0, c.line.score, 700, t.n);
-      beep([place === 1 ? 784 : 523], 0.1, 0.15);
+      if (place !== 1) play("done", { pitch: place === 3 ? 0.8 : 0.9 });
     });
+    if (place !== 1) later(at, () => play("swish", { vol: 0.7, pitch: 0.7 }));
   };
   rise(3, 400, 650);
   rise(2, 1400, 650);
   rise(1, 2600, 1000);
+  later(2300, () => play("drumroll", { len: 1.35 }));
   later(3700, () => {
     cols[1]?.who.querySelector(".crown")?.classList.add("on");
+    stage.querySelector(".beam")?.classList.add("on");
     title.replaceChildren(...letters());
     confetti(conf, [...[1, 2, 3].flatMap((p) => (cols[p] ? [colorOf(cols[p].line.id ?? "")] : [])), "#ffd60a", "#fffdf6"]);
-    beep([523, 659, 784, 1047], 0.14);
+    play("stamp", { vol: 0.8 });
+    play("fanfare");
+    play("applause", { at: 0.4 });
   });
   later(6000, () => hint.classList.add("on"));
+}
+
+/** The winner's rosette: gold petals, the winner's colour in the middle, two tails. */
+function rosette() {
+  const el = h("div", { class: "crown" });
+  const petals = Array.from({ length: 16 }, (_, i) => {
+    const a = (i / 16) * Math.PI * 2;
+    return `<circle cx="${(50 + Math.cos(a) * 33).toFixed(1)}" cy="${(46 + Math.sin(a) * 33).toFixed(1)}" r="9.5"/>`;
+  }).join("");
+  el.innerHTML =
+    '<svg viewBox="0 0 100 130" aria-hidden="true">' +
+    '<path d="M38 62 L22 126 L31 118 L38 128 L52 66 Z" style="fill:var(--pc)" stroke="#1d1d1f" stroke-width="2.4" stroke-linejoin="round"/>' +
+    '<path d="M62 62 L78 126 L69 118 L62 128 L48 66 Z" style="fill:var(--pc)" stroke="#1d1d1f" stroke-width="2.4" stroke-linejoin="round"/>' +
+    `<g fill="#ffd60a" stroke="#1d1d1f" stroke-width="2.4">${petals}</g>` +
+    '<circle cx="50" cy="46" r="31" fill="#ffd60a"/>' +
+    '<circle cx="50" cy="46" r="27" fill="#f2b705" stroke="#1d1d1f" stroke-width="2.4" stroke-dasharray="3 3"/>' +
+    '<circle cx="50" cy="46" r="18" style="fill:var(--pc)" stroke="#1d1d1f" stroke-width="2.4"/>' +
+    '<path d="M50 34 L53.5 42 L62 42.5 L55.5 48 L57.5 56.5 L50 52 L42.5 56.5 L44.5 48 L38 42.5 L46.5 42 Z" fill="#fffdf6" stroke="#1d1d1f" stroke-width="1.6" stroke-linejoin="round"/>' +
+    "</svg>";
+  return el;
 }
 
 /**

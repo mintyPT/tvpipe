@@ -55,6 +55,22 @@ animation is a drawing with `frames` (the frames after the first,
 `strokes`); the limits of a drawing (300 strokes, 12,000 points) are
 for both frames together.
 
+The look is an art show on late-night TV: a stage with a spotlight and
+a sunburst, sketchbook pages while people draw, drawings hung in
+picture frames with a brass plate that turns over to the real title in
+the reveal, titles on gallery placards, rubber stamps, brush strokes
+sweeping between phases and a rosette for the winner. The phone is the
+player's sketchbook: paper cards taped on in their colour, sticker
+buttons, a painter's palette to pick a colour from, coloured pencils
+for pens, and a red dot on the title you vote for. Sounds are
+synthesized with Web Audio (`phone/sfx.js`, no files): the TV plays
+the show (a whoosh with every stinger, the clock's last ten seconds,
+stamps, a drum roll and a fanfare for the truth, the sad trombone for
+the game's own lie, applause for the winner; muted in the host page's
+preview), the phones a quiet tap, a bell and a buzz when it is your
+turn, coins for points; the speaker button in the phone's header turns
+them off (kept on that phone).
+
 It is a web app for [`tvpipe game play`](../../docs/playshare-design.md):
 tvpipe serves it, the game runs in its host page (a window on the
 computer), the TV page is cast to AirPlay and Chromecast receivers, and
@@ -66,7 +82,7 @@ phones join with the QR code.
 | `game/` | the rules (`rules.ts`), the game (`game.ts`), bots (`bots.ts`) | TypeScript on `@tvpipe/party`, tested in Node |
 | `host/` | the host page | tvpipe's standard host page (`HostPage`: the party, the TV, the players, a preview of the TV) with Drawbluff's settings as a spec (`host.ts`) and its look (`host.css`); `strings.ts` (the status line) |
 | `screen/` | the TV page | the screen view (`{ roster, screen, join }`); `strings.js` |
-| `phone/` | the phone page | drawing, lies, votes; `strings.js`, `i18n.js` (languages, `Intl`) |
+| `phone/` | the phone page | drawing, lies, votes; `strings.js`, `i18n.js` (languages, `Intl`), `sfx.js` (the sounds, the TV's too) |
 | `data/prompts.txt`, `data/prompts.de.txt` | the prompts, English and German | fetched by the host page |
 | `data/prompts.adult.txt`, `data/prompts.adult.de.txt` | the adult prompts (18+), English and German | dealt instead when the room turned adult on |
 | `scripts/prompts.ts` | numbers about a prompts file | structures, words, near duplicates, repeats per session |

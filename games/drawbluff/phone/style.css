@@ -3,14 +3,23 @@
 @font-face { font-family: "Michroma"; src: url("fonts/michroma.woff2") format("woff2"); }
 @font-face { font-family: "Sixtyfour"; src: url("fonts/sixtyfour.woff2") format("woff2"); }
 
+/*
+ * The phone is the player's sketchbook: paper cards on the stage's
+ * purple, a strip of tape in the player's colour (`--me`), buttons like
+ * stickers (an ink edge, a hard shadow, pressed down when tapped), the
+ * colour picker a painter's palette, the pens pencils.
+ */
 :root {
-  --bg: #2b1d5c;
+  --bg: #1f1442;
   --bg2: #3d2a7d;
   --ink: #fffdf6;
   --accent: #ffd60a;
   --hot: #ff5d8f;
   --ok: #2ec4b6;
-  --paper: #fffdf6;
+  --paper: #fffaf0;
+  --dark: #1d1d1f;
+  --deep: #120a2a;
+  --me: var(--accent);
   font-family: "Plex Sans", system-ui, sans-serif;
   color: var(--ink);
   background: var(--bg);
@@ -24,60 +33,102 @@ body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none
 input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
 body {
   min-height: 100dvh;
-  background: radial-gradient(circle at 20% 0%, var(--bg2), var(--bg) 60%);
+  background:
+    radial-gradient(ellipse 80% 45% at 50% -8%, rgba(255,232,160,.14), rgba(255,232,160,0) 70%),
+    repeating-conic-gradient(from -3deg at 50% 115%, rgba(255,255,255,.035) 0deg 4deg, rgba(255,255,255,0) 6deg 10deg, rgba(255,255,255,.035) 12deg),
+    radial-gradient(circle at 20% 0%, var(--bg2), var(--bg) 60%);
+  background-attachment: fixed;
   -webkit-tap-highlight-color: transparent;
   padding-bottom: env(safe-area-inset-bottom);
 }
 header {
-  display: flex; align-items: center; gap: .75rem;
+  display: flex; align-items: center; gap: .6rem;
   padding: .6rem 1rem; padding-top: max(.6rem, env(safe-area-inset-top));
 }
-.logo { font-family: "Sixtyfour", monospace; color: var(--accent); font-size: 1rem; }
-#who { flex: 1; text-align: right; opacity: .8; font-size: .9rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-#lang { font-size: .75rem; font-weight: 500; padding: .2rem .55rem; border-radius: 1rem; background: rgba(255,255,255,.12); }
+.logo { font-family: "Sixtyfour", monospace; color: var(--accent); font-size: 1rem; text-shadow: 2px 2px 0 var(--deep); }
+#who { flex: 1; text-align: right; opacity: .85; font-size: .9rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+header button { box-shadow: none; border: 0; background: rgba(255,255,255,.12); color: var(--ink); }
+header button:active { transform: none; box-shadow: none; background: rgba(255,255,255,.22); }
+#lang { font-size: .75rem; font-weight: 500; padding: .2rem .55rem; border-radius: 1rem; }
+#sound { width: 2rem; height: 1.7rem; padding: 0; border-radius: 1rem; display: grid; place-items: center; flex: none; }
+#sound svg { width: 1rem; height: 1rem; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+#sound.off { opacity: .55; }
 #timer {
   font-family: "Michroma", sans-serif; font-size: .95rem; min-width: 3ch; text-align: right;
-  background: rgba(255,255,255,.12); border-radius: 1rem; padding: .15rem .6rem;
+  background: var(--paper); color: var(--dark); border-radius: 1rem; padding: .15rem .6rem; box-shadow: 0 2px 0 var(--deep);
 }
-#timer.low { background: var(--hot); }
+#timer.low { background: var(--hot); color: var(--dark); animation: tick 1s steps(1) infinite; }
+@keyframes tick { 50% { transform: scale(1.12) rotate(-3deg); } }
+/* Small phones: a smaller logo leaves the name its room. */
+@media (max-width: 380px) {
+  header { gap: .4rem; padding-left: .7rem; padding-right: .7rem; }
+  .logo { font-size: .78rem; }
+}
 #banner { background: var(--hot); color: #fff; text-align: center; padding: .4rem; font-size: .9rem; }
 main { padding: .5rem 1rem 1.5rem; max-width: 34rem; margin: 0 auto; }
 /* German compounds ("regenbogenreparaturdienst") break with a hyphen where the language allows. */
 main { overflow-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; }
-.card { background: rgba(255,255,255,.08); border-radius: 1.2rem; padding: 1.2rem; margin-top: .5rem; }
+
+/* A card: a sheet of paper taped to the page. */
+.card {
+  position: relative; background: var(--paper); color: var(--dark); border-radius: .35rem; padding: 1.4rem 1.2rem 1.2rem; margin-top: 1rem;
+  box-shadow: 4px 5px 0 var(--deep);
+  animation: cardin .45s cubic-bezier(.2,1.3,.4,1) both;
+}
+.card::before {
+  content: ""; position: absolute; left: 50%; top: -.7rem; width: 6.5rem; height: 1.5rem; margin-left: -3.25rem; transform: rotate(-3deg);
+  background: color-mix(in srgb, var(--me) 78%, transparent);
+  clip-path: polygon(0 0, 100% 0, 96% 20%, 100% 40%, 96% 60%, 100% 80%, 96% 100%, 0 100%, 4% 80%, 0 60%, 4% 40%, 0 20%);
+}
+@keyframes cardin { from { transform: translateY(1.2rem) rotate(-1.5deg); opacity: 0; } }
 h1 { font-family: "Michroma", sans-serif; font-size: 1.15rem; margin: 0 0 1rem; line-height: 1.4; }
-h2 { font-size: .85rem; text-transform: uppercase; letter-spacing: .08em; opacity: .7; margin: 1rem 0 .4rem; }
-.big { font-size: 1.35rem; line-height: 1.4; margin: .4rem 0; }
+h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .1em; color: #6b6480; margin: 1.1rem 0 .45rem; }
+.big { font-size: 1.3rem; line-height: 1.4; margin: .4rem 0; }
 .prompt { font-family: "Michroma", sans-serif; color: var(--accent); font-size: 1.2rem; line-height: 1.4; margin: 0 0 .8rem; }
-label { display: block; font-size: .85rem; opacity: .8; margin-bottom: .3rem; }
+label { display: block; font-size: .85rem; color: #55506a; margin-bottom: .3rem; }
 input {
-  width: 100%; font: inherit; font-size: 1.2rem; padding: .7rem .9rem; border-radius: .8rem;
-  border: 2px solid transparent; background: var(--paper); color: #1d1d1f;
+  width: 100%; font: inherit; font-size: 1.2rem; padding: .7rem .9rem; border-radius: .5rem;
+  border: 2px solid var(--dark); background: #fff; color: var(--dark); box-shadow: inset 0 3px 0 rgba(0,0,0,.08);
 }
-input:focus { outline: none; border-color: var(--accent); }
+input:focus { outline: none; border-color: var(--dark); box-shadow: inset 0 3px 0 rgba(0,0,0,.08), 0 0 0 3px var(--accent); }
+
+/* Buttons: stickers with an ink edge, pressed down when tapped. */
 button {
-  font: inherit; font-weight: 600; font-size: 1.05rem; border: 0; border-radius: .9rem;
-  padding: .8rem 1rem; background: rgba(255,255,255,.15); color: var(--ink); cursor: pointer;
-  touch-action: manipulation;
+  font: inherit; font-weight: 700; font-size: 1.05rem; border: 2px solid var(--dark); border-radius: .6rem;
+  padding: .75rem 1rem; background: #fff; color: var(--dark); cursor: pointer; touch-action: manipulation;
+  box-shadow: 0 4px 0 var(--dark); transition: transform .06s, box-shadow .06s, background .2s;
+  position: relative;
 }
-button.primary { background: var(--accent); color: #1d1d1f; width: 100%; margin-top: .8rem; }
+button:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--dark); }
+button.primary { background: var(--accent); color: var(--dark); width: 100%; margin-top: 1rem; font-size: 1.15rem; padding: .85rem 1rem; }
 button:disabled { opacity: .45; }
-button.chosen { outline: 3px solid var(--accent); }
+button.chosen { background: var(--accent); }
 .row { display: flex; gap: .5rem; margin-top: .6rem; }
 .row > * { flex: 1; }
-.seg button { padding: .55rem .2rem; font-size: .9rem; }
-.seg button.chosen { background: rgba(255,214,10,.3); outline: 2px solid var(--accent); }
+.seg button { padding: .55rem .2rem; font-size: .9rem; border-radius: .5rem; }
+.seg button.chosen { background: var(--accent); transform: translateY(2px); box-shadow: 0 2px 0 var(--dark); }
 .late .muted { margin: .5rem 0 0; font-size: .9rem; }
-.error { color: #ffb3c7; min-height: 1.2em; margin: .5rem 0 0; }
+.error { color: #c0144f; font-weight: 600; min-height: 1.2em; margin: .5rem 0 0; }
 ul.players { list-style: none; padding: 0; margin: 0; }
-ul.players li { display: flex; align-items: center; gap: .5rem; padding: .45rem 0; border-bottom: 1px solid rgba(255,255,255,.08); }
-ul.players li .name { flex: 1; }
+ul.players li { display: flex; align-items: center; gap: .55rem; padding: .45rem 0; border-bottom: 2px dotted rgba(29,29,31,.15); font-weight: 600; }
+ul.players li .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 ul.players li.away .name { opacity: .5; }
-ul.players li button { padding: .2rem .6rem; font-size: .85rem; }
-.vip { color: var(--accent); font-size: .8rem; }
-.options { display: flex; flex-direction: column; gap: .55rem; }
-.options button { text-align: left; background: var(--paper); color: #1d1d1f; font-weight: 500; }
-.options button.chosen { background: var(--accent); }
+ul.players li button { padding: .2rem .6rem; font-size: .85rem; box-shadow: 0 2px 0 var(--dark); border-radius: .4rem; }
+.vip { color: #9a6b00; font-size: .8rem; font-weight: 700; }
+
+/* Voting: gallery placards; yours gets the red dot (sold!). */
+.options { display: flex; flex-direction: column; gap: .7rem; }
+.options button { text-align: left; background: #fff; color: var(--dark); font-weight: 600; padding: .85rem 2.6rem .85rem 1.1rem; border-radius: .3rem; }
+.options button::before { content: ""; position: absolute; left: .45rem; top: 25%; bottom: 25%; width: 3px; border-radius: 2px; background: #c99a3c; }
+.options button.chosen { background: #fff3c4; }
+.options button.chosen::after {
+  content: ""; position: absolute; right: .7rem; top: 50%; width: 1.25rem; height: 1.25rem; margin-top: -.625rem; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ff7a7a, #d81b2c 60%); box-shadow: 0 1px 0 rgba(0,0,0,.35); animation: sold .3s cubic-bezier(.2,1.8,.4,1);
+}
+@keyframes sold { from { transform: scale(2.5); opacity: 0; } }
+.options button.in { animation: optin .4s cubic-bezier(.2,1.4,.4,1) both; }
+@keyframes optin { from { transform: translateY(.8rem) rotate(2deg); opacity: 0; } }
+
 /* Drawing: the whole screen (no header, no card), the pad a square as big
    as the width allows (or the height, when that is shorter), the pens and
    the tools under the thumb. Sideways: the pad at full height on the left. */
@@ -89,9 +140,11 @@ body.drawing main {
 body.drawing #banner { position: fixed; top: 0; left: 0; right: 0; z-index: 5; }
 .draw {
   height: 100%; max-width: 40rem; margin: 0 auto;
-  display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto auto; gap: 6px;
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto auto; gap: 8px;
   -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
 }
+.draw button { box-shadow: 0 3px 0 var(--deep); border-color: var(--deep); }
+.draw button:active:not(:disabled) { box-shadow: 0 0 0 var(--deep); }
 .draw .top { display: flex; align-items: center; gap: .6rem; padding: 0 6px; min-height: 44px; }
 .draw .what { flex: 1; min-width: 0; }
 .draw .label { display: block; font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; opacity: .65; }
@@ -103,39 +156,50 @@ body.drawing #banner { position: fixed; top: 0; left: 0; right: 0; z-index: 5; }
 .padbox { min-height: 0; container-type: size; display: grid; place-items: start center; touch-action: none; }
 canvas.pad {
   width: 100%; aspect-ratio: 1; /* without container units */
-  width: min(100cqw, 100cqh); height: min(100cqw, 100cqh);
-  display: block; border-radius: 8px; background: var(--paper); touch-action: none;
+  width: min(100cqw - 6px, 100cqh - 6px); height: min(100cqw - 6px, 100cqh - 6px);
+  display: block; border-radius: 4px; background: var(--paper); touch-action: none; box-shadow: 4px 5px 0 var(--deep);
 }
 /* An animation: a line of frames (tabs with thumbnails, copy, play). */
 .draw.anim { grid-template-rows: auto minmax(0, 1fr) auto auto auto auto; }
-.frames { display: flex; gap: 6px; padding: 0 2px; height: 44px; }
+.frames { display: flex; gap: 6px; padding: 0 2px 3px; height: 47px; }
 .frames .frame {
   flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 4px;
-  border-radius: 12px; background: rgba(255,255,255,.1); border: 2px solid transparent; font-size: .9rem; white-space: nowrap;
+  border-radius: 10px; background: #fff; font-size: .9rem; white-space: nowrap;
 }
-.frames .frame canvas { width: 32px; height: 32px; flex: none; border-radius: 6px; background: var(--paper); }
+.frames .frame canvas { width: 32px; height: 32px; flex: none; border-radius: 4px; background: var(--paper); border: 1px solid rgba(0,0,0,.2); }
 .frames .frame span { overflow: hidden; text-overflow: ellipsis; }
-.frames .frame.chosen { border-color: var(--accent); background: rgba(255,214,10,.18); }
-.frames .icon { width: 44px; flex: none; border-radius: 12px; display: grid; place-items: center; padding: 0; }
+.frames .frame.chosen { background: var(--accent); }
+.frames .icon { width: 44px; flex: none; border-radius: 10px; display: grid; place-items: center; padding: 0; }
 .frames .icon[hidden] { display: none; }
-.frames .icon.chosen { background: var(--accent); color: #1d1d1f; }
+.frames .icon.chosen { background: var(--accent); color: var(--dark); }
 .frames .icon svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-.toolbar .done.arm { background: var(--hot); color: var(--ink); font-size: .85rem; }
-.swatches { display: flex; gap: 6px; padding: 0 2px; }
-.swatches button { flex: 1; height: 38px; padding: 0; border-radius: 10px; border: 3px solid rgba(255,255,255,.18); }
-.draw button.chosen { outline: none; }
-.swatches button.chosen { border-color: var(--accent); box-shadow: 0 0 0 2px var(--bg) inset; }
-.toolbar { display: flex; gap: 6px; padding: 0 2px; height: 48px; }
+.toolbar .done.arm { background: var(--hot); color: var(--dark); font-size: .85rem; white-space: normal; line-height: 1.15; }
+
+/* The pens: coloured pencils; the one in your hand sticks out. */
+.swatches { display: flex; gap: 4px; padding: 0 2px; }
+.swatches button {
+  flex: 1; height: 38px; padding: 0; border: 0; border-radius: 0; box-shadow: none; transform: translateY(5px);
+  background: linear-gradient(180deg, rgba(255,255,255,.35) 0 18%, rgba(255,255,255,0) 18% 34%, rgba(0,0,0,0) 66%, rgba(0,0,0,.18) 66%) 0 0 / 72% 100% no-repeat,
+    linear-gradient(90deg, var(--c) 0 72%, #f3d3a1 72% 91%, var(--c) 91%);
+  clip-path: polygon(0 10%, 72% 10%, 100% 50%, 72% 90%, 0 90%);
+  transition: transform .18s cubic-bezier(.2,1.6,.4,1);
+}
+.swatches button:active:not(:disabled) { box-shadow: none; }
+.swatches button.chosen { transform: translateY(-3px) scale(1.04); }
+.swatches { filter: drop-shadow(0 3px 0 var(--deep)); }
+.toolbar { display: flex; gap: 6px; padding: 0 2px 3px; height: 51px; }
 .toolbar > * { height: 100%; }
-.sizes { display: flex; background: rgba(255,255,255,.1); border-radius: 12px; padding: 3px; gap: 2px; }
-.sizes button { width: 40px; border-radius: 9px; background: transparent; display: grid; place-items: center; padding: 0; }
-.sizes button.chosen { background: rgba(255,214,10,.32); }
-.sizes i { display: block; border-radius: 50%; background: var(--ink); }
-.toolbar .icon { width: 48px; border-radius: 12px; display: grid; place-items: center; padding: 0; }
+/* The sizes: dabs of paint on a strip of card. */
+.sizes { display: flex; background: #fff; border-radius: 10px; padding: 3px; gap: 2px; border: 2px solid var(--deep); box-shadow: 0 3px 0 var(--deep); }
+.sizes button { width: 40px; border-radius: 7px; background: transparent; display: grid; place-items: center; padding: 0; border: 0; box-shadow: none; }
+.sizes button:active:not(:disabled) { box-shadow: none; }
+.sizes button.chosen { background: var(--accent); }
+.sizes i { display: block; border-radius: 48% 52% 45% 55% / 55% 45% 55% 45%; background: var(--dark); }
+.toolbar .icon { width: 48px; border-radius: 10px; display: grid; place-items: center; padding: 0; }
 .toolbar .icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .toolbar .icon.arm { background: var(--hot); width: auto; padding: 0 .7rem; font-size: .85rem; }
-.toolbar .done { flex: 1; border-radius: 12px; background: var(--accent); color: #1d1d1f; padding: 0; }
-.draw .error { min-height: 0; margin: 0; text-align: center; font-size: .9rem; }
+.toolbar .done { flex: 1; min-width: 0; border-radius: 10px; background: var(--accent); color: var(--dark); padding: 0 .3rem; font-size: clamp(.95rem, 4.6vw, 1.15rem); hyphens: manual; -webkit-hyphens: manual; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.draw .error { min-height: 0; margin: 0; text-align: center; font-size: .9rem; color: #ffb3c7; }
 .draw .error:empty { display: none; }
 @media (orientation: landscape) and (max-height: 540px) {
   .draw {
@@ -152,25 +216,60 @@ canvas.pad {
   .frames { grid-area: frames; }
   .draw .top { grid-area: top; padding: 0; }
   .padbox { grid-area: pad; height: 100%; }
-  .swatches { grid-area: pens; flex-wrap: wrap; }
+  .swatches { grid-area: pens; flex-wrap: wrap; row-gap: 6px; }
   .swatches button { flex: 1 0 calc(25% - 6px); height: 34px; }
   .toolbar { grid-area: tools; height: auto; flex-wrap: wrap; }
   .toolbar > * { height: 44px; }
   .toolbar .done { flex: 1 0 100%; }
   .draw .error { grid-area: err; }
 }
-canvas.mini { width: 60%; aspect-ratio: 1; display: block; margin: 0 auto .8rem; border-radius: .6rem; background: var(--paper); }
-/* Your colour: ten swatches, yours ringed, others' marked. */
-.colors { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .45rem; padding: 4px; }
-.colors button { min-width: 0; aspect-ratio: 1; padding: 0; border-radius: 50%; border: 3px solid rgba(255,255,255,.2); position: relative; }
-.colors button.chosen { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent); }
-.colors button.taken::after { content: ""; position: absolute; inset: 32%; border-radius: 50%; background: rgba(0,0,0,.35); }
-.pens-line { display: flex; align-items: center; gap: .5rem; margin-top: .6rem; font-size: .9rem; }
+
+/* A drawing to name or vote on: framed, on a mat. */
+.mframe { width: 64%; margin: 0 auto 1rem; padding: 7px; border-radius: 2px;
+  background: linear-gradient(135deg, #7d4f12, #f2cf73 22%, #a8721f 45%, #f7dd8a 68%, #8b5a16); box-shadow: 3px 4px 0 rgba(18,10,42,.35), inset 0 0 0 1px rgba(0,0,0,.35); }
+.mframe > div { background: #ebe4d2; padding: 6px; box-shadow: inset 2px 2px 4px rgba(0,0,0,.25); }
+canvas.mini { width: 100%; aspect-ratio: 1; display: block; background: var(--paper); }
+
+/* Your colour: dabs of paint on a wooden palette (a thumb hole in its corner). */
+.colors {
+  position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .55rem .5rem; padding: 1rem 1rem 1rem 3rem;
+  background: radial-gradient(circle at 1.45rem 50%, var(--paper) 0 .8rem, #7a4a20 .85rem 1rem, transparent 1.05rem),
+    repeating-linear-gradient(97deg, rgba(120,70,20,.0) 0 9px, rgba(120,70,20,.12) 9px 11px, rgba(120,70,20,0) 11px 23px),
+    linear-gradient(160deg, #e2b77c, #c98f4f);
+  border-radius: 46% 54% 40% 60% / 58% 46% 54% 42%; border: 2px solid #7a4a20; box-shadow: 0 4px 0 #7a4a20;
+}
+.colors button {
+  min-width: 0; aspect-ratio: 1; padding: 0; border: 0; box-shadow: inset -2px -3px 0 rgba(0,0,0,.18), 0 2px 0 rgba(60,30,5,.45);
+  border-radius: 52% 48% 57% 43% / 47% 55% 45% 53%; transition: transform .2s cubic-bezier(.2,1.6,.4,1);
+}
+.colors button:nth-child(3n) { border-radius: 45% 55% 48% 52% / 58% 42% 58% 42%; }
+.colors button:nth-child(3n+1) { border-radius: 58% 42% 50% 50% / 45% 55% 45% 55%; }
+/* A glossy highlight on the paint. */
+.colors button::before { content: ""; position: absolute; left: 22%; top: 16%; width: 30%; height: 22%; border-radius: 50%; background: rgba(255,255,255,.45); transform: rotate(-25deg); }
+.colors button:active:not(:disabled) { transform: scale(.92); box-shadow: inset -2px -3px 0 rgba(0,0,0,.18); }
+.colors button.chosen { outline: 3px solid var(--dark); outline-offset: 2px; transform: scale(1.12); background-image: none; }
+.colors button.chosen::after { content: "✓"; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.2rem; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.colors button.taken::after { content: ""; position: absolute; inset: 34%; border-radius: 50%; background: rgba(0,0,0,.32); }
+.pens-line { display: flex; align-items: center; gap: .5rem; margin-top: .8rem; font-size: .9rem; }
 .pens { display: flex; gap: .3rem; }
-.pen { width: 1.6rem; height: .7rem; border-radius: .4rem; border: 1px solid rgba(255,255,255,.3); }
+.pen { width: 2.2rem; height: .8rem; clip-path: polygon(0 0, 72% 0, 100% 50%, 72% 100%, 0 100%); background: linear-gradient(90deg, var(--c) 0 72%, #f3d3a1 72% 90%, var(--c) 90%); }
 .picker .error:empty, .rules .error:empty { display: none; }
 .rules .muted { margin: .35rem 0 .2rem; font-size: .9rem; }
-#who .dot { display: inline-block; width: .7rem; height: .7rem; border-radius: 50%; margin-right: .4rem; vertical-align: -.05rem; }
-.score { font-family: "Michroma", sans-serif; font-size: 2rem; color: var(--accent); margin: .2rem 0; }
-.muted { opacity: .7; }
-.role { font-weight: 600; color: var(--accent); margin: 0 0 .6rem; line-height: 1.35; }
+#who .dot { display: inline-block; width: .75rem; height: .75rem; border-radius: 50%; margin-right: .4rem; vertical-align: -.05rem; box-shadow: 0 0 0 2px rgba(255,255,255,.25); }
+.score { font-family: "Michroma", sans-serif; font-size: 2.2rem; color: var(--dark); margin: .2rem 0; }
+.score.pop { animation: scorepop .5s cubic-bezier(.2,1.8,.4,1); }
+@keyframes scorepop { from { transform: scale(.4) rotate(-8deg); opacity: 0; } }
+/* Points won: a rosette-like badge that slams on. */
+.gain { display: inline-block; font-family: "Michroma", sans-serif; font-size: 1.6rem; background: var(--accent); color: var(--dark); padding: .3rem .9rem; border: 2px solid var(--dark); border-radius: .5rem;
+  box-shadow: 3px 4px 0 var(--dark); transform: rotate(-4deg); margin: 0 0 .8rem; animation: gain .45s cubic-bezier(.2,1.8,.4,1) both; }
+@keyframes gain { from { transform: scale(2.4) rotate(-14deg); opacity: 0; } }
+.muted { color: #55506a; }
+.role { font-weight: 700; color: #b0164e; margin: 0 0 .9rem; line-height: 1.35; }
+/* Waiting: a pencil doodles on the card. */
+.doodle { display: block; width: 5rem; height: 2.6rem; margin: .6rem 0 0; }
+.doodle path { fill: none; stroke: var(--me); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: doodle 2.4s ease-in-out infinite; }
+@keyframes doodle { 55%, 75% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -1; } }
+@media (prefers-reduced-motion: reduce) {
+  .card, .options button.in, .gain, .score.pop, #timer.low, .doodle path { animation: none !important; }
+  .doodle path { stroke-dashoffset: 0; }
+}
