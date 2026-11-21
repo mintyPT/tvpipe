@@ -1,35 +1,45 @@
-//! `tvpipe game play` without a game (docs/game-catalog.md): the window
-//! opens on the games list first. A small server of its own on 127.0.0.1
-//! (token and cookie as the game's local listener) serves the picker page,
-//! the list with its screenshots (fetched by tvpipe, never by the window)
-//! and the choice: a game of the list or a source typed in, fetched in the
-//! background, asked about in the window when it is new (§18), then handed
-//! to [`super::run`], which starts the game's own server and tells the
-//! page where to go.
+//! The games list in the window (docs/game-catalog.md,
+//! docs/game-switching.md): the games on this computer the command line
+//! named (bundles, folders of them), then the online list with its
+//! screenshots (fetched by tvpipe, never by the window), and the choice:
+//! a game of either list or a source typed in, fetched in the background,
+//! asked about in the window when it is new (§18), then put in the hub's
+//! slot (the first game, or the next one). The page is served by the
+//! local listener (`/_tvpipe/picker/`), the API here.
 
-use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex, MutexGuard, Weak};
 
-use crate::browser::fonts;
 use crate::codec::json::Value;
-use crate::crypto::ring::ct_eq;
 use crate::error::{Error, Result};
 use crate::events::{Event, Events, Progress};
 use crate::net::fetch::Url;
 use crate::net::http::{Request, Response};
-use crate::net::httpd::{self, Reply};
+use crate::net::httpd;
 
-use super::bundle::{self, clean_path, percent_decode, Bundle};
+use super::bundle::{Bundle, Manifest, MANIFEST};
 use super::check;
-use super::remote::{FetchOptions, Fetched, Fetcher};
-use super::server::cookie_name;
+use super::hub::Hub;
+use super::remote::{Fetched, Fetcher};
 use super::source::{self, Source};
-use super::web;
 
 /// Makes a fetcher whose progress goes to these events.
 pub type MakeFetcher = Arc<dyn Fn(Events) -> Result<Fetcher> + Send + Sync>;
 
 /// The picker's page.
 pub const PAGE: &str = "/_tvpipe/picker/";
+
+/// What the picker offers.
+#[derive(Clone, Default)]
+pub struct Config {
+    /// The online list and games from the internet; `None`: neither.
+    pub make: Option<MakeFetcher>,
+    /// `--yes`: no question.
+    pub yes: bool,
+    /// The command line's games on this computer: bundles (a folder with
+    /// `tvpipe.json`, a zip) and folders of bundles.
+    pub local: Vec<PathBuf>,
+}
 
 /// Where the choice is.
 enum Job {
@@ -44,12 +54,11 @@ enum Job {
         fetcher: Box<Fetcher>,
         fetched: Box<Fetched>,
     },
-    /// Chosen: the bundle until [`Picker::take`] takes it.
-    Chosen {
+    /// Chosen: going into the slot.
+    Starting {
         title: String,
-        bundle: Option<Box<Bundle>>,
     },
-    /// The game's server runs: the page goes there.
+    /// In the slot: the page goes to `url`.
     Ready {
         url: String,
     },
@@ -67,101 +76,119 @@ struct Catalog {
 
 struct St {
     job: Job,
-    /// Counts choices: a finished fetch of an older one is dropped.
+    /// Counts choices: a finished fetch of an older one is dropped, and
+    /// a page follows `ready` only for its own.
     choice: u64,
     catalog: Option<Arc<Catalog>>,
 }
 
 struct Shared {
-    token: String,
-    port: OnceLock<u16>,
-    /// `--yes`: no question.
-    yes: bool,
-    make: MakeFetcher,
+    cfg: Config,
+    hub: Weak<Hub>,
     st: Mutex<St>,
 }
 
-/// The running picker.
+/// The games list and the choice, in the hub.
 pub(crate) struct Picker {
     shared: Arc<Shared>,
-    _server: httpd::Server,
+}
+
+/// A game on this computer the list shows.
+pub(crate) struct LocalGame {
+    /// How the page names it: its path as given or found.
+    pub id: String,
+    pub path: PathBuf,
+    /// Its manifest, or why it cannot be played.
+    pub manifest: std::result::Result<Manifest, String>,
+}
+
+/// Whether `path` is one game (a folder with `tvpipe.json`, or a file)
+/// rather than a folder of games.
+pub fn is_bundle(path: &Path) -> bool {
+    !path.is_dir() || path.join(MANIFEST).is_file()
+}
+
+/// The games of `roots`: each a bundle, or a folder whose folders with
+/// `tvpipe.json` and zips are (hidden ones left out, by name).
+pub(crate) fn scan(roots: &[PathBuf]) -> Vec<LocalGame> {
+    let mut out = Vec::new();
+    for root in roots {
+        let mut paths = Vec::new();
+        if is_bundle(root) {
+            paths.push(root.clone());
+        } else if let Ok(rd) = std::fs::read_dir(root) {
+            let mut found: Vec<PathBuf> = rd
+                .filter_map(|e| e.ok())
+                .map(|e| e.path())
+                .filter(|p| {
+                    let name = p.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                    if name.starts_with('.') {
+                        return false;
+                    }
+                    if p.is_dir() {
+                        p.join(MANIFEST).is_file()
+                    } else {
+                        name.to_ascii_lowercase().ends_with(".zip")
+                    }
+                })
+                .collect();
+            found.sort();
+            paths.extend(found);
+        }
+        for path in paths {
+            let manifest = Bundle::open(&path)
+                .map(|b| b.manifest)
+                .map_err(|e| e.to_string());
+            out.push(LocalGame {
+                id: path.display().to_string(),
+                path,
+                manifest,
+            });
+        }
+    }
+    out
 }
 
 impl Picker {
-    /// Binds 127.0.0.1:`port` (0: any) with the real fetcher.
-    pub(crate) fn start(
-        fetch: FetchOptions,
-        yes: bool,
-        port: u16,
-        stop: crate::util::stop::Stop,
-    ) -> Result<Picker> {
-        let make: MakeFetcher =
-            Arc::new(move |events| Fetcher::from_env(fetch, events, Some(stop.clone())));
-        Picker::start_with(make, yes, port)
-    }
-
-    pub(crate) fn start_with(make: MakeFetcher, yes: bool, port: u16) -> Result<Picker> {
-        let token = crate::util::hex::encode(&crate::crypto::ring::random_array::<16>()?);
-        let shared = Arc::new(Shared {
-            token,
-            port: OnceLock::new(),
-            yes,
-            make,
-            st: Mutex::new(St {
-                job: Job::Idle,
-                choice: 0,
-                catalog: None,
+    pub(crate) fn new(cfg: Config, hub: Weak<Hub>) -> Picker {
+        Picker {
+            shared: Arc::new(Shared {
+                cfg,
+                hub,
+                st: Mutex::new(St {
+                    job: Job::Idle,
+                    choice: 0,
+                    catalog: None,
+                }),
             }),
-        });
-        let s = shared.clone();
-        let handler: httpd::Handler = Arc::new(move |req: &Request| Reply::Response(s.handle(req)));
-        let config = httpd::Config {
-            max_connections: 64,
-            max_body: 16 * 1024,
-            lan: false,
-        };
-        let server = httpd::Server::bind_with(
-            std::net::SocketAddr::from(([127, 0, 0, 1], port)),
-            handler,
-            config,
-        )?;
-        let _ = shared.port.set(server.local_addr().port());
-        Ok(Picker {
-            shared,
-            _server: server,
-        })
-    }
-
-    /// The window's first URL (it sets the cookie).
-    pub(crate) fn start_url(&self) -> String {
-        format!(
-            "http://127.0.0.1:{}/_tvpipe/start?t={}",
-            self.shared.port(),
-            self.shared.token
-        )
-    }
-
-    /// The chosen game, once (then the page shows "starting").
-    pub(crate) fn take(&self) -> Option<Bundle> {
-        let mut st = self.shared.lock();
-        match &mut st.job {
-            Job::Chosen { bundle, .. } => bundle.take().map(|b| *b),
-            _ => None,
         }
     }
 
-    /// The game's server runs at `url` (its start URL): the page goes
-    /// there.
-    pub(crate) fn started(&self, url: String) {
-        self.shared.lock().job = Job::Ready { url };
-    }
-
-    /// Starting the chosen game failed: the page shows it.
-    pub(crate) fn failed(&self, source: &str, error: &Error) {
-        self.shared.lock().job = Job::Failed {
-            source: source.to_owned(),
-            error: error.to_string(),
+    /// The API (`/_tvpipe/api/catalog`, `/_tvpipe/catalog/N`,
+    /// `/_tvpipe/api/game`), for the local listener once the token and,
+    /// for a POST, the origin are checked; `None`: not the picker's.
+    pub(crate) fn handle(&self, req: &Request, path: &str) -> Option<Response> {
+        let s = &self.shared;
+        if path == "/_tvpipe/api/catalog" {
+            return Some(json(200, &s.catalog_value()));
+        }
+        if let Some(n) = path.strip_prefix("/_tvpipe/catalog/") {
+            return Some(s.picture(n));
+        }
+        if path != "/_tvpipe/api/game" {
+            return None;
+        }
+        if req.method != "POST" {
+            return Some(json(200, &s.state()));
+        }
+        let body = match Value::parse(&String::from_utf8_lossy(&req.body)) {
+            Ok(v) => v,
+            Err(_) => return Some(error_json(400, "a JSON object")),
         };
+        Some(match s.post(&body) {
+            Ok(()) => json(200, &s.state()),
+            Err((status, msg)) => error_json(status, &msg),
+        })
     }
 }
 
@@ -185,26 +212,6 @@ fn json(status: u16, v: &Value) -> Response {
 
 fn error_json(status: u16, msg: &str) -> Response {
     json(status, &Value::object().with("error", msg))
-}
-
-fn redirect(location: &str) -> Response {
-    let mut r = httpd::response(302, "Found", "text/plain; charset=utf-8", Vec::new());
-    r.headers.add("Location", location);
-    r
-}
-
-fn file(rel: &str, bytes: Vec<u8>) -> Response {
-    let mut r = httpd::response(200, "OK", bundle::mime(rel), bytes);
-    r.headers
-        .set("Cache-Control", "no-cache")
-        .add("Referrer-Policy", "no-referrer");
-    r
-}
-
-fn query_param<'a>(query: &'a str, key: &str) -> Option<&'a str> {
-    query
-        .split('&')
-        .find_map(|kv| kv.strip_prefix(key)?.strip_prefix('='))
 }
 
 /// The games list's entries the page can show: a name, a title and a
@@ -281,148 +288,75 @@ impl Shared {
         self.st.lock().unwrap_or_else(|e| e.into_inner())
     }
 
-    fn port(&self) -> u16 {
-        self.port.get().copied().unwrap_or(0)
-    }
-
-    fn host_ok(&self, req: &Request) -> bool {
-        let port = self.port();
-        req.headers.get("host").is_some_and(|h| {
-            let h = h.trim().to_ascii_lowercase();
-            [
-                format!("127.0.0.1:{port}"),
-                format!("localhost:{port}"),
-                format!("[::1]:{port}"),
-            ]
-            .contains(&h)
-        })
-    }
-
-    fn token_ok(&self, req: &Request, query: &str) -> bool {
-        let want = self.token.as_bytes();
-        let name = cookie_name(self.port());
-        query_param(query, "t").is_some_and(|t| ct_eq(t.as_bytes(), want))
-            || req.headers.get_all("cookie").any(|h| {
-                h.split(';').any(|kv| {
-                    kv.trim()
-                        .split_once('=')
-                        .is_some_and(|(k, v)| k == name && ct_eq(v.as_bytes(), want))
-                })
-            })
-    }
-
-    /// A POST from this origin only (a page elsewhere has no cookie to
-    /// send anyway: `SameSite=Strict`).
-    fn origin_ok(&self, req: &Request) -> bool {
-        let port = self.port();
-        req.headers.get("origin").is_none_or(|o| {
-            let o = o.trim().to_ascii_lowercase();
-            o == format!("http://127.0.0.1:{port}") || o == format!("http://localhost:{port}")
-        })
-    }
-
-    fn handle(self: &Arc<Shared>, req: &Request) -> Response {
-        if !self.host_ok(req) {
-            return httpd::error_response(421, "Misdirected Request");
+    fn fetcher(&self, events: Events) -> Result<Fetcher> {
+        match &self.cfg.make {
+            Some(make) => make(events),
+            None => Err(Error::unsupported("no games from the internet here")),
         }
-        let (path, query) = req.target.split_once('?').unwrap_or((&req.target, ""));
-        let post = req.method == "POST";
-        if !post && req.method != "GET" && req.method != "HEAD" {
-            let mut r = httpd::error_response(405, "Method Not Allowed");
-            r.headers.add("Allow", "GET, HEAD, POST");
-            return r;
-        }
-        if post && path != "/_tvpipe/api/game" {
-            return httpd::error_response(405, "Method Not Allowed");
-        }
-        match path {
-            "/" => {
-                return if self.token_ok(req, "") {
-                    redirect(PAGE)
-                } else {
-                    httpd::error_response(403, "Forbidden: open the link tvpipe printed")
-                }
-            }
-            "/_tvpipe/start" => {
-                if !self.token_ok(req, query) {
-                    return httpd::error_response(403, "Forbidden");
-                }
-                let mut r = redirect(PAGE);
-                r.headers.add(
-                    "Set-Cookie",
-                    format!(
-                        "{}={}; Path=/; HttpOnly; SameSite=Strict",
-                        cookie_name(self.port()),
-                        self.token
-                    ),
-                );
-                return r;
-            }
-            "/_tvpipe/ui.css" => return file("ui.css", fonts::UI_CSS.as_bytes().to_vec()),
-            _ => {}
-        }
-        if let Some(name) = path.strip_prefix("/_tvpipe/fonts/") {
-            return fonts::font_response(fonts::font(name));
-        }
-        if let Some(rest) = path.strip_prefix("/_tvpipe/picker/") {
-            let rel = if rest.is_empty() {
-                "index.html".to_owned()
-            } else {
-                rest.to_owned()
-            };
-            let Some(rel) = percent_decode(&rel).and_then(|r| clean_path(&r)) else {
-                return httpd::error_response(404, "Not Found");
-            };
-            return match web::get(&format!("picker/{rel}")) {
-                Some(b) => file(&rel, b.into_owned()),
-                None => httpd::error_response(404, "Not Found"),
-            };
-        }
-        if !self.token_ok(req, "") {
-            return httpd::error_response(403, "Forbidden");
-        }
-        if path == "/_tvpipe/api/catalog" {
-            return match self.catalog() {
-                Ok(c) => json(200, &c.value),
-                Err(e) => json(
-                    200,
-                    &Value::object()
-                        .with("games", Value::array(Vec::<Value>::new()))
-                        .with("error", e.to_string()),
-                ),
-            };
-        }
-        if let Some(n) = path.strip_prefix("/_tvpipe/catalog/") {
-            return self.picture(n);
-        }
-        if path == "/_tvpipe/api/game" {
-            if !post {
-                return json(200, &self.state());
-            }
-            if !self.origin_ok(req) {
-                return httpd::error_response(403, "Forbidden");
-            }
-            let body = match Value::parse(&String::from_utf8_lossy(&req.body)) {
-                Ok(v) => v,
-                Err(_) => return error_json(400, "a JSON object"),
-            };
-            return match self.post(&body) {
-                Ok(()) => json(200, &self.state()),
-                Err((status, msg)) => error_json(status, &msg),
-            };
-        }
-        httpd::error_response(404, "Not Found")
     }
 
     fn catalog(&self) -> Result<Arc<Catalog>> {
         if let Some(c) = &self.lock().catalog {
             return Ok(c.clone());
         }
-        let fetcher = (self.make)(Events::none())?;
+        let fetcher = self.fetcher(Events::none())?;
         let list = fetcher.catalog()?;
         let c = Arc::new(catalog_of(&list, &fetcher.list_url()?, &fetcher));
         self.lock().catalog = Some(c.clone());
         Ok(c)
+    }
+
+    /// `GET /_tvpipe/api/catalog`: the games on this computer (scanned
+    /// again each time), then the online list. A local game takes the
+    /// summary, languages and pictures of the online entry of its name.
+    fn catalog_value(&self) -> Value {
+        let (online, error) = match (&self.cfg.make, self.catalog()) {
+            (_, Ok(c)) => (Some(c), None),
+            (None, Err(_)) => (None, None),
+            (Some(_), Err(e)) => (None, Some(e.to_string())),
+        };
+        let games: &[Value] = online
+            .as_ref()
+            .and_then(|c| c.value.get("games"))
+            .and_then(Value::as_array)
+            .unwrap_or(&[]);
+        let mut local = Vec::new();
+        for g in scan(&self.cfg.local) {
+            let mut v = Value::object()
+                .with("id", g.id.as_str())
+                .with("from", g.id.as_str());
+            match &g.manifest {
+                Ok(m) => {
+                    v = v
+                        .with("name", m.name.as_str())
+                        .with("title", m.title.as_str())
+                        .with("min", m.min_players)
+                        .with("max", m.max_players);
+                    let twin = games
+                        .iter()
+                        .find(|o| o.get("name").and_then(Value::as_str) == Some(m.name.as_str()));
+                    for k in ["summary", "languages", "screenshots"] {
+                        if let Some(x) = twin.and_then(|t| t.get(k)) {
+                            v = v.with(k, x.clone());
+                        }
+                    }
+                }
+                Err(e) => {
+                    let name = g
+                        .path
+                        .file_name()
+                        .map(|n| n.to_string_lossy().into_owned())
+                        .unwrap_or_else(|| g.id.clone());
+                    v = v.with("title", name).with("error", e.as_str());
+                }
+            }
+            local.push(v);
+        }
+        Value::object()
+            .with("local", Value::Array(local))
+            .with("games", Value::Array(games.to_vec()))
+            .with("online", self.cfg.make.is_some())
+            .with_opt("error", error)
     }
 
     fn picture(&self, n: &str) -> Response {
@@ -434,7 +368,7 @@ impl Shared {
         let Some(url) = url else {
             return httpd::error_response(404, "Not Found");
         };
-        let got = (self.make)(Events::none()).and_then(|f| f.picture(&url));
+        let got = self.fetcher(Events::none()).and_then(|f| f.picture(&url));
         match got {
             Ok((bytes, mime)) => {
                 let mut r = httpd::response(200, "OK", mime, bytes);
@@ -448,10 +382,17 @@ impl Shared {
         }
     }
 
-    /// The choice's state for the page.
+    /// The choice's state for the page, with the game in the slot.
     fn state(&self) -> Value {
+        let current = self.hub.upgrade().and_then(|h| h.game()).map(|g| {
+            let m = &g.bundle.manifest;
+            Value::object()
+                .with("name", m.name.as_str())
+                .with("title", m.title.as_str())
+                .with("from", g.bundle.origin.display().to_string())
+        });
         let st = self.lock();
-        match &st.job {
+        let v = match &st.job {
             Job::Idle => Value::object().with("state", "idle"),
             Job::Fetching {
                 source,
@@ -480,7 +421,7 @@ impl Shared {
                         .with("changed", f.changed),
                 )
             }
-            Job::Chosen { title, .. } => Value::object()
+            Job::Starting { title } => Value::object()
                 .with("state", "starting")
                 .with("title", title.as_str()),
             Job::Ready { url } => Value::object()
@@ -490,20 +431,48 @@ impl Shared {
                 .with("state", "failed")
                 .with("source", source.as_str())
                 .with("error", error.as_str()),
-        }
+        };
+        v.with("choice", st.choice).with_opt("current", current)
     }
 
-    /// `{"source": S}` (choose), `{"trust": true}` (yes to the question),
-    /// `{"back": true}` (no, or after an error: the list again).
+    /// `{"source": S}` (a game from the internet or of the online list),
+    /// `{"local": ID}` (a game of the local list), `{"trust": true}` (yes
+    /// to the question), `{"back": true}` (no, or after an error: the
+    /// list again).
     fn post(self: &Arc<Shared>, body: &Value) -> std::result::Result<(), (u16, String)> {
         let busy = |st: &St| {
             matches!(
                 st.job,
-                Job::Fetching { .. } | Job::Chosen { .. } | Job::Ready { .. }
+                Job::Fetching { .. } | Job::Ask { .. } | Job::Starting { .. }
             )
         };
+        if let Some(id) = body.get("local").and_then(Value::as_str) {
+            let game = scan(&self.cfg.local)
+                .into_iter()
+                .find(|g| g.id == id)
+                .ok_or_else(|| (404, format!("{id}: not a game of the list")))?;
+            if let Err(e) = &game.manifest {
+                return Err((409, e.clone()));
+            }
+            let mut st = self.lock();
+            if busy(&st) {
+                return Err((409, "a game is being fetched or started".into()));
+            }
+            st.choice += 1;
+            let choice = st.choice;
+            st.job = Job::Starting {
+                title: id.to_owned(),
+            };
+            drop(st);
+            let res = Bundle::open(&game.path);
+            self.finish(choice, id, res);
+            return Ok(());
+        }
         if let Some(s) = body.get("source").and_then(Value::as_str) {
             let src = Source::parse_remote(s).map_err(|e| (400, e.to_string()))?;
+            if self.cfg.make.is_none() {
+                return Err((400, "no games from the internet here".into()));
+            }
             let mut st = self.lock();
             if busy(&st) {
                 return Err((409, "a game is being fetched or started".into()));
@@ -534,19 +503,25 @@ impl Shared {
             if let Err(e) = fetcher.trust(&fetched) {
                 warn!("picker: remembering the answer: {e}");
             }
-            st.job = chosen(*fetched);
+            let choice = st.choice;
+            st.job = Job::Starting {
+                title: fetched.bundle.manifest.title.clone(),
+            };
+            drop(st);
+            let shown = fetched.shown.clone();
+            self.finish(choice, &shown, Ok(fetched.bundle));
             return Ok(());
         }
         if body.get("back").and_then(Value::as_bool) == Some(true) {
             let mut st = self.lock();
-            if busy(&st) {
+            if matches!(st.job, Job::Fetching { .. } | Job::Starting { .. }) {
                 return Err((409, "a game is being fetched or started".into()));
             }
             st.choice += 1;
             st.job = Job::Idle;
             return Ok(());
         }
-        Err((400, "expected source, trust or back".into()))
+        Err((400, "expected local, source, trust or back".into()))
     }
 
     /// Fetches a choice (on its own thread).
@@ -568,7 +543,7 @@ impl Shared {
                 }
             }
         });
-        let res = (self.make)(events).and_then(|fetcher| {
+        let res = self.fetcher(events).and_then(|fetcher| {
             let f = fetcher.fetch(src)?;
             Ok((fetcher, f))
         });
@@ -576,26 +551,49 @@ impl Shared {
         if st.choice != choice {
             return;
         }
-        st.job = match res {
-            Ok((_, f)) if f.pinned || f.trusted || self.yes => chosen(f),
-            Ok((fetcher, f)) => Job::Ask {
-                fetcher: Box::new(fetcher),
-                fetched: Box::new(f),
+        match res {
+            Ok((_, f)) if f.pinned || f.trusted || self.cfg.yes => {
+                st.job = Job::Starting {
+                    title: f.bundle.manifest.title.clone(),
+                };
+                drop(st);
+                self.finish(choice, &f.shown, Ok(f.bundle));
+            }
+            Ok((fetcher, f)) => {
+                st.job = Job::Ask {
+                    fetcher: Box::new(fetcher),
+                    fetched: Box::new(f),
+                }
+            }
+            Err(e) => {
+                st.job = Job::Failed {
+                    source: shown.to_owned(),
+                    error: e.to_string(),
+                }
+            }
+        }
+    }
+
+    /// The chosen game into the hub's slot (or why not).
+    fn finish(&self, choice: u64, shown: &str, bundle: Result<Bundle>) {
+        let job = match (bundle, self.hub.upgrade()) {
+            (Ok(b), Some(hub)) => {
+                info!("playshare: picked {} from {shown}", b.manifest.title);
+                Job::Ready { url: hub.put(b) }
+            }
+            (Ok(_), None) => Job::Failed {
+                source: shown.to_owned(),
+                error: "playshare is ending".into(),
             },
-            Err(e) => Job::Failed {
+            (Err(e), _) => Job::Failed {
                 source: shown.to_owned(),
                 error: e.to_string(),
             },
         };
-    }
-}
-
-fn chosen(f: Fetched) -> Job {
-    let title = f.bundle.manifest.title.clone();
-    info!("playshare: picked {} from {}", title, f.shown);
-    Job::Chosen {
-        title,
-        bundle: Some(Box::new(f.bundle)),
+        let mut st = self.lock();
+        if st.choice == choice {
+            st.job = job;
+        }
     }
 }
 

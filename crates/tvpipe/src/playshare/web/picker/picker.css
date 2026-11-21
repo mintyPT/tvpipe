@@ -9,6 +9,13 @@ main { flex: 1; }
 .error { margin: 0 0 18px; font-size: 14.5px; }
 .searching { margin: 14px 0 0; font-size: 13.5px; color: var(--ink-3); }
 
+/* The two lists: on this computer, then the online one. */
+.part { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin: 0 0 14px; }
+.part .lbl { color: var(--ink-2); }
+.part .part-note { font: 400 13px/1.4 var(--sans); color: var(--ink-3); }
+#local-part + #online-part { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--rule); }
+.head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+
 /* The games: a card each, the cover on top. */
 .games { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 18px; }
 .game { position: relative; display: flex; flex-direction: column; border: 1px solid var(--rule); border-radius: 4px;
@@ -27,6 +34,22 @@ main { flex: 1; }
 .game.busy .bar { display: block; }
 .game.busy { border-color: var(--accent); cursor: progress; }
 .games.locked .game:not(.busy) { opacity: .45; cursor: default; }
+.game .from { margin: 0; font: 400 12px/1.4 var(--mono); color: var(--ink-3); overflow-wrap: anywhere; }
+.game .cover.blank { display: grid; place-items: center; font: 400 22px/1.2 var(--title); letter-spacing: .06em;
+                     text-transform: uppercase; color: var(--ink-3); padding: 12px; text-align: center; }
+.game.broken { cursor: default; border-style: dashed; }
+.game.broken:hover { border-color: var(--rule); }
+.game .problem { margin: 0; font-size: 13px; line-height: 1.4; color: var(--bad); overflow-wrap: anywhere; }
+.game .tag.now { background: var(--accent); color: #fff; }
+
+/* In a dialog over the host page (?mode=switch): no header or footer. */
+[data-mode="switch"] .top, [data-mode="switch"] .foot { display: none; }
+[data-mode="switch"] main { padding: 0 28px 28px; }
+[data-mode="switch"] .row { grid-template-columns: minmax(0, 1fr); }
+[data-mode="switch"] .row > .meta { display: flex; align-items: center; gap: 12px; padding-bottom: 6px; }
+[data-mode="switch"] .row > .meta .lbl { margin: 0; }
+[data-mode="switch"] .ph { padding: 24px 0 32px; }
+[data-mode="switch"] .sec .meta { display: none; }
 .games.locked .game:not(.busy):hover { border-color: var(--rule); }
 
 /* A source from elsewhere. */

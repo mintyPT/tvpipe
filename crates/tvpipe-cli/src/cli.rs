@@ -350,11 +350,15 @@ static GAME_PLAY: Cli<PlayshareArg> = Cli::new("play")
             .long("dev")
             .help("Test mode: the game's host page offers its test tools (bots: dummy players that join and play)"),
     ])
-    .args(&[Pos::new(PlayshareArg::Path, "GAME").optional().help(
-        "A folder or .zip with tvpipe.json, an https:// URL of a zip, gh:OWNER/REPO[/ASSET][@TAG], \
-         or a name from the games list (drawbluff); #sha256=HEX pins a download. \
-         Without it the window opens on the games list",
-    )])
+    .args(&[Pos::new(PlayshareArg::Path, "GAME")
+        .optional()
+        .multiple()
+        .help(
+            "A folder or .zip with tvpipe.json, an https:// URL of a zip, gh:OWNER/REPO[/ASSET][@TAG], \
+             or a name from the games list (drawbluff); #sha256=HEX pins a download. \
+             A folder of games, or several folders and zips: the window lists them first. \
+             Without it the window opens on the games list",
+        )])
     .after_help(
         "A game from the internet is downloaded (and kept: tvpipe game list), and the first time \
          tvpipe asks before running it. Closing the window (or Ctrl-C) ends the game: the TVs \
@@ -1060,11 +1064,11 @@ fn parse_tunnel(mut p: Parser<TunnelArg>, g: &mut Global) -> Result<Command, Err
 fn parse_playshare(mut p: Parser<PlayshareArg>) -> Result<Command, Error> {
     use tvpipe::__cli::playshare::{Options, Resolution, TunnelChoice, WindowMode};
     let mut o = Options::default();
-    let mut path = None;
+    let mut games = Vec::new();
     let (mut tunnel, mut no_tunnel) = (None, false);
     while let Some(arg) = p.param()? {
         match arg {
-            PlayshareArg::Path => path = Some(p.value::<String>()?),
+            PlayshareArg::Path => games.push(p.value::<String>()?),
             PlayshareArg::Yes => o.yes = true,
             PlayshareArg::Refresh => o.fetch.refresh = true,
             PlayshareArg::Offline => o.fetch.offline = true,
@@ -1121,8 +1125,9 @@ fn parse_playshare(mut p: Parser<PlayshareArg>) -> Result<Command, Error> {
     if o.fetch.refresh && o.fetch.offline {
         return Err(p.error("--refresh and --offline together"));
     }
-    // No GAME: the window opens on the games list (docs/game-catalog.md).
-    o.game = path.unwrap_or_default();
+    // No GAME: the window opens on the games list (docs/game-catalog.md);
+    // several: local ones (docs/game-switching.md).
+    o.games = games;
     Ok(Command::Playshare(o))
 }
 
@@ -1727,7 +1732,7 @@ mod tests {
         let Ok((_, Command::Playshare(o))) = parse_from(&["game", "play", "games/x"]) else {
             panic!()
         };
-        assert_eq!(o.game, "games/x");
+        assert_eq!(o.games, ["games/x"]);
         assert!(!o.yes && !o.fetch.refresh && !o.fetch.offline);
         assert_eq!(o.tunnel, TunnelChoice::Auto);
         assert_eq!(o.window, WindowMode::App);
@@ -1738,7 +1743,11 @@ mod tests {
         let Ok((_, Command::Playshare(o))) = parse_from(&["game", "play"]) else {
             panic!()
         };
-        assert_eq!(o.game, "");
+        assert!(o.games.is_empty());
+        let Ok((_, Command::Playshare(o))) = parse_from(&["game", "play", "a", "b.zip"]) else {
+            panic!()
+        };
+        assert_eq!(o.games, ["a", "b.zip"]);
         let Ok((_, Command::Playshare(o))) = parse_from(&[
             "game",
             "play",
@@ -1775,7 +1784,7 @@ mod tests {
         ]) else {
             panic!()
         };
-        assert_eq!(o.game, "gh:mitsuhiko/tvpipe/drawbluff@drawbluff-v*");
+        assert_eq!(o.games, ["gh:mitsuhiko/tvpipe/drawbluff@drawbluff-v*"]);
         assert!(o.yes && o.fetch.offline);
         for bad in [
             &["game", "play", "--refresh", "--offline", "x"][..],

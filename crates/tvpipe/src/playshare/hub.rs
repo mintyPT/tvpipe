@@ -1,14 +1,16 @@
-//! The state of one playshare run: the API sockets, the relay's client
-//! connections and its host, the launcher's selection, discovery, pairing
-//! and the cast (docs/playshare-design.md §5, §6).
+//! The state of one playshare run (a session): the game in its slot,
+//! the API sockets, the relay's client connections and its host, the
+//! room, the launcher's selection, discovery, pairing and the cast
+//! (docs/playshare-design.md §5, §6; docs/game-switching.md).
 //!
 //! Locks: `Hub::st` is taken briefly and never while waiting on a socket;
-//! outboxes have locks of their own, taken after `st` or alone.
+//! outboxes have locks of their own, taken after `st` or alone; the game
+//! slot's after `st` or alone (never `st` while holding the slot).
 
 use std::collections::{BTreeMap, HashMap};
 use std::net::SocketAddr;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex, MutexGuard, OnceLock, RwLock};
+use std::sync::{Arc, Mutex, MutexGuard, OnceLock, RwLock, RwLockReadGuard};
 use std::time::{Duration, Instant};
 
 use crate::codec::json::Value;
@@ -21,6 +23,7 @@ use crate::util::stop::Stop;
 use super::backend::{Backend, Cast, Discover, Pair};
 use super::bundle::Bundle;
 use super::conn::{self, Next, Out, WindowCounter};
+use super::picker::{self, Picker};
 use super::resolution::{Picture, Resolution};
 
 /// Relay frame ops (§6.2).
@@ -44,6 +47,55 @@ pub const CLOSING_GRACE: Duration = Duration::from_secs(1);
 pub const CLOSE_ENDED: u16 = 4011;
 /// The close code for clients when the host went away (they reconnect).
 pub const CLOSE_RESTART: u16 = 1012;
+/// The close code for clients when another game took the slot: phones go
+/// to their join link, which is the next game's now.
+pub const CLOSE_NEXT_GAME: u16 = 4014;
+
+/// The cookie that names the game a page was loaded with (`RUN.GEN`).
+pub const GAME_COOKIE: &str = "tvpipe-game";
+
+/// A game in the hub's slot.
+pub struct Game {
+    pub bundle: Bundle,
+    /// The session's games counted: 1 for the first.
+    pub gen: u64,
+}
+
+/// The room of the session: every game's party has this code and join
+/// key, so the join link stays from game to game.
+#[derive(Debug, Clone)]
+pub struct Room {
+    /// Four consonants (`roomCode()` of `@tvpipe/party`).
+    pub code: String,
+    /// 16 random bytes, base64url.
+    pub key: String,
+}
+
+/// The letters of room codes (`CODE_LETTERS` of `@tvpipe/party`).
+const CODE_LETTERS: &[u8] = b"BCDFGHJKLMNPQRSTVWXZ";
+
+impl Room {
+    pub fn new() -> Result<Room> {
+        let r = crate::crypto::ring::random_array::<4>()?;
+        let code = r
+            .iter()
+            .map(|b| CODE_LETTERS[*b as usize % CODE_LETTERS.len()] as char)
+            .collect();
+        let k = crate::crypto::ring::random_array::<16>()?;
+        Ok(Room {
+            code,
+            key: base64url(&k),
+        })
+    }
+}
+
+/// Base64 with the URL alphabet, no padding.
+pub fn base64url(data: &[u8]) -> String {
+    crate::net::base64::encode(data)
+        .trim_end_matches('=')
+        .replace('+', "-")
+        .replace('/', "_")
+}
 
 /// Where a relayed connection came from.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -117,8 +169,14 @@ pub(super) struct St {
 }
 
 pub struct Hub {
-    pub bundle: Bundle,
+    /// The game being played; empty until one is picked.
+    game: RwLock<Option<Arc<Game>>>,
     pub token: String,
+    /// This run in [`GAME_COOKIE`] (random, not secret).
+    pub run: String,
+    pub room: Room,
+    /// The games list and the choice (`/_tvpipe/picker/`).
+    pub(super) picker: Picker,
     pub ports: OnceLock<Ports>,
     pub tunnel: RwLock<TunnelInfo>,
     pub peers: RwLock<Option<PeerLookup>>,
@@ -192,7 +250,29 @@ pub fn browser_device() -> Value {
 }
 
 impl Hub {
+    /// A hub with `bundle` in the slot and no games list (tests).
     pub fn new(bundle: Bundle, token: String, backend: Box<dyn Backend>, stop: Stop) -> Arc<Hub> {
+        let hub = Hub::session(token, backend, stop, picker::Config::default());
+        hub.put(bundle);
+        hub
+    }
+
+    /// A hub without a game: the window picks one (`picker`).
+    pub fn session(
+        token: String,
+        backend: Box<dyn Backend>,
+        stop: Stop,
+        picker: picker::Config,
+    ) -> Arc<Hub> {
+        let random = |n: usize| {
+            crate::crypto::ring::random_array::<16>()
+                .map(|b| crate::util::hex::encode(&b[..n]))
+                .unwrap_or_default()
+        };
+        let room = Room::new().unwrap_or_else(|_| Room {
+            code: "BCDF".into(),
+            key: random(16),
+        });
         let lags = match backend.storage().map(|s| s.tv_lags()) {
             Some(Ok(l)) => l,
             Some(Err(e)) => {
@@ -201,11 +281,14 @@ impl Hub {
             }
             None => BTreeMap::new(),
         };
-        Arc::new(Hub {
+        Arc::new_cyclic(|me| Hub {
             lags: Mutex::new(lags),
             dev: AtomicBool::new(false),
-            bundle,
+            game: RwLock::new(None),
             token,
+            run: random(4),
+            room,
+            picker: Picker::new(picker, me.clone()),
             ports: OnceLock::new(),
             tunnel: RwLock::new(TunnelInfo {
                 state: "off",
@@ -243,6 +326,98 @@ impl Hub {
         self.st.lock().unwrap_or_else(|e| e.into_inner())
     }
 
+    fn slot(&self) -> RwLockReadGuard<'_, Option<Arc<Game>>> {
+        self.game.read().unwrap_or_else(|e| e.into_inner())
+    }
+
+    /// The game in the slot, if one was picked.
+    pub fn game(&self) -> Option<Arc<Game>> {
+        self.slot().clone()
+    }
+
+    /// The game, or the API's `no-game`.
+    fn need_game(&self) -> Result<Arc<Game>> {
+        self.game()
+            .ok_or_else(|| Error::usage("no game yet: pick one in the window").with_code("no-game"))
+    }
+
+    /// The [`GAME_COOKIE`] of `game`'s pages.
+    pub fn game_tag(&self, game: &Game) -> String {
+        format!("{}.{}", self.run, game.gen)
+    }
+
+    /// Where the window starts: the game's launcher (its own or
+    /// tvpipe's), the games list without a game.
+    pub fn start_page(&self) -> String {
+        match self.game() {
+            Some(g) => launcher_of(&g.bundle),
+            None => picker::PAGE.to_owned(),
+        }
+    }
+
+    /// Puts `bundle` in the slot: the first game, or the next one
+    /// (docs/game-switching.md): the relay's clients are closed with
+    /// [`CLOSE_NEXT_GAME`] (phones go to their join link), surfaces stop,
+    /// the host is detached, and the API sockets get `game` with the page
+    /// to go to (the host page when TVs are chosen, else the launcher),
+    /// which this returns.
+    pub fn put(&self, bundle: Bundle) -> String {
+        let game = {
+            let mut slot = self.game.write().unwrap_or_else(|e| e.into_inner());
+            let gen = slot.as_ref().map_or(1, |g| g.gen + 1);
+            let game = Arc::new(Game { bundle, gen });
+            *slot = Some(game.clone());
+            game
+        };
+        let m = &game.bundle.manifest;
+        let chosen = {
+            let mut st = self.lock();
+            if game.gen > 1 {
+                Hub::close_clients(&mut st, CLOSE_NEXT_GAME, "next game");
+                if st.host.take().is_some() {
+                    info!("playshare: the host page of the last game is detached");
+                }
+            }
+            !st.selection.is_empty()
+        };
+        if game.gen > 1 {
+            self.surfaces_stop_all();
+        }
+        let url = if chosen {
+            format!("/{}", m.pages.host)
+        } else {
+            launcher_of(&game.bundle)
+        };
+        info!(
+            "playshare: {} from {}",
+            m.title,
+            game.bundle.origin.display()
+        );
+        if let Some(p) = self.ports.get() {
+            let local = format!("http://127.0.0.1:{}/", p.public);
+            let lan = p.lan.map(|lan| format!("http://{lan}/"));
+            info!(
+                "playshare: phones on this computer: {local}{}",
+                lan.as_ref()
+                    .map(|l| format!(", on the Wi-Fi: {l}"))
+                    .unwrap_or_default()
+            );
+            self.progress(Progress::Game {
+                title: m.title.clone(),
+                local,
+                lan,
+            });
+        }
+        self.event(
+            "game",
+            Value::object()
+                .with("name", m.name.as_str())
+                .with("title", m.title.as_str())
+                .with("url", url.as_str()),
+        );
+        url
+    }
+
     fn ports(&self) -> Ports {
         self.ports.get().copied().unwrap_or(Ports {
             local: 0,
@@ -269,9 +444,13 @@ impl Hub {
         (format!("http://127.0.0.1:{}/", p.public), "local")
     }
 
-    /// The most connections the relay takes at once.
+    /// The most connections the relay takes at once (the game's).
     pub fn max_clients(&self) -> usize {
-        (2 * self.bundle.manifest.max_players as usize + 16).max(64)
+        let max = self
+            .slot()
+            .as_ref()
+            .map_or(8, |g| g.bundle.manifest.max_players);
+        relay_limit(max)
     }
 
     // -----------------------------------------------------------------
@@ -340,7 +519,10 @@ impl Hub {
         query: String,
         agent: String,
     ) {
-        let limits = self.bundle.manifest.limits;
+        let (limits, gen) = match self.game() {
+            Some(g) => (g.bundle.manifest.limits, Some(g.gen)),
+            None => (super::bundle::Limits::default(), None),
+        };
         let id = Arc::new(OnceLock::<u32>::new());
         let hub = self.clone();
         let mark_id = id.clone();
@@ -370,6 +552,11 @@ impl Hub {
             leftover,
             opts,
             |out| {
+                // Another game since the upgrade: its join link.
+                if hub.slot().as_ref().map(|g| g.gen) != gen {
+                    out.close(CLOSE_NEXT_GAME, "next game");
+                    return;
+                }
                 let mut st = hub.lock();
                 let Some(host) = st.host.filter(|_| !st.closing) else {
                     out.close(CLOSE_RESTART, "no host");
@@ -433,6 +620,25 @@ impl Hub {
             );
         }
         debug!("playshare: client {conn} closed ({})", ended.code);
+    }
+
+    /// A page of an earlier game: accepted and closed with
+    /// [`CLOSE_NEXT_GAME`] (it goes to its join link).
+    pub(super) fn run_stale(&self, tcp: std::net::TcpStream, leftover: Vec<u8>) {
+        let opts = conn::Options {
+            name: "relay-stale",
+            max_message: 4096,
+            first_message: Some(FIRST_MESSAGE),
+            mark: None,
+            limit: None,
+        };
+        conn::run(
+            tcp,
+            leftover,
+            opts,
+            |out| out.close(CLOSE_NEXT_GAME, "next game"),
+            |_| Next::Continue,
+        );
     }
 
     fn close_clients(st: &mut St, code: u16, reason: &str) {
@@ -601,7 +807,7 @@ impl Hub {
     pub fn call(self: &Arc<Hub>, api: u64, method: &str, params: &Value) -> Result<Value> {
         let unknown = || Error::usage(format!("no method {method:?}")).with_code("unknown-method");
         match method {
-            "info" => Ok(self.info()),
+            "info" => self.info(),
             "devices.watch" => {
                 let on = params.get("on").and_then(Value::as_bool).unwrap_or(true);
                 let mut st = self.lock();
@@ -690,6 +896,7 @@ impl Hub {
                 Ok(Value::object().with("size", rows.len()).with("rows", rows))
             }
             "relay.attach" => {
+                self.need_game()?;
                 let mut st = self.lock();
                 if st.closing {
                     return Err(Error::closed("playshare is ending").with_code("closing"));
@@ -790,10 +997,13 @@ impl Hub {
         self.lock().host.is_some()
     }
 
-    pub fn info(&self) -> Value {
+    /// `info`: the game, the room and how phones reach it.
+    pub fn info(&self) -> Result<Value> {
+        let game = self.need_game()?;
         let (phone, mode) = self.phone_base();
         let p = self.ports();
-        self.bundle
+        Ok(game
+            .bundle
             .manifest
             .to_value()
             .with(
@@ -806,8 +1016,15 @@ impl Hub {
             .with("tunnel", self.tunnel_value())
             .with("local", self.local_origin())
             .with("version", self.version)
-            .with("resolutions", self.resolutions())
+            .with("resolutions", self.resolutions(&game))
             .with("dev", self.dev.load(Ordering::Relaxed))
+            .with(
+                "room",
+                Value::object()
+                    .with("code", self.room.code.as_str())
+                    .with("key", self.room.key.as_str()),
+            )
+            .with("game", game.gen))
     }
 
     /// The resolution until someone chooses one (`--resolution`).
@@ -816,8 +1033,8 @@ impl Hub {
     }
 
     /// The resolutions people may choose (none: `tv.resolution` fixed).
-    fn resolutions(&self) -> Value {
-        if self.bundle.manifest.tv_fixed {
+    fn resolutions(&self, game: &Game) -> Value {
+        if game.bundle.manifest.tv_fixed {
             return Value::array(Vec::<Value>::new());
         }
         Value::array(Resolution::ALL.iter().map(|r| r.as_str()))
@@ -827,7 +1044,11 @@ impl Hub {
     fn selection_value(&self, st: &St) -> Value {
         Value::object().with("devices", st.selection.clone()).with(
             "resolution",
-            if self.bundle.manifest.tv_fixed {
+            if self
+                .slot()
+                .as_ref()
+                .is_some_and(|g| g.bundle.manifest.tv_fixed)
+            {
                 Value::Null
             } else {
                 Value::from(st.resolution.as_str())
@@ -943,7 +1164,8 @@ impl Hub {
             None | Some(Value::Null) => self.lock().resolution,
             Some(r) => parse_resolution(r)?,
         };
-        let manifest = &self.bundle.manifest;
+        let game = self.need_game()?;
+        let manifest = &game.bundle.manifest;
         let picture = Picture {
             layout: manifest.tv_size,
             resolution: (!manifest.tv_fixed).then_some(resolution),
@@ -1111,5 +1333,18 @@ impl Hub {
         while Instant::now() < until && self.client_count() > 0 {
             std::thread::sleep(Duration::from_millis(20));
         }
+    }
+}
+
+/// The relay's connections at most for a game of `max_players`.
+pub fn relay_limit(max_players: u32) -> usize {
+    (2 * max_players as usize + 16).max(64)
+}
+
+/// A game's launcher: its own, else tvpipe's.
+pub fn launcher_of(bundle: &Bundle) -> String {
+    match &bundle.manifest.pages.launcher {
+        Some(l) => format!("/{l}"),
+        None => super::server::LAUNCHER.to_owned(),
     }
 }

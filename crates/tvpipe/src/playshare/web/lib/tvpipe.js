@@ -8,6 +8,7 @@
  *   const party = await tvpipe.party({ lateJoin: "wait" });   // the host
  *   await party.cast();                                      // the TV page on the chosen TVs
  *   await party.changeCast();                                // the cast picker: other TVs, resolution
+ *   await tvpipe.showGamePicker();                           // the games list: the next game
  */
 import { Emitter } from "./emitter.js";
 import { Party } from "./party.js";
@@ -59,6 +60,10 @@ const LAUNCHER = "/_tvpipe/launcher/";
 export const TVSYNC_PAGE = "/_tvpipe/tvsync/";
 /** The message the launcher in change mode sends its parent page. */
 export const PICKER_MESSAGE = "tvpipe:cast-picker";
+/** tvpipe's games list. */
+export const GAME_PICKER = "/_tvpipe/picker/";
+/** The message the games list in a dialog sends its parent page (`{type, done}`). */
+export const GAME_PICKER_MESSAGE = "tvpipe:game-picker";
 export class Tvpipe extends Emitter {
     /** Connects to tvpipe's API. */
     static connect(opts = {}) {
@@ -82,6 +87,11 @@ export class Tvpipe extends Emitter {
     #calls = new Map();
     #relay;
     #closed = false;
+    /**
+     * Whether a top-level page goes to the next game's page by itself when
+     * another game is picked (the `game` event). Default `true`.
+     */
+    followGames = true;
     constructor(ws) {
         super();
         this.#ws = ws;
@@ -151,10 +161,23 @@ export class Tvpipe extends Emitter {
                 case "surface":
                     this.emit("surface", data);
                     return;
+                case "game":
+                    this.#nextGame(data);
+                    return;
             }
             return;
         }
         this.#relay?.handleControl(msg);
+    }
+    #nextGame(next) {
+        this.emit("game", next);
+        const g = globalThis;
+        if (!this.followGames || !g.location || typeof next?.url !== "string" || !next.url.startsWith("/"))
+            return;
+        // In a frame (the cast picker, a preview) the page around it goes.
+        if (g.window && g.window.top !== g.window)
+            return;
+        g.location.assign(next.url);
     }
     /** Calls an API method (docs/playshare-design.md §5). */
     call(method, params = {}) {
@@ -284,6 +307,50 @@ export class Tvpipe extends Emitter {
         await this.call("cast.stop");
     }
     /**
+     * tvpipe's games list in a dialog over this page
+     * (docs/game-switching.md): the games on this computer and the online
+     * ones, the current one marked. Resolves `true` once another game was
+     * picked (tvpipe swaps it in, and the `game` event takes this page
+     * there), `false` when cancelled.
+     */
+    async showGamePicker() {
+        const doc = globalThis.document;
+        if (!doc)
+            throw new TvpipeError("unsupported", "the games list needs a page");
+        return new Promise((resolve) => {
+            const dialog = doc.createElement("dialog");
+            dialog.className = "tvpipe-game-picker";
+            dialog.style.cssText =
+                "padding:0;border:0;border-radius:12px;width:min(1000px,96vw);height:min(760px,92vh);overflow:hidden;background:transparent;box-shadow:0 20px 60px rgb(0 0 0 / 40%)";
+            const frame = doc.createElement("iframe");
+            frame.title = "Pick another game";
+            frame.src = `${GAME_PICKER}?mode=switch`;
+            frame.style.cssText = "display:block;width:100%;height:100%;border:0";
+            dialog.append(frame);
+            const done = (picked) => {
+                removeEventListener("message", onMessage);
+                dialog.close();
+                dialog.remove();
+                resolve(picked);
+            };
+            const onMessage = (ev) => {
+                if (ev.source !== frame.contentWindow || ev.origin !== globalThis.location.origin)
+                    return;
+                const d = ev.data;
+                if (d?.type !== GAME_PICKER_MESSAGE)
+                    return;
+                done(d.picked === true);
+            };
+            addEventListener("message", onMessage);
+            dialog.addEventListener("cancel", (ev) => {
+                ev.preventDefault();
+                done(false);
+            });
+            doc.body.append(dialog);
+            dialog.showModal();
+        });
+    }
+    /**
      * A short link to the tunnel's join link `url` (docs/short-links.md):
      * tvpipe registers it at tvpipe.party (`code`: the code to ask for, the
      * room's). Rejects with `unavailable` without a tunnel, with
@@ -390,7 +457,7 @@ export class HostedParty extends Party {
     #pairing = false;
     constructor(tvpipe, info, relay, options) {
         const { pair, ...rest } = options;
-        super({ maxPlayers: info.players.max, ...rest });
+        super({ maxPlayers: info.players.max, code: info.room?.code, joinKey: info.room?.key, ...rest });
         this.tvpipe = tvpipe;
         this.info = info;
         this.relay = relay;

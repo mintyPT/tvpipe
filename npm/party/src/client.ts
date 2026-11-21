@@ -34,6 +34,7 @@ const FINAL = new Set([
   "left",
   "rate-limited",
   "too-big",
+  "next-game",
 ]);
 
 /**
@@ -53,9 +54,25 @@ const FINAL_CODES: Record<number, string> = {
   4009: "replaced",
   4010: "kicked",
   4011: "room-closed",
+  4014: "next-game",
   4029: "full",
   4030: "in-progress",
 };
+
+/**
+ * What a phone was in the room's last game (docs/game-switching.md):
+ * its name, and what that game stashed with {@link PartyClient.carry}.
+ */
+export interface Carried {
+  name?: string;
+  data?: unknown;
+}
+
+/** {@link PartyClient.carry}'s data at most, bytes of JSON. */
+export const CARRY_LIMIT = 4096;
+
+/** tvpipe's cookie naming the game a page was loaded with. */
+const GAME_COOKIE = "tvpipe-game";
 
 /** Unacknowledged actions kept at most. */
 const MAX_PENDING = 32;
@@ -212,6 +229,16 @@ export interface PartyClientOptions {
   role?: Role | undefined;
   /** Where the identity is kept (default `localStorage` when there is one). */
   storage?: StorageLike | null | undefined;
+  /**
+   * Where what goes along to the room's next game is kept (default
+   * `sessionStorage`: this tab only).
+   */
+  session?: StorageLike | null | undefined;
+  /**
+   * Players in a page: when the room goes on with another game, go to
+   * the join link (the next game's phone page). Default `true`.
+   */
+  followGames?: boolean | undefined;
   /** Default the global one. */
   WebSocket?: WebSocketFactory | undefined;
   /**
@@ -253,7 +280,11 @@ export class PartyClient {
     const h = new URLSearchParams(loc.hash.replace(/^#/, ""));
     const room = opts.room ?? h.get("r") ?? q.get("r") ?? "";
     const key = opts.key ?? h.get("k") ?? q.get("k") ?? undefined;
-    const url = opts.url ?? `${loc.protocol === "https:" ? "wss:" : "ws:"}//${loc.host}${SOCKET_PATH}`;
+    let url = opts.url ?? `${loc.protocol === "https:" ? "wss:" : "ws:"}//${loc.host}${SOCKET_PATH}`;
+    // The game this page is of: tvpipe sends a page of an earlier game
+    // on to its join link (docs/game-switching.md).
+    const game = opts.url ? null : cookieValue(GAME_COOKIE);
+    if (game) url += `?g=${encodeURIComponent(game)}`;
     const r = opts.role ?? h.get("role") ?? "player";
     const role: Role = r === "screen" || r === "watch" ? r : "player";
     const client = new PartyClient({ ...opts, url, room, key, role });
@@ -276,6 +307,8 @@ export class PartyClient {
   readonly key: string | undefined;
   readonly role: Role;
   readonly storage: StorageLike | null;
+  readonly session: StorageLike | null;
+  readonly followGames: boolean;
   /** The current view (`{ roster, room, me }` or `{ roster, screen, join }`). */
   view: Record<string, any> = {};
   /** Who this client is, from `welcome`. */
@@ -305,6 +338,10 @@ export class PartyClient {
   #retry: ReturnType<typeof setTimeout> | null = null;
   #pinger: ReturnType<typeof setInterval> | null = null;
   #name: string | undefined;
+  /** Whether this connect joins with the carried name. */
+  #joinsCarried = false;
+  /** What goes along to the next game ({@link carry}). */
+  #outgoing: string | undefined;
   #nextAct = 1;
   readonly #pending = new Map<number, Pending>();
   #inSeq = 0;
@@ -334,6 +371,8 @@ export class PartyClient {
     this.key = opts.key;
     this.role = opts.role ?? "player";
     this.storage = opts.storage !== undefined ? opts.storage : safeStorage();
+    this.session = opts.session !== undefined ? opts.session : safeStorage("sessionStorage");
+    this.followGames = opts.followGames ?? true;
     this.#WS = opts.WebSocket ?? (globalThis.WebSocket as unknown as WebSocketFactory);
     const doc = (globalThis as any).document as Document | undefined;
     if (this.role !== "player" && opts.rejoinBadge !== false && doc?.createElement) {
@@ -381,9 +420,74 @@ export class PartyClient {
     } catch {}
   }
 
-  /** Whether `connect()` can come back as an earlier player. */
+  /** Whether `connect()` can come back as an earlier player (or join with the name of the last game). */
   get canResume(): boolean {
-    return this.role !== "player" || typeof this.saved?.resume === "string";
+    return this.role !== "player" || typeof this.saved?.resume === "string" || typeof this.carried?.name === "string";
+  }
+
+  get #carryKey(): string {
+    return `${this.#storageKey.replace(/:[^:]*$/, "")}:carry`;
+  }
+
+  /**
+   * What this phone was in the room's last game, when it came here with
+   * the room (docs/game-switching.md): `{name, data}`, or `null`. The
+   * game may use it or not; `connect()` joins with the name when there
+   * is no saved identity.
+   */
+  get carried(): Carried | null {
+    if (this.role !== "player") return null;
+    try {
+      const s = this.session?.getItem(this.#carryKey);
+      const v: unknown = s ? JSON.parse(s) : null;
+      if (!isObject(v)) return null;
+      const out: Carried = {};
+      if (typeof v["name"] === "string") out.name = v["name"];
+      if ("data" in v) out.data = v["data"];
+      return out;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Stashes `data` (JSON, at most {@link CARRY_LIMIT} bytes) for the
+   * room's next game: it gets it as `carried.data`. `undefined` drops it.
+   */
+  carry(data: unknown): void {
+    const text = data === undefined ? undefined : JSON.stringify(data);
+    if (text !== undefined && text.length > CARRY_LIMIT) throw new RangeError(`carry: more than ${CARRY_LIMIT} bytes`);
+    this.#outgoing = text;
+    try {
+      if (text === undefined) this.session?.removeItem(`${this.#carryKey}-out`);
+      else this.session?.setItem(`${this.#carryKey}-out`, text);
+    } catch {}
+  }
+
+  /** The room goes on with another game: what goes along, and to the join link. */
+  #nextGame(): void {
+    if (this.role !== "player") return;
+    const carried: Carried = {};
+    const name = this.saved?.name ?? this.you?.["name"] ?? this.#name;
+    if (typeof name === "string") carried.name = name;
+    let out = this.#outgoing;
+    try {
+      out ??= this.session?.getItem(`${this.#carryKey}-out`) ?? undefined;
+      this.session?.removeItem(`${this.#carryKey}-out`);
+    } catch {}
+    if (out !== undefined) {
+      try {
+        carried.data = JSON.parse(out);
+      } catch {}
+    }
+    try {
+      this.session?.setItem(this.#carryKey, JSON.stringify(carried));
+    } catch {}
+    this.#forget();
+    const loc = (globalThis as any).location;
+    if (!this.followGames || !loc || typeof loc.replace !== "function") return;
+    const key = this.key ? `#k=${encodeURIComponent(this.key)}` : "";
+    loc.replace(`/?r=${encodeURIComponent(this.room)}${key}`);
   }
 
   /** Events: `view`, `welcome`, `msg`, `status`, `bye`, `ack`, `tv` (the {@link tvDelay}). */
@@ -420,6 +524,13 @@ export class PartyClient {
   /** Connects: a screen, or a player with a saved identity. Resolves with `welcome`. */
   connect(): Promise<Record<string, any>> {
     if (this.#name === undefined) this.#name = this.saved?.name;
+    if (this.#name === undefined && this.role === "player" && typeof this.saved?.resume !== "string") {
+      const name = this.carried?.name;
+      if (name !== undefined) {
+        this.#name = name;
+        this.#joinsCarried = true;
+      }
+    }
     return new Promise((resolve, reject) => {
       this.#waiting = { resolve, reject };
       this.byeReason = null;
@@ -491,6 +602,15 @@ export class PartyClient {
   #fail(reason: string, message: string): void {
     this.#setStatus("closed");
     if (reason === "no-player" || reason === "kicked" || reason === "bad-key") this.#forget();
+    if (reason === "next-game") this.#nextGame();
+    else if (this.#joinsCarried && !this.you) {
+      // The carried name did not get in (taken, refused): the game asks.
+      this.#joinsCarried = false;
+      this.#name = undefined;
+      try {
+        this.session?.removeItem(this.#carryKey);
+      } catch {}
+    }
     const err = new PartyActionError(reason, message);
     for (const p of this.#pending.values()) p.reject(err);
     this.#pending.clear();
@@ -788,9 +908,22 @@ export class PartyClient {
   }
 }
 
-function safeStorage(): StorageLike | null {
+/** A cookie of this page's origin, if any. */
+function cookieValue(name: string): string | null {
   try {
-    const s = (globalThis as any).localStorage as StorageLike | undefined;
+    const all: unknown = (globalThis as any).document?.cookie;
+    if (typeof all !== "string") return null;
+    for (const kv of all.split(";")) {
+      const i = kv.indexOf("=");
+      if (i > 0 && kv.slice(0, i).trim() === name) return decodeURIComponent(kv.slice(i + 1).trim());
+    }
+  } catch {}
+  return null;
+}
+
+function safeStorage(which: "localStorage" | "sessionStorage" = "localStorage"): StorageLike | null {
+  try {
+    const s = (globalThis as any)[which] as StorageLike | undefined;
     if (!s) return null;
     s.getItem("x");
     return s;

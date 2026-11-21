@@ -172,7 +172,12 @@ pairing dialog over the page), `setDisplayLag(device, ms)`
 (a TV's lag as tapped along: the launcher's Sync), `cast({ page, to })`,
 `stopCast()` and the `cast` event, `qr(text)`, `quit()`, the `tunnel`
 and `closing` events. A game's own launcher uses these, then
-`select()`s and navigates to the host page.
+`select()`s and navigates to the host page. `showGamePicker()` shows
+tvpipe's games list in a dialog; when another game is picked the `game`
+event (`{name, title, url}`) comes and a top-level page goes to `url`
+(`followGames = false`: go yourself). `info().room` is the run's room
+code and join key: `HostedParty` uses them, so the join link stays from
+game to game (docs/game-switching.md).
 
 ## Surfaces: canvases on TVs
 
@@ -205,7 +210,7 @@ HTML-in-Canvas (Drawbluff's "TV picture: drawn here").
 ## Client API
 
 `PartyClient.fromLocation()` or `new PartyClient({ url, room, key, role,
-storage, WebSocket })`; `join(name)`, `connect()`, `act(type, data)`
+storage, session, followGames, WebSocket })`; `join(name)`, `connect()`, `act(type, data)`
 (rejects with `PartyActionError`: `code`, `message`), `input(data)`,
 `on("view" | "msg" | "status" | "bye" | "welcome" | "tv", fn)`, `view`, `you`,
 `status`, `now()`, `hostNow()`, `tvDelay`, `leave()`, `close()`; on
@@ -216,7 +221,12 @@ y, size)`, `joinText(join)`, `memoryStorage()`. It reconnects by itself
 (and when the page becomes visible again), keeps the player's identity in
 `localStorage`, takes a rejoin link's token, and resends unacknowledged
 actions. `drop({ away, forget })` (tests) loses the connection like a
-phone would.
+phone would. When the room goes on with another game (`bye next-game`,
+4014) a player's page goes to its join link: `carried` (`{name, data}`,
+in `sessionStorage`) is what it was in the last game, `connect()` joins
+with that name when there is no saved identity (`canResume` is true
+then), and `carry(data)` stashes up to `CARRY_LIMIT` bytes of JSON for
+the next one.
 
 **The TV is behind** (render, capture, the receivers' playout delay, the
 TV's own lag: ~0.25 s on an Apple TV, ~0.45 s on Cast). Changes the host

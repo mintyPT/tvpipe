@@ -18,8 +18,9 @@
 //!   packing, a run in a headless browser, the starter template).
 //! - [`source`], [`remote`], [`cache`]: games from the internet (§18): what
 //!   a source may be, fetching from GitHub and the games list, the cache.
-//! - [`picker`]: `game play` without a game: the games list in the window
-//!   first (docs/game-catalog.md).
+//! - [`picker`]: the games list in the window: the first game when none
+//!   was given, the next one any time (docs/game-catalog.md,
+//!   docs/game-switching.md).
 
 pub mod backend;
 pub mod bundle;
@@ -79,10 +80,11 @@ pub enum TunnelChoice {
 /// `tvpipe game play` (the CLI's options).
 #[derive(Debug, Clone, Default)]
 pub struct Options {
-    /// The game: a folder, a `.zip`, an `https://` URL, `gh:…` or a name
-    /// from the games list (§18); empty: the window picks one from the
-    /// list (docs/game-catalog.md).
-    pub game: String,
+    /// The games: one game (a folder, a `.zip`, an `https://` URL, `gh:…`
+    /// or a name from the games list, §18), or folders of games and
+    /// several local ones; none: the window picks one from the list
+    /// (docs/game-catalog.md, docs/game-switching.md).
+    pub games: Vec<String>,
     /// `--refresh`, `--offline`.
     pub fetch: remote::FetchOptions,
     /// `--yes`: a game from the internet runs without the question.
@@ -105,7 +107,7 @@ pub struct Options {
     pub dev: bool,
 }
 
-/// A started playshare: the hub, its listeners and the tunnel.
+/// A started playshare session: the hub, its listeners and the tunnel.
 pub(crate) struct Running {
     pub hub: Arc<Hub>,
     servers: Servers,
@@ -113,26 +115,36 @@ pub(crate) struct Running {
 }
 
 impl Running {
-    /// Binds the listeners and starts the tunnel (in the background).
+    /// Binds the listeners with `bundle` in the slot and starts the
+    /// tunnel (in the background).
     pub(crate) fn start(
         bundle: Bundle,
         backend: Box<dyn backend::Backend>,
         opts: &Options,
         stop: Stop,
     ) -> Result<Running> {
-        Running::start_with(bundle, backend, opts, stop, Events::none())
+        Running::start_with(
+            Some(bundle),
+            backend,
+            opts,
+            stop,
+            Events::none(),
+            picker::Config::default(),
+        )
     }
 
-    /// [`Running::start`] with progress events for a front end.
+    /// The session, with progress events for a front end; `bundle`: the
+    /// first game, else the window picks one from `picker`'s list.
     pub(crate) fn start_with(
-        bundle: Bundle,
+        bundle: Option<Bundle>,
         backend: Box<dyn backend::Backend>,
         opts: &Options,
         stop: Stop,
         events: Events,
+        picker: picker::Config,
     ) -> Result<Running> {
         let token = crate::util::hex::encode(&crate::crypto::ring::random_array::<16>()?);
-        let hub = Hub::new(bundle, token, backend, stop.clone());
+        let hub = Hub::session(token, backend, stop.clone(), picker);
         hub.set_resolution(opts.resolution);
         hub.dev.store(opts.dev, Ordering::Relaxed);
         let _ = hub.events.set(events);
@@ -142,6 +154,9 @@ impl Running {
         ));
         let servers = Servers::start(&hub, opts.port, opts.lan)?;
         let tunnel = start_tunnel(&hub, opts.tunnel);
+        if let Some(b) = bundle {
+            hub.put(b);
+        }
         Ok(Running {
             hub,
             servers,
@@ -175,11 +190,60 @@ impl Running {
 /// is nobody to ask.
 pub type Ask<'a> = &'a dyn Fn(&str, &dyn Fn() -> bool) -> Option<bool>;
 
-/// The game of `opts`: a local one as it is; one from the internet
+/// What the command line's games mean (docs/game-switching.md).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Games {
+    /// None: the window picks from the online list.
+    Pick,
+    /// One game, played at once (and in the list if it is local).
+    One(String),
+    /// Games on this computer (bundles and folders of them): the window
+    /// picks.
+    Local(Vec<PathBuf>),
+}
+
+impl Games {
+    /// Sorts the command line's games out: one game (local or not), or
+    /// local ones only.
+    pub fn parse(games: &[String]) -> Result<Games> {
+        let games: Vec<&str> = games
+            .iter()
+            .map(|g| g.trim())
+            .filter(|g| !g.is_empty())
+            .collect();
+        match games.as_slice() {
+            [] => Ok(Games::Pick),
+            [one] => {
+                let p = std::path::Path::new(one);
+                if p.exists() && !picker::is_bundle(p) {
+                    Ok(Games::Local(vec![p.to_owned()]))
+                } else {
+                    Ok(Games::One((*one).to_owned()))
+                }
+            }
+            many => {
+                let mut paths = Vec::new();
+                for g in many {
+                    let p = std::path::Path::new(g);
+                    if !p.exists() {
+                        return Err(Error::usage(format!(
+                            "{g}: no such file or folder (several games are folders or zips on \
+                             this computer; a game from the internet comes alone)"
+                        )));
+                    }
+                    paths.push(p.to_owned());
+                }
+                Ok(Games::Local(paths))
+            }
+        }
+    }
+}
+
+/// The game of `source`: a local one as it is; one from the internet
 /// fetched (or from the cache), and run only after the question (§18)
 /// unless pinned, approved before or `--yes`.
-pub fn open_game(opts: &Options, ctx: &Ctx, ask: Ask<'_>) -> Result<Bundle> {
-    let src = source::Source::parse(&opts.game)?;
+pub fn open_game(source: &str, opts: &Options, ctx: &Ctx, ask: Ask<'_>) -> Result<Bundle> {
+    let src = source::Source::parse(source)?;
     if let source::Source::Local(p) = &src {
         return Bundle::open(p);
     }
@@ -209,16 +273,57 @@ pub fn open_game(opts: &Options, ctx: &Ctx, ask: Ask<'_>) -> Result<Bundle> {
 }
 
 /// Runs playshare until the window closes, the page quits or `ctx`'s
-/// stop is requested. Prints the window's URL with `--window none`. A
-/// game from the internet is first fetched and, the first time, asked
-/// about with `ask`. Without a game, the window opens on the games list
-/// and the game picked there runs (docs/game-catalog.md).
+/// stop is requested. Prints the window's URL with `--window none`. One
+/// game given: it is fetched and, from the internet the first time, asked
+/// about with `ask`, and played at once; otherwise the window opens on
+/// the games list. Either way the window can switch to another game of
+/// the list any time (docs/game-switching.md).
 pub fn run(opts: &Options, ctx: &Ctx, ask: Ask<'_>) -> Result<()> {
-    if opts.game.trim().is_empty() {
-        return run_picked(opts, ctx);
-    }
-    let bundle = open_game(opts, ctx, ask)?;
-    let running = start_game(bundle, opts, ctx)?;
+    let (first, local) = match Games::parse(&opts.games)? {
+        Games::Pick => (None, Vec::new()),
+        Games::One(g) => {
+            let bundle = open_game(&g, opts, ctx, ask)?;
+            let p = std::path::Path::new(&g);
+            let local = if p.exists() {
+                vec![p.to_owned()]
+            } else {
+                Vec::new()
+            };
+            (Some(bundle), local)
+        }
+        Games::Local(paths) => {
+            if picker::scan(&paths).is_empty() {
+                let shown: Vec<String> = paths.iter().map(|p| p.display().to_string()).collect();
+                return Err(Error::usage(format!(
+                    "{}: no {} here, and no games (folders with one, zips) in it",
+                    shown.join(", "),
+                    bundle::MANIFEST
+                )));
+            }
+            info!("playshare: pick a game in the window");
+            (None, paths)
+        }
+    };
+    let (fetch, stop) = (opts.fetch, ctx.stop.clone());
+    let make: picker::MakeFetcher =
+        Arc::new(move |events| remote::Fetcher::from_env(fetch, events, Some(stop.clone())));
+    let picker = picker::Config {
+        make: Some(make),
+        yes: opts.yes,
+        local,
+    };
+    let backend = backend::Real {
+        storage: ctx.storage.clone(),
+        browser: opts.browser.clone(),
+    };
+    let running = Running::start_with(
+        first,
+        Box::new(backend),
+        opts,
+        ctx.stop.clone(),
+        ctx.events.clone(),
+        picker,
+    )?;
     let url = running.start_url();
     let window = match open_window(opts, &url, &ctx.events) {
         Ok(w) => w,
@@ -229,88 +334,6 @@ pub fn run(opts: &Options, ctx: &Ctx, ask: Ask<'_>) -> Result<()> {
     };
     serve(running, window, &ctx.stop, &ctx.events);
     Ok(())
-}
-
-/// `game play` without a game: the picker in the window, then the game.
-fn run_picked(opts: &Options, ctx: &Ctx) -> Result<()> {
-    let stop = ctx.stop.clone();
-    let picker = picker::Picker::start(opts.fetch, opts.yes, opts.port, stop.clone())?;
-    let mut window = open_window(opts, &picker.start_url(), &ctx.events)?;
-    info!("playshare: pick a game in the window");
-    let bundle = loop {
-        if stop.wait(TICK) {
-            window.close();
-            return Ok(());
-        }
-        if window.owned() {
-            window.pass_out_new_pages();
-            if window.closed() {
-                info!("playshare: the window was closed");
-                window.close();
-                return Ok(());
-            }
-        }
-        if let Some(b) = picker.take() {
-            break b;
-        }
-    };
-    let source = bundle.origin.display().to_string();
-    // The game's own listener: --port was the picker's.
-    let game_opts = Options {
-        port: 0,
-        ..opts.clone()
-    };
-    let running = match start_game(bundle, &game_opts, ctx) {
-        Ok(r) => r,
-        Err(e) => {
-            picker.failed(&source, &e);
-            // Long enough for the page to show it.
-            stop.wait(Duration::from_secs(3));
-            window.close();
-            return Err(e);
-        }
-    };
-    picker.started(running.start_url());
-    serve(running, window, &stop, &ctx.events);
-    drop(picker);
-    Ok(())
-}
-
-/// Starts the game's server and tells the front end about it.
-fn start_game(bundle: Bundle, opts: &Options, ctx: &Ctx) -> Result<Running> {
-    let events = ctx.events.clone();
-    info!(
-        "playshare: {} from {}",
-        bundle.manifest.title,
-        bundle.origin.display()
-    );
-    let title = bundle.manifest.title.clone();
-    let backend = backend::Real {
-        storage: ctx.storage.clone(),
-        browser: opts.browser.clone(),
-    };
-    let running = Running::start_with(
-        bundle,
-        Box::new(backend),
-        opts,
-        ctx.stop.clone(),
-        events.clone(),
-    )?;
-    let p = *running
-        .hub
-        .ports
-        .get()
-        .ok_or_else(|| Error::closed("no ports"))?;
-    let local = format!("http://127.0.0.1:{}/", p.public);
-    let lan = p.lan.map(|lan| format!("http://{lan}/"));
-    info!(
-        "playshare: phones on this computer: {local}{}",
-        lan.as_ref()
-            .map(|l| format!(", on the Wi-Fi: {l}"))
-            .unwrap_or_default()
-    );
-    events.progress(Progress::Game { title, local, lan });
-    Ok(running)
 }
 
 /// Opens the window on `url` (prints it with `--window none`).
@@ -370,8 +393,9 @@ struct Servers {
 
 impl Servers {
     fn start(hub: &Arc<Hub>, port: u16, lan: Option<Option<IpAddr>>) -> Result<Servers> {
+        // For the largest game: the relay's own limit is the game's.
         let config = httpd::Config {
-            max_connections: hub.max_clients() + 64,
+            max_connections: hub::relay_limit(bundle::MAX_PLAYERS) + 64,
             max_body: 64 * 1024,
             lan: false,
         };

@@ -186,7 +186,9 @@ endButton.onclick = () => tvpipe.quit();     // ends tvpipe: TVs stop, phones ar
 the window most games want: the logo and the game's status, the join QR
 code and link (Copy), the TVs (change them, try again, open the TV
 view), the players (VIP, a rejoin code for away players, remove), Start
-(with how many are still missing) and End, a muted preview of the TV,
+(with how many are still missing), Other game (tvpipe's games list in a
+dialog: the next game takes the room, the TVs and the phones over) and
+End, a muted preview of the TV,
 the bots' buttons in test mode, and the game's **settings, from a
 spec**: a list of fields, each a label, its choices and how to read and
 change the value. The page draws them (a dropdown, a row of buttons or
@@ -256,6 +258,17 @@ if (client.canResume) await client.connect();
 else form.onsubmit = () => client.join(nameInput.value).catch((e) => show(e.message));
 button.onclick = () => client.act("answer", { text: input.value }).catch((e) => show(e.message));
 ```
+
+**The next game.** When the host picks another game, tvpipe closes the
+phones with 4014 and `PartyClient` takes each player's page to its join
+link, which is the next game's phone page now
+([`game-switching.md`](game-switching.md)). The phone page above needs
+nothing for it: `canResume` is also true when the phone carries a name
+from the last game, and `connect()` joins with it (a taken name rejects,
+and the form shows). `client.carried` is `{name, data}` or `null`, for
+a game that wants more; `client.carry(data)` stashes up to 4 KiB of
+JSON for the next game (an avatar, a colour). A game without names
+ignores both.
 
 The rules of thumb: the host **sets views** (`party.room`, `party.screen`,
 `player.state`), it never sends events to keep phones in sync; phones
@@ -404,8 +417,10 @@ tvpipe game play ./my-game --window open      # the host page in your own browse
 ```
 
 - A folder is read on every request: edit a file and reload the page.
-  Reloading the host page starts a new party (it casts again, phones
-  join again); a phone or TV page can be reloaded on its own.
+  Reloading the host page starts a new party in the same room (it casts
+  again, phones come back in by their names); a phone or TV page can be
+  reloaded on its own. Several games at once: `tvpipe game play
+  ./games`, and Other game in the host page to go from one to another.
 - Pick **"A browser tab on this computer"** in the launcher to see the TV
   page without a TV; the host page's preview (`party.links.watch` in an
   `<iframe>`) shows it too.
@@ -590,12 +605,21 @@ tvpipe game play                          # pick one from the games list in the 
 tvpipe game play drawbluff                # a name from the games list
 tvpipe game play drawbluff.zip            # a zip
 tvpipe game play ./drawbluff              # or a folder with tvpipe.json
+tvpipe game play ./games                  # a folder of games: pick one in the window
+tvpipe game play ./a ./b.zip              # several games on this computer
 ```
 
 Without a game the window opens on the games list with its pictures (or a
 field for a source from elsewhere); the game picked there is downloaded,
 asked about in the window the first time, and then runs as below
-([`game-catalog.md`](game-catalog.md)).
+([`game-catalog.md`](game-catalog.md)). Games on this computer (a folder
+whose folders or zips have a `tvpipe.json`, or several paths) are listed
+first, under "On this computer", the online list below.
+
+**Another game** any time: Other game in the host page (or the
+launcher) shows the list again. The TVs, the phones' link and its QR
+code and short link stay; phones go to the next game by themselves,
+with their names ([`game-switching.md`](game-switching.md)).
 
 tvpipe finds the game (a path that exists wins; else it is downloaded),
 checks it (errors before anything starts), opens a window with the

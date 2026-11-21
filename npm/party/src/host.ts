@@ -117,6 +117,9 @@ const STRINGS = {
     settings: "Settings",
     lockedHint: "Settings change between games.",
     end: "End",
+    otherGame: "Other game",
+    otherGameTitle: "Pick another game: the TVs and the join link stay, phones follow",
+    otherGameSure: "Switch to another game? This one ends for everybody.",
     previewNote: "What the TV shows (a preview, no sound). The VIP's phone can start the game too.",
     preview: "What the TV shows",
     copy: "Copy",
@@ -166,6 +169,9 @@ const STRINGS = {
     settings: "Einstellungen",
     lockedHint: "Einstellungen ändern sich zwischen den Spielen.",
     end: "Beenden",
+    otherGame: "Anderes Spiel",
+    otherGameTitle: "Ein anderes Spiel wählen: Fernseher und Link bleiben, die Handys wechseln mit",
+    otherGameSure: "Zu einem anderen Spiel wechseln? Dieses endet für alle.",
     previewNote: "Was der Fernseher zeigt (Vorschau, ohne Ton). Der VIP kann das Spiel auch am Handy starten.",
     preview: "Was der Fernseher zeigt",
     copy: "Kopieren",
@@ -403,7 +409,9 @@ const CSS = `
   .tvh button.tvh-kick { background: none; border-color: transparent; color: var(--muted); }
   .tvh button.tvh-kick.sure { color: var(--error); border-color: var(--error); }
   .tvh a { color: var(--link); }
-  .tvh-foot { display: flex; gap: 10px; padding: 14px 22px 18px; border-top: 1px solid var(--line); }
+  .tvh-foot { display: flex; flex-wrap: wrap; gap: 10px; padding: 14px 22px 18px; border-top: 1px solid var(--line); }
+  .tvh-foot button.tvh-primary { flex: 1 1 100%; }
+  .tvh-foot button.tvh-quiet { flex: 1 1 0; }
   .tvh-error { color: var(--error); margin: 0; padding: 0 22px 14px; }
   .tvh-preview { width: min(100%, 80vh); align-self: center; }
   .tvh-screen { width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); }
@@ -706,7 +714,7 @@ export class HostPage {
       el("ul", { class: "tvh-list", id: "players" }),
       el("div", { class: "tvh-row", id: "bots", hidden: true }, el("button", { id: "bot1" }), el("button", { id: "bot3" })),
     );
-    const foot = el("footer", { class: "tvh-foot" }, el("button", { class: "tvh-primary", id: "start", disabled: true }), el("button", { class: "tvh-quiet", id: "quit" }));
+    const foot = el("footer", { class: "tvh-foot" }, el("button", { class: "tvh-primary", id: "start", disabled: true }), el("button", { class: "tvh-quiet", id: "other-game", hidden: true }), el("button", { class: "tvh-quiet", id: "quit" }));
     this.#error = el("p", { class: "tvh-error", id: "error", hidden: true });
     const side = el("aside", { class: "tvh-side" }, el("div", { class: "tvh-scroll" }, el("header", {}, el("span", { class: "logo", textContent: o.title }), status), join, tvs, players), foot, this.#error);
     const settings = el("section", { class: "tvh-settings", hidden: true }, el("h2", {}, el("span", { id: "settings-title" }), el("span", { class: "tvh-small", id: "settings-locked", hidden: true })));
@@ -782,6 +790,12 @@ export class HostPage {
     $("change-tv").onclick = () => void this.#changeTvs();
     $("cast-again").onclick = () => void this.cast();
     $("quit").onclick = () => void this.tvpipe.quit();
+    // Another game in the same room (a tvpipe with a games list: it gives the room).
+    $("other-game").hidden = !party.info.room;
+    $("other-game").onclick = () => {
+      if (game.running && !globalThis.confirm?.(hostStrings(this.#lang).otherGameSure)) return;
+      void this.tvpipe.showGamePicker();
+    };
     $("start").onclick = () => {
       if (game.running || party.connectedPlayers.length < game.minPlayers) return;
       void game.play();
@@ -879,6 +893,9 @@ export class HostPage {
     set("bot1", t.addBot);
     set("bot3", t.addBots);
     set("quit", t.end);
+    set("other-game", t.otherGame);
+    const other = document.getElementById("other-game");
+    if (other) other.title = t.otherGameTitle;
     set("settings-title", t.settings);
     if (!this.#copied) set("copy-link", t.copy);
     set("preview-note", this.#run?.previewNote !== undefined ? textIn(this.#run.previewNote, this.#lang) : t.previewNote);

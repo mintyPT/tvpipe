@@ -75,6 +75,8 @@ pub struct Renderer {
     command: String,
     title: Option<String>,
     title_shown: bool,
+    /// A game's links were shown (the next game of the run: a note).
+    game_shown: bool,
     out: String,
     /// The last line printed is blank (or nothing is printed yet).
     blank: bool,
@@ -127,6 +129,7 @@ impl Renderer {
             command: command.to_owned(),
             title,
             title_shown: false,
+            game_shown: false,
             out: String::new(),
             blank: true,
             drawn: false,
@@ -434,7 +437,12 @@ impl Renderer {
                     ));
                 }
             }
+            Progress::Game { title, .. } if self.game_shown => {
+                // The next game of the run: the links stay the same.
+                self.note(&format!("Now playing {title}"));
+            }
             Progress::Game { title, local, lan } => {
+                self.game_shown = true;
                 self.set_title(title);
                 self.since.get_or_insert(now);
                 self.link("Play in a browser on this computer", local, false, None);

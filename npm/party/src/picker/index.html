@@ -8,7 +8,8 @@
 <link rel="preload" href="/_tvpipe/fonts/plex-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/_tvpipe/fonts/michroma.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/_tvpipe/fonts/sixtyfour.woff2" as="font" type="font/woff2" crossorigin>
-<script>try { document.documentElement.dataset.theme = localStorage.getItem('tvpipe-theme') || 'auto'; } catch (e) {}</script>
+<script>try { document.documentElement.dataset.theme = localStorage.getItem('tvpipe-theme') || 'auto'; } catch (e) {}
+if (new URLSearchParams(location.search).get('mode') === 'switch') document.documentElement.dataset.mode = 'switch';</script>
 <link rel="stylesheet" href="/_tvpipe/ui.css">
 <link rel="stylesheet" href="picker.css">
 <script type="module" src="picker.js"></script>
@@ -44,15 +45,25 @@
   <section class="row ph">
     <div class="meta"><span class="lbl">Status</span><span class="state" id="state">Loading the games…</span></div>
     <div class="body">
-      <h1 id="title">Pick a game</h1>
-      <p class="lead" id="message">tvpipe downloads the game you pick, and asks before it runs one the first time. Everyone plays on their own phone; the TV shows the game.</p>
+      <div class="head">
+        <h1 id="title">Pick a game</h1>
+        <button class="btn" id="cancel" type="button" hidden>Cancel</button>
+      </div>
+      <p class="lead" id="message">Everyone plays on their own phone; the TV shows the game.</p>
       <p id="error" class="error bad" hidden></p>
-      <ul id="games" class="games" aria-label="Games"></ul>
-      <p id="empty" class="searching" hidden></p>
+      <div id="local-part" hidden>
+        <h2 class="part"><span class="lbl">On this computer</span></h2>
+        <ul id="local" class="games" aria-label="Games on this computer"></ul>
+      </div>
+      <div id="online-part" hidden>
+        <h2 class="part"><span class="lbl">From tvpipe.party</span><span class="part-note" id="online-note">Downloaded when you pick one; tvpipe asks before it runs a new one.</span></h2>
+        <ul id="games" class="games" aria-label="Games from tvpipe.party"></ul>
+        <p id="empty" class="searching" hidden></p>
+      </div>
     </div>
   </section>
 
-  <section class="row sec">
+  <section class="row sec" id="elsewhere" hidden>
     <div class="meta"><span class="lbl">Elsewhere</span></div>
     <form class="body other" id="other">
       <label for="source">Or a game from elsewhere: an <code>https://</code> link to its zip, or <code>gh:OWNER/REPO</code>.</label>

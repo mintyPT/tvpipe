@@ -641,6 +641,16 @@ fn game() -> Vec<(u64, In)> {
         (30_000, p(Progress::Phones(1))),
         (40_000, p(Progress::Phones(3))),
         (60_000, p(Progress::Casting(vec!["Living Room TV".into()]))),
+        // The next game of the run (Other game in the window).
+        (
+            600_000,
+            p(Progress::Game {
+                title: "Krakel".into(),
+                local: "http://127.0.0.1:62991/".into(),
+                lan: None,
+            }),
+        ),
+        (601_000, p(Progress::Casting(vec!["Living Room TV".into()]))),
         (721_000, Tick),
     ]
 }

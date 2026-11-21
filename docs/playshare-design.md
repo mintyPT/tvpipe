@@ -122,6 +122,8 @@ by mistake:
 | `/_tvpipe/ws` | relayed WebSocket (the TV page) | relayed WebSocket (phones) |
 | `/_tvpipe/start?t=TOKEN` | sets the session cookie, redirects to the launcher | — (404) |
 | `/_tvpipe/launcher/` | the standard launcher | — |
+| `/_tvpipe/picker/`, `/_tvpipe/api/catalog`, `/_tvpipe/api/game` | the games list and its API (token; docs/game-switching.md) | — |
+| `/_tvpipe/wait/`, `/_tvpipe/game` | the same | `/` goes to the wait page while no game is picked; `/_tvpipe/game` says whether one is (`{game}`) |
 | `/_tvpipe/api` | the API WebSocket (token) | — |
 
 Static files: GET/HEAD, a fixed MIME table, `Content-Length`,
@@ -155,7 +157,7 @@ ignored, or `unknown-method`.
 
 | Method | Params → value | |
 |---|---|---|
-| `info` | → `{name, title, players, pages, tv, phone: {url, mode, lan}, tunnel, version, launcher, resolutions, dev}` | `phone.url`: the base phones use (`https://HOST/`, `http://IP:P'/` or `http://127.0.0.1:P/`), `mode` `tunnel`/`lan`/`local`; `dev`: test mode (`--dev`), the game's test tools (docs/games.md) |
+| `info` | → `{name, title, players, pages, tv, phone: {url, mode, lan}, tunnel, version, launcher, resolutions, dev, room: {code, key}, game}` | `no-game` before a game is picked; `room`: the run's room code and join key, the same for every game (docs/game-switching.md); `game`: the run's games counted; `phone.url`: the base phones use (`https://HOST/`, `http://IP:P'/` or `http://127.0.0.1:P/`), `mode` `tunnel`/`lan`/`local`; `dev`: test mode (`--dev`), the game's test tools (docs/games.md) |
 | `devices.watch` | `{on: bool}` → the current list | discovery runs while any socket watches; `devices` events with the whole list when it changes |
 | `select` / `selection` | `{devices: [name], resolution?}` → `{devices, resolution}` | the launcher's (or the cast picker's) choice, kept by tvpipe for the host page (a navigation away); `resolution` `auto`, `720p`, `1080p`, `2160p` (§9.1; absent: unchanged, default `auto`; `null` in the answer when `tv.resolution` is fixed) |
 | `pair.start` | `{device}` → `{}` | AirPlay PIN pairing; `pair` events `{device, state: connecting\|pin\|done\|failed, error?}` |
@@ -165,12 +167,14 @@ ignored, or `unknown-method`.
 | `cast.stop` | | the TVs get TEARDOWN; the headless browser quits |
 | `tvsync.set` | `{device, displayMs}` → `{device, displayMs?}` | a TV's display lag as matched in the launcher's Sync (0–2000 ms; `null` forgets it), kept in the storage (`tv-lag`); devices and statuses carry it as `displayMs` (docs/party-design.md §8.1) |
 | `qr` | `{text}` → `{size, rows}` | tvpipe's QR encoder (`util::qr`): `rows` of `"0"`/`"1"` |
-| `relay.attach` | `{}` → `{public, local}` | this socket becomes the relay host (§6); a newer attach replaces it |
+| `relay.attach` | `{}` → `{public, local}` | this socket becomes the relay host (§6); a newer attach replaces it; `no-game` before a game is picked |
 | `shortlink` | `{url, code}` → `{url, code}` | a short link (`https://tvpipe.party/BCDF`) for the tunnel's join link `url` (only `https://TUNNEL-HOST/…`: else `bad-url`), `code` the room code to propose; `unavailable` without a tunnel, with `--no-short-link`/`TVPIPE_PARTY_URL=off` or when the service fails. One registration per run (the same url: no request), refreshed every 6 h, deleted at the end: [`short-links.md`](short-links.md) |
 | `quit` | | ends playshare (§10) |
 
-Events also include `tunnel` (`{state: up|reconnecting, url}`) and
-`closing` (tvpipe is ending: the host has 1 s to say goodbye).
+Events also include `tunnel` (`{state: up|reconnecting, url}`),
+`closing` (tvpipe is ending: the host has 1 s to say goodbye) and `game`
+(`{name, title, url}`: another game is in the slot, the pages go to
+`url`; docs/game-switching.md).
 
 ## 6. The relay
 
@@ -234,9 +238,15 @@ even when a host page is slow or buggy.
 
 - The host socket closing (a reload, a navigation, a crash) closes every
   client with **1012** (service restart): clients reconnect, and get
-  `503` until a host attaches again. A host that loses its state on a
-  reload therefore sends phones back to their name entry (`bye
-  no-player`); the library may keep its state in `sessionStorage` later.
+  `503` until a host attaches again. The room code and join key are the
+  run's (`info.room`), so a host that loses its state on a reload has
+  the same room: a phone's old token means nothing to it, and the phone
+  comes back in by its name, as a new player.
+- Another game in the slot (docs/game-switching.md) closes every client
+  with **4014** "next game": phones go to their join link, which is the
+  next game's phone page. A relay connection whose `?g=` (the
+  `tvpipe-game` cookie of its page) is not the current game's is closed
+  with 4014 at once.
 - A second `relay.attach` replaces the first (the old socket gets
   `{"t":"event","type":"detached"}` and is closed).
 - At the end (§10) tvpipe sends `closing`, waits up to 1 s (the library
@@ -845,9 +855,11 @@ than another, the games list's included. `game fetch` and `game check` run
 nothing and never ask.
 
 **Picking in the window** (`playshare/picker.rs`, `npm/party/src/picker/`;
-docs/game-catalog.md). `game play` without a game starts a small server
-of its own on 127.0.0.1 (a token and a cookie, as the local listener) and
-opens the window on the picker: the games list's entries with their
+docs/game-catalog.md, docs/game-switching.md). `game play` without a game
+starts the session with an empty slot and opens the window on the
+picker (the local listener's `/_tvpipe/picker/`, the token and cookie as
+every page there): the games on this computer the command line named,
+then the games list's entries with their
 screenshots, which tvpipe fetches and serves (`GET /_tvpipe/api/catalog`,
 `/_tvpipe/catalog/N`: `https://` pictures only, PNG, JPEG or WebP, at most
 2 MiB, cached), and a field for a source (`https://`, `gh:`, a name; never
@@ -855,9 +867,11 @@ a path). `POST /_tvpipe/api/game` with `{"source"}` fetches in the
 background (`GET` polls: `fetching` with the bytes so far, `ask`,
 `starting`, `ready`, `failed`), `{"trust": true}` answers the question
 above in the window (remembered as in the terminal; `--yes` and pins skip
-it), `{"back": true}` returns to the list. The chosen bundle starts the
-game's own server (as with a game on the command line), and `ready`
-carries its start link, which the page opens.
+it), `{"local": ID}` picks a game of this computer's list, `{"back":
+true}` returns to the list. The chosen bundle goes into the hub's slot
+(the first game, or the next one: docs/game-switching.md), and `ready`
+carries the page to open (the game's launcher, or its host page when TVs
+are chosen).
 
 **Service workers** are refused on the phones' listeners (a request with
 `Service-Worker: script` gets 403, for every game): the phones' origin

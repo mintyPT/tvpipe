@@ -83,11 +83,14 @@ opens the window on the launcher's first step:
 4. The bundle is loaded into the running server and the launcher moves on
    to the TVs and Start, as today.
 
-The hub holds the game in a set-once slot; the game's pages and the host
-API answer `409` ("no game yet") until it is filled. Once a game is
-chosen it stays for the run (no going back to the list). With `GAME`
-given, the list is skipped and the terminal asks as before; `--yes` also
-skips the question in the window.
+The hub holds the game in a slot; the game's pages are not there and
+the host API answers `no-game` until it is filled. Since
+[`game-switching.md`](game-switching.md) the slot can be filled again
+any time: the host page's "Other game" opens the list in a dialog, and
+games on this computer (a folder of games, several paths) are listed
+before the online ones. With `GAME` given, the list is skipped at the
+start and the terminal asks as before; `--yes` also skips the question
+in the window.
 
 ## Screenshots
 

@@ -32,6 +32,8 @@ export const BYE = {
   kicked: 4010,
   "room-closed": 4011,
   slow: 4013,
+  /** The room goes on with another game (tvpipe's, docs/game-switching.md): phones go to their join link. */
+  "next-game": 4014,
   full: 4029,
   locked: 4029,
   "in-progress": 4030,
@@ -291,6 +293,12 @@ export interface PartyLimits {
 export interface PartyOptions {
   /** The room code (default: four random consonants). */
   code?: string | undefined;
+  /**
+   * The join key (default: a new one). tvpipe keeps code and key for
+   * every game of a run, so the join link stays (`HostedParty` takes
+   * them from `info.room`).
+   */
+  joinKey?: string | undefined;
   /** Players at most (default 8). */
   maxPlayers?: number | undefined;
   /**
@@ -391,7 +399,7 @@ let partySeq = 0;
 
 export class Party extends Emitter<PartyEvents> {
   readonly code: string;
-  readonly joinKey = token();
+  readonly joinKey: string;
   readonly screenKey = token();
   readonly watchKey = token();
   /** What every player sees (`view.room`). */
@@ -430,6 +438,7 @@ export class Party extends Emitter<PartyEvents> {
   constructor(options: PartyOptions = {}) {
     super();
     this.code = options.code ?? roomCode();
+    this.joinKey = options.joinKey ?? token();
     this.maxPlayers = options.maxPlayers ?? 8;
     this.grace = options.grace ?? 500;
     this.#moderate = options.moderate;

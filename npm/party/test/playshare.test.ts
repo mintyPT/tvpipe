@@ -7,7 +7,9 @@
 
 import assert from "node:assert/strict";
 import { spawn, type ChildProcess } from "node:child_process";
-import { existsSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { createInterface } from "node:readline";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -145,16 +147,89 @@ test("playshare: a zip bundle, and a host that goes away", { skip: !binary && "n
     await c.join("Cy");
     // The host page closes (a reload): the phone is told to come back
     // (1012) and then refused by nobody being there (503) until a host is.
+    // The room is tvpipe's: the new party has the same code and key, and
+    // the phone comes back in by its name (its old token means nothing).
     tvpipe.close();
     await until(() => c.status === "reconnecting", 5000);
     const again = await Tvpipe.connect({ url: `ws://${run.url.host}/_tvpipe/api`, token });
     const fresh = await again.party();
-    await until(() => c.status === "closed", 10_000);
-    assert.equal(c.byeReason, "no-room");
-    assert.notEqual(fresh.code, party.code);
+    assert.equal(fresh.code, party.code);
+    assert.equal(fresh.joinKey, party.joinKey);
+    await until(() => fresh.players.length === 1, 10_000);
+    assert.equal(fresh.players[0]!.name, "Cy");
+    await until(() => c.status === "open", 5000);
     await again.quit();
     assert.equal(await run.exited, 0);
   } finally {
     run.child.kill();
+  }
+});
+
+test("playshare: a folder of games, and the next game takes the room over", { skip: !binary && "no tvpipe binary" }, async () => {
+  const dir = mkdtempSync(join(tmpdir(), "tvpipe-games-"));
+  cpSync(game, join(dir, "one"), { recursive: true });
+  cpSync(`${game}.zip`, join(dir, "two.zip"));
+  const run = await playshare(dir);
+  try {
+    const token = run.url.searchParams.get("t")!;
+    // The window starts on the list: the local games, nothing in the slot yet.
+    const start = await fetch(run.url, { redirect: "manual" });
+    assert.equal(start.headers.get("location"), "/_tvpipe/picker/");
+    const cookie = `tvpipe-${run.url.port}=${token}`;
+    const api = (path: string, body?: unknown) =>
+      fetch(new URL(path, run.url), {
+        method: body === undefined ? "GET" : "POST",
+        headers: { cookie, "content-type": "application/json" },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      }).then((r) => r.json() as Promise<any>);
+    const list = await api("/_tvpipe/api/catalog");
+    assert.deepEqual(
+      list.local.map((g: { from: string }) => g.from.slice(dir.length + 1)),
+      ["one", "two.zip"],
+    );
+    const tvpipe = await Tvpipe.connect({ url: `ws://${run.url.host}/_tvpipe/api`, token });
+    await assert.rejects(tvpipe.info(), (e: { code?: string }) => e.code === "no-game");
+    const first = await api("/_tvpipe/api/game", { local: list.local[0].id });
+    assert.equal(first.state, "ready");
+    assert.equal(first.url, "/_tvpipe/launcher/");
+
+    // The first game: a host and a phone.
+    tvpipe.followGames = false;
+    const party = await tvpipe.party();
+    const info = tvpipe.info();
+    const phoneUrl = (await info).phone.url;
+    const ws = `${phoneUrl.replace(/^http/, "ws")}_tvpipe/ws`;
+    const session = memoryStorage();
+    const c = new PartyClient({ url: ws, room: party.code, key: party.joinKey, storage: memoryStorage(), session });
+    await c.join("Cy");
+    c.carry({ colour: "teal" });
+
+    // The next game: the phone is sent on, the host page hears where to go.
+    const next = new Promise<{ url: string; title: string }>((r) => tvpipe.once("game", r));
+    const second = await api("/_tvpipe/api/game", { local: list.local[1].id });
+    assert.equal(second.state, "ready");
+    assert.equal((await next).url, "/_tvpipe/launcher/");
+    await until(() => c.status === "closed", 5000);
+    assert.equal(c.byeReason, "next-game");
+
+    // The next game's host page: the same room; the phone comes along by its name.
+    const again = await Tvpipe.connect({ url: `ws://${run.url.host}/_tvpipe/api`, token });
+    const fresh = await again.party();
+    assert.equal(fresh.code, party.code);
+    assert.equal((await again.info()).game, 2);
+    const d = new PartyClient({ url: ws, room: fresh.code, key: fresh.joinKey, storage: memoryStorage(), session });
+    assert.deepEqual(d.carried, { name: "Cy", data: { colour: "teal" } });
+    assert.ok(d.canResume);
+    await d.connect();
+    assert.equal(d.you?.["name"], "Cy");
+    assert.deepEqual(
+      fresh.players.map((p) => p.name),
+      ["Cy"],
+    );
+    await again.quit();
+    assert.equal(await run.exited, 0);
+  } finally {
+    run.child.kill();
+    rmSync(dir, { recursive: true, force: true });
   }
 });

@@ -29,6 +29,7 @@ const FINAL = new Set([
     "left",
     "rate-limited",
     "too-big",
+    "next-game",
 ]);
 /**
  * Close codes that are final without a `bye` (tvpipe's own closes:
@@ -47,9 +48,14 @@ const FINAL_CODES = {
     4009: "replaced",
     4010: "kicked",
     4011: "room-closed",
+    4014: "next-game",
     4029: "full",
     4030: "in-progress",
 };
+/** {@link PartyClient.carry}'s data at most, bytes of JSON. */
+export const CARRY_LIMIT = 4096;
+/** tvpipe's cookie naming the game a page was loaded with. */
+const GAME_COOKIE = "tvpipe-game";
 /** Unacknowledged actions kept at most. */
 const MAX_PENDING = 32;
 /** `input()` at most this often, ms (latest wins). */
@@ -173,7 +179,12 @@ export class PartyClient {
         const h = new URLSearchParams(loc.hash.replace(/^#/, ""));
         const room = opts.room ?? h.get("r") ?? q.get("r") ?? "";
         const key = opts.key ?? h.get("k") ?? q.get("k") ?? undefined;
-        const url = opts.url ?? `${loc.protocol === "https:" ? "wss:" : "ws:"}//${loc.host}${SOCKET_PATH}`;
+        let url = opts.url ?? `${loc.protocol === "https:" ? "wss:" : "ws:"}//${loc.host}${SOCKET_PATH}`;
+        // The game this page is of: tvpipe sends a page of an earlier game
+        // on to its join link (docs/game-switching.md).
+        const game = opts.url ? null : cookieValue(GAME_COOKIE);
+        if (game)
+            url += `?g=${encodeURIComponent(game)}`;
         const r = opts.role ?? h.get("role") ?? "player";
         const role = r === "screen" || r === "watch" ? r : "player";
         const client = new PartyClient({ ...opts, url, room, key, role });
@@ -196,6 +207,8 @@ export class PartyClient {
     key;
     role;
     storage;
+    session;
+    followGames;
     /** The current view (`{ roster, room, me }` or `{ roster, screen, join }`). */
     view = {};
     /** Who this client is, from `welcome`. */
@@ -224,6 +237,10 @@ export class PartyClient {
     #retry = null;
     #pinger = null;
     #name;
+    /** Whether this connect joins with the carried name. */
+    #joinsCarried = false;
+    /** What goes along to the next game ({@link carry}). */
+    #outgoing;
     #nextAct = 1;
     #pending = new Map();
     #inSeq = 0;
@@ -253,6 +270,8 @@ export class PartyClient {
         this.key = opts.key;
         this.role = opts.role ?? "player";
         this.storage = opts.storage !== undefined ? opts.storage : safeStorage();
+        this.session = opts.session !== undefined ? opts.session : safeStorage("sessionStorage");
+        this.followGames = opts.followGames ?? true;
         this.#WS = opts.WebSocket ?? globalThis.WebSocket;
         const doc = globalThis.document;
         if (this.role !== "player" && opts.rejoinBadge !== false && doc?.createElement) {
@@ -298,9 +317,85 @@ export class PartyClient {
         }
         catch { }
     }
-    /** Whether `connect()` can come back as an earlier player. */
+    /** Whether `connect()` can come back as an earlier player (or join with the name of the last game). */
     get canResume() {
-        return this.role !== "player" || typeof this.saved?.resume === "string";
+        return this.role !== "player" || typeof this.saved?.resume === "string" || typeof this.carried?.name === "string";
+    }
+    get #carryKey() {
+        return `${this.#storageKey.replace(/:[^:]*$/, "")}:carry`;
+    }
+    /**
+     * What this phone was in the room's last game, when it came here with
+     * the room (docs/game-switching.md): `{name, data}`, or `null`. The
+     * game may use it or not; `connect()` joins with the name when there
+     * is no saved identity.
+     */
+    get carried() {
+        if (this.role !== "player")
+            return null;
+        try {
+            const s = this.session?.getItem(this.#carryKey);
+            const v = s ? JSON.parse(s) : null;
+            if (!isObject(v))
+                return null;
+            const out = {};
+            if (typeof v["name"] === "string")
+                out.name = v["name"];
+            if ("data" in v)
+                out.data = v["data"];
+            return out;
+        }
+        catch {
+            return null;
+        }
+    }
+    /**
+     * Stashes `data` (JSON, at most {@link CARRY_LIMIT} bytes) for the
+     * room's next game: it gets it as `carried.data`. `undefined` drops it.
+     */
+    carry(data) {
+        const text = data === undefined ? undefined : JSON.stringify(data);
+        if (text !== undefined && text.length > CARRY_LIMIT)
+            throw new RangeError(`carry: more than ${CARRY_LIMIT} bytes`);
+        this.#outgoing = text;
+        try {
+            if (text === undefined)
+                this.session?.removeItem(`${this.#carryKey}-out`);
+            else
+                this.session?.setItem(`${this.#carryKey}-out`, text);
+        }
+        catch { }
+    }
+    /** The room goes on with another game: what goes along, and to the join link. */
+    #nextGame() {
+        if (this.role !== "player")
+            return;
+        const carried = {};
+        const name = this.saved?.name ?? this.you?.["name"] ?? this.#name;
+        if (typeof name === "string")
+            carried.name = name;
+        let out = this.#outgoing;
+        try {
+            out ??= this.session?.getItem(`${this.#carryKey}-out`) ?? undefined;
+            this.session?.removeItem(`${this.#carryKey}-out`);
+        }
+        catch { }
+        if (out !== undefined) {
+            try {
+                carried.data = JSON.parse(out);
+            }
+            catch { }
+        }
+        try {
+            this.session?.setItem(this.#carryKey, JSON.stringify(carried));
+        }
+        catch { }
+        this.#forget();
+        const loc = globalThis.location;
+        if (!this.followGames || !loc || typeof loc.replace !== "function")
+            return;
+        const key = this.key ? `#k=${encodeURIComponent(this.key)}` : "";
+        loc.replace(`/?r=${encodeURIComponent(this.room)}${key}`);
     }
     /** Events: `view`, `welcome`, `msg`, `status`, `bye`, `ack`, `tv` (the {@link tvDelay}). */
     on(event, fn) {
@@ -335,6 +430,13 @@ export class PartyClient {
     connect() {
         if (this.#name === undefined)
             this.#name = this.saved?.name;
+        if (this.#name === undefined && this.role === "player" && typeof this.saved?.resume !== "string") {
+            const name = this.carried?.name;
+            if (name !== undefined) {
+                this.#name = name;
+                this.#joinsCarried = true;
+            }
+        }
         return new Promise((resolve, reject) => {
             this.#waiting = { resolve, reject };
             this.byeReason = null;
@@ -415,6 +517,17 @@ export class PartyClient {
         this.#setStatus("closed");
         if (reason === "no-player" || reason === "kicked" || reason === "bad-key")
             this.#forget();
+        if (reason === "next-game")
+            this.#nextGame();
+        else if (this.#joinsCarried && !this.you) {
+            // The carried name did not get in (taken, refused): the game asks.
+            this.#joinsCarried = false;
+            this.#name = undefined;
+            try {
+                this.session?.removeItem(this.#carryKey);
+            }
+            catch { }
+        }
         const err = new PartyActionError(reason, message);
         for (const p of this.#pending.values())
             p.reject(err);
@@ -722,9 +835,24 @@ export class PartyClient {
         catch { }
     }
 }
-function safeStorage() {
+/** A cookie of this page's origin, if any. */
+function cookieValue(name) {
     try {
-        const s = globalThis.localStorage;
+        const all = globalThis.document?.cookie;
+        if (typeof all !== "string")
+            return null;
+        for (const kv of all.split(";")) {
+            const i = kv.indexOf("=");
+            if (i > 0 && kv.slice(0, i).trim() === name)
+                return decodeURIComponent(kv.slice(i + 1).trim());
+        }
+    }
+    catch { }
+    return null;
+}
+function safeStorage(which = "localStorage") {
+    try {
+        const s = globalThis[which];
         if (!s)
             return null;
         s.getItem("x");

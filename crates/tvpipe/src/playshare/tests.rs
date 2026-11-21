@@ -206,16 +206,17 @@ fn embedded_files_match_the_directory() {
 // Fakes
 
 #[derive(Default)]
-struct Log {
-    casts: Vec<(String, Vec<String>)>,
+pub(crate) struct Log {
+    pub casts: Vec<(String, Vec<String>)>,
     pictures: Vec<super::resolution::Picture>,
     stopped: usize,
     pins: Vec<String>,
 }
 
-struct Fake {
-    log: Arc<Mutex<Log>>,
-    fail_cast: bool,
+/// Devices, pairing, casts and surfaces that only log.
+pub(crate) struct Fake {
+    pub log: Arc<Mutex<Log>>,
+    pub fail_cast: bool,
 }
 
 struct FakeDiscover;
@@ -458,6 +459,11 @@ fn get(port: u16, path: &str, host: &str, extra: &str) -> String {
     )
 }
 
+/// A plain GET on 127.0.0.1 (the raw answer).
+pub(crate) fn http_get(port: u16, path: &str) -> String {
+    get(port, path, &format!("127.0.0.1:{port}"), "")
+}
+
 type Ws = (Receiver<TcpStream, TcpStream>, Sender<TcpStream>);
 
 fn ws(port: u16, path: &str, headers: &[(&str, &str)]) -> crate::error::Result<Ws> {
@@ -692,7 +698,12 @@ fn public_listener_rules() {
     assert!(get(s.public(), "/", "x.example.com", "").starts_with("HTTP/1.1 421"));
     let info = s.hub.info();
     assert_eq!(
-        info.get("phone").unwrap().get("url").unwrap().as_str(),
+        info.unwrap()
+            .get("phone")
+            .unwrap()
+            .get("url")
+            .unwrap()
+            .as_str(),
         Some("https://abc.example.com/")
     );
 }
@@ -1223,6 +1234,68 @@ fn relay_both_ways() {
 }
 
 #[test]
+fn the_next_game_takes_the_room_over() {
+    let s = Setup::new("game");
+    let mut host = attach(&s);
+    let info = call(&mut host, "info", Value::object());
+    let room = info
+        .get("value")
+        .and_then(|v| v.get("room"))
+        .unwrap()
+        .clone();
+    let code = room.get("code").and_then(Value::as_str).unwrap();
+    assert_eq!(code.len(), 4);
+    assert!(code.bytes().all(|b| b"BCDFGHJKLMNPQRSTVWXZ".contains(&b)));
+    assert_eq!(room.get("key").and_then(Value::as_str).unwrap().len(), 22);
+    // Bundle files name their game; the phone page connects with it.
+    let raw = get(
+        s.public(),
+        "/phone/index.html",
+        &format!("127.0.0.1:{}", s.public()),
+        "",
+    );
+    let tag = format!("{}.1", s.hub.run);
+    assert!(
+        raw.contains(&format!(
+            "Set-Cookie: tvpipe-game={tag}; Path=/; SameSite=Lax"
+        )),
+        "{raw}"
+    );
+    let mut p = ws(s.public(), &format!("/_tvpipe/ws?g={tag}"), &[]).unwrap();
+    host_control(&mut host, "open");
+    // Without `g` (Node, tests): not checked.
+    let mut q = phone(&s).unwrap();
+    host_control(&mut host, "open");
+    // The next game: phones go to their join link, the host is detached,
+    // the pages get where to go.
+    call(
+        &mut host,
+        "select",
+        Value::object().with("devices", vec!["Living Room"]),
+    );
+    let url = s.hub.put(Bundle::open(&fixture("game.zip")).unwrap());
+    assert_eq!(url, "/host.html");
+    assert_eq!(close_code(&mut p.0), hub::CLOSE_NEXT_GAME);
+    assert_eq!(close_code(&mut q.0), hub::CLOSE_NEXT_GAME);
+    let ev = event_of(&mut host, "game");
+    assert_eq!(ev.get("url").and_then(Value::as_str), Some("/host.html"));
+    assert_eq!(ev.get("title").and_then(Value::as_str), Some("Test game"));
+    assert!(!s.hub.host_attached());
+    // A page of the last game is sent along at once, even without a host.
+    let mut stale = ws(s.public(), &format!("/_tvpipe/ws?g={tag}"), &[]).unwrap();
+    assert_eq!(close_code(&mut stale.0), hub::CLOSE_NEXT_GAME);
+    // The new host page: the same room.
+    let mut host2 = attach(&s);
+    let info = call(&mut host2, "info", Value::object());
+    let v = info.get("value").unwrap();
+    assert_eq!(v.get("room"), Some(&room));
+    assert_eq!(v.get("game").and_then(Value::as_u64), Some(2));
+    let tag2 = format!("{}.2", s.hub.run);
+    let _p = ws(s.public(), &format!("/_tvpipe/ws?g={tag2}"), &[]).unwrap();
+    host_control(&mut host2, "open");
+}
+
+#[test]
 fn relay_origins_and_local_clients() {
     let s = Setup::new("game");
     let _host = attach(&s);
@@ -1447,7 +1520,7 @@ fn lan_listener() {
     .unwrap();
     let hub = running.hub.clone();
     let lan = hub.ports.get().unwrap().lan.unwrap();
-    let info = hub.info();
+    let info = hub.info().unwrap();
     let phone = info.get("phone").unwrap();
     assert_eq!(phone.get("mode").and_then(Value::as_str), Some("lan"));
     assert_eq!(

@@ -22,6 +22,8 @@ export const BYE = {
     kicked: 4010,
     "room-closed": 4011,
     slow: 4013,
+    /** The room goes on with another game (tvpipe's, docs/game-switching.md): phones go to their join link. */
+    "next-game": 4014,
     full: 4029,
     locked: 4029,
     "in-progress": 4030,
@@ -188,7 +190,7 @@ const MAX_ACT_AGE = 1000;
 let partySeq = 0;
 export class Party extends Emitter {
     code;
-    joinKey = token();
+    joinKey;
     screenKey = token();
     watchKey = token();
     /** What every player sees (`view.room`). */
@@ -226,6 +228,7 @@ export class Party extends Emitter {
     constructor(options = {}) {
         super();
         this.code = options.code ?? roomCode();
+        this.joinKey = options.joinKey ?? token();
         this.maxPlayers = options.maxPlayers ?? 8;
         this.grace = options.grace ?? 500;
         this.#moderate = options.moderate;

@@ -6,6 +6,7 @@
 
 import { displayLag, Flasher, MAX_LAG_MS } from "../flashsync.ts";
 import {
+  GAME_PICKER,
   PICKER_MESSAGE,
   Tvpipe,
   TV_DISPLAY_MS,
@@ -494,6 +495,9 @@ async function main(): Promise<void> {
   setupSync();
 
   $("start").onclick = () => void start([...selected]);
+  // The games list (a tvpipe that has one gives the room).
+  $("other-game").hidden = changing || !info.room;
+  $("other-game").onclick = () => location.assign(GAME_PICKER);
   $("no-tv").onclick = () => (changing ? void cancelPicker() : void start([]));
   if (changing) {
     addEventListener("keydown", (ev) => {

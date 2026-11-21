@@ -12,8 +12,8 @@ use crate::net::httpd::{self, Handler, Reply};
 use crate::net::websocket;
 
 use super::bundle::{self, clean_path, percent_decode, Lookup};
-use super::hub::{Hub, Via};
-use super::web;
+use super::hub::{Hub, Via, GAME_COOKIE};
+use super::{picker, web};
 
 /// Which listener a handler serves.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -25,6 +25,8 @@ pub enum Listener {
 
 /// The standard launcher.
 pub const LAUNCHER: &str = "/_tvpipe/launcher/";
+/// The phones' page while no game is picked yet.
+pub const WAIT: &str = "/_tvpipe/wait/";
 
 fn loopback_names(port: u16) -> [String; 3] {
     [
@@ -167,13 +169,6 @@ impl Hub {
             .unwrap_or_else(|| "?".into())
     }
 
-    fn launcher_path(&self) -> String {
-        match &self.bundle.manifest.pages.launcher {
-            Some(l) => format!("/{l}"),
-            None => LAUNCHER.to_owned(),
-        }
-    }
-
     fn handle(self: &Arc<Hub>, req: &Request, l: Listener) -> Reply {
         if !self.host_ok(req, l) {
             return Reply::Response(httpd::error_response(421, "Misdirected Request"));
@@ -182,7 +177,8 @@ impl Hub {
         if websocket::is_upgrade(req) {
             return self.upgrade(req, l, path, query);
         }
-        if req.method != "GET" && req.method != "HEAD" {
+        let post = l == Listener::Local && path == "/_tvpipe/api/game";
+        if req.method != "GET" && req.method != "HEAD" && !(post && req.method == "POST") {
             let mut r = httpd::error_response(405, "Method Not Allowed");
             r.headers.add("Allow", "GET, HEAD");
             return Reply::Response(r);
@@ -232,13 +228,11 @@ impl Hub {
         };
         let reason = r.reason.split(':').next().unwrap_or("").to_owned();
         r.headers.set("Content-Type", "text/html; charset=utf-8");
-        r.body = web::error_page(
-            r.status,
-            &reason,
-            &self.bundle.manifest.title,
-            heading,
-            text,
-        );
+        let title = self
+            .game()
+            .map(|g| g.bundle.manifest.title.clone())
+            .unwrap_or_else(|| "tvpipe".into());
+        r.body = web::error_page(r.status, &reason, &title, heading, text);
         r
     }
 
@@ -247,13 +241,17 @@ impl Hub {
             return match l {
                 Listener::Local => {
                     if self.token_ok(req, "") {
-                        redirect(302, &self.launcher_path())
+                        redirect(302, &self.start_page())
                     } else {
                         httpd::error_response(403, "Forbidden: open the link tvpipe printed")
                     }
                 }
                 _ => {
-                    let phone = format!("/{}", self.bundle.manifest.pages.phone);
+                    // No game yet: a page that waits for one.
+                    let phone = match self.game() {
+                        Some(g) => format!("/{}", g.bundle.manifest.pages.phone),
+                        None => WAIT.to_owned(),
+                    };
                     if query.is_empty() {
                         redirect(302, &phone)
                     } else {
@@ -273,7 +271,7 @@ impl Hub {
                 let next = query_param(query, "next")
                     .and_then(percent_decode)
                     .filter(|n| n.starts_with('/') && !n.starts_with("//") && !n.contains('\\'))
-                    .unwrap_or_else(|| self.launcher_path());
+                    .unwrap_or_else(|| self.start_page());
                 let mut r = redirect(302, &next);
                 r.headers.add(
                     "Set-Cookie",
@@ -287,6 +285,31 @@ impl Hub {
             }
             if rest == "launcher" && l == Listener::Local {
                 return redirect(301, LAUNCHER);
+            }
+            // Whether there is a game (the wait page asks).
+            if rest == "game" {
+                let v = crate::codec::json::Value::object().with("game", self.game().is_some());
+                let mut r = httpd::response(
+                    200,
+                    "OK",
+                    "application/json; charset=utf-8",
+                    v.to_json().into_bytes(),
+                );
+                r.headers.set("Cache-Control", "no-store");
+                return r;
+            }
+            // The games list's API (the page itself is a file below).
+            if l == Listener::Local && (rest.starts_with("api/") || rest.starts_with("catalog/")) {
+                if !self.token_ok(req, "") {
+                    return httpd::error_response(403, "Forbidden");
+                }
+                if req.method == "POST" && !self.origin_ok(req, l) {
+                    return httpd::error_response(403, "Forbidden");
+                }
+                return match self.picker.handle(req, path) {
+                    Some(r) => r,
+                    None => httpd::error_response(404, "Not Found"),
+                };
             }
             // tvpipe's look, for any page (the browser player's files).
             if rest == "ui.css" {
@@ -306,11 +329,14 @@ impl Hub {
             }) else {
                 return httpd::error_response(404, "Not Found");
             };
-            // The launcher and the TV sync page (cast from the local
-            // origin) only on this computer.
+            // The launcher, the games list and the TV sync page (cast
+            // from the local origin) only on this computer.
             let allowed = rel.starts_with("lib/")
+                || rel.starts_with("wait/")
                 || (l == Listener::Local
-                    && (rel.starts_with("launcher/") || rel.starts_with("tvsync/")));
+                    && (rel.starts_with("launcher/")
+                        || rel.starts_with("tvsync/")
+                        || rel.starts_with(&picker::PAGE["/_tvpipe/".len()..])));
             if !allowed {
                 return httpd::error_response(404, "Not Found");
             }
@@ -338,8 +364,22 @@ impl Hub {
         if rel == "_tvpipe" || rel.starts_with("_tvpipe/") {
             return httpd::error_response(404, "Not Found");
         }
-        match self.bundle.get(&rel) {
-            Lookup::File(f) => file_response(req, &rel, f.bytes, Some(f.etag)),
+        let Some(game) = self.game() else {
+            return httpd::error_response(404, "Not Found");
+        };
+        match game.bundle.get(&rel) {
+            Lookup::File(f) => {
+                let mut r = file_response(req, &rel, f.bytes, Some(f.etag));
+                // Which game the page is of (docs/game-switching.md).
+                r.headers.add(
+                    "Set-Cookie",
+                    format!(
+                        "{GAME_COOKIE}={}; Path=/; SameSite=Lax",
+                        self.game_tag(&game)
+                    ),
+                );
+                r
+            }
             Lookup::Dir => {
                 let q = if query.is_empty() {
                     String::new()
@@ -391,6 +431,14 @@ impl Hub {
         }
         if api {
             return Reply::Upgrade(resp, Box::new(move |tcp, rest| hub.run_api(tcp, rest)));
+        }
+        // A page of an earlier game: closed at once, it goes to its join
+        // link (docs/game-switching.md).
+        if let Some(g) = query_param(query, "g") {
+            let current = self.game().map(|game| self.game_tag(&game));
+            if current.as_deref() != Some(g) {
+                return Reply::Upgrade(resp, Box::new(move |tcp, rest| hub.run_stale(tcp, rest)));
+            }
         }
         let addr = self.address(req, l);
         if let Err((status, reason)) = self.admit(&addr) {

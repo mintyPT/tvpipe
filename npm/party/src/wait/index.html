@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tvpipe · a game is being picked</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/_tvpipe/ui.css">
+<style>
+  body { min-height: 100svh; display: grid; place-items: center; padding: 24px; }
+  .wait { max-width: 420px; text-align: center; }
+  .wait .state { justify-content: center; margin-bottom: 18px; }
+  .wait p { color: var(--ink-2); margin: 0; }
+</style>
+<script type="module" src="wait.js"></script>
+</head>
+<body>
+<!-- tvpipe has no game yet (docs/game-switching.md): the phone waits here, then goes back to its link. -->
+<main class="wait">
+  <span class="state on" id="state">Waiting</span>
+  <h1 id="title">The game is being picked</h1>
+  <p id="text">This page goes on by itself as soon as it starts.</p>
+</main>
+</body>
+</html>

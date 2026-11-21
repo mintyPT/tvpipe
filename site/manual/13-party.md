@@ -3,7 +3,7 @@ title: Party games
 summary: Games on the TV that everyone plays with their phone.
 group: Use
 spec:
-  Command: `tvpipe game play [GAME]`
+  Command: `tvpipe game play [GAME…]`
   Package: `@tvpipe/party` (npm, for writing games)
   A game: a folder or a zip with `tvpipe.json`, here or from the internet
   Games: [Games to play](game-list.md)
@@ -16,9 +16,12 @@ $ tvpipe game play                     # pick one from the list in the window
 $ tvpipe game play drawbluff           # a game from the list, downloaded
 $ tvpipe game play my-game             # a folder with tvpipe.json
 $ tvpipe game play my-game.zip         # or a zip of one
+$ tvpipe game play my-games            # a folder of games: pick one in the window
 ```
 
 Without a game, the window opens on the [list of games](game-list.md), with pictures of each. Click one: tvpipe downloads it, asks in the window before it runs a game the first time, and moves on to picking the TVs. A field below the list takes a game from elsewhere (`https://…` or `gh:OWNER/REPO`).
+
+A folder of games (folders with `tvpipe.json`, or zips), or several paths, come first in the list, under "On this computer"; the online list follows.
 
 ## Games from the internet
 
@@ -61,7 +64,8 @@ Other sources work the same way:
 1. tvpipe opens a window. It lists the TVs on your network as they answer: Apple TVs and AirPlay TVs, Chromecasts and Google TVs. An Apple TV you have not paired with shows a **Pair** button: the TV shows a code, you type it in the window. "A browser tab on this computer" lets you try a game without a TV.
 2. Pick one or more TVs and press **Start**. The window becomes the game's own page, and the TV shows the game with its QR code.
 3. Everyone scans the QR code and plays on their phone. Phones that lose the connection (a locked screen, a tunnel hiccup) come back on their own.
-4. Close the window (or press Ctrl-C in the terminal) to end it: the TVs leave the game, the phones say the room closed.
+4. **Other game** in the window picks the next game from the list. The TVs, the QR code and the link stay, and the phones go to the next game by themselves, with their names.
+5. Close the window (or press Ctrl-C in the terminal) to end it: the TVs leave the game, the phones say the room closed.
 
 ![The start window: a game, its TVs to pick, and the Start buttons](shots/game-launcher.png "The start window of `tvpipe game play`, with Drawbluff.")
 

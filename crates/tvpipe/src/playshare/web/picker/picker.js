@@ -1,11 +1,16 @@
 "use strict";
 /**
- * The game picker (docs/game-catalog.md): `tvpipe game play` without a
- * game opens the window here. The games list comes from tvpipe (which
- * fetched it and its screenshots from tvpipe.party); picking a game or
- * typing a source asks tvpipe to fetch it, a new one is asked about, and
- * once tvpipe started the game this page goes to its launcher.
+ * The games list (docs/game-catalog.md, docs/game-switching.md): the
+ * window opens here when `tvpipe game play` has no game to start with,
+ * and the host page shows it in a dialog (`?mode=switch`) to pick the
+ * next game. The games on this computer (the command line's) come first,
+ * then the online list (fetched by tvpipe with its screenshots). Picking
+ * a game or typing a source asks tvpipe for it: a local one loads at
+ * once, a remote one is downloaded and, when new, asked about; then
+ * tvpipe puts it in its slot and the window goes to it.
  */
+/** The message to the page around the dialog (`Tvpipe.showGamePicker`). */
+const GAME_PICKER_MESSAGE = "tvpipe:game-picker";
 const $ = (id) => document.getElementById(id);
 const LANGUAGES = {
     en: "English",
@@ -17,8 +22,15 @@ const LANGUAGES = {
     pt: "Portuguese",
     ja: "Japanese",
 };
+/** In a dialog over the host page: pick the next game. */
+const switching = new URLSearchParams(location.search).get("mode") === "switch";
 let current = { state: "idle" };
+/** The choice this page made (a `ready` of another one is not ours). */
+let mine = null;
+/** The card picked last, to mark it busy. */
+let pickedKey = null;
 let polling = false;
+let catalog = { games: [] };
 function el(tag, cls, text) {
     const e = document.createElement(tag);
     if (cls)
@@ -42,55 +54,82 @@ function players(g) {
         return "";
     return g.min === g.max ? `${g.min} players` : `${g.min}–${g.max} players`;
 }
-function renderGames(c) {
-    const list = $("games");
-    list.replaceChildren();
-    for (const g of c.games) {
-        const li = el("li", "game");
-        li.tabIndex = 0;
-        li.dataset["name"] = g.name;
-        li.setAttribute("role", "button");
-        li.setAttribute("aria-label", `Play ${g.title}`);
-        const cover = g.screenshots.find((s) => s.kind === "tv") ?? g.screenshots[0];
-        if (cover) {
-            const img = el("img", "cover");
-            img.src = cover.src;
-            img.alt = cover.alt;
-            img.loading = "lazy";
-            img.onerror = () => img.removeAttribute("src");
-            li.append(img);
-        }
-        else {
-            li.append(el("div", "cover"));
-        }
-        const bar = el("div", "bar");
-        bar.append(el("i"));
-        li.append(bar);
-        if (g.downloaded)
-            li.append(el("span", "tag", "Downloaded"));
-        const text = el("div", "text");
-        text.append(el("h3", "", g.title));
-        if (g.summary)
-            text.append(el("p", "summary", g.summary));
-        const facts = [players(g), g.languages.map((l) => LANGUAGES[l] ?? l).join(", ")].filter(Boolean).join(" · ");
-        if (facts)
-            text.append(el("p", "facts", facts));
-        li.append(text);
-        const pick = () => void choose(g.name);
-        li.onclick = pick;
-        li.onkeydown = (e) => {
-            if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                pick();
-            }
-        };
-        list.append(li);
+/** Whether `g` is the game being played. */
+function playing(g, local) {
+    const c = current.current;
+    if (!c)
+        return false;
+    if (local)
+        return g.from === c.from;
+    // The online twin only when the game is not one of this computer's.
+    return g.name === c.name && !(catalog.local ?? []).some((l) => l.from === c.from);
+}
+function card(g, local) {
+    const li = el("li", "game");
+    const key = local ? `local:${g.id}` : `online:${g.name}`;
+    li.dataset["key"] = key;
+    const cover = g.screenshots?.find((s) => s.kind === "tv") ?? g.screenshots?.[0];
+    if (cover) {
+        const img = el("img", "cover");
+        img.src = cover.src;
+        img.alt = cover.alt;
+        img.loading = "lazy";
+        img.onerror = () => img.removeAttribute("src");
+        li.append(img);
     }
+    else {
+        li.append(el("div", "cover blank", g.title));
+    }
+    const bar = el("div", "bar");
+    bar.append(el("i"));
+    li.append(bar);
+    if (playing(g, local))
+        li.append(el("span", "tag now", "Playing"));
+    else if (!local && g.downloaded)
+        li.append(el("span", "tag", "Downloaded"));
+    const text = el("div", "text");
+    text.append(el("h3", "", g.title));
+    if (g.summary)
+        text.append(el("p", "summary", g.summary));
+    if (local && g.from)
+        text.append(el("p", "from", g.from));
+    if (g.error)
+        text.append(el("p", "problem", g.error));
+    const facts = [players(g), (g.languages ?? []).map((l) => LANGUAGES[l] ?? l).join(", ")].filter(Boolean).join(" · ");
+    if (facts)
+        text.append(el("p", "facts", facts));
+    li.append(text);
+    if (g.error) {
+        li.classList.add("broken");
+        li.setAttribute("aria-disabled", "true");
+        return li;
+    }
+    li.tabIndex = 0;
+    li.setAttribute("role", "button");
+    li.setAttribute("aria-label", `Play ${g.title}`);
+    const pick = () => void choose(key, local ? { local: g.id } : { source: g.name });
+    li.onclick = pick;
+    li.onkeydown = (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            pick();
+        }
+    };
+    return li;
+}
+function renderGames() {
+    const local = catalog.local ?? [];
+    $("local-part").hidden = local.length === 0;
+    $("local").replaceChildren(...local.map((g) => card(g, true)));
+    const online = catalog.online !== false;
+    $("online-part").hidden = !online;
+    $("elsewhere").hidden = !online;
+    $("games").replaceChildren(...catalog.games.map((g) => card(g, false)));
     const empty = $("empty");
-    empty.hidden = c.games.length > 0;
-    empty.textContent = c.error
-        ? `The games list did not load: ${c.error}. A game from elsewhere still works.`
-        : "The games list is empty.";
+    empty.hidden = catalog.games.length > 0;
+    empty.textContent = catalog.error
+        ? `The online list did not load: ${catalog.error}.${local.length > 0 ? "" : " A game from elsewhere still works."}`
+        : "The online list is empty.";
 }
 async function call(body) {
     const r = await fetch("/_tvpipe/api/game", {
@@ -103,18 +142,27 @@ async function call(body) {
         throw new Error(v.error ?? `${r.status}`);
     return v;
 }
-async function choose(source) {
-    if (current.state !== "idle" && current.state !== "failed")
+/** Whether a new choice may start (nothing of this page's under way). */
+function free() {
+    return current.state === "idle" || current.state === "failed" || current.state === "ready";
+}
+async function choose(key, body) {
+    if (!free())
         return;
     showError(null);
+    pickedKey = key;
     try {
         if (current.state === "failed")
             await call({ back: true });
-        render(await call({ source }));
+        const s = await call(body);
+        mine = s.choice ?? null;
+        render(s);
         void poll();
     }
     catch (err) {
+        pickedKey = null;
         showError(err.message);
+        render(current);
     }
 }
 function human(n) {
@@ -143,49 +191,62 @@ function ask(g) {
     if (!d.open)
         d.showModal();
 }
+/** The game is in tvpipe's slot: go there (in a dialog the page around it goes). */
+function started(url) {
+    if (switching)
+        window.parent.postMessage({ type: GAME_PICKER_MESSAGE, picked: true }, location.origin);
+    else
+        location.assign(url);
+}
 function render(s) {
-    current = s;
-    const list = $("games");
-    const busy = s.state === "fetching" || s.state === "starting" || s.state === "ready" || s.state === "ask";
-    list.classList.toggle("locked", busy);
-    $("open").disabled = busy;
-    $("source").disabled = busy;
-    for (const li of list.querySelectorAll(".game")) {
-        const mine = "source" in s ? li.dataset["name"] === s.source : false;
-        li.classList.toggle("busy", busy && (mine || (s.state !== "fetching" && li.classList.contains("busy"))));
-        const bar = li.querySelector(".bar i");
-        if (bar && s.state === "fetching" && mine) {
-            bar.style.width = s.total ? `${Math.round((100 * s.done) / s.total)}%` : "30%";
+    // Another page's choice that is done: nothing for this page.
+    const theirs = s.state === "ready" && s.choice !== mine;
+    const was = current.current?.from;
+    current = theirs ? { state: "idle", ...(s.current ? { current: s.current } : {}) } : s;
+    if (current.current?.from !== was)
+        renderGames();
+    const busy = !free() || (s.state === "ready" && !theirs);
+    for (const list of [$("games"), $("local")]) {
+        list.classList.toggle("locked", busy);
+        for (const li of list.querySelectorAll(".game")) {
+            const picked = busy && li.dataset["key"] === pickedKey;
+            li.classList.toggle("busy", picked);
+            const bar = li.querySelector(".bar i");
+            if (bar && picked && current.state === "fetching") {
+                bar.style.width = current.total ? `${Math.round((100 * current.done) / current.total)}%` : "30%";
+            }
         }
     }
+    $("open").disabled = busy;
+    $("source").disabled = busy;
     const dialog = $("ask");
-    if (s.state !== "ask" && dialog.open)
+    if (current.state !== "ask" && dialog.open)
         dialog.close();
-    switch (s.state) {
+    switch (current.state) {
         case "idle":
-            setState("Pick a game", "ok");
-            $("game").textContent = "Pick one";
+            setState(switching && current.current ? `Playing ${current.current.title}` : "Pick a game", "ok");
+            $("game").textContent = current.current?.title ?? "Pick one";
             break;
         case "fetching":
-            setState(s.done > 0 ? `Downloading ${human(s.done)}${s.total ? ` of ${human(s.total)}` : ""}` : "Downloading…", "on");
-            $("game").textContent = s.source;
+            setState(current.done > 0 ? `Downloading ${human(current.done)}${current.total ? ` of ${human(current.total)}` : ""}` : "Downloading…", "on");
+            $("game").textContent = current.source;
             break;
         case "ask":
             setState("Waiting for you", "on");
-            $("game").textContent = s.game.title;
-            ask(s.game);
+            $("game").textContent = current.game.title;
+            ask(current.game);
             break;
         case "starting":
             setState("Starting…", "on");
-            $("game").textContent = s.title;
+            $("game").textContent = current.title;
             break;
         case "ready":
             setState("Starting…", "on");
-            location.assign(s.url);
+            started(current.url);
             break;
         case "failed":
             setState("Something failed", "bad");
-            showError(`${s.source}: ${s.error}`);
+            showError(`${current.source}: ${current.error}`);
             break;
     }
 }
@@ -199,7 +260,7 @@ async function poll() {
             if (!r.ok)
                 throw new Error(`tvpipe answered ${r.status}`);
             render((await r.json()));
-            if (current.state === "idle" || current.state === "failed" || current.state === "ready" || current.state === "ask")
+            if (free() || current.state === "ask")
                 break;
             await new Promise((ok) => setTimeout(ok, 200));
         }
@@ -211,6 +272,12 @@ async function poll() {
     finally {
         polling = false;
     }
+}
+/** Closes the dialog without a new game (`?mode=switch`). */
+async function cancel() {
+    if (current.state === "ask")
+        await call({ back: true }).catch(() => { });
+    window.parent.postMessage({ type: GAME_PICKER_MESSAGE, picked: false }, location.origin);
 }
 /** The light/dark/system switch, shared with tvpipe's other pages. */
 function themes() {
@@ -231,11 +298,21 @@ function themes() {
 async function main() {
     themes();
     $("where").textContent = `tvpipe game · ${location.host}`;
+    if (switching) {
+        $("title").textContent = "Pick the next game";
+        $("message").textContent = "The TVs and the join link stay; phones go to the next game by themselves.";
+        $("cancel").hidden = false;
+        $("cancel").onclick = () => void cancel();
+        addEventListener("keydown", (ev) => {
+            if (ev.key === "Escape" && !$("ask").open)
+                void cancel();
+        });
+    }
     $("other").onsubmit = (e) => {
         e.preventDefault();
         const v = $("source").value.trim();
         if (v)
-            void choose(v);
+            void choose(`source:${v}`, { source: v });
     };
     $("ask-form").onsubmit = (e) => {
         e.preventDefault();
@@ -256,21 +333,32 @@ async function main() {
         $("ask-no").click();
     };
     // A reload in the middle: pick up where tvpipe is.
-    void poll();
     try {
-        const r = await fetch("/_tvpipe/api/catalog");
+        const r = await fetch("/_tvpipe/api/game");
         if (r.status === 403) {
             setState("Not connected", "bad");
             $("title").textContent = "Open the link tvpipe printed";
             $("message").textContent = "This page talks to tvpipe through the link it printed (or the window it opened).";
             return;
         }
-        const c = (await r.json());
-        renderGames(c);
-        render(current);
+        const s = (await r.json());
+        if (s.state !== "ready" && s.state !== "idle")
+            mine = s.choice ?? null;
+        current = s.state === "ready" ? { state: "idle", ...(s.current ? { current: s.current } : {}) } : s;
     }
     catch (err) {
-        showError(`The games list did not load: ${err.message}`);
+        showError(`tvpipe did not answer: ${err.message}`);
     }
+    try {
+        const r = await fetch("/_tvpipe/api/catalog");
+        catalog = (await r.json());
+    }
+    catch (err) {
+        catalog = { games: [], error: err.message };
+    }
+    renderGames();
+    render(current);
+    if (!free())
+        void poll();
 }
 void main();

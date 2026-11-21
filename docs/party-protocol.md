@@ -22,8 +22,9 @@ it: `docs/party-design.md` §5; how the messages travel:
 - tvpipe closes a socket by itself only for its own limits or the end:
   1009 (a message too large), 4008 (too fast), 4013 (too far behind:
   the client reconnects), 1012 (the host page went away: the client
-  reconnects), 4011 (the game ended). Clients treat 1009, 4008 and 4011
-  as final even without a `bye`.
+  reconnects), 4011 (the game ended), 4014 (the room goes on with
+  another game: docs/game-switching.md). Clients treat 1009, 4008, 4011
+  and 4014 as final even without a `bye`.
 
 ## 2. Roles and links
 
@@ -84,6 +85,7 @@ of the Rust host; hosts ignore both, as any unknown field and type.)
 | `kicked` | 4010 | no (forgotten) |
 | `room-closed` | 4011 | no |
 | `slow` | 4013 | yes |
+| `next-game` (tvpipe put another game in its slot; the room goes on) | 4014 | no: players in a page go to their join link, their name carried along (docs/game-switching.md) |
 | `full`, `locked` | 4029 | no |
 | `in-progress` (a new name while a game is on and `lateJoin` is `closed`) | 4030 | no |
 | (`left`, after `leave`) | 1000 | no |

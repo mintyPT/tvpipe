@@ -23,7 +23,8 @@ detail lives in `docs/`:
   what phones and the host page say; [`party-design.md`](docs/party-design.md):
   the first design (a Node host), for its reasoning and measurements;
   [`games.md`](docs/games.md): building, checking, packing and running
-  a game (`tvpipe game`).
+  a game (`tvpipe game`); [`game-switching.md`](docs/game-switching.md):
+  one run, several games (the room stays, phones follow).
 - [`screen.md`](docs/screen.md): sharing a screen or a window with
   sound (`tvpipe screen`): Chrome's capture per OS, the ffmpeg fallback,
   native APIs assessed.
@@ -241,6 +242,15 @@ naming its host, TV and phone pages. Design and protocols:
   away clients are closed with 1012 (they reconnect); at the end with
   4011, after a second for the host's goodbyes; the cast is stopped
   (TEARDOWN/STOP), the browsers quit, the tunnel closes.
+- **A run is a session, the game sits in a slot** (`Hub::put`;
+  [`docs/game-switching.md`](docs/game-switching.md)): the listeners,
+  tunnel, short link, TV choice and the room (code and join key) last the
+  run; the games list (`playshare/picker.rs`, served by the local
+  listener) fills the slot first when no game was given, and again from
+  the host page's "Other game". The next game closes the relay's clients
+  with 4014 (phones go to their join link, now the next game's) and the
+  pages follow a `game` event. A folder of games (or several paths) is
+  listed first, the online list below.
 - **Tunnels**: OpenTunnel first (its identity is made once and reused, so
   frequent runs create nothing), Cloudflare if it fails; `--no-tunnel`.
 - **Short links** (`playshare/shortlink.rs`): the host page asks for
