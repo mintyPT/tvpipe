@@ -165,9 +165,10 @@ function renderPlayers(): void {
   renderSettings();
 }
 
-/** The settings as the game has them (the VIP changes them from the lobby too). */
+/** The rounds and the settings as the game has them (the VIP changes them from the lobby too). */
 function renderSettings(): void {
   const s = game.settings;
+  $<HTMLSelectElement>("rounds").value = String(game.rounds);
   $<HTMLSelectElement>("animate").value = s.animate ? "on" : "off";
   $<HTMLSelectElement>("undo").value = s.undo ? "on" : "off";
   $<HTMLSelectElement>("colormode").value = s.colorMode ? "on" : "off";

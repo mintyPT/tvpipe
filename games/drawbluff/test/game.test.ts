@@ -14,7 +14,7 @@ async function until(cond: () => boolean, ms = 3000): Promise<void> {
 }
 
 import { bots, LIES } from "../game/bots.ts";
-import { Drawbluff } from "../game/game.ts";
+import { Drawbluff, MAX_ROUNDS } from "../game/game.ts";
 import { palette, PLAYER_COLORS, seeded, type Lang } from "../game/rules.ts";
 import { ADULT_BY_LANG, PROMPT_LIST, PROMPTS_BY_LANG } from "./prompts.ts";
 
@@ -503,6 +503,18 @@ test("colours, pens and the rules: picked in the lobby, the VIP's settings, adul
     await players[0]!.client.act("settings", { undo: true, colorMode: true, adult: true });
     assert.deepEqual(g.settings, { undo: true, colorMode: true, adult: true, animate: false });
     assert.equal(changes.length, 1);
+    // The rounds: the VIP's too, 1 to 5.
+    await assert.rejects(players[1]!.client.act("settings", { rounds: 3 }), (e: { code: string }) => e.code === "not-vip");
+    for (const rounds of [0, MAX_ROUNDS + 1, 2.5, "3"]) {
+      await assert.rejects(players[0]!.client.act("settings", { rounds }), (e: { code: string }) => e.code === "bad-settings", String(rounds));
+    }
+    await players[0]!.client.act("settings", { rounds: MAX_ROUNDS });
+    assert.equal(g.rounds, 5);
+    assert.equal(changes.length, 2);
+    await until(() => players.every((_, i) => room(i)["rounds"] === 5));
+    assert.equal((party.screen.peek() as { rounds: number }).rounds, 5);
+    await players[0]!.client.act("settings", { rounds: 1 });
+    assert.equal(g.rounds, 1);
     await until(() => players.every((_, i) => me(i).palette.length === 5 && room(i)["colorMode"] === true));
     assert.deepEqual(me(1).palette, palette(free, true));
     assert.equal((party.screen.peek() as { adult: boolean }).adult, true);

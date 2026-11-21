@@ -25,7 +25,8 @@
  * Every player has a colour (`PLAYER_COLORS`, picked in the lobby, else
  * the least used) and draws with pens made from it (`palette`): its dark
  * and light shade, or with `colorMode` black and four colours leaning to
- * it. The settings (the host page's, or the VIP's in the lobby): `undo`
+ * it. The settings (the host page's, or the VIP's in the lobby): the
+ * `rounds` (1 to `MAX_ROUNDS`), `undo`
  * on the pad (off: every stroke counts), `colorMode`, `adult` (the
  * adult prompts, where the language has them), `animate` (every drawing
  * is an animation of `FRAMES` frames that the pages flip through, with
@@ -120,6 +121,8 @@ export const TYPING_EVERY = 1000;
 export const TYPING_FOR = 3000;
 /** The most `ink` a phone can report (a full pad of strokes is far less). */
 export const MAX_INK = 1_000_000;
+/** The most rounds a game can have (the host page's or the VIP's choice, from 1). */
+export const MAX_ROUNDS = 5;
 
 export interface GameOptions {
   rounds?: number | undefined;
@@ -169,7 +172,7 @@ export interface ScoreLine {
 export interface GameEvents {
   phase: [phase: string];
   end: [scores: ScoreLine[]];
-  /** The settings changed (the host page's or the VIP's). */
+  /** The settings or the rounds changed (the host page's or the VIP's). */
   settings: [settings: Settings];
 }
 
@@ -257,7 +260,7 @@ export class Drawbluff extends Emitter<GameEvents> {
   constructor(party: Party, options: GameOptions) {
     super();
     this.party = party;
-    this.rounds = options.rounds ?? 2;
+    this.rounds = Math.max(1, Math.min(MAX_ROUNDS, Math.round(options.rounds ?? 2)));
     this.minPlayers = options.minPlayers ?? 3;
     this.timings = { ...DEFAULT_TIMINGS, ...options.timings };
     this.#rng = options.rng ?? Math.random;
@@ -339,8 +342,13 @@ export class Drawbluff extends Emitter<GameEvents> {
     });
     party.handle("settings", (d, from) => {
       if (from.role !== "player" || !from.vip) throw new PartyError("not-vip", "Only the VIP can change this");
-      if (typeof d !== "object" || d === null || Array.isArray(d)) throw new PartyError("bad-settings", "undo, colorMode, adult, animate");
-      const o: Partial<Settings> = {};
+      if (typeof d !== "object" || d === null || Array.isArray(d)) throw new PartyError("bad-settings", "rounds, undo, colorMode, adult, animate");
+      const o: Partial<Settings> & { rounds?: number } = {};
+      const rounds = (d as Record<string, Json>)["rounds"];
+      if (rounds !== undefined) {
+        if (typeof rounds !== "number" || !Number.isInteger(rounds) || rounds < 1 || rounds > MAX_ROUNDS) throw new PartyError("bad-settings", `rounds: 1 to ${MAX_ROUNDS}`);
+        o.rounds = rounds;
+      }
       for (const k of ["undo", "colorMode", "adult", "animate"] as const) {
         const v = (d as Record<string, Json>)[k];
         if (v === undefined) continue;
@@ -506,7 +514,8 @@ export class Drawbluff extends Emitter<GameEvents> {
     if (o.lang !== undefined && !this.#prompts.has(o.lang)) throw new PartyError("bad-lang", `No prompts in ${o.lang}`);
     const lang = o.lang ?? this.#lang;
     if (o.adult === true && !this.#adultPrompts.has(lang)) throw new PartyError("no-adult", `No adult prompts in ${lang}`);
-    if (o.rounds !== undefined) this.rounds = Math.max(1, Math.min(5, Math.round(o.rounds)));
+    const rounds = this.rounds;
+    if (o.rounds !== undefined) this.rounds = Math.max(1, Math.min(MAX_ROUNDS, Math.round(o.rounds)));
     if (o.timings) this.timings = { ...DEFAULT_TIMINGS, ...o.timings };
     if (o.lang !== undefined && o.lang !== this.#lang) {
       this.#lang = o.lang;
@@ -526,7 +535,7 @@ export class Drawbluff extends Emitter<GameEvents> {
       this.party.room.set({ rounds: this.rounds });
       this.party.screen.set({ ...this.#settings, rounds: this.rounds });
     }
-    if (JSON.stringify(this.#settings) !== was) this.emit("settings", this.settings);
+    if (JSON.stringify(this.#settings) !== was || this.rounds !== rounds) this.emit("settings", this.settings);
   }
 
   /** Ends the game and its timers (the party stays). */

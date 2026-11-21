@@ -124,6 +124,8 @@ const en = (f) => ({
   yourPens: "Your pens:",
   colourNames: ["red", "orange", "yellow", "lime", "green", "teal", "sky blue", "blue", "violet", "pink"],
   rules: "Rules",
+  /** @param {number} n */
+  roundsLine: (n) => f.p(n, { one: "One round.", other: "# rounds." }),
   /** @type {Record<"animate" | "undo" | "colorMode" | "adult", [[string, string], [string, string]]>} off, on: the button, the line */
   settings: {
     animate: [
@@ -244,6 +246,7 @@ const de = (f) => ({
   yourPens: "Deine Stifte:",
   colourNames: ["Rot", "Orange", "Gelb", "Hellgrün", "Grün", "Türkis", "Himmelblau", "Blau", "Violett", "Pink"],
   rules: "Regeln",
+  roundsLine: (n) => f.p(n, { one: "Eine Runde.", other: "# Runden." }),
   settings: {
     animate: [
       ["Standbild", "Alle zeichnen ein Bild."],

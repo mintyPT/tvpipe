@@ -5,7 +5,10 @@ A Drawful-style party game (our own name, prompts and look) on
 draws a secret prompt on their phone, others invent fake titles for each
 drawing, everyone votes for the real one. Points for finding the truth
 (1000), for the artist per player who found it (1000), and for every
-player fooled by your lie (500); round 2 counts double.
+player fooled by your lie (500); a round's points count as many times
+as its number (round 2 double, round 3 triple, …). A game has 1 to 5
+rounds (2 by default), as the host page or the VIP's phone sets it in
+the lobby.
 
 Up to 8 players it is the classic game: every drawing on the TV, every
 other player lies. From 9 the round has six spotlight drawings (the rest
@@ -37,7 +40,7 @@ own while one is free; a newcomer gets one of the least used) and draws
 with pens made from it in OKLCH: its dark and light shade, or in colour
 mode black and red, yellow, green and blue leaning towards it (`palette`
 in `game/rules.ts`; a drawing carries its artist's pens). The host page
-and the VIP's phone set the rules before a game: undo on the pad (off by
+and the VIP's phone set the rules before a game: the rounds, undo on the pad (off by
 default: every stroke counts), colour mode, and adult prompts
 (`data/prompts.adult.txt`, `data/prompts.adult.de.txt`: 18+, cheeky, not
 explicit), and animated drawings (like Drawful Animate: every player

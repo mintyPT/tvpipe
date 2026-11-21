@@ -422,14 +422,19 @@ function colorPicker(err) {
 }
 
 /**
- * The room's rules: the VIP's buttons (undo, colours, adult prompts,
- * animation), a line each for everybody.
+ * The room's rules: the VIP's buttons (the rounds, undo, colours, adult
+ * prompts, animation), a line each for everybody.
  * @param {HTMLElement} err
  */
 function rules(err) {
   /** @type {{ key: "animate" | "undo" | "colorMode" | "adult", row: HTMLElement, buttons: HTMLButtonElement[], line: HTMLElement }[]} */
   const items = [];
   const box = h("div", { class: "rules" }, h("h2", {}, t.rules));
+  // The rounds: 1 to MAX_ROUNDS (game.ts).
+  const roundButtons = [1, 2, 3, 4, 5].map((n) => /** @type {HTMLButtonElement} */ (h("button", { onclick: () => act("settings", { rounds: n }, err).catch(() => {}) }, String(n))));
+  const roundRow = h("div", { class: "row seg rounds" }, ...roundButtons);
+  const roundLine = h("p", { class: "muted" });
+  box.append(roundRow, roundLine);
   for (const key of /** @type {const} */ (["undo", "colorMode", "adult", "animate"])) {
     const [off, on] = t.settings[key];
     const buttons = [false, true].map((value, i) => /** @type {HTMLButtonElement} */ (h("button", { onclick: () => act("settings", { [key]: value }, err).catch(() => {}) }, (i ? on : off)[0])));
@@ -442,6 +447,10 @@ function rules(err) {
     const v = client.view;
     const room = v.room ?? {};
     const vip = (v.roster ?? []).find((/** @type {any} */ r) => r.id === client.you?.id)?.vip;
+    const rounds = typeof room.rounds === "number" ? room.rounds : 0;
+    roundRow.hidden = !vip;
+    roundButtons.forEach((b, i) => b.classList.toggle("chosen", i + 1 === rounds));
+    roundLine.textContent = rounds ? t.roundsLine(rounds) : "";
     for (const { key, row, buttons, line } of items) {
       const on = !!room[key];
       row.hidden = !vip;
