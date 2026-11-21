@@ -237,7 +237,12 @@ export class Drawbluff extends Emitter<GameEvents> {
   #tally = new Map<string, Tally>();
   #phase: Phase = "lobby";
   #running = false;
+  /** The game's: aborted by {@link close} (each game has its own). */
   #abort = new AbortController();
+  /** Counts games and closes: a game whose number moved on was closed. */
+  #gen = 0;
+  /** A game's flow until it returned (a closed one winds down at once, writing nothing). */
+  #flow: Promise<void> | undefined;
   /** This game's deck (the room's, in the game's language). */
   #deck!: PromptDeck;
   #round = 0;
@@ -539,9 +544,26 @@ export class Drawbluff extends Emitter<GameEvents> {
     if (JSON.stringify(this.#settings) !== was || this.rounds !== rounds) this.emit("settings", this.settings);
   }
 
-  /** Ends the game and its timers (the party stays). */
+  /**
+   * Ends the game and its timers (the party stays): back to the lobby
+   * at once (no final screen, closing is not finishing), the waiting
+   * players in, so the VIP or the host can start again. Nothing of the
+   * closed game writes to the party after this returns.
+   */
   close(): void {
+    this.#gen++;
     this.#abort.abort();
+    clearTimeout(this.#inkTimer);
+    this.#inkTimer = undefined;
+    this.#ink = undefined;
+    this.#onScreen = undefined;
+    this.#pokeTyping = undefined;
+    if (!this.#running && this.#phase === "lobby") return;
+    this.#running = false;
+    this.party.inProgress = false;
+    for (const p of this.party.players) this.party.activate(p);
+    this.#joined = [];
+    this.#lobby();
   }
 
   #setPhase(phase: Phase): void {
@@ -615,43 +637,65 @@ export class Drawbluff extends Emitter<GameEvents> {
     for (const pl of p.players) pl.state.replace({ task: "lobby", ...this.#pens(pl) });
   }
 
-  /** Plays a whole game with the players who are there (and those who join). */
+  /**
+   * Plays a whole game with the players who are there (and those who
+   * join). It ends early, to the final screen, when a round would start
+   * with fewer than `minPlayers` (players who left or were removed do not
+   * count, an away phone does). Closed ({@link close}): it returns the
+   * scores so far and writes nothing.
+   */
   async play(): Promise<ScoreLine[]> {
     const party = this.party;
+    const gen = ++this.#gen;
     this.#running = true;
     party.inProgress = true;
-    this.scores.clear();
-    this.#lied.clear();
-    this.#spotted.clear();
-    this.#fresh.clear();
-    this.#typed.clear();
-    const adult = this.#settings.adult && this.#adultPrompts.has(this.#lang);
-    const deckKey = adult ? `${this.#lang}:adult` : this.#lang;
-    let deck = this.#decks.get(deckKey);
-    if (!deck) this.#decks.set(deckKey, (deck = new PromptDeck((adult ? this.#adultPrompts : this.#prompts).get(this.#lang)!, this.#rng)));
-    this.#deck = deck;
+    // A closed game's flow winds down first (its signal is aborted until it did).
+    if (this.#flow) await this.#flow;
+    if (gen !== this.#gen) return this.#table();
+    let ended!: () => void;
+    this.#flow = new Promise((r) => (ended = r));
+    this.#abort = new AbortController();
     try {
+      this.scores.clear();
+      this.#lied.clear();
+      this.#spotted.clear();
+      this.#fresh.clear();
+      this.#typed.clear();
+      const adult = this.#settings.adult && this.#adultPrompts.has(this.#lang);
+      const deckKey = adult ? `${this.#lang}:adult` : this.#lang;
+      let deck = this.#decks.get(deckKey);
+      if (!deck) this.#decks.set(deckKey, (deck = new PromptDeck((adult ? this.#adultPrompts : this.#prompts).get(this.#lang)!, this.#rng)));
+      this.#deck = deck;
       for (let round = 1; round <= this.rounds; round++) {
+        if (this.#abort.signal.aborted) break;
         this.#round = round;
         this.#joined = [];
         this.#votesLeft = 0;
         // Everybody in the room plays this round, late joiners too.
         this.#dealIn(false);
         for (const p of party.players) if (!this.scores.has(p.id)) this.scores.set(p.id, 0);
+        const players = this.#inGame();
+        // Too few left: the game ends here.
+        if (players.length < this.minPlayers) break;
         const before = new Map(this.scores);
         this.#tally = new Map();
-        const players = this.#inGame();
         const entries = await this.#draw(round, players);
         if (this.#abort.signal.aborted) break;
         await this.#spotlights(round, players.length, entries);
         if (this.#abort.signal.aborted) break;
         await this.#scores(round, before);
       }
+      if (gen !== this.#gen) return this.#table();
       return this.#final();
     } finally {
-      this.#running = false;
-      party.inProgress = false;
-      for (const p of party.players) party.activate(p);
+      this.#flow = undefined;
+      ended();
+      // Closed: close() did this (and a next game may run).
+      if (gen === this.#gen) {
+        this.#running = false;
+        party.inProgress = false;
+        for (const p of party.players) party.activate(p);
+      }
     }
   }
 
@@ -917,9 +961,11 @@ export class Drawbluff extends Emitter<GameEvents> {
     const art = { id: artist.id, name: artist.name };
     const lang = this.#lang;
     const truthKey = titleKey(spot.prompt, lang);
+    const lied = await lies.done;
+    if (this.#abort.signal.aborted) return;
     const options = buildOptions(
       spot.prompt,
-      new Map([...(await lies.done)].map(([p, t]) => [p.id, t])),
+      new Map([...lied].map(([p, t]) => [p.id, t])),
       // The prompt's own decoys, then (a file without them) undealt prompts.
       [...shuffle(spot.decoys, this.#rng), ...decoyOrder(shuffle(this.#deck.left.filter((t) => titleKey(t.text, lang) !== truthKey), this.#rng), spot.tag).map((t) => t.text)],
       this.#rng,
@@ -977,6 +1023,7 @@ export class Drawbluff extends Emitter<GameEvents> {
         party.screen.set({ done: [...answers.keys()].map((x) => x.id) });
       },
     });
+    if (this.#abort.signal.aborted) return;
 
     // Points (counted once the TV showed them, see #reveal) and the reveal.
     const byVoter = new Map([...votes].map(([p, o]) => [p.id, o]));
@@ -1054,12 +1101,14 @@ export class Drawbluff extends Emitter<GameEvents> {
     });
     for (let step = 1; step <= items.length; step++) {
       await this.#sleep(this.timings.revealStep);
+      if (this.#abort.signal.aborted) return;
       this.#withTv(() => party.screen.set({ step }));
     }
     // Once the TV showed the truth and its points: the points count, and
     // each phone says what it did for you (`note: "result"`).
     const after = Math.min(this.timings.revealStep, Math.floor(this.timings.revealEnd / 2));
     await this.#sleep(after);
+    if (this.#abort.signal.aborted) return;
     for (const [id, n] of scoring.points) this.scores.set(id, (this.scores.get(id) ?? 0) + n);
     this.#withTv(() => {
       for (const p of party.players) {

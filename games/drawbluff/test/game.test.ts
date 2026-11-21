@@ -20,12 +20,16 @@ import { ADULT_BY_LANG, PROMPT_LIST, PROMPTS_BY_LANG } from "./prompts.ts";
 
 const fast = { draw: 1500, drawAnimated: 1500, lie: 1200, vote: 1200, revealStep: 20, revealEnd: 20, scores: 20, gallery: 20 };
 
-async function game(n: number, opts: { silent?: number; drop?: number; rounds?: number; think?: number; lateJoin?: LateJoin; lang?: Lang; adult?: boolean; tvDelay?: number } = {}) {
+async function game(
+  n: number,
+  opts: { silent?: number; drop?: number; rounds?: number; think?: number; lateJoin?: LateJoin; lang?: Lang; adult?: boolean; tvDelay?: number; minPlayers?: number } = {},
+) {
   const relay = new MemoryRelay();
   const party = new Party({ grace: 100, maxPlayers: Math.max(8, n + 2), tvDelay: opts.tvDelay }).listen(relay);
   const server = { relay, close: async () => party.close() };
   const g = new Drawbluff(party, {
     rounds: opts.rounds ?? 2,
+    minPlayers: opts.minPlayers,
     timings: fast,
     rng: seeded(7),
     lateJoin: opts.lateJoin,
@@ -272,7 +276,7 @@ test("VIP removes a player in the lobby", async () => {
 });
 
 test("the host page removes players and moves the VIP during a game: it plays on", async () => {
-  const { server, party, g, players } = await game(7, { rounds: 2 });
+  const { server, party, g, players, phases } = await game(8, { rounds: 2 });
   try {
     const end = new Promise((r) => g.once("end", r));
     const removed: string[] = [];
@@ -291,9 +295,141 @@ test("the host page removes players and moves the VIP during a game: it plays on
     const table = (await end) as unknown[];
     assert.equal(removed.length, 5, "every kind of phase came");
     assert.equal(g.phase, "final");
-    assert.equal(party.players.length, 2);
-    assert.equal(table.length, 2, "the removed are not ranked");
+    assert.equal(party.players.length, 3);
+    assert.equal(phases.filter((p) => p === "draw").length, 2, "three are enough for the next round");
+    assert.equal(table.length, 3, "the removed are not ranked");
     assert.equal(party.players.filter((p) => p.vip).length, 1);
+  } finally {
+    for (const b of players) b.close();
+    await server.close();
+  }
+});
+
+test("too few players left: the game ends at the next round, to the final screen; an away phone still counts", async () => {
+  // One leaves and one's phone goes away for good in round 1: three still in it, both rounds.
+  {
+    const { server, g, players, phases } = await game(4, { rounds: 2 });
+    try {
+      g.once("phase", (p) => {
+        if (p !== "draw") return;
+        players[3]!.client.leave();
+        players[2]!.client.close();
+      });
+      const end = new Promise((r) => g.once("end", r));
+      await players[0]!.client.act("start");
+      const table = (await end) as unknown[];
+      assert.equal(phases.filter((p) => p === "draw").length, 2);
+      assert.equal(table.length, 3);
+    } finally {
+      for (const b of players) b.close();
+      await server.close();
+    }
+  }
+  // One leaves and the host removes another in round 1: two left, round 2 does not start.
+  {
+    const { server, party, g, players, phases } = await game(4, { rounds: 3 });
+    try {
+      g.once("phase", (p) => {
+        if (p !== "draw") return;
+        players[3]!.client.leave();
+        party.kick(party.players[2]!);
+      });
+      const end = new Promise((r) => g.once("end", r));
+      await players[0]!.client.act("start");
+      const table = (await end) as unknown[];
+      assert.equal(phases.filter((p) => p === "draw").length, 1);
+      assert.equal(phases.filter((p) => p === "scores").length, 1, "round 1 played to its scores");
+      assert.equal(phases.at(-1), "final");
+      assert.equal(table.length, 2);
+      assert.equal(g.running, false);
+      assert.equal((party.screen.peek() as { phase: string }).phase, "final");
+      await until(() => players.slice(0, 2).every((b) => b.client.view["me"]?.task === "final"));
+    } finally {
+      for (const b of players) b.close();
+      await server.close();
+    }
+  }
+  // The game's own minimum: with minPlayers 2, two play on.
+  {
+    const { server, g, players, phases } = await game(3, { rounds: 2, minPlayers: 2 });
+    try {
+      g.once("phase", (p) => {
+        if (p === "draw") players[2]!.client.leave();
+      });
+      const end = new Promise((r) => g.once("end", r));
+      await players[0]!.client.act("start");
+      const table = (await end) as unknown[];
+      assert.equal(phases.filter((p) => p === "draw").length, 2);
+      assert.equal(table.length, 2);
+    } finally {
+      for (const b of players) b.close();
+      await server.close();
+    }
+  }
+});
+
+test("close(): back to the lobby at once, nothing of the closed game writes after it, and the next game plays", async () => {
+  const { server, party, g, players } = await game(3, { rounds: 2, tvDelay: 150 });
+  try {
+    await players[0]!.client.act("start");
+    // A late joiner waits for the next round.
+    await until(() => g.phase === "lie" || g.phase === "vote");
+    const late = await bots(1, { url: "ws://party.test/_tvpipe/ws", WebSocket: server.relay.WebSocket, room: party.code, key: party.joinKey, names: ["Late"], think: () => 5 });
+    players.push(...late);
+    await until(() => party.players.find((p) => p.name === "Late")?.waiting === true);
+    await until(() => g.phase === "vote");
+    const after: string[] = [];
+    g.on("phase", (p) => after.push(p));
+    g.on("end", () => after.push("end"));
+    g.close();
+    // At once: the lobby on the TV, in the room and on every phone, everyone in.
+    assert.equal(g.running, false);
+    assert.equal(g.phase, "lobby");
+    assert.equal(party.inProgress, false);
+    assert.ok(party.players.every((p) => !p.waiting));
+    assert.equal((party.screen.peek() as { phase: string }).phase, "lobby");
+    assert.equal((party.room.peek() as { phase: string }).phase, "lobby");
+    assert.ok(party.players.every((p) => (p.state.peek() as { task: string }).task === "lobby"));
+    assert.deepEqual(after, ["lobby"]);
+    // Then nothing: no phase, no final screen, no view changes (the game's timers are gone).
+    const views = () => JSON.stringify([party.screen.peek(), party.room.peek(), party.players.map((p) => p.state.peek())]);
+    const was = views();
+    await new Promise((r) => setTimeout(r, fast.vote + fast.lie + 500));
+    assert.equal(views(), was);
+    assert.deepEqual(after, ["lobby"]);
+    await until(() => players.every((b) => b.client.view["me"]?.task === "lobby"));
+    // The VIP starts again: a fresh game, with the late joiner from its first round.
+    for (const b of players) b.errors = [];
+    const end = new Promise((r) => g.once("end", r));
+    await players[0]!.client.act("start");
+    const table = (await end) as { name: string; score: number }[];
+    assert.equal(table.length, 4);
+    assert.ok(table.some((l) => l.score > 0), "someone scored");
+    assert.equal(after.filter((p) => p === "draw").length, 2);
+    assert.deepEqual(
+      players.map((b) => b.errors),
+      [[], [], [], []],
+    );
+    // Closing a finished game goes to the lobby too; a second close changes nothing.
+    g.close();
+    assert.equal((party.room.peek() as { phase: string }).phase, "lobby");
+    g.close();
+    assert.equal(g.phase, "lobby");
+  } finally {
+    for (const b of players) b.close();
+    await server.close();
+  }
+});
+
+test("a closed bot never acts", async () => {
+  const { server, g, players } = await game(3, { rounds: 1, think: 150 });
+  try {
+    await players[0]!.client.act("start");
+    await until(() => players[1]!.client.view["me"]?.task === "draw");
+    players[1]!.close();
+    await new Promise((r) => setTimeout(r, 400));
+    assert.deepEqual(players[1]!.errors, [], "no answer sent from a closed client");
+    g.close();
   } finally {
     for (const b of players) b.close();
     await server.close();

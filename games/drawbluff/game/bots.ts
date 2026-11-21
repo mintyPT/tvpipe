@@ -117,6 +117,8 @@ export class Bot {
   readonly #o: BotOptions;
   readonly #rng: () => number;
   #handled = new Set<string>();
+  /** Answers on their way (cleared by `close`: a closed bot never acts). */
+  readonly #timers = new Set<ReturnType<typeof setTimeout>>();
 
   constructor(o: BotOptions) {
     this.#o = o;
@@ -134,9 +136,11 @@ export class Bot {
     if (this.#handled.has(key)) return;
     this.#handled.add(key);
     const delay = this.#o.think ? this.#o.think() : this.#rng() * 300;
-    setTimeout(() => {
+    const t = setTimeout(() => {
+      this.#timers.delete(t);
       fn().catch((e: { code?: string }) => this.errors.push(e.code ?? String(e)));
     }, delay);
+    this.#timers.add(t);
   }
 
   #onView(view: Record<string, any>): void {
@@ -149,8 +153,10 @@ export class Bot {
     switch (me.task) {
       case "lobby":
       case "final": {
-        // A next game reuses the keys (`1.1`, …): answer them again.
+        // A next game reuses the keys (`1.1`, …): answer them again
+        // (also after a closed game; in the lobby not start twice).
         if (me.task === "final") this.#handled.clear();
+        else for (const k of this.#handled) if (!k.startsWith("start:")) this.#handled.delete(k);
         const vip = (view["roster"] ?? []).find((r: { id: string }) => r.id === c.you?.id)?.vip;
         const ready = (view["roster"] ?? []).filter((r: { connected: boolean }) => r.connected).length;
         if (this.#o.autoStart && vip && me.task === "lobby" && ready >= (room.minPlayers ?? 3)) {
@@ -186,6 +192,8 @@ export class Bot {
   }
 
   close(): void {
+    for (const t of this.#timers) clearTimeout(t);
+    this.#timers.clear();
     this.client.close();
   }
 }

@@ -468,6 +468,15 @@ start to its podium, and activates every waiting player at the podium.
 - The lobby's maximum is the game's (`maxPlayers` 50).
 - A player who leaves during a round is dropped from the pools; their
   spotlight is skipped (as today); lies already in stay.
+- Too few: when a round would start (after the newcomers are dealt in)
+  with fewer than `minPlayers` (3) in the game, the game ends there,
+  to its final screen. Players who left or were removed do not count; a
+  phone that is only away does (it may come back).
+- The host closing the game (`close()`) is not finishing it: the lobby
+  at once (TV, room, phones; no final screen), waiting players in, and
+  nothing of that game (its timers, its deadlines) writes after; the
+  next Start plays a fresh game. Closed bots (the host page's) never
+  answer again either.
 - VIP and kick: as today (the VIP starts, kicks only in the lobby, the
   next connected player becomes VIP).
 

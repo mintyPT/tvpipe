@@ -22,7 +22,9 @@ and the spotlight draw does not decide the game. Players can join
 mid-game, as the VIP (or the host page) sets it in the lobby: from the
 next round (`wait`, the default), from the next drawing (`open`, "join
 anytime" on the TV) or not at all (`closed`); every phone shows its role and
-its rank ("#12 of 50"). The design and the numbers:
+its rank ("#12 of 50"). When a round would start with fewer than three
+players left in the game (an away phone counts, one who left does not),
+the game ends there, to its final screen. The design and the numbers:
 [`docs/drawbluff-scale.md`](../../docs/drawbluff-scale.md).
 
 It speaks English and German: the room's language is a setting on the
@@ -119,7 +121,9 @@ the prompt files' lints in both languages (display form, length,
 duplicates, structures) and the room's deck (no repeats),
 whole games with 3, 8 and 50 bots on `@tvpipe/party`'s relay in memory
 (a player who drops mid-game and comes back, one who leaves, too few
-players, late joiners in every mode, the VIP removing a player, three
+players to start and too few left for the next round (the game ends
+there), the host closing a game and starting the next, late joiners in
+every mode, the VIP removing a player, three
 games in one room without a repeated prompt, a whole game in German,
 a game of animated drawings).
 `npm run build && node test/live/play.ts [--zip] [--bots N]
