@@ -132,8 +132,9 @@ test("judging a guess: slips are forgiven (none up to 4 letters, one up to 7, tw
     ["girafe", w("giraffe"), "en", "right"],
     ["jiraf", w("giraffe"), "en", "wrong"],
     ["crocodil", w("crocodile", "croc"), "en", "right"],
-    ["krokodil", w("crocodile", "croc"), "en", "close"],
-    ["krokodile", w("crocodile", "croc"), "en", "right"],
+    ["krokodil", w("crocodile", "croc"), "en", "wrong"],
+    ["krokodile", w("crocodile", "croc"), "en", "wrong"],
+    ["crokodile", w("crocodile", "croc"), "en", "right"],
     ["krokodiel", w("Krokodil"), "de", "right"],
     ["croc", w("crocodile", "croc"), "en", "right"],
     ["cat", w("cat"), "en", "right"],
@@ -158,10 +159,13 @@ test("a slip never turns one word of the list into another", () => {
   const laus = w("Laus");
   const katze = w("Katze");
   const tatze = w("Tatze", "Pfote");
-  const list = [maus, laus, katze, tatze];
-  assert.equal(judge("Tatze", katze, "de"), "right", "alone it would be a slip");
-  assert.equal(judge("Tatze", katze, "de", list), "wrong");
-  assert.equal(judge("Tatzen", katze, "de", list), "wrong");
+  const biene = w("Biene");
+  const birne = w("Birne");
+  const list = [maus, laus, katze, tatze, biene, birne];
+  assert.equal(judge("Birne", biene, "de"), "right", "alone it would be a slip");
+  assert.equal(judge("Birne", biene, "de", list), "wrong");
+  assert.equal(judge("Birnen", biene, "de", list), "wrong");
+  assert.equal(judge("Tatze", katze, "de"), "wrong", "a rhyme is another word");
   assert.equal(judge("Pfote", katze, "de", list), "wrong");
   assert.equal(judge("Katse", katze, "de", list), "right");
   assert.equal(judge("Katze", katze, "de", list), "right", "the word itself is in the list");
@@ -175,6 +179,32 @@ test("a slip never turns one word of the list into another", () => {
   assert.equal(judge("swordfish", sword, "en", [sword, swordfish]), "right", "the longer word says the shorter one (they are never in one category)");
   // A copy of the word (another object) is the word.
   assert.equal(judge("Katze", w("Katze"), "de", list), "right");
+});
+
+test("slips keep the first letter, read ae/oe/ue as umlauts, and count against the stem", () => {
+  // A rhyme is another word, not a slip (and not close either).
+  assert.equal(judge("house", w("mouse", "mice"), "en"), "wrong");
+  assert.equal(judge("rouse", w("mouse", "mice"), "en"), "wrong");
+  assert.equal(judge("power", w("tower"), "en"), "wrong");
+  assert.equal(judge("Haus", w("Maus"), "de"), "wrong");
+  assert.equal(judge("mouze", w("mouse", "mice"), "en"), "right");
+  // German without umlauts on the keyboard.
+  assert.equal(judge("Kaese", w("Käse"), "de"), "right");
+  assert.equal(judge("Loewe", w("Löwe"), "de"), "right");
+  assert.equal(judge("Baer", w("Bär"), "de"), "right");
+  assert.equal(judge("Kuehe", w("Kuh"), "de"), "right");
+  assert.equal(judge("Schildkroete", w("Schildkröte"), "de"), "right");
+  assert.equal(judge("Fuechse", w("Fuchs"), "de"), "right");
+  assert.equal(judge("Kaese", w("Käse"), "en"), "close", "only in German");
+  // Slips against the stem: as typed, or without its ending.
+  assert.equal(judge("elefants", w("elephant"), "en"), "right");
+  assert.equal(judge("girafes", w("giraffe"), "en"), "right");
+  assert.equal(judge("Krokodiele", w("Krokodil"), "de"), "right");
+  // Stem to stem only the slips the shorter stem allows.
+  assert.equal(judge("Kuh", w("Kuchen"), "de"), "wrong");
+  assert.equal(judge("Kuchn", w("Kuchen"), "de"), "right");
+  // Two slips are too many for seven letters.
+  assert.equal(judge("pinguen", w("penguin"), "en"), "close");
 });
 
 test("the easy mode's blanks", () => {

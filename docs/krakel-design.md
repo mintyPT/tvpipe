@@ -125,13 +125,21 @@ leading article (`a`, `the`; `ein`, `der` …). It is **right** when it
    letters and more (`Babykatze`, `Segelschiff` for `Schiff`); or
 4. is a spelling slip away: no letter off for words up to 4 letters,
    one up to 7, two from 8 (insert, delete, replace, or two neighbours
-   swapped: `elefant`, `Krokodiel`, `girafe`), **unless** the guess is
-   another word of the language's whole list, by its letters or its
-   stem (`Laus` is not a misspelt `Maus`, `Tatze` not a `Katze`; a
-   `swordfis` is still a swordfish, though it has a `sword` inside).
+   swapped: `elefant`, `Krokodiel`, `girafe`), as typed or without its
+   ending (`elefants`, `girafes`), stem to stem only as many as the
+   shorter stem allows (`Kuh` is no slip of `Kuchen`), **and**
+   - keeps the word's first letter: a rhyme is another word, not a slip
+     (`house` is no `mouse`, `power` no `tower`);
+   - is not another word of the language's whole list, by its letters
+     or its stem (`Birne` is not a misspelt `Biene`, `Kirche` no
+     `Kirsche`; a `swordfis` is still a swordfish, though it has a
+     `sword` inside).
 
-One slip more than allowed is **close**: the phone says so (and is
-locked like after any wrong guess). A guess of several words is never
+German guesses count with `ae`, `oe`, `ue` for umlauts too (`Kaese`,
+`Loewe`, `Baer`, `Kuehe`), besides as typed (`Feuer`).
+
+One slip more than allowed (the first letter kept) is **close**: the
+phone says so (and is locked like after any wrong guess). A guess of several words is never
 taken apart ("fox wolf dog" is wrong), so the lockout cannot be beaten
 by typing every animal at once.
 

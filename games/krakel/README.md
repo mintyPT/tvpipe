@@ -27,8 +27,10 @@ read them. ("Krakel": German for a scrawl.)
     the TV shows the guess, struck out.
   - The machine judges: other names from the word list (`hippo`,
     `hippopotamus`), plurals, compounds with the word inside
-    (`Babykatze`), and spelling slips (`elefant`, `Krokodiel`) count,
-    unless the slip is another word of the list (`Laus` for `Maus`).
+    (`Babykatze`), and spelling slips (`elefant`, `elefants`,
+    `Krokodiel`; German `Kaese`, `Baer` for `Käse`, `Bär`) count, unless
+    the slip is another word of the list (`Birne` for `Biene`) or starts
+    with another letter (a rhyme: `house` is no `mouse`).
   - Easy (the default): a blank per letter of the word. Hard: only the
     category.
 - **The artist** earns half of what the guessers earned by time. So:

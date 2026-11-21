@@ -209,26 +209,62 @@ function names(g: Form, word: Word, lang: Lang): boolean {
 export type Verdict = "right" | "close" | "wrong";
 
 /**
+ * German written without umlauts on the keyboard: `ae`, `oe`, `ue` as
+ * the folded `a`, `o`, `u` (`Kaese`, `Loewe`, `Kuehe`). Only the
+ * guess's other reading; the guess as typed counts too (`Feuer`).
+ */
+function umlautsOff(text: string): string {
+  return text.replace(/([aou])e/gi, "$1");
+}
+
+/**
+ * How far a guess (folded, written as one) is from a name (`joined`) by
+ * spelling slips: `right` at most {@link slips} letters off it, as typed
+ * or without its ending (`elefants`, `girafes`), and stem to stem as
+ * many as the shorter stem allows (`Kuh` is no slip of `Kuchen`);
+ * `close` one more than that on a name of four letters and more; else
+ * `wrong`. Never with another first letter: a rhyme is another word
+ * (`house` is no `mouse`).
+ */
+function slipOf(t: string, joined: string, lang: Lang): Verdict {
+  if (!t || t[0] !== joined[0]) return "wrong";
+  const allowed = slips(joined.length);
+  const d = distance(t, joined, allowed + 1);
+  if (d <= allowed) return "right";
+  if (allowed > 0) {
+    const st = stem(t, lang);
+    if (st !== t && distance(st, joined, allowed) <= allowed) return "right";
+    const sw = stem(joined, lang);
+    const few = slips(Math.min(st.length, sw.length));
+    if (few > 0 && distance(st, sw, few) <= few) return "right";
+  }
+  return d === allowed + 1 && joined.length >= 4 ? "close" : "wrong";
+}
+
+/**
  * Judges a guess at a word. Right: it says the word or one of its other
  * names ({@link says}), or is a spelling slip away from one
- * ({@link slips}: `elefant`, `Krokodiel`), unless it is another word of
- * `others` (`Laus` is not a misspelt `Maus`; `swordfis` is still a
- * swordfish, though it has a `sword` inside). Close: one more slip than
- * that. A guess of several words is never taken apart: it
- * has to be the word.
+ * ({@link slipOf}: `elefant`, `Krokodiel`, `girafes`; the same first
+ * letter), unless it is another word of `others` (`Laus` is not a
+ * misspelt `Maus`; `swordfis` is still a swordfish, though it has a
+ * `sword` inside). Close: one more slip than that. German guesses count
+ * with `ae`, `oe`, `ue` for umlauts too (`Kaese`, `Baer`). A guess of
+ * several words is never taken apart: it has to be the word.
  */
 export function judge(guess: string, word: Word, lang: Lang = "en", others: readonly Word[] = []): Verdict {
-  const g = form(guess, lang);
-  if (!g.joined) return "wrong";
-  const forms = [word.word, ...word.also].map((w) => form(w, lang));
-  if (forms.some((w) => saysForm(g, w, lang))) return "right";
-  if (others.some((o) => o !== word && o.word !== word.word && names(g, o, lang))) return "wrong";
+  const readings = lang === "de" && /[aou]e/i.test(guess) ? [guess, umlautsOff(guess)] : [guess];
+  const gs = readings.map((r) => form(r, lang)).filter((g) => g.joined);
+  if (gs.length === 0) return "wrong";
+  const forms = [word.word, ...word.also].map((w) => form(w, lang)).filter((w) => w.joined);
+  if (gs.some((g) => forms.some((w) => saysForm(g, w, lang)))) return "right";
+  if (others.some((o) => o !== word && o.word !== word.word && gs.some((g) => names(g, o, lang)))) return "wrong";
   let best: Verdict = "wrong";
   for (const w of forms) {
-    const allowed = slips(w.joined.length);
-    const d = distance(g.joined, w.joined, allowed + 1);
-    if (d <= allowed) return "right";
-    if (d === allowed + 1 && w.joined.length >= 4) best = "close";
+    for (const g of gs) {
+      const v = slipOf(g.joined, w.joined, lang);
+      if (v === "right") return v;
+      if (v === "close") best = v;
+    }
   }
   return best;
 }
