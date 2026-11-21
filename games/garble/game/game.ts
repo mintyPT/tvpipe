@@ -1,5 +1,5 @@
 /**
- * Garble on a party, for 4 to 12 players (docs/garble-design.md): the
+ * Garble on a party, for 3 to 12 players (docs/garble-design.md): the
  * lobby, then per round one picture per player passed seat to seat (the
  * first player picks a word and draws it; each next one guesses what it
  * is now, then draws the word they are dealt on top), the reveal (each
@@ -19,6 +19,11 @@
  * Until the reveal, a layer's word reaches only its drawer, a guess only
  * its writer, and the picture of a step only the player at that step
  * (as one ink: which strokes are new does not show).
+ *
+ * The TV is behind the phones (docs/games.md): what the TV shows (a new
+ * phase, a step of the reveal, the best move, the scores) is set inside
+ * `party.withTv`, so phones get it when the TV picture with it is up,
+ * and deadlines count from then (`party.deadline`).
  */
 
 import { Emitter, PartyError, type Json, type Party, type Player } from "@tvpipe/party";
@@ -42,6 +47,7 @@ import {
   validateDrawing,
   type Drawing,
   type Earned,
+  type Guess,
   type Lang,
   type Picture,
   type Word,
@@ -174,6 +180,8 @@ interface Round {
   first: number;
   /** Best-move votes: voter id → layer id. */
   votes: Map<string, string>;
+  /** The guesses as shown (`party.moderate`), by layer id; `false`: refused, hidden. */
+  shown: Map<string, string | false>;
 }
 
 export class Garble extends Emitter<GameEvents> {
@@ -315,7 +323,7 @@ export class Garble extends Emitter<GameEvents> {
       if (from.role !== "player") throw new PartyError("not-player", "Players only");
       const r = typeof d === "object" && d !== null && "r" in d ? (d as { r: unknown }).r : d;
       if (typeof r !== "number" || !Number.isInteger(r) || r < 0 || r >= REACTIONS) throw new PartyError("bad-reaction", "No such reaction");
-      if (this.#phase !== "reveal" && this.#phase !== "best") return null;
+      if (!this.#running || (this.#phase !== "reveal" && this.#phase !== "best")) return null;
       const now = party.now();
       const p = from as Player;
       if (now - (this.#reacted.get(p.id) ?? 0) < REACT_EVERY) return null;
@@ -359,9 +367,28 @@ export class Garble extends Emitter<GameEvents> {
     if (JSON.stringify([this.rounds, this.#settings]) !== was) this.emit("settings", this.settings);
   }
 
-  /** Ends the game and its timers (the party stays). */
+  /**
+   * Ends a running game and its timers, with no final screen (closing
+   * is not finishing: no `end`): the room is open again and the lobby
+   * is on the TV and the phones (at once, not with the TV's delay), so
+   * the VIP or the host can start again. Nothing of the closed game
+   * writes to the party after it returns (each game's steps check their
+   * own abort signal); the party stays, and a later {@link play} starts
+   * afresh.
+   */
   close(): void {
+    if (!this.#running) return;
     this.#abort.abort();
+    this.#over();
+    this.#lobby();
+  }
+
+  /** A game is over (finished or closed): latecomers in, the room open again. */
+  #over(): void {
+    this.#round = undefined;
+    this.#running = false;
+    this.party.inProgress = false;
+    for (const p of this.party.players) this.party.activate(p);
   }
 
   // -------------------------------------------------------------------------
@@ -435,8 +462,15 @@ export class Garble extends Emitter<GameEvents> {
     for (const p of party.players) p.state.replace(this.#lobbyState(p));
   }
 
-  /** A picture as the reveal shows it (names, colours, words, guesses, points). */
-  #pictureView(c: Picture): Record<string, unknown> {
+  /**
+   * A picture as the reveal shows it (names, colours, words, guesses,
+   * points). A guess shows as `party.moderate` let it (`hidden`: refused).
+   */
+  #pictureView(r: Round, c: Picture): Record<string, unknown> {
+    const guess = (g: Guess, k: number) => {
+      const shown = r.shown.get(layerId(c.id, k)) ?? g.text;
+      return { by: this.#who(g.by), text: shown === false ? "" : shown, right: g.right, ...(shown === false ? { hidden: true } : {}) };
+    };
     return {
       id: c.id,
       starter: this.#who(c.layers[0]?.by ?? ""),
@@ -445,7 +479,7 @@ export class Garble extends Emitter<GameEvents> {
         word: l.word.word,
         drawing: l.drawing,
         points: layerPoints(k),
-        guess: l.guess ? { by: this.#who(l.guess.by), text: l.guess.text, right: l.guess.right } : null,
+        guess: l.guess ? guess(l.guess, k) : null,
       })),
     };
   }
@@ -454,10 +488,21 @@ export class Garble extends Emitter<GameEvents> {
   // A game
 
   /** Plays a whole game with the players who are there (and those who join). */
+  /**
+   * Plays a whole game with the players who are there (and those who
+   * join). It ends early, to the final screen, when fewer than
+   * {@link minPlayers} are left in it at the start of a round (players
+   * who left or were removed do not count; a phone that is only away
+   * does). After {@link close} it resolves to the scores so far and
+   * writes nothing more.
+   */
   async play(): Promise<ScoreLine[]> {
+    if (this.#running) throw new PartyError("running", "The game is on");
     const party = this.party;
     this.#running = true;
-    this.#abort = new AbortController();
+    const abort = new AbortController();
+    this.#abort = abort;
+    const signal = abort.signal;
     party.inProgress = true;
     this.scores.clear();
     try {
@@ -468,19 +513,17 @@ export class Garble extends Emitter<GameEvents> {
           if (!this.scores.has(p.id)) this.scores.set(p.id, 0);
         }
         const players = party.players.filter((p) => this.scores.has(p.id));
-        if (players.length < 3) break;
+        if (players.length < this.minPlayers) break;
         const before = new Map(this.scores);
-        await this.#playRound(r, players);
-        if (this.#abort.signal.aborted) break;
-        await this.#scores(r, before);
-        if (this.#abort.signal.aborted) break;
+        await this.#playRound(r, players, signal);
+        if (signal.aborted) break;
+        await this.#scores(r, before, signal);
+        if (signal.aborted) break;
       }
+      if (signal.aborted) return this.#table();
       return this.#final();
     } finally {
-      this.#round = undefined;
-      this.#running = false;
-      party.inProgress = false;
-      for (const p of party.players) party.activate(p);
+      if (!signal.aborted) this.#over();
     }
   }
 
@@ -515,7 +558,7 @@ export class Garble extends Emitter<GameEvents> {
     return { seats, deals: seats.map(() => dealPicture(deck, layers, this.#lang)), first: Math.floor(this.#rng() * seats.length) };
   }
 
-  async #playRound(n: number, players: Player[]): Promise<void> {
+  async #playRound(n: number, players: Player[], signal: AbortSignal): Promise<void> {
     const { seats, deals, first } = this.#deal(n, players);
     const round: Round = {
       n,
@@ -525,13 +568,14 @@ export class Garble extends Emitter<GameEvents> {
       pictures: seats.map((_, i) => ({ id: i, layers: [] })),
       deals,
       votes: new Map(),
+      shown: new Map(),
     };
     this.#round = round;
-    for (let k = 0; k <= round.layers && !this.#abort.signal.aborted; k++) await this.#step(round, k);
-    if (this.#abort.signal.aborted) return;
-    await this.#reveal(round);
-    if (this.#abort.signal.aborted) return;
-    await this.#vote(round);
+    for (let k = 0; k <= round.layers && !signal.aborted; k++) await this.#step(round, k, signal);
+    if (signal.aborted) return;
+    await this.#reveal(round, signal);
+    if (signal.aborted) return;
+    await this.#vote(round, signal);
   }
 
   /**
@@ -540,7 +584,7 @@ export class Garble extends Emitter<GameEvents> {
    * the picture is now, then draw the dealt word on top; the last step
    * only guesses.
    */
-  async #step(r: Round, k: number): Promise<void> {
+  async #step(r: Round, k: number, signal: AbortSignal): Promise<void> {
     const party = this.party;
     const count = r.seats.length;
     const first = k === 0;
@@ -551,16 +595,14 @@ export class Garble extends Emitter<GameEvents> {
     const t = this.timings;
     const guessFor = first ? 0 : t.guess;
     const drawFor = last ? 0 : first ? t.firstDraw : t.draw;
-    const start = party.now();
-    const guessUntil = start + guessFor;
-    const deadline = start + guessFor + drawFor;
+    // From when the step is on the TV (and, with it, on the phones).
+    const guessUntil = party.deadline(guessFor);
+    const deadline = guessUntil + drawFor;
     const seatOfPlayer = new Map(r.seats.map((p, s) => [p, s]));
     const pictureOf = (p: Player) => r.pictures[pictureAt(seatOfPlayer.get(p)!, k, count)]!;
     const next = (p: Player) => this.#name(r.seats[(seatOfPlayer.get(p)! + 1) % count]!.id);
     const kind = first ? "first" : last ? "last" : "turn";
-    this.#room({ phase: "play", step: k + 1, steps: r.layers + 1, kind, deadline });
     const seats = r.seats.map((p) => this.#who(p.id));
-    this.#screen({ phase: "play", round: r.n, rounds: this.rounds, step: k + 1, steps: r.layers + 1, kind, deadline, guessUntil, duration: guessFor + drawFor, seats, guessed: [], done: [] });
     const base = (p: Player) => ({ step: k + 1, steps: r.layers + 1, ...this.#mine(p) });
     /** The drawing task of a player at this step (after their guess). */
     const drawState = (p: Player) => {
@@ -581,10 +623,13 @@ export class Garble extends Emitter<GameEvents> {
       const from = c.layers.at(-1)?.by;
       return { task: "guess", ...base(p), picture: flatten(c.layers), from: from ? this.#name(from) : null, deadline: guessUntil, last, done: false };
     };
-    for (const p of r.seats) p.state.replace(first ? drawState(p) : guessState(p));
-    for (const p of party.players) if (!seatOfPlayer.has(p)) p.state.replace(this.#waitState(p));
+    party.withTv(() => {
+      this.#room({ phase: "play", step: k + 1, steps: r.layers + 1, kind, deadline });
+      this.#screen({ phase: "play", round: r.n, rounds: this.rounds, step: k + 1, steps: r.layers + 1, kind, deadline, guessUntil, duration: guessFor + drawFor, seats, guessed: [], done: [] });
+      for (const p of r.seats) p.state.replace(first ? drawState(p) : guessState(p));
+      for (const p of party.players) if (!seatOfPlayer.has(p)) p.state.replace(this.#waitState(p));
+    });
 
-    const signal = this.#abort.signal;
     const guessed = new Map<Player, string>();
     const drawn = new Set<string>();
     const guesses = first
@@ -645,6 +690,8 @@ export class Garble extends Emitter<GameEvents> {
         // A slip counts unless it is another word: of the list, or of this picture (a script's words need not be in the list).
         const others = [...(this.#words.get(this.#lang) ?? []), ...c.layers.map((l) => l.word)];
         prev.guess = guessAt(prev, p.id, guessed.get(p) ?? "", this.#lang, others);
+        // Judged as typed, shown (on the TV and in the gallery) as the moderate hook lets it.
+        if (prev.guess.text) r.shown.set(layerId(c.id, c.layers.length - 1), party.moderate(prev.guess.text, "guess", p));
       }
       if (last) continue;
       const a = got.get(p);
@@ -657,57 +704,61 @@ export class Garble extends Emitter<GameEvents> {
   // -------------------------------------------------------------------------
   // The reveal
 
-  async #reveal(r: Round): Promise<void> {
+  async #reveal(r: Round, signal: AbortSignal): Promise<void> {
     this.#setPhase("reveal");
     const order = r.pictures.map((_, i) => r.pictures[(r.first + i) % r.pictures.length]!);
     const shown: number[] = [];
     for (let i = 0; i < order.length; i++) {
-      if (this.#abort.signal.aborted) return;
-      await this.#showPicture(r, order[i]!, i, order.length, shown);
+      if (signal.aborted) return;
+      await this.#showPicture(r, order[i]!, i, order.length, shown, signal);
       shown.push(order[i]!.id);
     }
   }
 
-  async #showPicture(r: Round, c: Picture, index: number, of: number, shown: number[]): Promise<void> {
+  async #showPicture(r: Round, c: Picture, index: number, of: number, shown: number[], signal: AbortSignal): Promise<void> {
     const party = this.party;
     const starter = c.layers[0]?.by ?? "";
-    this.#room({ phase: "reveal", index: index + 1, of });
     const { layer, read, legend } = this.timings;
-    this.#screen({ phase: "reveal", round: r.n, rounds: this.rounds, index: index + 1, of, shown: [...shown], picture: this.#pictureView(c), cursor: 0, stage: "layers", times: { layer, read, legend } });
-    for (const p of party.players) {
-      if (!this.scores.has(p.id)) p.state.replace(this.#waitState(p));
-      else p.state.replace({ task: "watch", starter: this.#name(starter), mine: c.layers.some((l) => l.by === p.id), index: index + 1, of, ...this.#mine(p) });
-    }
+    party.withTv(() => {
+      this.#room({ phase: "reveal", index: index + 1, of });
+      this.#screen({ phase: "reveal", round: r.n, rounds: this.rounds, index: index + 1, of, shown: [...shown], picture: this.#pictureView(r, c), cursor: 0, stage: "layers", times: { layer, read, legend } });
+      for (const p of party.players) {
+        if (!this.scores.has(p.id)) p.state.replace(this.#waitState(p));
+        else p.state.replace({ task: "watch", starter: this.#name(starter), mine: c.layers.some((l) => l.by === p.id), index: index + 1, of, ...this.#mine(p) });
+      }
+    });
     for (let k = 0; k < c.layers.length; k++) {
-      if (k > 0) party.screen.set({ cursor: k });
-      await this.#sleep(this.timings.layer + this.timings.read);
-      if (this.#abort.signal.aborted) return;
+      if (k > 0) party.withTv(() => party.screen.set({ cursor: k }));
+      await this.#sleep(this.timings.layer + this.timings.read, signal);
+      if (signal.aborted) return;
     }
-    party.screen.set({ stage: "legend" });
-    await this.#sleep(this.timings.legend);
+    party.withTv(() => party.screen.set({ stage: "legend" }));
+    await this.#sleep(this.timings.legend, signal);
   }
 
   // -------------------------------------------------------------------------
   // The best move
 
-  async #vote(r: Round): Promise<void> {
+  async #vote(r: Round, signal: AbortSignal): Promise<void> {
     const party = this.party;
     this.#setPhase("vote");
-    const deadline = party.now() + this.timings.vote;
-    const gallery = r.pictures.map((c) => this.#pictureView(c));
+    const deadline = party.deadline(this.timings.vote);
+    const gallery = r.pictures.map((c) => this.#pictureView(r, c));
     /** The layers one can vote for: those with ink. */
     const candidates = new Map<string, string>();
     for (const c of r.pictures) c.layers.forEach((l, k) => l.drawing.strokes.length > 0 && candidates.set(layerId(c.id, k), l.by));
     const voters = r.seats.filter((p) => party.players.includes(p));
-    this.#room({ phase: "vote", deadline, gallery });
-    this.#screen({ phase: "vote", round: r.n, rounds: this.rounds, deadline, duration: this.timings.vote, gallery, voters: voters.map((p) => this.#who(p.id)), done: [] });
     const mine = (p: Player) => [...candidates].filter(([, by]) => by === p.id).map(([id]) => id);
-    for (const p of voters) p.state.replace({ task: "vote", mine: mine(p), deadline, done: false, choice: null, ...this.#mine(p) });
-    for (const p of party.players) if (!voters.includes(p)) p.state.replace(this.#waitState(p));
+    party.withTv(() => {
+      this.#room({ phase: "vote", deadline, gallery });
+      this.#screen({ phase: "vote", round: r.n, rounds: this.rounds, deadline, duration: this.timings.vote, gallery, voters: voters.map((p) => this.#who(p.id)), done: [] });
+      for (const p of voters) p.state.replace({ task: "vote", mine: mine(p), deadline, done: false, choice: null, ...this.#mine(p) });
+      for (const p of party.players) if (!voters.includes(p)) p.state.replace(this.#waitState(p));
+    });
     const votes = await party.collect<string>("vote", {
       from: voters,
       until: deadline,
-      signal: this.#abort.signal,
+      signal,
       validate: (d, p) => {
         const id = typeof d === "object" && d !== null && !Array.isArray(d) ? (d as { layer?: unknown }).layer : d;
         if (typeof id !== "string" || !candidates.has(id)) throw new PartyError("bad-vote", "Pick a layer");
@@ -719,7 +770,7 @@ export class Garble extends Emitter<GameEvents> {
         party.screen.set({ done: [...got.keys()].map((x) => x.id) });
       },
     });
-    if (this.#abort.signal.aborted) return;
+    if (signal.aborted) return;
     r.votes = new Map([...votes].map(([p, id]) => [p.id, id]));
     const earned = scoreRound(r.pictures, r.votes);
     for (const [id, e] of earned) if (this.scores.has(id)) this.scores.set(id, (this.scores.get(id) ?? 0) + earnedTotal(e));
@@ -733,15 +784,17 @@ export class Garble extends Emitter<GameEvents> {
       const [pi, li] = id.split(":").map(Number);
       return { id, picture: pi!, layer: li!, votes: best.count, points: best.points };
     });
-    this.#room({ phase: "best" });
-    this.#screen({ phase: "best", round: r.n, rounds: this.rounds, gallery, best: winners, tally });
-    for (const p of party.players) {
-      if (!this.scores.has(p.id)) continue;
-      const won = winners.filter((w) => r.pictures[w.picture]?.layers[w.layer]?.by === p.id);
-      const pick = r.votes.get(p.id);
-      p.state.replace({ task: "best", won: won.length > 0, points: won.length * best.points, picked: !!pick && best.ids.includes(pick), ...this.#mine(p) });
-    }
-    await this.#sleep(this.timings.best);
+    party.withTv(() => {
+      this.#room({ phase: "best" });
+      this.#screen({ phase: "best", round: r.n, rounds: this.rounds, gallery, best: winners, tally });
+      for (const p of party.players) {
+        if (!this.scores.has(p.id)) continue;
+        const won = winners.filter((w) => r.pictures[w.picture]?.layers[w.layer]?.by === p.id);
+        const pick = r.votes.get(p.id);
+        p.state.replace({ task: "best", won: won.length > 0, points: won.length * best.points, picked: !!pick && best.ids.includes(pick), ...this.#mine(p) });
+      }
+    });
+    await this.#sleep(this.timings.best, signal);
   }
 
   #table(before?: ReadonlyMap<string, number>): ScoreLine[] {
@@ -754,7 +807,7 @@ export class Garble extends Emitter<GameEvents> {
       .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
   }
 
-  async #scores(round: number, before: ReadonlyMap<string, number>): Promise<void> {
+  async #scores(round: number, before: ReadonlyMap<string, number>, signal: AbortSignal): Promise<void> {
     const party = this.party;
     this.#setPhase("scores");
     const r = this.#round;
@@ -777,17 +830,19 @@ export class Garble extends Emitter<GameEvents> {
       }
     }
     const lines = this.#table(before).map((l) => ({ ...l, earned: this.#earned.get(l.id) ?? null, counts: counts.get(l.id) ?? null }));
-    this.#room({ phase: "scores" });
-    this.#screen({ phase: "scores", round, rounds: this.rounds, lines, last: round >= this.rounds });
-    for (const p of party.players) {
-      if (!this.scores.has(p.id)) {
-        p.state.replace(this.#waitState(p));
-        continue;
+    party.withTv(() => {
+      this.#room({ phase: "scores" });
+      this.#screen({ phase: "scores", round, rounds: this.rounds, lines, last: round >= this.rounds });
+      for (const p of party.players) {
+        if (!this.scores.has(p.id)) {
+          p.state.replace(this.#waitState(p));
+          continue;
+        }
+        const line = lines.find((l) => l.id === p.id);
+        p.state.replace({ task: "scores", earned: line?.earned ?? null, counts: line?.counts ?? null, delta: line?.delta ?? 0, ...this.#mine(p) });
       }
-      const line = lines.find((l) => l.id === p.id);
-      p.state.replace({ task: "scores", earned: line?.earned ?? null, counts: line?.counts ?? null, delta: line?.delta ?? 0, ...this.#mine(p) });
-    }
-    await this.#sleep(this.timings.scores);
+    });
+    await this.#sleep(this.timings.scores, signal);
   }
 
   #final(): ScoreLine[] {
@@ -795,17 +850,18 @@ export class Garble extends Emitter<GameEvents> {
     this.#round = undefined;
     this.#setPhase("final");
     const table = this.#table();
-    this.#room({ phase: "final", maxPlayers: party.maxPlayers });
-    this.#screen({ phase: "final", lines: table, rounds: this.rounds, ...this.#settings });
-    for (const p of party.players) p.state.replace({ task: "final", color: this.colorOf(p.id), ...this.#rank(this.scores.has(p.id) ? p : undefined) });
+    party.withTv(() => {
+      this.#room({ phase: "final", maxPlayers: party.maxPlayers });
+      this.#screen({ phase: "final", lines: table, rounds: this.rounds, ...this.#settings });
+      for (const p of party.players) p.state.replace({ task: "final", color: this.colorOf(p.id), ...this.#rank(this.scores.has(p.id) ? p : undefined) });
+    });
     this.emit("end", table);
     return table;
   }
 
   // -------------------------------------------------------------------------
 
-  #sleep(ms: number): Promise<void> {
-    const signal = this.#abort.signal;
+  #sleep(ms: number, signal: AbortSignal): Promise<void> {
     return new Promise((resolve) => {
       if (signal.aborted) return resolve();
       const t = setTimeout(resolve, ms);

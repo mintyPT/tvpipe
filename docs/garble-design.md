@@ -62,6 +62,11 @@ after the guess.
 - Missing answers: no guess counts as wrong; no drawing leaves the page
   as it was (the next guesser still sees something). A blank layer pays
   nobody, even if its word is guessed by luck.
+- Joining late: from the next round (the late-join setting: wait or
+  closed). Leaving: a player who left or was removed is out; one whose
+  phone is only away stays in. When a round would start with fewer than
+  the minimum players (3) still in the game, the game ends there, to its
+  final scores.
 
 A guess is about the **latest** layer: "what is it now?". It is right
 when it says that layer's word (§3).
@@ -132,7 +137,9 @@ drawer; the next player's guess card flies in with ✓ or ✗; then the
 next layer draws on top in its drawer's colour, and so on. At the end
 the whole picture stands with a legend (each colour, its word, its
 drawer), then shrinks into the gallery. Phones can react meanwhile
-(four bubbles that float up the TV).
+(four bubbles that float up the TV). Guesses are judged as typed, but
+shown (on the TV, in the gallery) as `party.moderate` lets them: a
+refused one says "(hidden)" with its ✓ or ✗.
 
 **Best move.** After the last picture, the gallery: every layer of the
 round with ink is a candidate (on the phone: the picture up to that
@@ -164,10 +171,23 @@ word reaches only its drawer until the reveal; a guess only its writer;
 the picture of a step only the player at that step. `test/game.test.ts`
 watches every view of a whole game for leaks.
 
+The TV is behind the phones (docs/games.md): everything the TV shows,
+a step, a picture of the reveal and its layers, the vote, the best
+move, the scores, the podium, is set in `party.withTv`, so a phone
+never says "you won" before the TV shows who; deadlines are
+`party.deadline` (counted from when the step is on the TV), and both
+count down with `client.now()`. Replies to a phone's own action (its
+guess sent, its drawing in) stay instant. Tested with a TV 250 ms
+behind.
+
+`close()` (the host page's) ends a running game and its timers, bots'
+included, with no final screen: the lobby comes back at once on the TV
+and the phones, latecomers are in, and nothing of the closed game
+writes to the party afterwards; `play()` starts a new one.
+
 ## 8. Not done (yet)
 
 - More than 12 players (the reveal would need spotlights).
-- Joining mid-game: newcomers wait for the next round.
 - An ink limit per layer, and rounds where the picture is only shown
   for a few seconds.
 - Bots cannot see drawings: the host page gives them what the latest

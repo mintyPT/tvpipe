@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-import { Party } from "@tvpipe/party";
+import { Party, type PartyOptions } from "@tvpipe/party";
 import { dropOuts, MemoryRelay } from "@tvpipe/party/testing";
 
 import { Bot, bots } from "../game/bots.ts";
@@ -32,9 +32,12 @@ async function until(cond: () => boolean, ms = 3000): Promise<void> {
   }
 }
 
-async function game(n: number, opts: { rounds?: number; silent?: number; length?: number; oracle?: boolean; lang?: "en" | "de"; voter?: boolean } = {}) {
+async function game(
+  n: number,
+  opts: { rounds?: number; silent?: number; length?: number; oracle?: boolean; lang?: "en" | "de"; voter?: boolean; tvDelay?: number; moderate?: PartyOptions["moderate"]; think?: number } = {},
+) {
   const relay = new MemoryRelay();
-  const party = new Party({ grace: 100, maxPlayers: 12 }).listen(relay);
+  const party = new Party({ grace: 100, maxPlayers: 12, tvDelay: opts.tvDelay, moderate: opts.moderate }).listen(relay);
   const g = new Garble(party, { words: WORDS, rounds: opts.rounds ?? 1, timings: fast, rng: seeded(11), length: opts.length, lang: opts.lang });
   g.open();
   const phases: string[] = [];
@@ -45,7 +48,7 @@ async function game(n: number, opts: { rounds?: number; silent?: number; length?
     room: party.code,
     key: party.joinKey,
     rng: seeded(n),
-    think: () => 3,
+    think: () => opts.think ?? 3,
     oracle: opts.oracle === false ? undefined : (id: string) => g.meant(id),
   };
   const silent = opts.silent ?? 0;
@@ -67,7 +70,14 @@ async function game(n: number, opts: { rounds?: number; silent?: number; length?
   g.on("phase", (p) => {
     if (p === "reveal") rounds.push(structuredClone({ pictures: g.round!.pictures, seats: g.round!.seats.map((x) => x.id), deals: g.round!.deals }));
   });
-  return { party, g, players, phases, rounds, close: () => party.close() };
+  /** One more bot, joining now (a latecomer). */
+  const add = async (name: string) => {
+    const b = new Bot({ ...o, name });
+    await b.join();
+    players.push(b);
+    return b;
+  };
+  return { party, g, players, phases, rounds, add, close: () => party.close() };
 }
 
 test("a whole game with 4 players", async () => {
@@ -399,6 +409,243 @@ test("settings: the VIP only, before a game", async () => {
     await assert.rejects(players[0]!.client.act("settings", { length: 4 }), /length/);
     await assert.rejects(players[0]!.client.act("settings", { rounds: 9 }), /rounds/);
     await until(() => players[2]!.client.view["room"].undo === false && players[2]!.client.view["room"].rounds === 3);
+  } finally {
+    for (const b of players) b.close();
+    close();
+  }
+});
+
+test("a TV 250 ms behind: every phone gets a phase, a step and a result when the TV shows it, never before; deadlines count from then", async () => {
+  const tvDelay = 250;
+  const { party, g, players, phases, close } = await game(4, { tvDelay });
+  try {
+    /** A view's place in the game: the phase, with its round and its step (play) or picture (reveal). */
+    const key = (v: { phase?: string; round?: number; step?: number; index?: number } | undefined) => (v?.phase === "final" ? "final" : `${String(v?.round)}:${String(v?.phase)}:${String(v?.step ?? v?.index ?? "")}`);
+    // When the host changed the TV to each, and when each phone got there.
+    const tv = new Map<string, number>();
+    const off = party.on("screen-view", (v) => {
+      const k = key(v["screen"] as Parameters<typeof key>[0]);
+      if (!tv.has(k)) tv.set(k, Date.now());
+    });
+    const timings = g.timings;
+    const lengths: Record<string, number> = { first: timings.firstDraw, turn: timings.guess + timings.draw, last: timings.guess };
+    const early: string[] = [];
+    const short: string[] = [];
+    let checked = 0;
+    for (const b of players) {
+      let last = "";
+      let result = "";
+      b.client.on("view", (v) => {
+        const room = v["room"] ?? {};
+        const me = v["me"] ?? {};
+        const k = key(room);
+        if (k !== last) {
+          last = k;
+          const at = tv.get(k);
+          if (at !== undefined) {
+            checked++;
+            if (Date.now() - at < tvDelay - 30) early.push(`${b.name}: ${k} ${Date.now() - at} ms after the TV`);
+            if (room.phase === "play") {
+              const left = room.deadline - party.now();
+              if (left < lengths[room.kind]! - 60) short.push(`${b.name}: ${k} ${left} ms of ${lengths[room.kind]}`);
+            }
+          }
+        }
+        // The best move's result and the scores: not before the TV shows them.
+        if ((me.task === "best" || me.task === "scores") && result !== `${room.round}:${me.task}`) {
+          result = `${room.round}:${me.task}`;
+          const at = tv.get(`${room.round}:${me.task}:`);
+          if (at === undefined || Date.now() - at < tvDelay - 30) early.push(`${b.name}: ${result} ${at === undefined ? "before the TV" : `${Date.now() - at} ms after the TV`}`);
+        }
+      });
+    }
+    const end = new Promise((r) => g.once("end", r));
+    await players[0]!.client.act("start");
+    await end;
+    await until(() => players.every((b) => b.client.view["me"]?.task === "final"));
+    off();
+    assert.equal(phases.filter((p) => p === "play").length, 4);
+    assert.ok(checked > 40, `${checked} phases checked`);
+    assert.deepEqual(early, []);
+    assert.deepEqual(short, []);
+    assert.deepEqual(
+      players.map((b) => b.errors),
+      [[], [], [], []],
+    );
+  } finally {
+    for (const b of players) b.close();
+    close();
+  }
+});
+
+test("too few players left: the game ends before the next round, to its final screen; an away phone still counts", async () => {
+  // Two of four leave in round 1: no round 2.
+  {
+    const { party, g, players, phases, close } = await game(4, { rounds: 2 });
+    try {
+      g.once("phase", function kick(p) {
+        if (p !== "scores") return void g.once("phase", kick);
+        for (const victim of party.players.filter((x) => !x.vip).slice(0, 2)) party.kick(victim);
+      });
+      const end = new Promise<{ id: string }[]>((r) => g.once("end", r));
+      await players[0]!.client.act("start");
+      const table = await end;
+      assert.equal(phases.filter((p) => p === "reveal").length, 1, "one round");
+      assert.equal(phases.at(-1), "final");
+      assert.equal(table.length, 2);
+      assert.equal((party.screen.peek() as { phase: string }).phase, "final");
+      assert.equal(party.inProgress, false);
+    } finally {
+      for (const b of players) b.close();
+      close();
+    }
+  }
+  // Three, one of them away when round 2 starts: it is played.
+  {
+    const { party, g, players, phases, close } = await game(3, { rounds: 2 });
+    try {
+      g.once("phase", function away(p) {
+        if (p !== "scores") return void g.once("phase", away);
+        players[2]!.client.drop({ away: 2500 });
+      });
+      const end = new Promise<{ id: string }[]>((r) => g.once("end", r));
+      await players[0]!.client.act("start");
+      const table = await end;
+      assert.equal(phases.filter((p) => p === "reveal").length, 2, "both rounds");
+      assert.equal(table.length, 3);
+      assert.equal(party.players.length, 3);
+    } finally {
+      for (const b of players) b.close();
+      close();
+    }
+  }
+});
+
+test("close() mid-round: the lobby at once, nothing more is written, no final screen; a later play() starts afresh", async () => {
+  const { party, g, players, phases, add, close } = await game(4, { rounds: 2, think: 150 });
+  try {
+    let ended = false;
+    g.on("end", () => (ended = true));
+    await players[0]!.client.act("start");
+    await until(() => g.phase === "play" && (party.screen.peek() as { step?: number }).step === 2);
+    const late = await add("Late");
+    await until(() => late.client.view["me"]?.task === "wait");
+    g.close();
+    assert.equal(g.running, false);
+    assert.equal(g.phase, "lobby");
+    assert.equal(party.inProgress, false);
+    assert.equal(party.players.find((p) => p.name === "Late")!.waiting, false, "latecomers are in");
+    assert.equal((party.screen.peek() as { phase: string }).phase, "lobby");
+    assert.equal((party.room.peek() as { phase: string }).phase, "lobby");
+    assert.deepEqual(
+      party.players.map((p) => (p.state.peek() as { task: string }).task),
+      ["lobby", "lobby", "lobby", "lobby", "lobby"],
+    );
+    await until(() => players.every((b) => b.client.view["me"]?.task === "lobby"));
+    const snapshot = () => JSON.stringify([party.screen.peek(), party.room.peek(), party.players.map((p) => p.state.peek())]);
+    const then = snapshot();
+    let flushed = 0;
+    const off = party.on("screen-view", () => flushed++);
+    // Longer than any step, the reveal, the vote and the scores with these timings.
+    await new Promise((r) => setTimeout(r, 3000));
+    off();
+    assert.equal(snapshot(), then, "nothing written after close()");
+    assert.equal(flushed, 0);
+    assert.equal(ended, false, "closing is not finishing");
+    assert.ok(!phases.includes("final") && !phases.includes("reveal"));
+    // The VIP starts a new game from the start, the latecomer in it.
+    const end = new Promise<{ score: number }[]>((r) => g.once("end", r));
+    const from = phases.length;
+    await players[0]!.client.act("start");
+    await until(() => g.phase === "play");
+    assert.equal((party.screen.peek() as { round: number; step: number }).round, 1);
+    assert.equal((party.screen.peek() as { step: number }).step, 1);
+    assert.equal(g.round!.seats.length, 5);
+    const table = await end;
+    assert.equal(table.length, 5);
+    assert.equal(phases.slice(from).filter((p) => p === "reveal").length, 2);
+    assert.equal(phases.at(-1), "final");
+  } finally {
+    for (const b of players) b.close();
+    close();
+  }
+});
+
+test("a closed bot never acts: its pending answers go with it", async () => {
+  const { g, players, close } = await game(3, { think: 400 });
+  try {
+    await players[0]!.client.act("start");
+    await until(() => g.phase === "play" && players[2]!.client.view["me"]?.task === "draw");
+    players[2]!.close();
+    await new Promise((r) => setTimeout(r, 700));
+    assert.deepEqual(players[2]!.errors, [], "no act on a closed client");
+    g.close();
+  } finally {
+    for (const b of players) b.close();
+    close();
+  }
+});
+
+test("a late joiner waits, then plays from the next round", async () => {
+  const { party, g, players, add, close } = await game(3, { rounds: 2 });
+  try {
+    const end = new Promise<{ name: string }[]>((r) => g.once("end", r));
+    await players[0]!.client.act("start");
+    await until(() => g.phase === "play");
+    const late = await add("Late");
+    await until(() => late.client.view["me"]?.task === "wait");
+    assert.equal(late.client.view["me"].note, "round");
+    assert.equal(party.players.find((p) => p.name === "Late")!.waiting, true);
+    assert.ok(!g.round!.seats.some((p) => p.name === "Late"), "not in the running round");
+    await until(() => late.client.view["room"]?.round === 2 && late.client.view["me"]?.task === "draw", 15_000);
+    assert.equal(party.players.find((p) => p.name === "Late")!.waiting, false);
+    const table = await end;
+    assert.deepEqual(table.map((l) => l.name).sort(), ["Ada", "Bea", "Cy", "Late"]);
+    assert.deepEqual(late.errors, []);
+  } finally {
+    for (const b of players) b.close();
+    close();
+  }
+});
+
+test("the VIP removes a player from the phone in the lobby, not during a game", async () => {
+  const { party, g, players, close } = await game(4);
+  try {
+    await assert.rejects(players[1]!.client.act("kick", { id: players[3]!.client.you!.id }), /VIP/);
+    await assert.rejects(players[0]!.client.act("kick", { id: players[0]!.client.you!.id }), /player/i);
+    await players[0]!.client.act("kick", { id: players[3]!.client.you!.id });
+    assert.equal(party.players.length, 3);
+    await until(() => players[3]!.client.status === "closed");
+    await players[0]!.client.act("start");
+    await assert.rejects(players[0]!.client.act("kick", { id: players[2]!.client.you!.id }), /game/i);
+    const end = new Promise<unknown[]>((r) => g.once("end", r));
+    assert.equal((await end).length, 3);
+  } finally {
+    for (const b of players) b.close();
+    close();
+  }
+});
+
+test("guesses shown on the TV and in the gallery go through party.moderate; judged as typed", async () => {
+  const moderate: PartyOptions["moderate"] = (text, { kind, player }) => (kind !== "guess" ? undefined : player?.name === "Ada" ? false : `~${text}`);
+  const { party, g, players, rounds, close } = await game(4, { moderate });
+  try {
+    const reveals: { layers: { guess: { by: { name: string }; text: string; right: boolean; hidden?: boolean } | null }[] }[] = [];
+    party.on("screen-view", (v) => {
+      const s = v["screen"] as { phase?: string; picture?: (typeof reveals)[number] };
+      if (s?.phase === "reveal" && s.picture) reveals.push(s.picture);
+    });
+    const end = new Promise((r) => g.once("end", r));
+    await players[0]!.client.act("start");
+    await end;
+    const guesses = reveals.flatMap((p) => p.layers.map((l) => l.guess!));
+    assert.ok(guesses.length > 0);
+    for (const x of guesses) {
+      if (x.by.name === "Ada") assert.deepEqual([x.text, x.hidden], ["", true]);
+      else assert.ok(x.text.startsWith("~"), x.text);
+    }
+    // The verdicts are the typed text's.
+    for (const p of rounds[0]!.pictures) for (const l of p.layers) assert.equal(l.guess!.right, judge(l.guess!.text, l.word, "en", WORDS.en));
   } finally {
     for (const b of players) b.close();
     close();

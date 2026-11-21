@@ -659,7 +659,7 @@ function reveal(s) {
     const r = rows[k];
     if (!r || r.querySelector(".gcard")) return;
     const g = l.guess;
-    const text = h("span", { class: `text${g?.text ? "" : " none"}` }, g?.text || t.noGuess);
+    const text = h("span", { class: `text${g?.text ? "" : " none"}` }, g?.hidden ? t.hiddenGuess : g?.text || t.noGuess);
     const card = h(
       "div",
       { class: `paper gcard${animate ? " fly" : ""}`, style: { "--r": `${(jitter(`g${k}`) * 2.4).toFixed(1)}deg` } },

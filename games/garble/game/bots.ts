@@ -107,6 +107,8 @@ export class Bot {
   readonly #o: BotOptions;
   readonly #rng: () => number;
   #handled = new Set<string>();
+  /** Pending answers, cleared by {@link close}: a closed bot never acts. */
+  #timers = new Set<ReturnType<typeof setTimeout>>();
 
   constructor(o: BotOptions) {
     this.#o = o;
@@ -124,9 +126,11 @@ export class Bot {
     if (this.#handled.has(key)) return;
     this.#handled.add(key);
     const delay = this.#o.think ? this.#o.think() : this.#rng() * 300;
-    setTimeout(() => {
+    const t = setTimeout(() => {
+      this.#timers.delete(t);
       fn().catch((e: { code?: string }) => this.errors.push(e.code ?? String(e)));
     }, delay);
+    this.#timers.add(t);
   }
 
   /** A guess: the word (mostly), one of its synonyms, its plural or a slip of it, or nonsense. */
@@ -152,7 +156,7 @@ export class Bot {
     switch (me.task) {
       case "lobby":
       case "final": {
-        if (me.task === "final") this.#handled.clear();
+        if (me.task === "final" || me.task === "lobby") this.#handled.clear();
         const vip = (view["roster"] ?? []).find((r: { id: string }) => r.id === c.you?.id)?.vip;
         const ready = (view["roster"] ?? []).filter((r: { connected: boolean }) => r.connected).length;
         if (this.#o.autoStart && vip && me.task === "lobby" && ready >= (room.minPlayers ?? 3)) this.#once(`start:${ready}`, () => c.act("start"));
@@ -180,6 +184,8 @@ export class Bot {
   }
 
   close(): void {
+    for (const t of this.#timers) clearTimeout(t);
+    this.#timers.clear();
     this.client.close();
   }
 }

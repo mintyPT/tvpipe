@@ -42,6 +42,7 @@ const EN = {
   drewIt: (/** @type {string} */ name) => `drawn by ${name}`,
   read: (/** @type {string} */ name) => `${name} read`,
   noGuess: "(no guess)",
+  hiddenGuess: "(hidden)",
   blank: "(nothing drawn)",
   each: (/** @type {number} */ n) => `+${n} each`,
   // Best move
@@ -100,6 +101,7 @@ const DE = {
   drewIt: (name) => `gezeichnet von ${name}`,
   read: (name) => `${name} las`,
   noGuess: "(kein Tipp)",
+  hiddenGuess: "(ausgeblendet)",
   blank: "(nichts gezeichnet)",
   each: (n) => `je +${n}`,
   bestTitle: "Bester Zug",
