@@ -24,6 +24,8 @@ export interface BotOptions {
   think?: () => number;
   /** Never answer (to test deadlines). */
   silent?: boolean;
+  /** The lies to write, as they are (default {@link LIES} in the room's language, now and then with the bot's name). */
+  lies?: readonly string[] | undefined;
 }
 
 /** The bots' lies per language (the room's: `room.lang`). */
@@ -173,10 +175,11 @@ export class Bot {
         return;
       case "lie":
         if (!me.done) {
-          const lies = LIES[pickLang(room.lang)];
+          const own = this.#o.lies;
+          const lies = own ?? LIES[pickLang(room.lang)];
           const base = lies[Math.floor(this.#rng() * lies.length)]!;
           // Now and then the same idea as another bot (merged lies).
-          const lie = { text: this.#rng() < 0.3 ? base : `${base} ${this.name}` };
+          const lie = { text: own || this.#rng() < 0.3 ? base : `${base} ${this.name}` };
           if (!this.#handled.has(`lie:${turn}`)) c.input({ typing: true });
           this.#once(`lie:${turn}`, () => c.act("lie", lie));
         }

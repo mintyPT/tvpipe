@@ -113,7 +113,15 @@ join and play by themselves; join with your phone (or the join link in
 a browser tab), add two bots, start. `tvpipe game play --help`: tunnels (`--tunnel=opentunnel`,
 `--no-tunnel`), the LAN (`--lan`), `--window`.
 
-## Tests
+## Checking it
+
+```sh
+npm run check && npm test          # types; the rules, the prompts, whole games with bots in Node
+npm run build && node test/live/play.ts   # a live game: tvpipe, headless Chrome, a phone, bots; screenshots in /tmp/drawbluff-play
+node test/live/play.ts --lang de --rounds 2 --animate
+node test/live/play.ts --long      # the longest titles there are (shots in /tmp/drawbluff-play-long)
+node test/live/play.ts --shots ../../site/static/games/drawbluff   # the games list's pictures (test/live/scenario.ts)
+```
 
 `npm test`: the rules and scoring (the rule vectors in
 `test/vectors/rules.txt`, written by `node test/vectors.ts --bless`),
@@ -126,19 +134,31 @@ there), the host closing a game and starting the next, late joiners in
 every mode, the VIP removing a player, three
 games in one room without a repeated prompt, a whole game in German,
 a game of animated drawings).
-`npm run build && node test/live/play.ts [--zip] [--bots N]
-[--rounds N] [--lang de] [--animate] [--tunnel=PROVIDER]` runs the real thing: `tvpipe
-playshare` on the bundle (or the zip), a headless Chrome as the window
-(the launcher, the host page), as a phone (it joins, draws with touch
-events, lies and votes) and as the TV (the `browser` receiver's player
+
+`node test/live/play.ts [--zip] [--bots N] [--rounds N] [--lang en|de]
+[--animate] [--long] [--out DIR] [--shots DIR] [--tunnel=PROVIDER]`
+runs the real thing: `tvpipe game play` on the bundle (or the zip), a
+headless Chrome as the window (the launcher, the host page), as a phone
+(it joins, draws with touch events, lies and votes), as the TV page (the
+watch link at 1280×720) and as the TV (the `browser` receiver's player
 page: the TV page went through tvpipe's own headless Chrome and the
-stream), bots through the phones' listener (the host page's bot
-buttons are for tests: they show only with `?bots` in its URL or with
-`tvpipe game play --dev`), and
-screenshots of the
-launcher, the host window, the TV and the phone (also at 320 px wide)
-per phase, each checked for text out of its box and, with `--lang de`
-(a German room and phone, shots in `/tmp/drawbluff-de`), for English
-left on the screen; `--animate` turns animated drawings on from the
+stream), each in a window of its own, and bots through the phones'
+listener (the host page's bot buttons are for tests: they show only
+with `?bots` in its URL or with `tvpipe game play --dev`). It takes
+screenshots of the launcher, the host window, the TV and the phone
+(also at 320 px wide) per phase and checks each: no text out of its box
+or off the screen, no title cut off with an ellipsis or broken in a
+word, and with `--lang de` (a German room and phone, shots in
+`/tmp/drawbluff-de`) no English left. It drops a bot out and brings
+it back by name, and has the phone forget everything, reload and join
+again. Any page's script error (exceptions, `console.error`, failed
+loads, over DevTools) and the bots' errors fail it too. `--animate` turns animated drawings on from the
 VIP's phone and draws a second frame (copied from the first, the mouth
-changed).
+changed). `--long` deals the room's longest prompts (and those with the
+longest words), the bots lie with the file's longest decoys and the
+phone types a lie of 40 characters, with 7 bots (a gallery, full
+reveals). `--shots DIR` writes the games list's pictures
+(docs/game-catalog.md): the round of `test/live/scenario.ts` with
+people's names, `tv-vote`, `phone-draw` and `phone-vote`. It needs
+Chrome and a built tvpipe (`TVPIPE_BINARY`, else `target/release`, else
+`target/debug`).

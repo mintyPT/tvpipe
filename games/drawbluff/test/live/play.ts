@@ -8,18 +8,27 @@
  * stream); bots join through the public listener. Screenshots of the
  * launcher, the host window, the TV and the phone per phase.
  *
- *   npm run build && node test/live/play.ts [--zip] [--bots N] [--rounds N] [--tunnel=PROVIDER] [--lang en|de] [--animate] [--out DIR] [--shots DIR]
+ *   npm run build && node test/live/play.ts [--zip] [--bots N] [--rounds N] [--tunnel=PROVIDER] [--lang en|de] [--animate] [--long] [--out DIR] [--shots DIR]
  *
  * `--animate`: the VIP turns animated drawings on; Phil draws frame 1,
  * copies it into frame 2 and changes the mouth (shots in
  * `…-animate`, the TV's drawings flip).
  *
+ * `--long`: the longest titles there are: the host page deals the
+ * room's longest prompts (and those with the longest words, with their
+ * decoys), the bots write the file's longest decoys as their lies and
+ * Phil a 40-character one (the most a phone takes), with 7 bots (a
+ * gallery, full reveals): no title may be cut off or broken in a word
+ * (shots in `…-long`).
+ *
  * `--lang de`: the host page sets the room to German (its Language
  * setting), the phone is a German one (`de-DE`); the screenshots go to
  * `/tmp/drawbluff-de` unless `--out`. Every shot also checks the layout
- * (the phone, also at 320 px wide, and the TV page in the host's
- * preview): no text running out of its box, nothing off the screen, no
- * English left in a German room.
+ * (the phone, also at 320 px wide, and the TV page at 1280×720): no
+ * text running out of its box, nothing off the screen, no title cut off
+ * (`data-fit`, no ellipsis on a title), no English left in a German
+ * room. Script errors in any page (over DevTools: exceptions,
+ * console.error, failed loads) and the bots' errors fail the run too.
  *
  * `--shots DIR`: the pictures for the games list (docs/game-catalog.md)
  * into DIR: `tv-vote` (the TV page), `phone-draw` and `phone-vote`. The
@@ -39,7 +48,7 @@
  */
 
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
@@ -57,11 +66,11 @@ const { values: args } = parseArgs({
     rounds: { type: "string", default: "1" },
     tunnel: { type: "string" },
     out: { type: "string" },
-    tv: { type: "string", default: "page" },
     lang: { type: "string", default: "en" },
     shots: { type: "string" },
     seed: { type: "string", default: String(SEED) },
     animate: { type: "boolean", default: false },
+    long: { type: "boolean", default: false },
   },
 });
 
@@ -77,12 +86,40 @@ const lang = args.lang === "de" ? "de" : "en";
 if (args.shots && (lang !== "en" || (args.bots !== undefined && Number(args.bots) !== NAMES.length))) {
   throw new Error(`--shots plays scenario.ts: in English, with ${NAMES.length} others`);
 }
-const nBots = args.shots ? NAMES.length : Number(args.bots ?? 2);
-const out = `${args.out ?? (lang === "de" ? "/tmp/drawbluff-de" : "/tmp/drawbluff-play")}${args.zip ? "-zip" : ""}${args.animate ? "-animate" : ""}`;
+if (args.shots && args.long) throw new Error("--shots plays scenario.ts, not --long");
+const nBots = args.shots ? NAMES.length : Number(args.bots ?? (args.long ? 7 : 2));
+const out = `${args.out ?? (lang === "de" ? "/tmp/drawbluff-de" : "/tmp/drawbluff-play")}${args.zip ? "-zip" : ""}${args.animate ? "-animate" : ""}${args.long ? "-long" : ""}`;
 mkdirSync(out, { recursive: true });
 if (args.shots) mkdirSync(args.shots, { recursive: true });
 const t0 = Date.now();
 const log = (m: string) => console.log(`${((Date.now() - t0) / 1000).toFixed(1).padStart(6)} ${m}`);
+
+/**
+ * `--long`: the room's prompts file cut to its longest prompts and those
+ * with the longest words (with their decoys and structures), the file's
+ * longest decoys (the bots' lies) and a lie of 40 characters for Phil.
+ */
+const longest = (() => {
+  const file = `prompts${lang === "en" ? "" : `.${lang}`}.txt`;
+  const lines: { tag: string; line: string; prompt: string }[] = [];
+  let tag = "";
+  for (const raw of readFileSync(new URL(`data/${file}`, here), "utf8").split("\n")) {
+    const line = raw.trim();
+    if (line === "" || line.startsWith("#")) continue;
+    const m = /^\[([a-z]+)\]$/.exec(line);
+    if (m) tag = m[1]!;
+    else lines.push({ tag, line, prompt: line.split("|")[0]!.trim() });
+  }
+  const word = (t: string) => Math.max(...t.split(" ").map((w) => w.length));
+  const pick = new Set([...[...lines].sort((a, b) => b.prompt.length - a.prompt.length).slice(0, 16), ...[...lines].sort((a, b) => word(b.prompt) - word(a.prompt)).slice(0, 8)]);
+  const decoys = [...new Set(lines.flatMap((l) => l.line.split("|").slice(1).map((d) => d.trim())))].sort((a, b) => b.length - a.length || word(b) - word(a));
+  return {
+    file,
+    prompts: [...pick].map((l) => `[${l.tag}]\n${l.line}\n`).join("\n"),
+    lies: decoys.slice(0, 12),
+    phil: lang === "de" ? "Bauchredner mit Sonnenblumenkernallergie" : "the overenthusiastic weatherforecaster",
+  };
+})();
 
 // tvpipe game play, the window left to us (--window none prints its URL).
 const tunnel = args.tunnel ? [`--tunnel=${args.tunnel}`] : ["--no-tunnel"];
@@ -101,9 +138,23 @@ log(`tvpipe game play ${args.zip ? "drawbluff.zip" : "games/drawbluff"}: ${start
 
 const browser = await Browser.launch();
 let failed = false;
+const problems: string[] = [];
+const problem = (p: string) => {
+  if (problems.includes(p)) return;
+  problems.push(p);
+  log(`PROBLEM ${p}`);
+};
+/** Every page (its errors over DevTools fail the run). */
+const tabs: [string, Tab][] = [];
+const reportErrors = () => {
+  for (const [name, tab] of tabs) {
+    for (const e of tab.errors.splice(0)) problem(`${name}: ${e.replace(/:\d+\/favicon/, ":PORT/favicon")}`);
+  }
+};
 try {
   // The window: the launcher first.
   const win = await browser.open(start, { width: 1100, height: 760 });
+  tabs.push(["the window", win]);
   await win.until(`document.querySelectorAll("#devices .device").length > 0`);
   await new Promise((r) => setTimeout(r, 1500)); // a discovery round: real TVs show up too
   await win.screenshot(`${out}/launcher.png`);
@@ -112,6 +163,10 @@ try {
   // Only the browser receiver (no real TV without asking).
   await win.eval(`document.querySelector('#devices .device[data-name="browser"]').click(); true`);
   await win.until(`!document.getElementById("start").disabled`);
+  if (args.long) {
+    await win.serve(`*/data/${longest.file}*`, longest.prompts);
+    log(`--long: the longest prompts, ${longest.prompts.split("\n").filter((l) => l && !l.startsWith("[")).length} of them`);
+  }
   if (args.shots) {
     // The scenario's prompts, as the host page fetches data/prompts.txt.
     await win.serve("*/data/prompts.txt*", promptsFile());
@@ -126,6 +181,8 @@ try {
   log("the host page runs the game");
   // The settings as the host picks them (HostPage.set: the form's own path).
   await win.eval(`(() => { drawbluff.page.set("rounds", ${JSON.stringify(args.rounds)}); drawbluff.page.set("timers", ${JSON.stringify(args.shots ? "normal" : "fast")}); return true; })()`);
+  // --long: a page of the gallery long enough to read its labels.
+  if (args.long) await win.eval(`(() => { drawbluff.game.configure({ timings: { ...drawbluff.game.timings, gallery: 9000 } }); return true; })()`);
   // The room's language, as the host page sets it.
   await win.eval(`(() => { drawbluff.page.set("lang", ${JSON.stringify(lang)}); return true; })()`);
   await win.until(`drawbluff.game.lang === ${JSON.stringify(lang)} && document.documentElement.lang === ${JSON.stringify(lang)}`);
@@ -138,9 +195,11 @@ try {
   await win.until(`!document.getElementById("player").hidden`, 60_000);
   const playerUrl = await win.eval<string>(`document.getElementById("player").href`);
   const tv = await browser.open(playerUrl, { width: 1280, height: 720 });
+  tabs.push(["the TV (the stream)", tv]);
   log(`TV: ${playerUrl.replace(/t=.*/, "t=…")}`);
-  // The TV page itself (the watch link, muted) for crisp pictures.
-  const screen = args.shots ? await browser.open(`${links.watch}&mute=1`, { width: 1280, height: 720 }) : undefined;
+  // The TV page itself (the watch link, muted) at the TV's size: its layout, crisp pictures.
+  const screen = await browser.open(`${links.watch}&mute=1`, { width: 1280, height: 720 });
+  tabs.push(["the TV page", screen]);
   const kept: string[] = [];
   const pic = async (tab: Tab, name: string, kind: "tv" | "phone", settle?: number) => {
     if (!args.shots || kept.some((f) => f.startsWith(`${name}.`))) return;
@@ -151,6 +210,7 @@ try {
   const phoneUrl = links.join.startsWith("https://") ? links.join : links.join;
   const PHONE = { width: 390, height: 844, mobile: true };
   const phone = await browser.open(phoneUrl, { ...PHONE, locale: lang === "de" ? "de-DE" : "en-US" });
+  tabs.push(["the phone", phone]);
   await phone.until(`!!document.getElementById("name")`, 20_000);
   await phone.screenshot(`${out}/phone-join.png`);
   log(`phone: navigator.language ${await phone.eval<string>("navigator.language")}, the join form says "${await phone.eval<string>(`document.querySelector("h1").textContent`)}"`);
@@ -164,33 +224,56 @@ try {
     key: new URLSearchParams(u.hash.slice(1)).get("k")!,
     think: () => 1200 + Math.random() * 2000,
   };
-  const botList: Bot[] = args.shots ? [] : await bots(nBots, joinAs);
+  const botList: Bot[] = args.shots ? [] : await bots(nBots, { ...joinAs, ...(args.long ? { lies: longest.lies } : {}) });
   const robots: { errors?: string[]; close(): void }[] = args.shots ? await actors(joinAs) : botList;
   log(`${robots.length} ${args.shots ? "players" : "bots"} joined through the phones' listener`);
 
   const shots: string[] = [];
-  const problems: string[] = [];
+  /** Elements that are names: they may end in an ellipsis (titles may not). */
+  const NAMES = [".n", ".nm", ".who", ".name", ".pchip", "#who", "#joined", ".pol .cap span", ".frames .frame span", ".plate span"].join(", ");
   /**
    * Layout problems in a document (`doc`: an expression): text running
    * out of its box (but where it ends with … on purpose), boxes off the
    * screen, and in a German room English words left.
    */
-  const layout = (doc: string) => `(() => {
+  const layout = (doc: string, tv: boolean) => `(() => {
     const doc = ${doc};
     if (!doc) return ["no document"];
+    const NAMES = ${JSON.stringify(NAMES)};
     const win = doc.defaultView;
     const out = [];
     const W = win.innerWidth, H = win.innerHeight;
     if (doc.documentElement.scrollWidth > W + 1) out.push("the page is wider than the screen: " + doc.documentElement.scrollWidth);
+    // What moves in or out right now (a frame sliding in) is checked once it is in place.
+    const moving = new Set(doc.getAnimations().filter((a) => a.effect?.getComputedTiming().iterations !== Infinity).map((a) => a.effect?.target).filter(Boolean));
+    const still = (el) => { for (let e = el; e; e = e.parentElement) if (moving.has(e)) return false; return true; };
     for (const el of doc.querySelectorAll("body *")) {
-      if (!el.checkVisibility || !el.checkVisibility()) continue;
-      if (["svg", "path", "rect", "canvas", "i", "input", "select", "option", "template"].includes(el.localName)) continue;
+      // (Not what is hidden, also by opacity: the winner's rosette waiting to drop in.)
+      if (!el.checkVisibility || !el.checkVisibility({ opacityProperty: true, visibilityProperty: true })) continue;
+      if (["svg", "canvas", "i", "input", "select", "option", "template"].includes(el.localName) || el.closest("svg")) continue;
       const cs = win.getComputedStyle(el);
       const text = (el.innerText || "").trim().slice(0, 60);
-      const clipped = cs.textOverflow === "ellipsis" || cs.webkitLineClamp !== "none" || cs.overflow === "hidden" && el.closest(".qr, #corner-qr");
-      if (!clipped && el.scrollWidth > el.clientWidth + 2 && el.clientWidth > 0 && cs.overflowX !== "auto" && cs.overflowX !== "scroll") out.push("too wide: " + el.localName + "." + el.className + " " + JSON.stringify(text));
+      const ellipsis = cs.textOverflow === "ellipsis" || cs.webkitLineClamp !== "none";
+      const clipped = ellipsis || cs.overflow === "hidden" && el.closest(".qr, #corner-qr");
+      // (On the TV only text itself: its podium's rosette and stingers stick out of their boxes on purpose.)
+      if (!clipped && (!${tv} || el.children.length === 0) && el.scrollWidth > el.clientWidth + 2 && el.clientWidth > 0 && cs.overflowX !== "auto" && cs.overflowX !== "scroll") out.push("too wide: " + el.localName + "." + el.className + " " + JSON.stringify(text));
+      // A title cut off with an ellipsis (names may be).
+      if (ellipsis && (el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1) && el.clientWidth > 0 && !el.matches(NAMES)) out.push("cut off: " + el.localName + "." + el.className + " " + JSON.stringify(text));
       const r = el.getBoundingClientRect();
-      if (r.width > 0 && (r.right > W + 2 || r.left < -2)) out.push("off the side: " + el.localName + "." + el.className + " " + JSON.stringify(text));
+      if (r.width > 0 && (r.right > W + 2 || r.left < -2) && still(el)) out.push("off the side: " + el.localName + "." + el.className + " " + JSON.stringify(text));
+      // The TV does not scroll.
+      if (${tv} && r.height > 0 && (r.bottom > H + 2 || r.top < -2) && still(el)) out.push("off the screen: " + el.localName + "." + el.className + " " + JSON.stringify(text));
+    }
+    // Titles fit their box whole (fit.js), never broken inside a word.
+    for (const el of doc.querySelectorAll("[data-fit]")) {
+      if (el.checkVisibility && !el.checkVisibility()) continue;
+      if (el.scrollWidth > el.clientWidth + 1) out.push("a title does not fit: " + JSON.stringify(el.textContent) + " " + el.scrollWidth + " > " + el.clientWidth);
+      const cs = win.getComputedStyle(el);
+      if (cs.hyphens === "auto" || cs.overflowWrap !== "normal" || cs.wordBreak !== "normal") out.push("a title may break in a word: " + JSON.stringify(el.textContent));
+    }
+    // A long lie stays readable whole in its field.
+    for (const el of doc.querySelectorAll("form input")) {
+      if (el.value && el.scrollWidth > el.clientWidth + 1) out.push("a lie does not fit its field: " + JSON.stringify(el.value) + " " + el.scrollWidth + " > " + el.clientWidth);
     }
     ${
       lang === "de"
@@ -200,15 +283,9 @@ try {
     }
     return out;
   })()`;
-  const check = async (where: string, tab: Tab, doc = "document") => {
-    const found = await tab.eval<string[]>(layout(doc)).catch((e: Error) => [`cannot check: ${e.message.slice(0, 120)}`]);
-    for (const f of found) {
-      const p = `${where}: ${f}`;
-      if (!problems.includes(p)) {
-        problems.push(p);
-        log(`LAYOUT ${p}`);
-      }
-    }
+  const check = async (where: string, tab: Tab, tv = false) => {
+    const found = await tab.eval<string[]>(layout("document", tv)).catch((e: Error) => [`cannot check: ${e.message.slice(0, 120)}`]);
+    for (const f of found) problem(`${where}: ${f}`);
   };
   const shot = async (name: string) => {
     await new Promise((r) => setTimeout(r, 1500)); // the TV is a stream: a little behind
@@ -216,8 +293,9 @@ try {
     await win.screenshot(`${out}/host-${name}.png`);
     await phone.screenshot(`${out}/phone-${name}.png`);
     await check(`phone ${name}`, phone);
-    // The TV page itself, in the host's preview (the TV's 1280×720).
-    await check(`tv ${name}`, win, `document.getElementById("preview").contentDocument`);
+    // The TV page itself at the TV's 1280×720.
+    await screen.screenshot(`${out}/screen-${name}.png`);
+    await check(`tv ${name}`, screen, true);
     // A small phone (320 px wide, an iPhone SE): long German words.
     await phone.resize({ width: 320, height: 640, mobile: true });
     await new Promise((r) => setTimeout(r, 300));
@@ -315,8 +393,21 @@ try {
     if (t.lie && !tasks.has(`lie:${t.key}`)) {
       tasks.add(`lie:${t.key}`);
       const artist = args.shots ? String((await phil())["artist"]?.name ?? "") : "";
-      const text = args.shots ? lieFor("Phil", artist) : lang === "de" ? "ein verdächtiger Streuselkuchen" : "a suspicious muffin";
-      await phone.eval(`(() => { const i = document.querySelector("form input"); i.value = ${JSON.stringify(text)}; i.form.requestSubmit(); return true; })()`);
+      const text = args.shots ? lieFor("Phil", artist) : args.long ? longest.phil : lang === "de" ? "ein verdächtiger Streuselkuchen" : "a suspicious muffin";
+      await phone.eval(`(() => { const i = document.querySelector("form input"); i.value = ${JSON.stringify(text)}; i.dispatchEvent(new Event("input", { bubbles: true })); return true; })()`);
+      if (args.long) {
+        // The longest lie, typed: readable whole in its field, also on a small phone.
+        await check("phone typing a long lie", phone);
+        await phone.screenshot(`${out}/phone-long-lie.png`);
+        await phone.resize({ width: 320, height: 640, mobile: true });
+        await new Promise((r) => setTimeout(r, 300));
+        await phone.eval(`document.querySelector("form input")?.dispatchEvent(new Event("input", { bubbles: true })); true`);
+        await check("small phone typing a long lie", phone);
+        await phone.screenshot(`${out}/phone-small-long-lie.png`);
+        await phone.resize(PHONE);
+      }
+      // (Unless the time ran out meanwhile.)
+      await phone.eval(`(() => { document.querySelector("form input")?.form.requestSubmit(); return true; })()`);
       log(`phone: lied${args.shots ? ` about ${artist}'s drawing: "${text}"` : ""}`);
     } else if (t.vote > 0 && !tasks.has(`vote:${t.key}`)) {
       tasks.add(`vote:${t.key}`);
@@ -386,8 +477,15 @@ try {
       // The phone's input or options first, then its answer.
       await new Promise((r) => setTimeout(r, 400));
       await shot(`${at}-${p}`);
-      if (p === "vote" && screen) {
-        if (!kept.some((f) => f.startsWith("tv-vote."))) {
+      if (p === "gallery" && args.long) {
+        // The labels under the drawings (they come once a drawing hangs).
+        await screen.until(`document.querySelectorAll(".pol .cap.on").length > 0`, 10_000).catch(() => {});
+        await new Promise((r) => setTimeout(r, 600));
+        await screen.screenshot(`${out}/screen-${at}-gallery-labels.png`);
+        await check(`tv ${at}-gallery-labels`, screen, true);
+      }
+      if (p === "vote") {
+        if (args.shots && !kept.some((f) => f.startsWith("tv-vote."))) {
           const artist = await win.eval<string>(`drawbluff.party.room.peek().artist?.name ?? ""`);
           log(`the TV's first vote: ${artist}'s "${dealt.get(artist) ?? "?"}"`);
         }
@@ -398,17 +496,20 @@ try {
     } else if (p === "reveal") {
       await new Promise((r) => setTimeout(r, 3000));
       await shot(`${at}-reveal`);
+      if (args.long) {
+        // The truth on the frame's plate, every title on the TV.
+        await win.until(`(() => { const s = drawbluff.party.screen.peek(); return s.phase !== "reveal" || s.step >= s.items.length; })()`, 30_000);
+        await shot(`${at}-reveal-truth`);
+      }
     }
   }
   await shot("final");
   const errors = robots.flatMap((b) => b.errors ?? []);
-  if (args.shots && kept.length < 3) {
-    log(`only these pictures: ${kept.join(", ")}`);
-    failed = true;
-  }
-  log(`game over: ${shots.length} screenshot sets in ${out}; bot errors: ${errors.length ? errors.join(", ") : "none"}; layout problems: ${problems.length || "none"}`);
-  if (problems.length > 0) failed = true;
-  // The End button: tvpipe ends, everyone is told.
+  if (errors.length > 0) problem(`the bots' errors: ${errors.join(", ")}`);
+  if (args.shots && kept.length < 3) problem(`only these pictures: ${kept.join(", ")}`);
+  reportErrors();
+  log(`game over: ${shots.length} screenshot sets in ${out}; problems: ${problems.length || "none"}`);
+  // The End button: tvpipe ends, everyone is told. Pages trying to reconnect after that are fine.
   await win.eval(`document.getElementById("quit").click(); true`);
   const code = await Promise.race([exited, new Promise<string>((r) => setTimeout(() => r("still running"), 15_000))]);
   await phone.until(`document.body.innerText.toLowerCase().includes("closed") || document.body.innerText.toLowerCase().includes("over")`, 5000).catch(() => {});
@@ -416,12 +517,18 @@ try {
   log(`tvpipe exited: ${code}; the phone says: ${(await phone.eval<string>(`document.querySelector("main")?.innerText.slice(0, 80) ?? ""`)).replace(/\n/g, " / ")}`);
   for (const b of robots) b.close();
   if (code !== 0) failed = true;
+  for (const [, tab] of tabs) tab.errors.splice(0, tab.errors.length, ...tab.errors.filter((e) => !/ERR_CONNECTION_REFUSED|WebSocket connection/.test(e)));
+  reportErrors();
 } catch (err) {
   failed = true;
   log(`FAILED: ${(err as Error).stack ?? String(err)}`);
+  reportErrors();
   writeFileSync(`${out}/tvpipe.log`, tvpipeLog.join("\n"));
 } finally {
+  writeFileSync(`${out}/problems.txt`, problems.join("\n") + "\n");
   browser.close();
   proc.kill();
 }
+if (problems.length > 0) failed = true;
+log(failed ? `FAILED (${problems.length} problems, ${out}/problems.txt)` : "ok");
 process.exit(failed ? 1 : 0);

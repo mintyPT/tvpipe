@@ -23,13 +23,15 @@ export class Tab {
   #id = 0;
   readonly #pending = new Map<number, { resolve: (v: any) => void; reject: (e: Error) => void }>();
   readonly #events = new Map<string, (params: any) => void>();
+  /** Errors the page reported (uncaught exceptions, console.error, failed loads) since `watch()`. */
+  readonly errors: string[] = [];
 
   constructor(ws: WebSocket) {
     this.#ws = ws;
     ws.onmessage = (e) => {
       const msg = JSON.parse(String(e.data));
       if (msg.method) {
-        this.#events.get(msg.method)?.(msg.params);
+        this.#event(msg.method, msg.params);
         return;
       }
       const p = this.#pending.get(msg.id);
@@ -49,6 +51,25 @@ export class Tab {
   /** Handles a DevTools event of the tab (`Fetch.requestPaused`, …); one handler per event. */
   on(method: string, fn: (params: any) => void): void {
     this.#events.set(method, fn);
+  }
+
+  #event(method: string, params: any): void {
+    this.#events.get(method)?.(params);
+    if (method === "Runtime.exceptionThrown") {
+      const d = params.exceptionDetails;
+      this.errors.push(`page error: ${d.exception?.description ?? d.text} (${d.url ?? ""}:${d.lineNumber})`.slice(0, 600));
+    } else if (method === "Runtime.consoleAPICalled" && (params.type === "error" || params.type === "assert")) {
+      const args = (params.args ?? []).map((a: any) => a.value ?? a.description ?? a.type).join(" ");
+      this.errors.push(`console.${params.type}: ${args}`.slice(0, 600));
+    } else if (method === "Log.entryAdded" && params.entry.level === "error") {
+      this.errors.push(`log (${params.entry.source}): ${params.entry.text} ${params.entry.url ?? ""}`.slice(0, 600));
+    }
+  }
+
+  /** Collects the page's errors into `errors` (Runtime and Log events). */
+  async watch(): Promise<void> {
+    await this.send("Runtime.enable");
+    await this.send("Log.enable");
   }
 
   /**
@@ -100,6 +121,7 @@ export class Tab {
    * px from the top left, times `scale`) for a picture of a fixed size.
    */
   async capture(o: { format?: "png" | "webp" | "jpeg"; quality?: number; clip?: { width: number; height: number; scale: number } } = {}): Promise<Buffer> {
+    await this.send("Page.bringToFront");
     const r = await this.send("Page.captureScreenshot", {
       format: o.format ?? "png",
       ...(o.quality === undefined ? {} : { quality: o.quality }),
@@ -145,6 +167,10 @@ export class Browser {
         "--no-first-run",
         "--no-default-browser-check",
         "--autoplay-policy=no-user-gesture-required",
+        // Every tab animates as if it were in front (the TV and the phone side by side).
+        "--disable-background-timer-throttling",
+        "--disable-renderer-backgrounding",
+        "--disable-backgrounding-occluded-windows",
         "about:blank",
       ],
       { stdio: "ignore" },
@@ -162,11 +188,32 @@ export class Browser {
     return new Browser(proc, port);
   }
 
-  /** A tab at a viewport; `locale` (`de-DE`) for its language (`navigator.language`, Intl). */
+  /**
+   * A tab at a viewport, in a window of its own, its errors watched
+   * (`Tab.errors`); `locale` (`de-DE`) for its language
+   * (`navigator.language`, Intl).
+   */
   async open(url: string, view: { width: number; height: number; mobile?: boolean; locale?: string }): Promise<Tab> {
-    const t = (await (await fetch(`http://127.0.0.1:${this.#port}/json/new?about:blank`, { method: "PUT" })).json()) as {
-      webSocketDebuggerUrl: string;
-    };
+    // A window of its own: headless Chrome renders (and animates) only the front tab of a window.
+    const version = (await (await fetch(`http://127.0.0.1:${this.#port}/json/version`)).json()) as { webSocketDebuggerUrl: string };
+    const root = new WebSocket(version.webSocketDebuggerUrl);
+    await new Promise((r, j) => {
+      root.onopen = r;
+      root.onerror = j;
+    });
+    const targetId = await new Promise<string>((resolve, reject) => {
+      root.onmessage = (e) => {
+        const msg = JSON.parse(String(e.data));
+        if (msg.id !== 1) return;
+        if (msg.error) reject(new Error(JSON.stringify(msg.error)));
+        else resolve(msg.result.targetId);
+      };
+      root.send(JSON.stringify({ id: 1, method: "Target.createTarget", params: { url: "about:blank", newWindow: true } }));
+    });
+    root.close();
+    const list = (await (await fetch(`http://127.0.0.1:${this.#port}/json/list`)).json()) as { id: string; webSocketDebuggerUrl: string }[];
+    const t = list.find((x) => x.id === targetId);
+    if (!t) throw new Error("the new window has no target");
     const ws = new WebSocket(t.webSocketDebuggerUrl);
     await new Promise((r, j) => {
       ws.onopen = r;
@@ -174,6 +221,7 @@ export class Browser {
     });
     const tab = new Tab(ws);
     await tab.send("Page.enable");
+    await tab.watch();
     await tab.send("Emulation.setDeviceMetricsOverride", {
       width: view.width,
       height: view.height,
