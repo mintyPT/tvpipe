@@ -99,8 +99,9 @@ try {
   await set("hints", args.hints === "off" ? "off" : "on");
   await set("mixed", args.mixed === "on" && !shots ? "on" : "off");
   await win.until(`krakel.game.lang === ${JSON.stringify(lang)} && krakel.game.settings.hints === ${args.hints !== "off"}`, 5000);
-  // Short timers; the phone gets time to draw and to guess twice.
-  const timings = shots ? { draw: 60_000, guess: 30_000, lead: 3000, reveal: 4000, vote: 12_000, ranked: 9000, scores: 6000 } : { draw: 30_000, guess: 16_000, lead: 3000, reveal: 4500, vote: 14_000, ranked: 10_000, scores: 6000 };
+  // Short timers; the phone gets time to draw and to guess twice, and to give its heart after
+  // the first gallery's drop-out check (a bot away and back by name: about 11 s).
+  const timings = shots ? { draw: 60_000, guess: 30_000, lead: 3000, reveal: 4000, vote: 12_000, ranked: 9000, scores: 6000 } : { draw: 30_000, guess: 16_000, lead: 3000, reveal: 4500, vote: 24_000, ranked: 10_000, scores: 6000 };
   await win.eval(`(() => { krakel.game.configure({ timings: ${JSON.stringify(timings)}, lockout: 2 }); return true; })()`);
   if (shots) await win.eval(`(() => { krakel.game.script = ${JSON.stringify(scenario.script())}; return true; })()`);
   if (args.long && !shots) {
@@ -114,11 +115,10 @@ try {
   const PHONE = { width: 390, height: 844, mobile: true };
   const phone = await browser.open(links.join, { ...PHONE, locale: lang === "de" ? "de-DE" : "en-US" });
   await phone.until(`!!document.getElementById("name")`, 20_000);
-  // A second TV with its sound on (the first is the muted preview's link), and every page's errors.
+  // A second TV with its sound on (the first is the muted preview's link). Every page's errors
+  // come over DevTools from before it loads (Tab.errors: exceptions, console.error, failed loads).
   const loud = await browser.open(links.watch, { width: 640, height: 360 });
   const pages: [string, Tab][] = [["the window", win], ["the TV", tv], ["the TV with sound", loud], ["the phone", phone]];
-  const watchErrors = (tab: Tab) => tab.eval(`(() => { if (globalThis.__errors) return true; globalThis.__errors = []; addEventListener("error", (e) => __errors.push(String(e.message))); addEventListener("unhandledrejection", (e) => __errors.push(String(e.reason?.message ?? e.reason))); return true; })()`);
-  for (const [, tab] of pages) await watchErrors(tab);
   await sleep(600);
   await tv.screenshot(`${out}/tv-00-empty.png`);
   await phone.screenshot(`${out}/phone-00-join.png`);
@@ -315,7 +315,6 @@ try {
         await phone.eval(`location.reload(); true`);
         await sleep(400);
         await phone.until(`!!document.querySelector("canvas.pad")`, 10_000);
-        await watchErrors(phone);
         await sleep(500);
         const after = await phone.eval<number>(`JSON.parse(localStorage.getItem("krakel:draft")).strokes.length`);
         log(`phone: reloaded while drawing: ${before} strokes before, ${after} after`);
@@ -410,9 +409,7 @@ try {
     const sound = await loud.eval<string>(`document.querySelector(".scene.final") ? "final" : ""`);
     if (sound !== "final") problem("the TV with sound did not reach the end");
   }
-  for (const [name, tab] of pages) {
-    for (const e of await tab.eval<string[]>(`globalThis.__errors ?? []`).catch(() => [])) problem(`${name}: ${e}`);
-  }
+  for (const [name, tab] of pages) for (const e of tab.errors.splice(0)) problem(`${name}: ${e.replace(/:\d+\/favicon/, ":PORT/favicon")}`);
   log(`game over; problems: ${problems.length || "none"}; screenshots in ${out}`);
   if (problems.length > 0) failed = true;
   await win.eval(`document.getElementById("quit").click(); true`);

@@ -69,10 +69,12 @@ cd games/krakel && npm install && npm run build
 Pick the TVs (or "A browser tab on this computer"), then Start. The
 first player is the VIP and starts the game from their phone once three
 are in (or the host page's Start). Settings (the host page, or the
-VIP's phone in the lobby): language, rounds (1–4), time to draw (1, 1½,
-2 or 3 minutes), time to guess (30, 45, 60 or 90 s), the words (one
-category a round, or mixed), letters shown or hidden, the wait after a
-wrong guess, latecomers (next round, or not during a game).
+VIP's phone in the lobby): rounds (1–4), time to draw (1, 1½, 2 or 3
+minutes), time to guess (30, 45, 60 or 90 s), the words (one category a
+round, or mixed), letters shown or hidden, the wait after a wrong
+guess; on the host page only, the language and latecomers (next round,
+or not during a game). A game ends early, after the round, when fewer
+than three players are left in it.
 
 ## Checking it
 
@@ -81,6 +83,7 @@ npm run check && npm test          # types; the rules, the ink, the word lists, 
 npm run words                      # the word lists: categories, counts, what is wrong
 node test/live/play.ts             # a live game: tvpipe, headless Chrome, a phone, bots; screenshots in /tmp/krakel-play
 node test/live/play.ts --lang de --bots 9 --hints off --mixed on
+node test/live/play.ts --long [--lang de]   # the first round with the longest words: none cut off or broken
 node test/live/play.ts --bots 3 --shots ../../site/static/games/krakel   # the games list's pictures (test/live/scenario.ts)
 node test/live/scenario.ts --preview /tmp/krakel-scenario                # the scripted round's drawings, whole and half replayed
 ```
@@ -95,7 +98,8 @@ tvpipe (`TVPIPE_BINARY`, else `target/release`, else `target/debug`);
 it also checks every phone screen at 390 and 320 px and the TV for
 anything running out of its box, reloads the phone in the middle of a
 drawing, drops phones out and brings them back, and fails on any
-page's script error (a TV with its sound on included).
+page's error (uncaught, console.error or a failed load, over DevTools;
+a TV with its sound on included) and on any bot's error.
 
 ## Languages
 

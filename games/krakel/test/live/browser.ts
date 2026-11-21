@@ -1,7 +1,7 @@
 /**
  * A headless Chrome for live checks (not part of `npm test`): open pages,
- * run script in them, take screenshots, over the DevTools protocol with
- * Node's own WebSocket.
+ * run script in them, take screenshots, collect their errors, over the
+ * DevTools protocol with Node's own WebSocket.
  *
  *   const b = await Browser.launch();
  *   const tab = await b.open("http://…", { width: 390, height: 844, mobile: true });
@@ -19,6 +19,8 @@ const CHROME =
   (process.platform === "darwin" ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" : "google-chrome");
 
 export class Tab {
+  /** Errors the page reported (uncaught exceptions, console.error, failed loads) since `watch()`. */
+  readonly errors: string[] = [];
   readonly #ws: WebSocket;
   #id = 0;
   readonly #pending = new Map<number, { resolve: (v: any) => void; reject: (e: Error) => void }>();
@@ -27,12 +29,34 @@ export class Tab {
     this.#ws = ws;
     ws.onmessage = (e) => {
       const msg = JSON.parse(String(e.data));
+      if (msg.method) {
+        this.#event(msg.method, msg.params);
+        return;
+      }
       const p = this.#pending.get(msg.id);
       if (!p) return;
       this.#pending.delete(msg.id);
       if (msg.error) p.reject(new Error(JSON.stringify(msg.error)));
       else p.resolve(msg.result);
     };
+  }
+
+  #event(method: string, params: any): void {
+    if (method === "Runtime.exceptionThrown") {
+      const d = params.exceptionDetails;
+      this.errors.push(`page error: ${d.exception?.description ?? d.text} (${d.url ?? ""}:${d.lineNumber})`.slice(0, 600));
+    } else if (method === "Runtime.consoleAPICalled" && (params.type === "error" || params.type === "assert")) {
+      const args = (params.args ?? []).map((a: any) => a.value ?? a.description ?? a.type).join(" ");
+      this.errors.push(`console.${params.type}: ${args}`.slice(0, 600));
+    } else if (method === "Log.entryAdded" && params.entry.level === "error") {
+      this.errors.push(`log (${params.entry.source}): ${params.entry.text} ${params.entry.url ?? ""}`.slice(0, 600));
+    }
+  }
+
+  /** Collects the page's errors into `errors` (Runtime and Log events), from before it loads. */
+  async watch(): Promise<void> {
+    await this.send("Runtime.enable");
+    await this.send("Log.enable");
   }
 
   send(method: string, params: Record<string, unknown> = {}): Promise<any> {
@@ -167,6 +191,7 @@ export class Browser {
     });
     const tab = new Tab(ws);
     await tab.send("Page.enable");
+    await tab.watch();
     await tab.send("Emulation.setDeviceMetricsOverride", {
       width: view.width,
       height: view.height,
