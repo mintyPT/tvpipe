@@ -19,6 +19,7 @@
  * @typedef {import("../game/views.ts").Reason} Reason
  * @typedef {import("../game/views.ts").Award} Award
  * @typedef {import("../game/views.ts").RoomTitle} RoomTitle
+ * @typedef {import("../game/views.ts").Settings} Settings
  */
 /**
  * @template {PlayerState["task"]} T
@@ -218,7 +219,7 @@ langButton.addEventListener("click", () => {
 /** @returns {RoomView} */
 function roomView() {
   const r = client.view?.room;
-  return r && typeof r === "object" && Array.isArray(r.people) ? r : { phase: "lobby", lang: browserLang(), people: [], minPlayers: 3, maxPlayers: 8 };
+  return r && typeof r === "object" && Array.isArray(r.people) ? r : { phase: "lobby", lang: browserLang(), settings: { rounds: "auto", write: 45, difficulty: "normal" }, people: [], minPlayers: 3, maxPlayers: 8 };
 }
 
 /** @returns {PlayerState | null} */
@@ -773,6 +774,44 @@ function facePad(face, color, err) {
 }
 
 /**
+ * The VIP's settings (the lobby and the end), as the host page offers
+ * them: rounds, writing time, words. The language and the latecomers stay
+ * the host's. The current values come with the room view.
+ * @param {HTMLElement} err
+ */
+function settingsBox(err) {
+  /** @type {{ key: keyof Settings, buttons: HTMLButtonElement[], values: any[] }[]} */
+  const items = [];
+  const roundsLine = h("p", { class: "line" });
+  const box = h("section", { class: "settings" }, h("h2", { class: "label" }, t.settings));
+  /** @param {keyof Settings} key @param {any[]} values @param {string[]} labels @param {string} title @param {HTMLElement | null} [line] */
+  const add = (key, values, labels, title, line = null) => {
+    const buttons = values.map((v, i) => btn("", () => void act("settings", { [key]: v }, err).catch(() => {}), labels[i] ?? String(v)));
+    const head = h("h3", {}, title);
+    box.append(h("div", { class: "setting" }, head, h("div", { class: "seg", role: "group", "aria-label": title }, ...buttons), line));
+    items.push({ key, buttons, values });
+  };
+  add("rounds", ["auto", 1, 2], [t.roundsAuto, t.roundsOnce, t.roundsTwice], t.roundsLabel, roundsLine);
+  add("write", [30, 45, 60, 90], [30, 45, 60, 90].map(t.seconds), t.writeLabel);
+  add("difficulty", ["easy", "normal", "hard"], [t.easy, t.normal, t.hard], t.wordsLabel);
+  /** @param {RoomView} room */
+  const update = (room) => {
+    box.hidden = !myself()?.vip || !room.settings;
+    const cur = room.settings;
+    if (!cur) return;
+    for (const it of items) {
+      it.buttons.forEach((b, i) => {
+        const on = it.values[i] === cur[it.key];
+        b.classList.toggle("on", on);
+        b.setAttribute("aria-pressed", String(on));
+      });
+    }
+    roundsLine.textContent = t.roundsLine[cur.rounds] ?? "";
+  };
+  return { box, update };
+}
+
+/**
  * @param {Task<"lobby">} me
  * @returns {Screen}
  */
@@ -786,6 +825,7 @@ function lobby(me) {
     act("start", null, err).catch(() => (start.disabled = false));
   }, t.start);
   const slip = h("p", { class: "slip" });
+  const set = settingsBox(err);
   /** @type {string | null} */
   let confirmKick = null;
   let lastList = "";
@@ -797,6 +837,7 @@ function lobby(me) {
       hint,
       h("h2", { class: "label" }, `${t.atTable} `, count),
       list,
+      set.box,
     ],
     dock: [err, start, slip],
     refresh: (m, room) => {
@@ -840,6 +881,7 @@ function lobby(me) {
       const host = room.people.find((p) => p.vip);
       slip.hidden = vip;
       slip.textContent = host ? t.vipStarts(host.name) : t.startsSoon;
+      set.update(room);
     },
   };
 }
@@ -1472,6 +1514,7 @@ function final(me) {
     act("again", null, err).catch(() => (again.disabled = false));
   }, t.playAgain);
   const slip = h("p", { class: "slip" });
+  const set = settingsBox(err);
   const award = me.award ? t.awards[me.award] : null;
   const low = me.title === "total jinx" || me.title === "mixed signals";
   if (me.record) buzz([40, 40, 40, 40, 140]);
@@ -1486,6 +1529,7 @@ function final(me) {
         big(t.wordsFound(me.found, me.total)),
         award ? h("div", { class: "award" }, h("small", {}, t.yourAward), h("b", {}, award[0]), h("p", {}, award[1])) : null,
       ),
+      set.box,
     ],
     dock: [err, again, slip],
     refresh: (m, room) => {
@@ -1494,6 +1538,7 @@ function final(me) {
       const host = room.people.find((p) => p.vip);
       slip.hidden = m.canRestart;
       slip.textContent = host ? t.vipAgain(host.name) : t.thanks;
+      set.update(room);
     },
   };
 }

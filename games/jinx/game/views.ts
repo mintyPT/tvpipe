@@ -331,10 +331,25 @@ export type ScreenView =
 // ---------------------------------------------------------------------------
 
 /** Every phone: the phase and the people (for faces and names). */
+/**
+ * The settings the VIP may change from the phone (lobby and end), as the
+ * host page does: rounds (`auto`: twice with 3–5 players, once with 6–8),
+ * the writing time in seconds, the words' difficulty. The language and
+ * the latecomers stay the host page's.
+ */
+export interface Settings {
+  rounds: "auto" | 1 | 2;
+  /** Seconds: 30, 45, 60 or 90 (the tests' short timers aside). */
+  write: number;
+  difficulty: "easy" | "normal" | "hard";
+}
+
 export interface RoomView {
   phase: ScreenView["phase"];
   /** The room's language. */
   lang: Lang;
+  /** The game's settings (the next game's, between games). */
+  settings: Settings;
   people: People;
   round?: number;
   rounds?: number;
@@ -411,6 +426,11 @@ export interface Actions {
   again: null;
   /** VIP, lobby: remove a player. */
   kick: { id: string };
+  /**
+   * VIP, lobby and end: change settings (any of them; refused with
+   * `bad-settings` for another key or value, `running` during a game).
+   */
+  settings: Partial<Settings>;
   /**
    * A clue-giver, write phase: send (or replace) the clue in `slot` (0, or 1
    * with 3 players). Refused with code `too-close:REASON`, `own-clue:REASON`

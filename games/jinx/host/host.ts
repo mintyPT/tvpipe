@@ -193,6 +193,8 @@ async function main(): Promise<void> {
     bots: addBots,
   });
   game.on("phase", () => page.update());
+  // The VIP changed a setting from the phone.
+  game.on("settings", () => page.update());
   page.tvpipe.on("closing", () => {
     for (const b of robots) b.close();
   });

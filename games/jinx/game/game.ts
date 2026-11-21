@@ -52,7 +52,7 @@ import {
   type RoundsSetting,
   type Turn,
 } from "./rules.ts";
-import type { Award, Bank, BestClue, Card, Face, JinxGroup, People, Person, PlayerState, Reason, RoomView, ScreenView, Tally } from "./views.ts";
+import type { Award, Bank, BestClue, Card, Face, JinxGroup, People, Person, PlayerState, Reason, RoomView, ScreenView, Settings, Tally } from "./views.ts";
 
 export interface Timings {
   /** The round intro. */
@@ -110,8 +110,11 @@ export const DEFAULT_TIMINGS: Timings = {
   draftEvery: 50,
 };
 
-/** The writing times the host page offers, seconds. */
+/** The writing times the host page (and the VIP's phone) offers, seconds. */
 export const WRITE_TIMES = [30, 45, 60, 90] as const;
+/** The rounds settings (`auto`: twice with 3–5 players, once with 6–8). */
+export const ROUNDS = ["auto", 1, 2] as const;
+export const DIFFICULTIES = ["easy", "normal", "hard"] as const;
 
 /** Longest draft the TV shows. */
 export const MAX_DRAFT = 24;
@@ -148,6 +151,8 @@ export interface JinxEvents {
   dealt: [used: string[], lang: Lang];
   /** A game of `rounds` rounds beat the room's record (or set the first): keep it. */
   record: [rounds: number, chips: number];
+  /** The settings changed (the host page or the VIP's phone). */
+  settings: [settings: Settings];
   end: [bank: number];
 }
 
@@ -278,6 +283,11 @@ export class Jinx extends Emitter<JinxEvents> {
     if (!this.#langs.has(this.#lang)) throw new Error(`jinx: no words in ${this.#lang}`);
   }
 
+  /** The settings the VIP may change from the phone too (the writing time in seconds). */
+  get settings(): Settings {
+    return { rounds: this.rounds, write: Math.round(this.timings.write / 1000), difficulty: this.difficulty };
+  }
+
   /** The room's language. */
   get lang(): Lang {
     return this.#lang;
@@ -331,6 +341,7 @@ export class Jinx extends Emitter<JinxEvents> {
   }): void {
     if (this.#running) throw new PartyError("running", "Not during a game");
     if (o.lang !== undefined && !this.#langs.has(o.lang)) throw new PartyError("bad-lang", `No words in ${o.lang}`);
+    const was = JSON.stringify(this.settings);
     if (o.lang !== undefined && o.lang !== this.#lang) {
       this.#lang = o.lang;
       this.#view["lang"] = o.lang;
@@ -341,6 +352,11 @@ export class Jinx extends Emitter<JinxEvents> {
     if (o.difficulty !== undefined) this.difficulty = o.difficulty;
     if (o.timings) this.timings = { ...this.timings, ...o.timings };
     if (o.write !== undefined) this.timings = { ...this.timings, write: o.write };
+    const now = this.settings;
+    if (JSON.stringify(now) !== was) {
+      this.party.room.set({ settings: now });
+      this.emit("settings", now);
+    }
   }
 
   /**
@@ -401,6 +417,12 @@ export class Jinx extends Emitter<JinxEvents> {
       party.kick(p);
       return null;
     });
+    party.handle("settings", (d, from) => {
+      if (from.role !== "player" || !from.vip) throw new PartyError("not-vip", "Only the VIP can change the settings");
+      if (this.#running) throw new PartyError("running", "Not during a game");
+      this.configure(this.#checkSettings(d));
+      return null;
+    });
     party.handle("clue", (d, from) => this.#onClue(d, from as Player));
     party.handle("pick", (d, from) => this.#onPick(d, from as Player));
     party.handle("guess", (d, from) => this.#onGuess(d, from as Player));
@@ -434,6 +456,22 @@ export class Jinx extends Emitter<JinxEvents> {
     this.#screen({ phase: "lobby", minPlayers: this.minPlayers, maxPlayers: party.maxPlayers });
     this.#roomView({ phase: "lobby" });
     for (const p of party.players) this.#passiveState(p);
+  }
+
+  /** A phone's settings, checked as the host page offers them (not the language or the latecomers: the host's). */
+  #checkSettings(d: Json): { rounds?: Settings["rounds"]; write?: number; difficulty?: Settings["difficulty"] } {
+    if (typeof d !== "object" || d === null || Array.isArray(d)) throw new PartyError("bad-settings", "rounds, write, difficulty");
+    const out: { rounds?: Settings["rounds"]; write?: number; difficulty?: Settings["difficulty"] } = {};
+    for (const [key, v] of Object.entries(d)) {
+      if (key === "rounds" && (ROUNDS as readonly Json[]).includes(v)) out.rounds = v as Settings["rounds"];
+      else if (key === "write" && (WRITE_TIMES as readonly Json[]).includes(v)) out.write = (v as number) * 1000;
+      else if (key === "difficulty" && (DIFFICULTIES as readonly Json[]).includes(v)) out.difficulty = v as Settings["difficulty"];
+      else if (key === "rounds") throw new PartyError("bad-settings", `rounds: ${ROUNDS.join(", ")}`);
+      else if (key === "write") throw new PartyError("bad-settings", `write: ${WRITE_TIMES.join(", ")}`);
+      else if (key === "difficulty") throw new PartyError("bad-settings", `difficulty: ${DIFFICULTIES.join(", ")}`);
+      else throw new PartyError("bad-settings", `${key}: not a setting (rounds, write, difficulty)`);
+    }
+    return out;
   }
 
   #checkEnough(): void {
@@ -521,7 +559,7 @@ export class Jinx extends Emitter<JinxEvents> {
 
   #roomView(fields: Partial<RoomView>): void {
     const r = this.#round;
-    const base: Record<string, unknown> = { lang: this.#lang, people: this.#people(), minPlayers: this.minPlayers, maxPlayers: this.party.maxPlayers };
+    const base: Record<string, unknown> = { lang: this.#lang, settings: this.settings, people: this.#people(), minPlayers: this.minPlayers, maxPlayers: this.party.maxPlayers };
     if (this.#running && r) Object.assign(base, { round: r.n, rounds: this.#total(), guesser: r.guesser.id });
     this.party.room.replace({ ...base, ...fields });
   }

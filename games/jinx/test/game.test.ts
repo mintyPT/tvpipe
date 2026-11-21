@@ -484,6 +484,47 @@ test("too few, non-VIP start, kick; a late joiner plays from the next round, rou
   }
 });
 
+test("the VIP's settings from the phone: lobby and end, checked as the host page offers them", async () => {
+  const { party, g, players, close } = await setup(3, { rounds: 1 });
+  try {
+    const vip = players[0]!.client;
+    const changed: unknown[] = [];
+    g.on("settings", (s) => changed.push(s));
+    assert.deepEqual(party.room.peek()["settings"], { rounds: 1, write: 2, difficulty: "normal" }, "the tests' 1.5 s write rounds to 2");
+    await vip.act("settings", { rounds: 2, write: 30 });
+    await vip.act("settings", { difficulty: "hard" });
+    assert.equal(g.rounds, 2);
+    assert.equal(g.timings.write, 30_000);
+    assert.equal(g.difficulty, "hard");
+    assert.deepEqual(changed, [
+      { rounds: 2, write: 30, difficulty: "normal" },
+      { rounds: 2, write: 30, difficulty: "hard" },
+    ]);
+    await until(() => JSON.stringify(players[1]!.client.view["room"]?.settings) === JSON.stringify({ rounds: 2, write: 30, difficulty: "hard" }));
+    // Refused: not the VIP, values the host page does not offer, the host's own settings.
+    await assert.rejects(players[1]!.client.act("settings", { rounds: 1 }), (e: { code: string }) => e.code === "not-vip");
+    for (const bad of [{ rounds: 3 }, { rounds: "1" }, { write: 50 }, { write: 45_000 }, { difficulty: "insane" }, { lang: "de" }, { late: "closed" }, { rounds: 1, write: 7 }, null, [1], "auto"]) {
+      await assert.rejects(vip.act("settings", bad), (e: { code: string }) => e.code === "bad-settings", JSON.stringify(bad));
+    }
+    assert.equal(g.rounds, 2, "a refused change changes nothing");
+    assert.equal(g.lang, "en");
+    await vip.act("settings", { rounds: "auto", write: 30 });
+    assert.equal(g.rounds, "auto");
+    // Not during a game; again at the end.
+    await vip.act("settings", { rounds: 1, write: 30, difficulty: "easy" });
+    g.configure({ write: 300 });
+    const end = new Promise((r) => g.once("end", r));
+    await vip.act("start");
+    await assert.rejects(vip.act("settings", { rounds: 2 }), (e: { code: string }) => e.code === "running");
+    await end;
+    await vip.act("settings", { write: 90 });
+    assert.equal(g.timings.write, 90_000);
+    assert.equal((party.room.peek()["settings"] as { write: number }).write, 90);
+  } finally {
+    close();
+  }
+});
+
 test("closed to latecomers (the host page's setting): nobody new joins during a game, anyone between games", async () => {
   const { party, g, players, add, close } = await setup(3, { rounds: 1, bot: () => ({ clues: "random" }) });
   try {

@@ -63,8 +63,13 @@ counts as missed, the bank stays as it is.
 ## 2. A game
 
 - **Players: 3–8.** The game has as many rounds as guessers: every player
-  guesses once with 6–8 players, twice with 3–5 (a host setting can
+  guesses once with 6–8 players, twice with 3–5 (a setting can
   change it: once, twice). A game takes about 10–20 minutes.
+- **Settings:** rounds, writing time and words, on the host page or the
+  VIP's phone in the lobby and at the end (the `settings` action, checked
+  against the same choices: anything else is refused with
+  `bad-settings`); the language and the latecomers only on the host page.
+  They change only between games.
 - **Guesser order:** the join order, rotated by one each game.
 - **Joining late:** from the next round, appended to the guesser order
   (the game gets one or two rounds longer). The host page can close a
@@ -90,7 +95,7 @@ counts as missed, the bank stays as it is.
 
 | Moment | Time | When it runs out |
 |---|---|---|
-| Writing | 45 s (host setting: 30 / 45 / 60 / 90) | clues not submitted are lost (no card) |
+| Writing | 45 s (a setting: 30 / 45 / 60 / 90) | clues not submitted are lost (no card) |
 | Reveal: each decision (turn a card or guess) | 30 s | a random face-down card is turned; after the last card, a pass |
 | Reveal: once the guesser starts typing | at least 15 s left | the draft is submitted as the guess, if any letters, else a pass |
 | Best clue | 20 s | no best clue this round |
@@ -177,7 +182,7 @@ optional, comma-separated). Built and curated in `games/jinx/design/words/`:
 - `also_right`: guesses that also count (bbq for barbecue, bike for
   bicycle). `banned`: clues that are rejected as "too close" (obvious
   translations: chat for cat).
-- **Dealing:** difficulty is a host setting. *Easy*: easy words only.
+- **Dealing:** difficulty is a setting. *Easy*: easy words only.
   *Normal* (default): easy and medium, about 2:3, and one hard word in
   ten. *Hard*: medium and hard. A game never deals two related words
   (fire and firework, sea and ocean: the word notes list them). A room
@@ -377,7 +382,7 @@ The TV page is rendered in a headless Chrome and H.264-encoded at about
 
 | Phase | Clue-giver | Guesser |
 |---|---|---|
-| Lobby | name, draw your face (or shuffle), "Look at the TV!"; the VIP starts from 3 players | |
+| Lobby | name, draw your face (or shuffle), "Look at the TV!"; the VIP starts from 3 players and has the settings (rounds, writing time, words) | |
 | Hot seat | "Anna guesses. Get ready." | "You're in the hot seat. Don't look at anyone's phone." |
 | Writing | the word on an index card, one field, the bold flame toggle, Send; a rejected clue shows the reason and stays editable; then "Sent: BEACON 🔥" | "Eyes on the TV: your friends are writing", who is done |
 | Jinx check | your card's fate ("JINXED with Esme: plural"), not the other words | "3 clues survived · 4 were jinxed" |
@@ -385,7 +390,7 @@ The TV page is rendered in a headless Chrome and H.264-encoded at about
 | Verdict | the word, what the room banked ("+7 for the room · bank 23"), what your card did ("Your clue was turned", "Bold paid: +2 to the pot", "Jinxed: the pot lost 3") | ✓ or ✗, the word, the bank |
 | Replay | the replay; "Anna is picking the best clue…"; "Your clue helped most!" | all clues as buttons: "Which clue helped most?" |
 | Bank | the room's bank, the next title ("6 more chips to *Mind readers*"); "You're up next!" for the next guesser | the same |
-| End | the room's bank, title and words, "New record!", your award; the VIP: Play again | the same |
+| End | the room's bank, title and words, "New record!", your award; the VIP: Play again and the settings | the same |
 
 **No phone beats the TV.** What the TV shows reaches the phones when the
 TV picture with it is up (`party.withTv`: the TV's lag, `tvDelay`), and
