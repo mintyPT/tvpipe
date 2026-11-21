@@ -9,6 +9,7 @@
 import { PartyClient, qrSvg } from "/_tvpipe/lib/client.js";
 import { createTv } from "./app.js";
 import { t } from "./strings.js";
+import { unlock } from "./sound.js";
 
 const hash = new URLSearchParams(location.hash.slice(1));
 // tvpipe's join badge (the join code the whole game, and who is away) bottom left: the pot is on the right.
@@ -17,6 +18,8 @@ const root = /** @type {HTMLElement} */ (document.getElementById("viewport"));
 const status = /** @type {HTMLElement} */ (document.getElementById("status"));
 
 const tv = createTv({ root, now: () => client.now(), qrSvg, muted: hash.get("mute") === "1" });
+/** A watch page opened by hand gets its sound with the first click. */
+addEventListener("pointerdown", () => unlock(), { once: true });
 
 /** @type {Record<string, any> | null} */
 let pending = null;

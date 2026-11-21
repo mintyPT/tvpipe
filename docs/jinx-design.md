@@ -372,8 +372,10 @@ The TV page is rendered in a headless Chrome and H.264-encoded at about
   round). No idle loops on large areas.
 - Nothing important faster than about 6 frames.
 - Sound is synthesized with Web Audio (no audio files) and routed
-  through `captureAudio`; the recipes are in both READMEs. The host
-  page's preview is muted (`#mute=1`, as Drawbluff).
+  through `captureAudio`, every cue mixed through one master gain and a
+  compressor; the recipes are in both READMEs. The host page's preview
+  is muted (`#mute=1`, as Drawbluff); a watch page opened by hand gets
+  its sound with the first tap (browsers start audio only in a gesture).
 - The TV animates the difference between two views and holds every final
   state statically, so a TV that reconnects renders the current state
   without replaying anything.
