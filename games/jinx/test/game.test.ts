@@ -20,7 +20,7 @@ const DICT = DICT_TEXT.split("\n").filter((w) => /^[a-z]{4,8}$/.test(w));
 // German: its own words, dictionary and matcher.
 const de = matcher("de");
 const WORDS_DE = de.parseWordList(readFileSync(new URL(`../data/${de.files.words}`, import.meta.url), "utf8"));
-const MATCH_DE = de.dictionary(readFileSync(new URL(`../data/${de.files.dict}`, import.meta.url), "utf8"));
+const MATCH_DE = { ...de.dictionary(readFileSync(new URL(`../data/${de.files.dict}`, import.meta.url), "utf8")), englishKnown: known };
 
 const fast: Partial<Timings> = {
   hotseat: 10,

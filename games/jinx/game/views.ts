@@ -73,6 +73,7 @@ export type Reason =
   | "sounds the same"
   | "contains the word"
   | "part of the word"
+  | "backwards"
   | "too close";
 
 /** A clue card. `id` is stable for the round ("c0", "c1", …). */

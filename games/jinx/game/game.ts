@@ -863,7 +863,7 @@ export class Jinx extends Emitter<JinxEvents> {
     if (said === false) throw new PartyError("refused", "Try another one");
     const own = slots.filter((s, i): s is Slot => s !== null && i !== slot).map((s) => s.clue);
     const { m, opt } = this.#here;
-    const res = m.checkSubmit(said, r.secret, { ...opt, banned: r.entry.banned, alsoRight: r.entry.alsoRight, own });
+    const res = m.checkSubmit(said, r.secret, { ...opt, banned: r.entry.banned, alsoRight: r.entry.alsoRight, english: r.entry.english, own });
     // The reason rides in the code ("too-close:plural"): a phone in another
     // language than the room's says it in its own words.
     if (!res.ok) throw new PartyError(res.reason ? `${res.code}:${res.reason}` : res.code, res.message);
@@ -889,6 +889,7 @@ export class Jinx extends Emitter<JinxEvents> {
       r.secret,
       opt,
       [...r.entry.banned, ...r.entry.alsoRight],
+      r.entry.english,
     );
     for (const x of res.invalid) r.cards[x.index]!.fate = "jinxed";
     r.groups = res.groups.map((g) => ({

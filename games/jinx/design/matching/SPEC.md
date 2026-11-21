@@ -128,6 +128,15 @@ word, a symbol only its identical symbol).
 | 4 | verb forms of one verb | verb form | run/running/ran, hope/hoping/hoped, hop/hopping/hopped, dance/danced, cry/cried, travel/travelled/traveled, swim/swam, go/went, begin/beginning | hope/hopping (hop), car/cared (care), filed/filled, planed/planned, saw/see, left/leave, felt/feel, rose/rise, born/bear |
 | 5 | same word family (one derivational suffix, two when the outer one is -ly/-ness/-ful/-less/-ship/-hood/-ment/-dom) | same family | prince/princess, actor/actress, teach/teacher/teaching, big/bigger, happy/happiness, sun/sunny, ice/icy, help/helpful, care/carefully, japan/japanese, china/chinese, italy/italian, america/american, music/musician, france/french, act/action, king/kingdom, gold/golden, long/length, good/better | care/career, corner/corn, mother/moth, shower/show, letter/let, party/part, story/store, every/ever, finish/fine, final/fine, sandal/sand, animal/anime, universe/university, organ/organization, question/quest, happen/happy, soldier/sell, minister/mine |
 | 6 | a typo of each other (section 6) | typo | chocolate/choclate, shirt/shurt, rhythm/rythm, broccoli/brocoli, dinosaur/dinosuar | diner/dinner, desert/dessert, later/latter, bear/beer, house/horse, fight/right, night/light, train/brain, plant/planet, scream/cream |
+| 7 | stretched: one is the other with letters doubled, nothing else; the stretched one unknown to the dictionary, the other known | other spelling | dog/doog, dog/ddoogg, dogs/dogss | diner/dinner (words), black/blak (undoubled), dog/doggs (no forms) |
+| 8 | backwards: one is the other written backwards, exactly; the backwards one unknown to the dictionary, the other known, 4+ letters | backwards | black/kcalb, tire/erit | star/rats, stop/pots (words), dog/sgod (no forms), car/rac (3 letters) |
+| 9 | two words (with a space) that share a word: the same words in any order, or a word of one related (rules 1–5) to the other clue or one of its words (3+ letters) | same word / contains the word | black car/car black, black car/black | firetruck/fire (closed compound) |
+
+Rules 7–9 are against cheating: a word disguised to slip past the jinx
+(short words have no typos), or a second word smuggled onto a card. Rules
+7 and 8 need the dictionary (without it nothing is unknown); they run
+after the typo rule, so a long stretched word is still a typo
+(black/blackk).
 
 Not jinxes between clues, on purpose:
 
@@ -193,6 +202,7 @@ universe/university and police/policy.
 | 2–5 | spelling, plural, verb form, family (as section 4) | other spelling, plural, verb form, same family | color for colour, fone for phone, shirts, mice for mouse, ran for run, teacher for teach, sunny for sun, princess for prince | the section 4 counter-examples: corn for corner, moth for mother, cared for car |
 | 6 | sounds the same: homophone table (~150 groups) or a sound key (hard c = k, qu = kw, x = ks, silent kn-/wr-/wh-, ph = f) | sounds the same | whether for weather, knight for night, kat for cat, kar for car | rise for rice, baked for backed, bee for is, diner for dinner, nite for night (weak spot) |
 | 7 | a typo of the secret (section 6) | typo | shurt for shirt | short for shirt (with dictionary) |
+| 7b | stretched or backwards (section 4, rules 7 and 8; with a dictionary) | other spelling, backwards | doog for dog, kcalb for black | rats for star |
 | 8 | the clue contains the secret: an explicit word of the clue relates to it, or the clue starts/ends with it and the rest has 3+ letters or is a prefix (un-, re-, micro-, …); with a dictionary the rest must be a word | contains the word | t-shirt, hot dog, ice cream for ice; snowman, snowmen, sunflower, sunday, football, earring, rainbow, iceberg, skateboard, microphone, airplane, strawberry, unhappy | hear, year, earth, spear for ear; giant for ant; heart/start for art; open for pen; seal for sea; scar for car; tshirt (1-letter rest); catching for cat (reads catch + ing); climbed for bed; history for story |
 | 9 | the secret contains the clue the same way ("whole component of a compound secret") | part of the word | foot or ball for football, snow for snowman, butter or fly for butterfly, apple for pineapple, cream for ice cream | land for island, plane/plan for planet, range for orange, rate for pirate, wind for window |
 | 10 | a form the word list bans for this word (translations, irregular relatives) | too close | chat, gato for cat (if listed) | kitten for cat |

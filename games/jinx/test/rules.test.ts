@@ -26,7 +26,7 @@ import {
 const WORDS = parseWordList(readFileSync(new URL("../data/words.txt", import.meta.url), "utf8"));
 const known = dictionary(readFileSync(new URL("../data/dict.txt", import.meta.url), "utf8"));
 
-const entry = (word: string, difficulty = "easy", category = "thing"): WordEntry => ({ word, difficulty, category, alsoRight: [], banned: [] });
+const entry = (word: string, difficulty = "easy", category = "thing"): WordEntry => ({ word, difficulty, category, alsoRight: [], banned: [], english: [] });
 
 test("the pot: 10, −1 per jinxed clue (−3 bold), −2 per card after the first, +2 per bold card, never below 2", () => {
   assert.equal(pot({ jinxed: 0, turned: 0 }), 10);

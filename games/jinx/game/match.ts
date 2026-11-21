@@ -12,6 +12,11 @@
 // Everything is deterministic and depends only on the two strings (plus the
 // optional `known` dictionary predicate), so every device computes the same.
 
+/** A lookup table without a prototype: typed words like "constructor" are not in it. */
+function table<T>(entries: Record<string, T>): Record<string, T> {
+  return Object.assign(Object.create(null) as Record<string, T>, entries);
+}
+
 export const MAX_CHARS = 24;
 export const MAX_WORDS = 2;
 
@@ -27,6 +32,7 @@ export type Reason =
   | "sounds the same"
   | "contains the word"
   | "part of the word"
+  | "backwards"
   | "too close";
 
 /** Short text for the TV, e.g. `cats = cat · plural`. */
@@ -42,6 +48,7 @@ export const REASON_TEXT: Record<Reason, string> = {
   "sounds the same": "sounds the same",
   "contains the word": "contains the word",
   "part of the word": "part of the word",
+  backwards: "backwards",
   "too close": "too close",
 };
 
@@ -57,7 +64,7 @@ export interface Clue {
 
 /** TV line for a pair: "cats = cat · plural", "elefant ≈ elephant · typo". */
 export function explain(a: Clue, b: Clue, r: Reason): string {
-  const sign = r === "typo" || r === "sounds the same" || r === "spelling" ? "≈" : r === "contains the word" ? "⊃" : r === "part of the word" ? "⊂" : "=";
+  const sign = r === "typo" || r === "sounds the same" || r === "spelling" || r === "backwards" ? "≈" : r === "contains the word" ? "⊃" : r === "part of the word" ? "⊂" : "=";
   return `${a.display} ${sign} ${b.display} · ${REASON_TEXT[r]}`;
 }
 
@@ -87,7 +94,7 @@ const MESSAGES: Record<CleanError, string> = {
 const FOLD: Record<string, string> = { ß: "ss", æ: "ae", œ: "oe", ø: "o", ł: "l", đ: "d", ð: "d", þ: "th", ı: "i", ĸ: "k" };
 
 /** A single symbol typed as the whole clue reads as its name. */
-const SYMBOL_NAMES: Record<string, string> = {
+const SYMBOL_NAMES: Record<string, string> = table({
   $: "dollar",
   "€": "euro",
   "£": "pound",
@@ -97,7 +104,7 @@ const SYMBOL_NAMES: Record<string, string> = {
   "+": "plus",
   "@": "at",
   "°": "degree",
-};
+});
 
 const EMOJI_EXTRA = /[\u{FE0E}\u{FE0F}\u{1F3FB}-\u{1F3FF}]/gu;
 
@@ -192,7 +199,7 @@ NUM_WORDS.set("billion", { v: 1e9, t: "scale" });
 const NUM_LIST = [...NUM_WORDS.keys()].sort((a, b) => b.length - a.length);
 
 /** Ordinals that are not also common words ("second" is a unit of time). */
-const ORDINALS: Record<string, string> = {
+const ORDINALS: Record<string, string> = table({
   first: "1st",
   third: "3rd",
   fourth: "4th",
@@ -204,7 +211,7 @@ const ORDINALS: Record<string, string> = {
   tenth: "10th",
   eleventh: "11th",
   twelfth: "12th",
-};
+});
 
 /** "twentyone", "onehundred" -> "21", "100"; null unless the whole string is number words. */
 export function parseNumberWords(s: string): string | null {
@@ -309,7 +316,7 @@ function endsDouble(w: string): boolean {
 // Spelling variants (UK -> US) and phonetic key
 // ---------------------------------------------------------------------------
 
-const SPELLING_TABLE: Record<string, string> = Object.fromEntries(
+const SPELLING_TABLE: Record<string, string> = table(Object.fromEntries(
   (
     "grey:gray tyre:tire kerb:curb plough:plow mould:mold moult:molt smoulder:smolder aluminium:aluminum " +
     "pyjama:pajama pyjamas:pajamas moustache:mustache doughnut:donut sceptic:skeptic sceptical:skeptical sulphur:sulfur " +
@@ -326,7 +333,7 @@ const SPELLING_TABLE: Record<string, string> = Object.fromEntries(
   )
     .split(/\s+/)
     .map((p) => p.split(":") as [string, string]),
-);
+));
 
 /** Words the -re/-er rule must not touch: a different word in its -er form. */
 const SPELLING_KEEP = new Set(["timbre"]);
@@ -453,7 +460,7 @@ const NO_INFLECT = new Set(
 );
 
 /** Words that are plural but should still meet their singular (they are in NO_INFLECT for other reasons). */
-const PLURAL_ALSO: Record<string, string> = { glasses: "glass", shorts: "short" };
+const PLURAL_ALSO: Record<string, string> = table({ glasses: "glass", shorts: "short" });
 
 function addVerbStem(out: Map<string, Kind>, s: string): void {
   if (s.length < 2 || !hasVowel(s)) return;
@@ -880,6 +887,80 @@ function related(a: string, b: string): Reason | null {
   return null;
 }
 
+/** "Kcalb" -> "black". */
+function reverse(w: string): string {
+  return [...w].reverse().join("");
+}
+
+/** `x` is `y` with letters doubled (or more), nothing else: radd, rrad for rad; not lam for lamm, feel for fell. */
+function stretches(x: string, y: string): boolean {
+  const rx = x.match(/(.)\1*/gu) ?? [];
+  const ry = y.match(/(.)\1*/gu) ?? [];
+  return x.length > y.length && rx.length === ry.length && rx.every((r, i) => r[0] === ry[i]![0] && r.length >= ry[i]!.length);
+}
+
+/**
+ * A word in disguise, to slip past the jinx (and the check against the
+ * secret): a known word with letters stretched (doog, ddoogg for dog; short
+ * words have no typos) or written backwards (kcalb for black, 4+ letters).
+ * Strict on purpose, so that no real word is caught: the disguise must be
+ * unknown to the dictionary and the other word known, only letters doubled
+ * (never undoubled), exactly reversed (no forms). Dinner and diner, star
+ * and rats are words of their own. Needs the dictionary; without it,
+ * nothing is a disguise.
+ */
+function disguised(a: string, b: string, opt: MatchOptions): Reason | null {
+  if (!opt.known || a === b || !/^[a-z]+$/.test(a) || !/^[a-z]+$/.test(b)) return null;
+  const ka = opt.known(a);
+  const kb = opt.known(b);
+  for (const [x, y, kx, ky] of [[a, b, ka, kb], [b, a, kb, ka]] as const) {
+    if (kx || !ky) continue;
+    if (stretches(x, y)) return "spelling";
+    if (y.length >= 4 && reverse(x) === y) return "backwards";
+  }
+  return null;
+}
+
+/**
+ * Is `c` the English word `t` (a translation a German secret bans: dog for
+ * Hund), or the same word otherwise: another spelling (color for colour),
+ * an inflection of it (dogs, monkeys, swam for swim, weddings for wedding),
+ * a typo (monky for monkey, with the dictionary) or a disguise (doog)? Only
+ * the translation's own forms, never what it is a form of or its family,
+ * parts or sounds: wed for wedding, glass for glasses, died for dice, outer
+ * for outing, carpet for car, hair for hare are other words. `opt.known` is
+ * the English dictionary.
+ */
+export function nearTranslation(c: Clue, t: Clue, opt: MatchOptions = {}): Reason | null {
+  if (c.key === t.key) return "same word";
+  if (c.kind !== "word" || t.kind !== "word") return null;
+  const fc = forms(c.key);
+  const ft = forms(t.key);
+  if (fc.spell === ft.spell) return "spelling";
+  const k = fc.infl.get(ft.spell);
+  if (k !== undefined && k !== "self" && k !== "same family") return k;
+  // A typo is no word of its own: transmutations is not "trainstation".
+  if (opt.known && !opt.known(c.key) && typoMatch(fc, ft, opt)) return "typo";
+  return disguised(c.key, t.key, opt);
+}
+
+/**
+ * Two-word clues that share a word: "black car" and "black", "car black"
+ * and "black car". The cards say the same word, whatever comes with it
+ * (closed compounds that share a part still do not jinx: fire/firetruck).
+ */
+function sharedWord(a: Clue, b: Clue): Reason | null {
+  if (a.parts.length < 2 && b.parts.length < 2) return null;
+  const pa = a.parts.length > 1 ? a.parts : [a.key];
+  const pb = b.parts.length > 1 ? b.parts : [b.key];
+  if (pa.length === pb.length && [...pa].sort().join(" ") === [...pb].sort().join(" ")) return "same word";
+  for (const x of pa) {
+    if (x.length < 3 || !/^[a-z]+$/.test(x)) continue;
+    for (const y of pb) if (y.length >= 3 && /^[a-z]+$/.test(y) && related(x, y)) return "contains the word";
+  }
+  return null;
+}
+
 /** Do two clues jinx each other? Returns the reason, or null. */
 export function sameClue(a: Clue, b: Clue, opt: MatchOptions = {}): Reason | null {
   if (a.key === b.key) {
@@ -889,7 +970,8 @@ export function sameClue(a: Clue, b: Clue, opt: MatchOptions = {}): Reason | nul
   if (a.kind !== "word" || b.kind !== "word") return null;
   const r = related(a.key, b.key);
   if (r) return r;
-  return typoMatch(forms(a.key), forms(b.key), opt) ? "typo" : null;
+  if (typoMatch(forms(a.key), forms(b.key), opt)) return "typo";
+  return disguised(a.key, b.key, opt) ?? sharedWord(a, b);
 }
 
 function soundsSame(a: string, b: string): boolean {
@@ -969,6 +1051,8 @@ export function invalidClue(c: Clue, s: Clue, opt: MatchOptions = {}, banned: re
   if (r) return r;
   if (soundsSame(c.key, s.key)) return "sounds the same";
   if (typoMatch(forms(c.key), forms(s.key), opt)) return "typo";
+  const d = disguised(c.key, s.key, opt);
+  if (d) return d;
   const k = containment(c, s, opt);
   if (k) return k;
   for (const b of banned) {
@@ -1096,6 +1180,7 @@ const TOO_CLOSE_TEXT: Record<Reason, string> = {
   "sounds the same": "Sounds like the word",
   "contains the word": "Contains the word",
   "part of the word": "Part of the word",
+  backwards: "That's the word backwards",
   "too close": "Too close to the word",
 };
 
@@ -1135,8 +1220,14 @@ export interface WordEntry {
   category: string;
   /** guesses accepted as right besides the word's own forms (bbq for barbecue) */
   alsoRight: string[];
-  /** clues rejected as too close besides the rules (translations) */
+  /** clues rejected as too close besides the rules (translations; with `english`) */
   banned: string[];
+  /**
+   * The English translations (German list: its own column): in a German room
+   * also rejected in their English forms, typos and disguises (dogs for dog);
+   * every other translation only as written.
+   */
+  english: string[];
 }
 
 /**
@@ -1146,7 +1237,7 @@ export interface WordEntry {
  * reorder them.
  */
 export function parseWordList(text: string): WordEntry[] {
-  let cols = ["word", "difficulty", "category", "also_right", "banned"];
+  let cols = ["word", "difficulty", "category", "also_right", "banned", "english"];
   const out: WordEntry[] = [];
   for (const line of text.split(/\r?\n/)) {
     if (line.trim() === "") continue;
@@ -1156,7 +1247,7 @@ export function parseWordList(text: string): WordEntry[] {
         const named = m[0].split(/<TAB>|\t|,\s*/).map((s) => s.trim().toLowerCase().replace(/[^a-z_].*$/, ""));
         if (named.includes("word")) {
           cols = named;
-          for (const extra of ["also_right", "banned"]) if (!cols.includes(extra)) cols.push(extra);
+          for (const extra of ["also_right", "banned", "english"]) if (!cols.includes(extra)) cols.push(extra);
         }
       }
       continue;
@@ -1171,7 +1262,8 @@ export function parseWordList(text: string): WordEntry[] {
         .split(",")
         .map((s) => s.trim())
         .filter((s) => s !== "");
-    out.push({ word: get("word"), difficulty: get("difficulty"), category: get("category"), alsoRight: list("also_right"), banned: list("banned") });
+    const english = list("english");
+    out.push({ word: get("word"), difficulty: get("difficulty"), category: get("category"), alsoRight: list("also_right"), banned: [...english, ...list("banned")], english });
   }
   return out.filter((e) => e.word !== "");
 }

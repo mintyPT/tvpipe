@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
+import { dictionary as enDictionary, parseWordList } from "../game/match.ts";
 import { adjacentKeys, checkSubmit, clean, clue, dictionary, explain, groupClues, invalidClue, judgeGuess, parseNumberWords, sameClue, spell } from "../game/match-de.ts";
 
 const opt = dictionary(readFileSync(new URL("../data/dict.de.txt", import.meta.url), "utf8"));
@@ -409,6 +410,128 @@ test("groupClues: transitive groups", () => {
   );
   assert.deepEqual(r.survivors, [4, 6]);
   assert.deepEqual(r.invalid, []);
+});
+
+// Cheats: a word stretched or written backwards to slip past the jinx, and
+// two-word clues that repeat another card's word (needs the lexicon).
+test("disguises: stretched, backwards, a shared word", () => {
+  const rows = table(`
+    # a                | b              | jinx / for the secret b
+    Radd               | Rad            | spelling
+    RRAAD              | Rad            | spelling
+    Hhuunndd           | Hund           | spelling
+    Auuto              | Auto           | spelling
+    Zrawhcs            | schwarz        | backwards
+    Otua               | Auto           | backwards
+    Nefier             | Reifen         | backwards
+    offen              | Ofen           | -              # two words of their own
+    Tor                | rot            | -
+    Lager              | Regal          | -
+    Nebel              | Leben          | -
+    # Strict, so that no real word is caught (the lexicon does not know them all):
+    Lam                | Lamm           | -              # only doubled, never undoubled
+    feel               | Fell           | -
+    Hunnde             | Hund           | -              # no forms of a stretched word: haarfein is no Harfe
+    haarfein           | Harfe          | -
+    Hausse             | Haus           | -
+    wüsst              | Wüste          | -
+    Ednuh              | Hund           | -              # no forms backwards: gilben is no "neblig"
+    gilben             | Nebel          | -
+    Dar                | Rad            | -              # 4+ letters backwards (sub, Bus)
+  `);
+  expectAll(rows, (a, b) => sameClue(clue(a), clue(b), opt));
+  expectAll(rows, (a, b) => sameClue(clue(b), clue(a), opt));
+  expectAll(rows, (a, b) => invalidClue(clue(a), clue(b), opt));
+  expectAll(
+    table(`
+      "Schwarz Auto"     | Schwarz        | contains the word
+      "Schwarz Auto"     | "Auto Schwarz" | same word
+      "Schwarz Auto"     | "schwarze Form"| contains the word
+      "Donut Form"       | "Schwarz Auto" | -
+      Schwarzwald        | Schwarz        | -              # one-word compounds still do not jinx
+      "Schwarz Auto"     | Schwarzwald    | -
+    `),
+    (a, b) => sameClue(clue(a), clue(b), opt),
+  );
+  // Without the lexicon the disguise rules are off (nothing knows a word).
+  assert.equal(sameClue(clue("Radd"), clue("Rad")), null);
+  const r = checkSubmit("Zrawhcs", clue("Schwarz"), opt);
+  assert.equal(r.ok, false);
+  if (!r.ok) assert.equal(r.message, "Das ist das Wort rückwärts. Versuch einen anderen Hinweis");
+  const own = checkSubmit("Schwarz Auto", clue("Reifen"), { ...opt, own: [clue("schwarz")] });
+  assert.equal(own.ok, false);
+});
+
+// In a German room an English word is checked only against the word's
+// English translations (in their English forms, typos and disguises), never
+// by the German rules: no other English word is refused.
+test("English clues: the translations and their forms, nothing else", () => {
+  const eopt = { ...opt, englishKnown: enDictionary(readFileSync(new URL("../data/dict.txt", import.meta.url), "utf8")) };
+  const words = new Map(parseWordList(readFileSync(new URL("../data/words.de.txt", import.meta.url), "utf8")).map((e) => [e.word, e]));
+  const check = (c: string, s: string) => {
+    const e = words.get(s);
+    if (!e) throw new Error(`no secret ${s}`);
+    return invalidClue(clue(c), clue(s), eopt, e.banned, e.alsoRight, e.english);
+  };
+  expectAll(
+    table(`
+      # clue            | secret          | reason
+      dog               | Hund            | too close
+      dogs              | Hund            | too close
+      doog              | Hund            | too close      # disguised
+      monkeys           | Affe            | too close
+      monky             | Affe            | too close      # a typo of it
+      llama             | Lama            | too close
+      swam              | schwimmen       | too close
+      planets           | Planet          | plural         # the word itself in English
+      giraffes          | Giraffe         | plural
+      perro             | Hund            | too close      # other languages: as written
+      # Other English words:
+      singing           | Affe            | -              # singe is French for it
+      wed               | Hochzeit        | -              # wedding is no form of wed
+      died              | Würfel          | -              # nor dice of die
+      glass             | Brille          | -              # nor glasses of glass
+      outer             | Ausflug         | -              # no family (outing)
+      tall              | Tal             | -
+      chops             | Chips           | -
+      better            | Bett            | -
+      auditor           | Tor             | -
+      hoses             | Hose            | -              # false friends are not listed
+      muttered          | Mutter          | -
+      seeing            | See             | -
+      ark               | Bogen           | -              # arc is French
+      fare              | Leuchtturm      | -              # faro is Spanish
+      bat               | Badewanne       | -              # bath
+      hearth            | Herz            | -              # heart
+      # German clues keep the German rules:
+      bellen            | Glocke          | -              # bell
+      Otua              | Auto            | backwards
+    `),
+    (c, s) => check(c, s),
+  );
+  expectAll(
+    table(`
+      dogs              | dog             | plural
+      planets           | Planet          | plural
+      better            | Bett            | -
+      chops             | Chips           | -
+      dog               | Hund            | -
+    `),
+    (a, b) => sameClue(clue(a), clue(b), eopt),
+  );
+});
+
+test("clean: words that are names of object properties", () => {
+  for (const w of ["constructor", "toString", "__proto__", "hasOwnProperty", "valueOf"]) {
+    const c = clean(w);
+    assert.equal(c.ok, true, w);
+    if (c.ok) {
+      assert.equal(typeof c.clue.key, "string");
+      sameClue(c.clue, clue("Hund"), opt);
+      invalidClue(c.clue, clue("Hund"), opt);
+      judgeGuess(c.clue, clue("Hund"), opt);
+    }
+  }
 });
 
 test("checkSubmit: German messages", () => {

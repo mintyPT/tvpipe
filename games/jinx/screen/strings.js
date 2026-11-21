@@ -83,6 +83,7 @@ const en = (f) => ({
     "sounds the same": "sounds the same",
     "contains the word": "contains the word",
     "part of the word": "part of the word",
+    backwards: "backwards",
     "too close": "too close",
   },
   /** @param {number} n */
@@ -252,6 +253,7 @@ const de = (f) => ({
     "sounds the same": "klingt gleich",
     "contains the word": "enthält das Wort",
     "part of the word": "Teil des Wortes",
+    backwards: "rückwärts",
     "too close": "zu nah dran",
   },
   sameWordTimes: (n) => `gleiches Wort × ${f.n(n)}`,

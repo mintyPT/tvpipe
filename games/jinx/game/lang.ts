@@ -24,7 +24,7 @@ export function pickLang(tag: unknown): Lang {
 }
 
 /** Options for checkSubmit: the word list's extras for this word and the giver's other clues. */
-export type SubmitOptions = MatchOptions & { banned?: readonly string[]; alsoRight?: readonly string[]; own?: readonly Clue[] };
+export type SubmitOptions = MatchOptions & { banned?: readonly string[]; alsoRight?: readonly string[]; english?: readonly string[]; own?: readonly Clue[] };
 
 export interface Matcher {
   readonly lang: Lang;
@@ -38,8 +38,8 @@ export interface Matcher {
   invalidClue(c: Clue, s: Clue, opt?: MatchOptions, banned?: readonly string[]): Reason | null;
   /** Is the guess right (null: wrong)? */
   judgeGuess(g: Clue, s: Clue, opt?: MatchOptions, alsoRight?: readonly string[]): Reason | null;
-  /** A round's clues: struck ones and jinx groups (transitive). */
-  groupClues(clues: readonly Clue[], secret: Clue, opt?: MatchOptions, banned?: readonly string[]): RoundResult;
+  /** A round's clues: struck ones and jinx groups (transitive); `english`: the English translations (German: also their forms). */
+  groupClues(clues: readonly Clue[], secret: Clue, opt?: MatchOptions, banned?: readonly string[], english?: readonly string[]): RoundResult;
   /** A clue as a giver submits it; rejections carry a message in this language. */
   checkSubmit(raw: string, secret: Clue, opt?: SubmitOptions): SubmitResult;
   /** The dictionary file's text as match options (typo matching, word forms). */

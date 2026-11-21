@@ -196,7 +196,9 @@ like Brezel, Schultüte, Gartenzwerg). The same rules, plus: no words that
 differ between Germany, Austria and Switzerland (Pfannkuchen, Sahne);
 regional names for the same thing are accepted guesses (Stiege for Treppe,
 Nuggi for Schnuller); `banned` holds only translations that are no fair
-German clue.
+German clue, and a sixth column `english` says which of them are English
+(with the word itself where English has it with the same meaning: planet
+for Planet, not Mutter or See).
 
 ### 5.2 When two clues are the same (jinx)
 
@@ -228,6 +230,14 @@ only an emoji matches only the same emoji.
 | 5 | word family | SAME FAMILY | prince/princess, teach/teacher, sun/sunny, france/french | corner/corn, mother/moth, universe/university |
 | 6 | typo (5+ letters, never between two dictionary words) | TYPO | chocolate/choclate | shirt/short, bear/beer |
 
+- **Cheats** jinx too (with the dictionary, strictly, so that no real
+  word is caught: only a word the dictionary does not know is a disguise
+  of one it knows): a word with letters doubled (dog/doog, Rad/Radd: short
+  words have no typos), "OTHER SPELLING"; a word written backwards,
+  exactly, 4+ letters (black/kcalb, Schwarz/Zrawhcs, but not star/rats),
+  "BACKWARDS"; two words that share a word (black car/black, black
+  car/car black), "CONTAINS THE WORD" or "SAME WORD". A second word on a
+  card must not get its first word past the jinx.
 - Grouping is **transitive**: teach ~ teacher ~ teachers jinxes all three.
   Every pair in a group keeps its reason, so the TV can explain each slam.
 - **Not** the same, on purpose: homophones between clues (night/knight),
@@ -247,6 +257,8 @@ the TV.
 
 - Rules 1–6 above against the secret word: "Too close to the word: plural".
 - Sounds the same: whether for weather, knight for night, kat for cat.
+- Stretched or backwards (§5.2): doog for dog, kcalb for black: "That's
+  the word backwards".
 - Contains the word: snowmen, t-shirt, sunflower for sun, unhappy for
   happy (but not hear for ear, giant for ant, history for story).
 - Part of the word: snow or man for snowman, foot for football (but not
@@ -493,6 +505,14 @@ page), and its rules do what a lexicon cannot:
   missing umlaut on a phone (Schlussel) are another spelling, but two real
   words are never one (Bar/Bär, schon/schön). Typos are measured on a QWERTZ
   keyboard.
+- **English clues**: the host page loads the English dictionary too. A clue
+  that is an English word and no German one is checked only against the
+  word's English translations, in their English forms, typos and disguises
+  (dog, dogs, doog for Hund; planets for Planet; swam for schwimmen), never
+  by the German rules: no other English word is refused or jinxed (tall for
+  Tal, chops for Chips, better for Bett, wed for Hochzeit, singing for Affe
+  although singe is French for it). Two English clues jinx by the English
+  rules (dog/dogs). The other languages' translations match as written.
 - **Reasons** are the English ones plus "word form" (declension and
   comparison: rot/rote, gut/besser); guesses also accept the female form of
   a job or animal (Lehrerin for Lehrer).
@@ -506,7 +526,7 @@ SO DANEBEN."), German stamps (RICHTIG!, DANEBEN, GEPASST, SAUBER!,
 UNGÜLTIG, EINGELOGGT); JINX! stays the game's word. The reasons on the
 tape: GLEICHES WORT, GLEICHE ZAHL, ANDERE SCHREIBWEISE, PLURAL, VERBFORM,
 ANDERE FORM (declension, adjective endings), WORTFAMILIE, TIPPFEHLER,
-KLINGT GLEICH, ENTHÄLT DAS WORT, TEIL DES WORTES. Room titles:
+KLINGT GLEICH, ENTHÄLT DAS WORT, TEIL DES WORTES, RÜCKWÄRTS. Room titles:
 Telepathen, Gedankenleser, Eingespielt, Funkstörung, Totaler Jinx;
 awards: Seelenverwandt, Hellseher.
 

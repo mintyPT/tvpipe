@@ -7,6 +7,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import { checkSubmit, clean, dictionary, judgeGuess, parseWordList } from "../game/match-de.ts";
+import { dictionary as enDictionary } from "../game/match.ts";
 
 const WORDS = new URL("../data/words.de.txt", import.meta.url);
 const DICT = new URL("../data/dict.de.txt", import.meta.url);
@@ -34,7 +35,9 @@ test("words.de.txt: columns, categories, difficulties, no duplicates", { skip: !
 
 test("words.de.txt: every secret, also_right and banned form behaves", { skip: !existsSync(WORDS) && "no data/words.de.txt" }, () => {
   const entries = parseWordList(readFileSync(WORDS, "utf8"));
-  const dict = existsSync(DICT) ? dictionary(readFileSync(DICT, "utf8")) : {};
+  // As the host page plays it: the German lexicon and the English dictionary.
+  const englishKnown = enDictionary(readFileSync(new URL("../data/dict.txt", import.meta.url), "utf8"));
+  const dict = { ...(existsSync(DICT) ? dictionary(readFileSync(DICT, "utf8")) : {}), englishKnown };
   const bad: string[] = [];
   for (const e of entries) {
     const c = clean(e.word);
@@ -43,7 +46,7 @@ test("words.de.txt: every secret, also_right and banned form behaves", { skip: !
       continue;
     }
     const secret = c.clue;
-    const opt = { ...dict, banned: e.banned, alsoRight: e.alsoRight };
+    const opt = { ...dict, banned: e.banned, alsoRight: e.alsoRight, english: e.english };
     if (checkSubmit(e.word, secret, opt).ok) bad.push(`${e.word}: accepted as its own clue`);
     if (judgeGuess(secret, secret, opt, e.alsoRight) !== "same word") bad.push(`${e.word}: own guess not right`);
     for (const a of e.alsoRight) {

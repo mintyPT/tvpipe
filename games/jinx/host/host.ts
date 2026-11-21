@@ -128,6 +128,8 @@ async function main(): Promise<void> {
       dictWords[l] = data.words.map((w) => w.word).filter((w) => /^\p{L}{4,10}$/u.test(w));
     }),
   );
+  // A German room knows English words too: none is a German word in disguise, and banned translations match in their English forms.
+  if (match.de && match.en?.known) match.de = { ...match.de, englishKnown: match.en.known } as MatchOptions;
   allWords = LANGS.flatMap((l) => words[l] ?? []);
   if (!words[lang]) lang = LANGS.find((l) => words[l]) ?? "en";
   // The settings of before the standard host page, once.

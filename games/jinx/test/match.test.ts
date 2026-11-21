@@ -446,6 +446,62 @@ test("sameClue: dictionary blocks typos between real words", () => {
   assert.equal(sameClue(clue("dinner"), clue("diner"), { known }), null);
 });
 
+// Cheats: a word stretched or written backwards to slip past the jinx, and
+// two-word clues that repeat another card's word.
+test("disguises: stretched, backwards, a shared word", () => {
+  const words = new Set(["dog", "dogs", "car", "black", "star", "rats", "diner", "dinner", "tire", "wheel", "stop", "pots", "spot"]);
+  const known = (w: string) => words.has(w);
+  const rows = table(`
+    # a          | b         | jinx / for the secret b
+    doog         | dog       | spelling
+    DDOOGG       | dog       | spelling
+    carr         | car       | spelling
+    dogss        | dogs      | spelling
+    kcalb        | black     | backwards
+    erit         | tire      | backwards
+    sgod         | dog       | -                # no forms backwards
+    god          | dog       | -                # 4+ letters backwards
+    doggs        | dog       | -                # no forms of a stretched word
+    blak         | black     | -                # only doubled, never undoubled (a typo rule's business)
+    rats         | star      | -                # two words of their own
+    diner        | dinner    | -
+    stop         | pots      | -
+  `);
+  expectAll(rows, (a, b) => sameClue(clue(a), clue(b), { known }));
+  expectAll(rows, (a, b) => sameClue(clue(b), clue(a), { known }));
+  expectAll(rows, (a, b) => invalidClue(clue(a), clue(b), { known }));
+  // Without the dictionary the disguise rules are off.
+  assert.equal(sameClue(clue("doog"), clue("dog")), null);
+  expectAll(
+    table(`
+      "black car"  | black       | contains the word
+      "black car"  | "car black" | same word
+      "black car"  | "black cars"| plural           # the whole clue in the plural
+      "black cars" | cars        | contains the word
+      "donut shape"| "black car" | -
+      firetruck    | fire        | -                # closed compounds still do not jinx
+      "fire truck" | firetruck   | same word
+    `),
+    (a, b) => sameClue(clue(a), clue(b), { known }),
+  );
+  const r = checkSubmit("kcalb", clue("black"), { known });
+  assert.equal(r.ok, false);
+  if (!r.ok) assert.equal(r.message, "That's the word backwards. Try another clue");
+});
+
+test("clean: words that are names of object properties", () => {
+  for (const w of ["constructor", "toString", "__proto__", "hasOwnProperty", "valueOf"]) {
+    const c = clean(w);
+    assert.equal(c.ok, true, w);
+    if (c.ok) {
+      assert.equal(typeof c.clue.key, "string");
+      sameClue(c.clue, clue("dog"));
+      invalidClue(c.clue, clue("dog"));
+      judgeGuess(c.clue, clue("dog"));
+    }
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Clue vs secret word: invalid clues
 // ---------------------------------------------------------------------------
@@ -832,9 +888,9 @@ test("parseWordList: columns, lists, comments", () => {
     "# a comment",
   ].join("\n");
   assert.deepEqual(parseWordList(text), [
-    { word: "barbecue", difficulty: "medium", category: "food", alsoRight: ["bbq", "barbeque"], banned: ["barbacoa"] },
-    { word: "cat", difficulty: "easy", category: "animal", alsoRight: [], banned: ["chat", "gato"] },
-    { word: "dog", difficulty: "easy", category: "animal", alsoRight: [], banned: [] },
+    { word: "barbecue", difficulty: "medium", category: "food", alsoRight: ["bbq", "barbeque"], banned: ["barbacoa"], english: [] },
+    { word: "cat", difficulty: "easy", category: "animal", alsoRight: [], banned: ["chat", "gato"], english: [] },
+    { word: "dog", difficulty: "easy", category: "animal", alsoRight: [], banned: [], english: [] },
   ]);
   // A header naming only three columns still reads the two new ones by position.
   const old = parseWordList("# word<TAB>difficulty<TAB>category. See README.md.\nbicycle\teasy\ttransport\tbike\n");

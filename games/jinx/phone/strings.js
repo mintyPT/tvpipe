@@ -85,6 +85,7 @@ const en = (f) => ({
     "sounds the same": "Sounds like the word",
     "contains the word": "Contains the word",
     "part of the word": "Part of the word",
+    backwards: "That's the word backwards",
     "too close": "Too close to the word",
   },
   /** @param {string} why */
@@ -104,6 +105,7 @@ const en = (f) => ({
     "sounds the same": "sounds the same",
     "contains the word": "contains the word",
     "part of the word": "part of the word",
+    backwards: "backwards",
     "too close": "too close",
   },
   // Waiting for the TV.
@@ -370,6 +372,7 @@ const de = (f) => ({
     "sounds the same": "Klingt genau wie das Wort",
     "contains the word": "Da steckt das Wort drin",
     "part of the word": "Das ist ein Teil des Wortes",
+    backwards: "Das ist das Wort rückwärts",
     "too close": "Zu nah am Wort",
   },
   tryAnother: (why) => `${why}. Nimm einen anderen Hinweis.`,
@@ -386,6 +389,7 @@ const de = (f) => ({
     "sounds the same": "klingt gleich",
     "contains the word": "enthält das Wort",
     "part of the word": "Teil des Wortes",
+    backwards: "rückwärts",
     "too close": "zu nah dran",
   },
   jinxCheck: "Jinx-Check",

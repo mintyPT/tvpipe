@@ -51,11 +51,13 @@ for (const [i, raw] of readFileSync(SOURCE, "utf8").split("\n").entries()) {
     continue;
   }
   if (line === "" || line.startsWith("#")) continue;
-  const [word, d, also = "", banned = "", note = ""] = line.split("|").map((s) => s.trim());
+  const [word, d, also = "", translations = "", note = ""] = line.split("|").map((s) => s.trim());
+  // "monkey, ape / mono, singe, scimmia": English before the slash, other languages after it.
+  const [english, banned = ""] = translations.includes("/") ? translations.split("/") : [translations];
   if (!DIFF[d]) errors.push(`${at}: ${word}: difficulty ${d}`);
   if (!category) errors.push(`${at}: no category`);
   const list = (s) => s.split(",").map((x) => x.trim()).filter(Boolean);
-  entries.push({ word, difficulty: DIFF[d], category, alsoRight: list(also), banned: list(banned), note, at });
+  entries.push({ word, difficulty: DIFF[d], category, alsoRight: list(also), english: list(english), banned: list(banned), note, at });
 }
 
 // Clean the lists: no duplicates, nothing equal to the word, banned minus also_right, at most two words.
@@ -73,6 +75,8 @@ for (const e of entries) {
     return true;
   };
   e.alsoRight = e.alsoRight.filter((x) => keep(x, "also_right"));
+  // The word itself is English too (planet for Planet): its English forms (planets) are rejected.
+  e.english = e.english.filter((x) => (fold(x) === key ? !e.english.slice(0, e.english.indexOf(x)).some((y) => fold(y) === key) : keep(x, "banned")));
   e.banned = e.banned.filter((x) => keep(x, "banned"));
 }
 
@@ -105,7 +109,7 @@ const covered = new Map();
 for (const e of entries) {
   const mark = (w) => covered.set(fold(w), e.word);
   mark(e.word);
-  for (const b of e.banned) mark(b);
+  for (const b of [...e.english, ...e.banned]) mark(b);
   for (const a of e.alsoRight) mark(a);
   for (const m of e.note.matchAll(/en:([a-z]+)/g)) mark(m[1]);
 }
@@ -127,11 +131,11 @@ if (uncovered.length) errors.push(`English words neither translated nor in dropp
 const collator = new Intl.Collator("de");
 const sorted = [...entries].sort((a, b) => collator.compare(a.word, b.word));
 const header = [
-  "# Jinx secret words (German). word<TAB>difficulty<TAB>category<TAB>also_right<TAB>banned",
-  "# also_right (accepted guesses) and banned (clues rejected as too close) are optional, comma-separated. Built from design/words/de/source.txt; see design/words/de/README.md.",
+  "# Jinx secret words (German). word<TAB>difficulty<TAB>category<TAB>also_right<TAB>banned<TAB>english",
+  "# also_right (accepted guesses), banned (translations rejected as clues, as written) and english (English translations, also rejected in their English forms) are optional, comma-separated. Built from design/words/de/source.txt; see design/words/de/README.md.",
 ];
 const body = sorted.map((e) => {
-  const cols = [e.word, e.difficulty, e.category, e.alsoRight.join(","), e.banned.join(",")];
+  const cols = [e.word, e.difficulty, e.category, e.alsoRight.join(","), e.banned.join(","), e.english.join(",")];
   while (cols.length > 3 && cols[cols.length - 1] === "") cols.pop();
   return cols.join("\t");
 });
@@ -142,7 +146,7 @@ const n = entries.length;
 console.log(`${n} words -> ${OUT}`);
 console.log("difficulty: " + count((e) => e.difficulty).map(([k, v]) => `${k} ${v} (${Math.round((100 * v) / n)}%)`).join(", "));
 console.log("category:   " + count((e) => e.category).map(([k, v]) => `${k} ${v}`).join(", "));
-console.log(`also_right: ${entries.filter((e) => e.alsoRight.length).length} words; banned: ${entries.filter((e) => e.banned.length).length} words`);
+console.log(`also_right: ${entries.filter((e) => e.alsoRight.length).length} words; english: ${entries.filter((e) => e.english.length).length} words; banned: ${entries.filter((e) => e.banned.length).length} words`);
 console.log(`English list: ${enWords.length - dropped.size - uncovered.length} translated, ${dropped.size} dropped`);
 for (const w of warnings) console.log("warning: " + w);
 for (const e of errors) console.log("ERROR: " + e);

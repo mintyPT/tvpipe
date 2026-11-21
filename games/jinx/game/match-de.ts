@@ -26,11 +26,16 @@
 // Keys keep ä, ö, ü and ß ("Bär" -> "bär"); "Baer", "Strasse" or "Bar" for
 // Bär are other spellings, found by comparing spelled forms (spell()).
 
-import { parseWordList } from "./match.ts";
+import { clean as cleanEn, nearTranslation, parseWordList, sameClue as sameClueEn } from "./match.ts";
 import type { Clue, Cleaned, CleanError, Link, MatchOptions, Reason, RoundResult, SubmitResult } from "./match.ts";
 
 export { parseWordList };
 export type { Clue, Cleaned, Reason, RoundResult, SubmitResult };
+
+/** A lookup table without a prototype: typed words like "constructor" are not in it. */
+function table<T>(entries: Record<string, T>): Record<string, T> {
+  return Object.assign(Object.create(null) as Record<string, T>, entries);
+}
 
 export const MAX_CHARS = 24;
 export const MAX_WORDS = 2;
@@ -48,18 +53,26 @@ export const REASON_TEXT: Record<Reason, string> = {
   "sounds the same": "klingt gleich",
   "contains the word": "enthält das Wort",
   "part of the word": "Teil des Wortes",
+  backwards: "rückwärts",
   "too close": "zu nah",
 };
 
 /** TV line for a pair: "Hunde = Hund · Plural", "Schokolode ≈ Schokolade · Tippfehler". */
 export function explain(a: Clue, b: Clue, r: Reason): string {
-  const sign = r === "typo" || r === "sounds the same" || r === "spelling" ? "≈" : r === "contains the word" ? "⊃" : r === "part of the word" ? "⊂" : "=";
+  const sign = r === "typo" || r === "sounds the same" || r === "spelling" || r === "backwards" ? "≈" : r === "contains the word" ? "⊃" : r === "part of the word" ? "⊂" : "=";
   return `${a.display} ${sign} ${b.display} · ${REASON_TEXT[r]}`;
 }
 
 /** MatchOptions with the lexicon (`dictionary(text)` gives both). */
 export interface DeOptions extends MatchOptions {
   lexicon?: Lexicon | undefined;
+  /**
+   * The English dictionary (the host page has every language's): an English
+   * word is a word, never a German word in disguise (tall is not Tal
+   * stretched, repo not Oper backwards), and the typos of an English
+   * translation are measured with it (monky for monkey, not shirt for short).
+   */
+  englishKnown?: ((word: string) => boolean) | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -92,7 +105,7 @@ export function foldWord(s: string): string {
 }
 
 /** A single symbol typed as the whole clue reads as its name. */
-const SYMBOL_NAMES: Record<string, string> = {
+const SYMBOL_NAMES: Record<string, string> = table({
   $: "dollar",
   "€": "euro",
   "£": "pfund",
@@ -103,7 +116,7 @@ const SYMBOL_NAMES: Record<string, string> = {
   "@": "at",
   "°": "grad",
   "§": "paragraf",
-};
+});
 
 const EMOJI_EXTRA = /[\u{FE0E}\u{FE0F}\u{1F3FB}-\u{1F3FF}]/gu;
 
@@ -186,8 +199,8 @@ export function clue(raw: string): Clue {
 
 // ---- number words ---------------------------------------------------------
 
-const UNITS: Record<string, number> = { ein: 1, eins: 1, eine: 1, zwei: 2, zwo: 2, drei: 3, vier: 4, fünf: 5, sechs: 6, sieben: 7, acht: 8, neun: 9 };
-const TEENS: Record<string, number> = {
+const UNITS: Record<string, number> = table({ ein: 1, eins: 1, eine: 1, zwei: 2, zwo: 2, drei: 3, vier: 4, fünf: 5, sechs: 6, sieben: 7, acht: 8, neun: 9 });
+const TEENS: Record<string, number> = table({
   zehn: 10,
   elf: 11,
   zwölf: 12,
@@ -198,8 +211,8 @@ const TEENS: Record<string, number> = {
   siebzehn: 17,
   achtzehn: 18,
   neunzehn: 19,
-};
-const TENS: Record<string, number> = { zwanzig: 20, dreißig: 30, dreissig: 30, vierzig: 40, fünfzig: 50, sechzig: 60, siebzig: 70, achtzig: 80, neunzig: 90 };
+});
+const TENS: Record<string, number> = table({ zwanzig: 20, dreißig: 30, dreissig: 30, vierzig: 40, fünfzig: 50, sechzig: 60, siebzig: 70, achtzig: 80, neunzig: 90 });
 const UNIT_RE = "(ein|zwei|zwo|drei|vier|fünf|sechs|sieben|acht|neun)";
 const SMALL_RE = new RegExp(`^(?:${UNIT_RE}und)?(${Object.keys(TENS).join("|")})$`);
 
@@ -239,7 +252,7 @@ export function parseNumberWords(s: string): string | null {
   return h === null || t === null ? null : String(h * 1000 + t);
 }
 
-const ORDINAL_SPECIAL: Record<string, number> = { erst: 1, dritt: 3, siebt: 7, acht: 8 };
+const ORDINAL_SPECIAL: Record<string, number> = table({ erst: 1, dritt: 3, siebt: 7, acht: 8 });
 
 /** "erste", "dritter", "zwanzigste", "hundertstes" -> "1.", "3.", "20.", "100.". */
 function ordinal(s: string): string | null {
@@ -252,7 +265,7 @@ function ordinal(s: string): string | null {
   return n === null || n === "0" || n === "1" ? null : n + ".";
 }
 
-const SCALES: Record<string, number> = { million: 1e6, millionen: 1e6, milliarde: 1e9, milliarden: 1e9 };
+const SCALES: Record<string, number> = table({ million: 1e6, millionen: 1e6, milliarde: 1e9, milliarden: 1e9 });
 
 function numberParts(parts: string[]): string[] {
   // "zwei Millionen", "eine Million"
@@ -627,7 +640,7 @@ const UMLAUT_OF: Record<string, string> = { a: "ä", o: "ö", u: "ü" };
 // ---------------------------------------------------------------------------
 
 /** Old and new, German and foreign spellings of one word (both sides go through spell()). */
-const SPELLING_TABLE: Record<string, string> = Object.fromEntries(
+const SPELLING_TABLE: Record<string, string> = table(Object.fromEntries(
   (
     "jogurt:joghurt ketschup:ketchup portmonee:portemonnaie majonäse:mayonnaise majonaese:mayonnaise spagetti:spaghetti " +
     "känguruh:känguru panter:panther tunfisch:thunfisch schi:ski frisör:friseur frisoer:friseur grislibär:grizzlybär " +
@@ -637,7 +650,7 @@ const SPELLING_TABLE: Record<string, string> = Object.fromEntries(
   )
     .split(/\s+/)
     .map((p) => p.split(":") as [string, string]),
-);
+));
 
 /** The plain spelling: ä = ae, ß = ss, ph = f, th = t, foreign c = k or z; equal spellings are "other spelling". */
 export function spell(w: string): string {
@@ -843,6 +856,87 @@ function umlautSlip(a: Forms, b: Forms, strict: boolean): boolean {
   return !strict || !(a.known && b.known);
 }
 
+/** Does the dictionary know the word? Undefined without one: the disguise rules need it. */
+function knownWord(w: string, opt: DeOptions): boolean | undefined {
+  if (opt.lexicon) return forms(w, opt).known || (opt.englishKnown?.(w) ?? false);
+  return opt.known ? opt.known(w) : undefined;
+}
+
+/** "Zrawhcs" -> "schwarz". */
+function reverse(w: string): string {
+  return [...w].reverse().join("");
+}
+
+/** `x` is `y` with letters doubled (or more), nothing else: radd, rrad for rad; not lam for lamm, feel for fell. */
+function stretches(x: string, y: string): boolean {
+  const rx = x.match(/(.)\1*/gu) ?? [];
+  const ry = y.match(/(.)\1*/gu) ?? [];
+  return x.length > y.length && rx.length === ry.length && rx.every((r, i) => r[0] === ry[i]![0] && r.length >= ry[i]!.length);
+}
+
+/**
+ * A word in disguise, to slip past the jinx (and the check against the
+ * secret): a known word with letters stretched (Radd, Hhuunndd, Auuto for
+ * Rad, Hund, Auto; short words have no typos) or written backwards (Otua
+ * for Auto, Zrawhcs for Schwarz, 4+ letters). Strict on purpose, so that no
+ * real word is caught: the disguise must be unknown to the lexicon and the
+ * other word known, only letters doubled (never undoubled: Lam for Lamm,
+ * feel for Fell are not), exactly reversed (no forms: gilben is not
+ * "nebelig"). Ofen and offen, Tor and rot are words of their own. Needs the
+ * lexicon; without it, nothing is a disguise.
+ */
+function disguised(a: string, b: string, opt: DeOptions): Reason | null {
+  if (a === b || !/^[a-zäöüß]+$/.test(a) || !/^[a-zäöüß]+$/.test(b)) return null;
+  const ka = knownWord(a, opt);
+  const kb = knownWord(b, opt);
+  if (ka === undefined || kb === undefined) return null;
+  for (const [x, y, kx, ky] of [[a, b, ka, kb], [b, a, kb, ka]] as const) {
+    if (kx || !ky) continue;
+    if (stretches(x, y)) return "spelling";
+    if (y.length >= 4 && reverse(x) === y) return "backwards";
+  }
+  return null;
+}
+
+/**
+ * Two-word clues that share a word: "Schwarz Auto" and "Schwarz", "Auto
+ * Schwarz" and "Schwarz Auto". The cards say the same word, whatever comes
+ * with it (one-word compounds that share a part still do not jinx).
+ */
+function sharedWord(a: Clue, b: Clue, opt: DeOptions): Reason | null {
+  if (a.parts.length < 2 && b.parts.length < 2) return null;
+  const pa = a.parts.length > 1 ? a.parts : [a.key];
+  const pb = b.parts.length > 1 ? b.parts : [b.key];
+  if (pa.length === pb.length && [...pa].sort().join(" ") === [...pb].sort().join(" ")) return "same word";
+  for (const x of pa) {
+    if (x.length < 3 || !/^[a-zäöüß]+$/.test(x)) continue;
+    for (const y of pb) if (y.length >= 3 && /^[a-zäöüß]+$/.test(y) && related(x, y, opt)) return "contains the word";
+  }
+  return null;
+}
+
+/** Every word of the clue is an English word (with the English dictionary). */
+function englishToo(c: Clue, opt: DeOptions): boolean {
+  const known = opt.englishKnown;
+  return known !== undefined && c.kind === "word" && c.parts.length > 0 && c.parts.every((p) => known(p));
+}
+
+/**
+ * An English word and no German one (dogs, chops, tall): it plays by English
+ * rules, never German ones (better is no plural of Bett, chops no typo of
+ * Chips, auditor does not contain Tor).
+ */
+function englishOnly(c: Clue, opt: DeOptions): boolean {
+  return englishToo(c, opt) && !forms(c.key, opt).known;
+}
+
+/** Two clues by the English matcher. */
+function sameEnglish(a: Clue, b: Clue, opt: DeOptions): Reason | null {
+  const ea = cleanEn(a.display);
+  const eb = cleanEn(b.display);
+  return ea.ok && eb.ok ? sameClueEn(ea.clue, eb.clue, { known: opt.englishKnown }) : null;
+}
+
 /** Do two clues jinx each other? Returns the reason, or null. */
 export function sameClue(a: Clue, b: Clue, opt: DeOptions = {}): Reason | null {
   if (a.key === b.key) {
@@ -850,12 +944,15 @@ export function sameClue(a: Clue, b: Clue, opt: DeOptions = {}): Reason | null {
     return "same word";
   }
   if (a.kind !== "word" || b.kind !== "word") return null;
+  // An English word against another English one (planets, Planet) by English rules; against a German word never.
+  if (englishOnly(a, opt) || englishOnly(b, opt)) return englishToo(a, opt) && englishToo(b, opt) ? sameEnglish(a, b, opt) : null;
   const r = related(a.key, b.key, opt);
   if (r) return r;
   const fa = forms(a.key, opt);
   const fb = forms(b.key, opt);
   if (umlautSlip(fa, fb, opt.lexicon !== undefined || opt.known !== undefined)) return "spelling";
-  return typoMatch(fa, fb, opt) ? "typo" : null;
+  if (typoMatch(fa, fb, opt)) return "typo";
+  return disguised(a.key, b.key, opt) ?? sharedWord(a, b, opt);
 }
 
 /**
@@ -994,14 +1091,25 @@ function containment(c: Clue, s: Clue, opt: DeOptions): Reason | null {
 
 /**
  * Is `c` an invalid clue for the secret word `s`? `banned` are extra words
- * the word list forbids for this word (translations: dog for Hund): they
- * match as they are written, or spelled otherwise, nothing more (bell for
- * Glocke must not reject bellen). `alsoRight` (accepted guesses: Rad for
- * Fahrrad) also match in their own forms (Räder), not their family or parts.
+ * the word list forbids for this word (translations: perro, chien for Hund):
+ * they match as they are written, or spelled otherwise, nothing more.
+ * `english` are its English translations (dog): the same, and a clue that is
+ * no German word also in their English forms, typos and disguises (dogs,
+ * doggy, doog), but never a German word (bell for Glocke must not reject
+ * bellen). `alsoRight` (accepted guesses: Rad for Fahrrad) also match in
+ * their own forms (Räder), not their family or parts.
  */
-export function invalidClue(c: Clue, s: Clue, opt: DeOptions = {}, banned: readonly string[] = [], alsoRight: readonly string[] = []): Reason | null {
+export function invalidClue(
+  c: Clue,
+  s: Clue,
+  opt: DeOptions = {},
+  banned: readonly string[] = [],
+  alsoRight: readonly string[] = [],
+  english: readonly string[] = [],
+): Reason | null {
   if (c.key === s.key) return c.kind === "number" ? "same number" : "same word";
   if (c.kind !== "word" || s.kind !== "word") return null;
+  if (englishOnly(c, opt)) return invalidEnglish(c, s, opt, banned, alsoRight, english);
   const r = related(c.key, s.key, opt);
   if (r) return r;
   const fc = forms(c.key, opt);
@@ -1009,17 +1117,58 @@ export function invalidClue(c: Clue, s: Clue, opt: DeOptions = {}, banned: reado
   if (umlautSlip(fc, fs, false)) return "spelling";
   if (soundsSame(fc, fs)) return "sounds the same";
   if (typoMatch(fc, fs, opt)) return "typo";
+  const d = disguised(c.key, s.key, opt);
+  if (d) return d;
   const k = containment(c, s, opt);
   if (k) return k;
-  for (const b of banned) {
+  for (const b of new Set([...banned, ...english])) {
     const bc = clean(b);
     if (!bc.ok) continue;
-    if (bc.clue.key === c.key || fc.spell === spell(bc.clue.key)) return "too close";
+    if (bc.clue.key === c.key) return "too close";
+    // German spellings only for the other languages (thon ~ Ton); English has
+    // its own below: bat is no "bath", hearth no "heart".
+    if (!english.includes(b) && fc.spell === spell(bc.clue.key)) return "too close";
   }
+  // The English translations also in their typos and disguises (monky,
+  // doog), unless the clue is a German word (bellen is no form of bell, Rock
+  // no rocket). The other languages' only as written.
+  const en = fc.known ? null : cleanEn(c.display);
+  if (en?.ok)
+    for (const b of english) {
+      const be = cleanEn(b);
+      if (be.ok && nearTranslation(en.clue, be.clue, { known: opt.englishKnown })) return "too close";
+    }
   for (const a of alsoRight) {
     const ac = clean(a);
     if (!ac.ok) continue;
     if (ac.clue.key === c.key || sameLemma(c.key, ac.clue.key, opt)) return "too close";
+  }
+  return null;
+}
+
+/**
+ * An English clue (no German word) for a German secret: only an English
+ * translation in its English forms, typos and disguises (dogs, monkeys,
+ * swam for schwimmen; planets for Planet, which the word list gives as its
+ * own translation), or a listed word as written. Never another English
+ * word: tall for Tal, chops for Chips, better for Bett, auditor for Tor,
+ * wed for Hochzeit (wedding), singing for Affe (French singe), hoses for
+ * Hose (a false friend: not listed).
+ */
+function invalidEnglish(c: Clue, s: Clue, opt: DeOptions, banned: readonly string[], alsoRight: readonly string[], english: readonly string[]): Reason | null {
+  const ce = cleanEn(c.display);
+  if (!ce.ok) return null;
+  const eo = { known: opt.englishKnown };
+  const se = cleanEn(s.display);
+  for (const b of english) {
+    const be = cleanEn(b);
+    const r = be.ok ? nearTranslation(ce.clue, be.clue, eo) : null;
+    // The word itself in English (planets for Planet): the reason; a translation: too close.
+    if (r) return se.ok && be.ok && se.clue.key === be.clue.key ? r : "too close";
+  }
+  for (const b of [...banned, ...alsoRight]) {
+    const bc = clean(b);
+    if (bc.ok && bc.clue.key === c.key) return "too close";
   }
   return null;
 }
@@ -1073,11 +1222,11 @@ function moved(f: string, m: string): boolean {
  * Strike invalid clues, then jinx the rest. Matching is transitive: if a
  * matches b and b matches c, all three are lost (connected components).
  */
-export function groupClues(clues: readonly Clue[], secret: Clue, opt: DeOptions = {}, banned: readonly string[] = []): RoundResult {
+export function groupClues(clues: readonly Clue[], secret: Clue, opt: DeOptions = {}, banned: readonly string[] = [], english: readonly string[] = []): RoundResult {
   const invalid: RoundResult["invalid"] = [];
   const valid: number[] = [];
   clues.forEach((c, i) => {
-    const r = invalidClue(c, secret, opt, banned);
+    const r = invalidClue(c, secret, opt, banned, [], english);
     if (r) invalid.push({ index: i, reason: r });
     else valid.push(i);
   });
@@ -1124,6 +1273,7 @@ const TOO_CLOSE_TEXT: Record<Reason, string> = {
   "sounds the same": "Klingt wie das Wort",
   "contains the word": "Enthält das Wort",
   "part of the word": "Ein Teil des Wortes",
+  backwards: "Das ist das Wort rückwärts",
   "too close": "Zu nah am Wort",
 };
 
@@ -1135,11 +1285,11 @@ const TOO_CLOSE_TEXT: Record<Reason, string> = {
 export function checkSubmit(
   raw: string,
   secret: Clue,
-  opt: DeOptions & { banned?: readonly string[]; alsoRight?: readonly string[]; own?: readonly Clue[] } = {},
+  opt: DeOptions & { banned?: readonly string[]; alsoRight?: readonly string[]; english?: readonly string[]; own?: readonly Clue[] } = {},
 ): SubmitResult {
   const c = clean(raw);
   if (!c.ok) return { ok: false, code: c.error, message: c.message };
-  const r = invalidClue(c.clue, secret, opt, opt.banned ?? [], opt.alsoRight ?? []);
+  const r = invalidClue(c.clue, secret, opt, opt.banned ?? [], opt.alsoRight ?? [], opt.english ?? []);
   if (r) return { ok: false, code: "too-close", reason: r, message: `${TOO_CLOSE_TEXT[r]}. Versuch einen anderen Hinweis` };
   for (const o of opt.own ?? []) {
     const m = sameClue(c.clue, o, opt);

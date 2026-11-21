@@ -1,8 +1,10 @@
 # Jinx secret words (German)
 
-`../../../data/words.de.txt`: **1,000 words**, same format as the English
-`words.txt` (`word<TAB>difficulty<TAB>category<TAB>also_right<TAB>banned`,
-header comment naming the columns, `parseWordList` reads it). German
+`../../../data/words.de.txt`: **1,000 words**, the format of the English
+`words.txt` with one more column
+(`word<TAB>difficulty<TAB>category<TAB>also_right<TAB>banned<TAB>english`,
+header comment naming the columns, `parseWordList` reads it: its `banned`
+is both columns, its `english` the last). German
 capitalisation as in Duden: nouns capitalised (`Hund`, `Schneemann`), verbs
 (category `action`) and adjectives (`quality`) lowercase.
 
@@ -12,7 +14,8 @@ capitalisation as in Duden: nouns capitalised (`Hund`, `Schneemann`), verbs
   nature 97, home 89, people 61, place 56, sport 54, fantasy 45, music 44,
   transport 44, body 42, clothing 42, tool 41, action 38, event 36,
   material 31, science 28, quality 14.
-- `also_right` on 498 words, `banned` on 926 (see the rules below).
+- `also_right` on 498 words, `banned` (French, Spanish, Italian) on 825,
+  `english` on 961 (see the rules below).
 
 The list is hand-curated: no dataset values are in it. `source.txt` is the
 source of truth (by category, with notes); `build.mjs` turns it into the TSV.
@@ -21,7 +24,7 @@ source of truth (by category, with notes); `build.mjs` turns it into the TSV.
 
 | File | What |
 | --- | --- |
-| `source.txt` | the list: `Wort \| e/m/h \| also_right \| banned \| note`, `## category` sections; notes say what a word translates (`en:bug`) and why something is or is not banned |
+| `source.txt` | the list: `Wort \| e/m/h \| also_right \| english / banned \| note` (`monkey, ape / mono, singe, scimmia`), `## category` sections; notes say what a word translates (`en:bug`) and why something is or is not banned |
 | `build.mjs` | `node build.mjs` writes `data/words.de.txt` and lints (categories, difficulty, duplicates, ≥ 3 letters, one word, capitalisation by part of speech, every English word translated or in `dropped.tsv`); `--review` checks against the raw data (below) and writes `../raw/de/review.tsv`; `--verbose` lists also_right forms that are themselves secrets |
 | `dropped.tsv` | the 185 English words with no German secret, and why |
 | `trimmed.txt` | 296 German candidates cut to keep the list near 1,000 (a reserve) |
@@ -87,7 +90,17 @@ Both are rejected as clues, so they must be narrow:
   close synonym a guesser types can be judged by the room, a blocked fair
   clue is worse.
 - `banned`: only translations: the English word, and French, Spanish and
-  Italian ones people know. Never German words, and no translation that is
+  Italian ones people know. In `source.txt` the English ones come first, a
+  `/` before the others; they go in the `english` column. The English ones
+  are also rejected in their English forms, typos and disguises (monkeys,
+  monky, mmonkey for monkey), the others only as written (singe is French
+  for Affe: singing is fine). Where English has the same word with the same
+  meaning, it is its own English translation (planet for Planet, so planets
+  is rejected; 122 words), never a false friend (Mutter, See, Hose, Boot,
+  Handy, Tee, Rock, Regal, Wald, Strand, Fell: muttered, seeing, hoses are
+  fine). Which entry is English came from the German Wiktionary's
+  translations (raw data, below), checked by hand where it lists the word in
+  several languages (canard, plume, bureau, tableau, basket for Turnschuh). Never German words, and no translation that is
   itself a German word a player may fairly use (Star for Stern, Curry for
   Currywurst, Pasta, Box, City, Pool, Match, Trick, Test, Bulldozer, Rosa,
   Limone…; the note says so). The matcher matches banned forms as written

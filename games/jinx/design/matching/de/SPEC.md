@@ -113,12 +113,25 @@ numbers).
 | 5 | … another form (declension, comparison, case) | andere Form | rot/rote, gut/besser/beste, groß/größte, Hund/Hundes | |
 | 6 | same family: one derives from the other (two steps), both derive from one word (siblings), or one family group | Wortfamilie | Lehrer/Lehrerin, Katze/Kätzchen, Bäcker/backen/Bäckerei, Fahrer/Fahrt, Sonne/sonnig, frei/Freiheit, groß/Größe, Lauf/laufen, Frankreich/französisch | Zeit/Zeitung, Messer/messen, Kind/Kindergarten (compound) |
 | 7 | typo: as English, on a QWERTZ keyboard (z next to u and t, y next to x, ü ö ä next to p, l, ö; an umlaut next to its vowel) | Tippfehler | Schokolade/Schokolode, Krokodil/Krokodiel | Hose/Rose, Kiste/Küste (two words) |
+| 8 | stretched: one is the other with letters doubled, nothing else; the stretched one unknown to the lexicon, the other known | andere Schreibweise | Rad/Radd, Hund/Hhuunndd, Auto/Auuto | Ofen/offen (words), Lamm/Lam, Fell/feel (undoubled, moved), Hund/Hunnde, Harfe/haarfein (no forms) |
+| 9 | backwards: one is the other written backwards, exactly; the backwards one unknown to the lexicon, the other known, 4+ letters | rückwärts | Schwarz/Zrawhcs, Auto/Otua | Tor/rot, Regal/Lager, Leben/Nebel (words), Rad/Dar (3 letters), Nebel/gilben (no forms) |
+| 10 | two words (with a space) that share a word: the same words in any order, or a word of one related (rules 1–6) to the other clue or one of its words (3+ letters) | gleiches Wort / enthält das Wort | Schwarz Auto/Auto Schwarz, Schwarz Auto/schwarz, Schwarz Auto/schwarze Form | Schwarz Auto/Schwarzwald, Schwarzwald/Schwarz (one-word compounds) |
 
 Two words that are lemmas of their own and meet only as forms of a third
 are those words, not forms (Reise and Reis are both forms of reisen: "ich
 reise", "reis!"). Two lemmas where one is also a form of the other are a
 family (Lauf is "lauf!" of laufen; Fliege and fliegen): the TV says
 Wortfamilie rather than Verbform.
+
+Rules 8–10 are against cheating: a word disguised to slip past the jinx,
+or a second word smuggled onto a card. Rules 8 and 9 need the lexicon
+(without it nothing is unknown); they run after the typo rule, so a long
+stretched word is still a typo (Schwarz/Schwarzz). They are strict because
+the lexicon does not know every real word: a sweep of the Hunspell
+dictionary (frami) and the OpenSubtitles word list against the word list
+found no German word refused for a secret but Torr (for Tor); the looser
+first version (forms of a stretched or backwards word) refused haarfein
+for Harfe, Hausse for Haus, gilben for Nebel, wüsst for Wüste.
 
 Not jinxes, as in English: compounds and their parts (Feuer/Feuerwehr,
 Kind/Kindergarten, Eis/Eisbär), prefixes (Glück/Unglück,
@@ -150,12 +163,29 @@ and families do not, and typos are not blocked between real words.
 ## 5. Clue vs secret word
 
 `invalidClue`, in order: rules 1–6 of §4, the umlaut left out even
-between two words (Bar for Bär), sounds the same, typo, containment, then
+between two words (Bar for Bär), sounds the same, typo, stretched and
+backwards (rules 8 and 9 of §4: Radd for Rad, Zrawhcs for Schwarz:
+"Das ist das Wort rückwärts"), containment, then
 the word list: a `banned` word (a translation) only as written or spelled
 otherwise (bell for Glocke must not reject bellen, nor rocket Rock), an
 `also_right` word (an accepted guess) also in its forms (Velos for Velo),
 never its family, parts or typos (Flieger for Flugzeug must not reject
 fliegen).
+
+**English clues.** With the English dictionary (`englishKnown`, the host
+page loads every language's), a clue that is an English word and no German
+one skips all of the above: it is refused only when it is one of the word's
+English translations (the word list's `english` column, which lists the
+word itself where English has it with the same meaning) or a form of one
+(plural, verb form, spelling: dogs, swam, planets; not what the translation
+is a form of: wed for wedding, glass for glasses), a typo of one that is no
+English word (monky) or a disguise (doog), or a listed word as written.
+The other languages' translations (`banned`) match as written or, for a
+clue that is no English word, in a German spelling (thon for Ton). Between
+clues, two English words jinx by the English rules (dogs/dog,
+planets/Planet), an English and a German word never (better/Bett,
+chops/Chips). A sweep of all 48,000 words of the English dictionary
+against the 1,000 secrets refuses only translations and their forms.
 
 **Sounds the same**: a homophone table (Stadt/statt, Mann/man, das/dass,
 ist/isst, …) and a sound key: ä = e, äu = eu, ai = ei, ie/ih = i, a
