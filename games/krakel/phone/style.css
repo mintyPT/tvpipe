@@ -38,6 +38,9 @@ body {
 }
 button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; touch-action: manipulation; }
 button:disabled { opacity: .45; }
+/* Words that must be read whole: never cut off, never broken in the middle; fit.js makes them smaller instead. */
+[data-fit] { overflow-wrap: normal; word-break: normal; hyphens: manual; -webkit-hyphens: manual; }
+[data-fit="1"] { white-space: nowrap; }
 svg { stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 
 /* ------------------------------------------------------------------ bar */
@@ -123,6 +126,7 @@ body.full .error { position: fixed; left: 12px; right: 12px; top: max(64px, env(
 .top { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 2px; }
 .top .what { flex: 1; min-width: 0; }
 .label { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.label[data-fit] { overflow: visible; text-overflow: clip; }
 .top .text { display: block; font-weight: 800; font-size: 23px; line-height: 1.05; font-variation-settings: "BNCE" 30, "INFM" 50; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .secs { flex: none; min-width: 46px; height: 46px; padding: 0 6px; border-radius: 50%; display: grid; place-items: center; background: var(--paper); border: 3px solid var(--ink); font-weight: 800; font-size: 19px; }
 .secs.low { background: var(--red); color: #fff; animation: wiggle .5s infinite; }
@@ -134,7 +138,7 @@ canvas.pad, canvas.view { width: 100%; height: 100%; display: block; border-radi
 /* The word to draw. */
 .wordtag { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0; }
 .wordline { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
-.wordtag .word { min-width: 0; font-weight: 800; font-size: min(29px, 7.4vw); line-height: 1.05; font-variation-settings: "BNCE" 30, "INFM" 50; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.wordtag .word { flex: 1 1 auto; min-width: 0; font-weight: 800; font-size: min(29px, 7.4vw); line-height: 1.15; font-variation-settings: "BNCE" 30, "INFM" 50; }
 .swap { flex: none; font-size: 13px; font-weight: 700; padding: 3px 9px; border-radius: 12px; border: 2px solid var(--ink); background: var(--paper); }
 .ontop { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); width: max-content; max-width: calc(100% - 24px); margin: 0; padding: 6px 12px; border-radius: 14px; background: var(--ink); color: var(--paper); font-size: 13.5px; line-height: 1.3; text-align: center; pointer-events: none; transition: opacity .4s, visibility .4s; }
 .ontop.gone { opacity: 0; visibility: hidden; }
@@ -167,7 +171,6 @@ canvas.pad, canvas.view { width: 100%; height: 100%; display: block; border-radi
   .gotit b { width: 32px; height: 32px; font-size: 20px; }
   .gotit strong { font-size: 22px; }
   .gotit em { font-size: 12px; padding: 1px 6px; }
-  .blanks i { width: 12px; }
   .sizes button { width: 29px; }
   .tool { width: 38px; }
   .tools { gap: 5px; height: 50px; }
@@ -182,7 +185,7 @@ canvas.pad, canvas.view { width: 100%; height: 100%; display: block; border-radi
 .choices .sub { font-size: 14px; text-align: center; color: var(--muted); }
 .choices button {
   min-height: 84px; padding: 12px 16px; border-radius: 18px; background: var(--paper); border: 3px solid var(--ink); box-shadow: 4px 5px 0 var(--ink);
-  font-weight: 800; font-size: 27px; line-height: 1.1; overflow-wrap: anywhere;
+  font-weight: 800; font-size: 27px; line-height: 1.1; min-width: 0;
 }
 .choices button b { display: block; font-weight: 800; }
 .choices button small { display: block; margin-top: 3px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
@@ -200,7 +203,8 @@ canvas.pad, canvas.view { width: 100%; height: 100%; display: block; border-radi
 .sheet { width: min(72%, 260px); margin: 6px auto 10px; border: 3px solid var(--ink); border-radius: 12px; overflow: hidden; box-shadow: 4px 5px 0 var(--ink); background: var(--paper); }
 .sheet.tilt { transform: rotate(-2.5deg); }
 .sheet canvas { display: block; width: 100%; aspect-ratio: 1; }
-.caption { margin: 10px 0 6px; font-weight: 800; font-size: 30px; line-height: 1.1; font-variation-settings: "BNCE" 30, "INFM" 50; overflow-wrap: anywhere; }
+.caption { margin: 10px 0 6px; font-weight: 800; font-size: 30px; line-height: 1.1; font-variation-settings: "BNCE" 30, "INFM" 50; }
+.caption b { display: block; font-weight: 800; }
 .caption small { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-variation-settings: normal; margin-bottom: 2px; }
 
 /* A drawing on stage */
@@ -210,15 +214,17 @@ canvas.pad, canvas.view { width: 100%; height: 100%; display: block; border-radi
 .hintrow { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-height: 30px; }
 .hintrow .label { flex: 1; }
 .count { flex: none; margin-left: auto; font-size: 13px; font-weight: 700; color: var(--muted); white-space: nowrap; }
-.blanks { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; }
-.blanks .w { display: flex; flex-wrap: wrap; gap: 4px 3px; }
-.blanks i { width: 15px; height: 22px; border-bottom: 3.5px solid var(--ink); border-radius: 1px; }
-.blanks b { font-size: 18px; line-height: 22px; }
+/* A blank per letter; a word's blanks stay on one line (fit.js makes them smaller when the word is long). */
+.blanks { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: .25em .7em; font-size: 18px; }
+.blanks .w { display: flex; gap: .17em; }
+.blanks i { flex: none; width: .84em; height: 1.2em; border-bottom: .19em solid var(--ink); border-radius: 1px; }
+.blanks b { line-height: 1.2em; }
 .feedback { margin: 0; min-height: 22px; font-weight: 800; font-size: 17px; line-height: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .feedback.wrong { color: var(--red); }
 .feedback.close { color: #b25f00; }
 .guess-form { display: flex; gap: 8px; }
 .guess-form input { flex: 1; min-width: 0; height: 58px; font-size: 23px; font-weight: 700; }
+.guess-form input::placeholder { font-size: 17px; font-weight: 600; }
 .guess-form .btn { width: auto; margin: 0; padding: 0 16px; min-height: 58px; min-width: 92px; white-space: nowrap; }
 .guess-form .btn.locked { background: #c9cbd2; color: var(--ink); font-size: 16px; -webkit-text-stroke: 0; }
 .guess-form.shake { animation: shake .35s; }
@@ -232,7 +238,7 @@ canvas.pad, canvas.view { width: 100%; height: 100%; display: block; border-radi
 .gotit.pop { animation: pop .45s cubic-bezier(.3, 1.6, .5, 1) both; }
 .myword { display: flex; align-items: baseline; gap: 10px; }
 .myword small { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
-.myword b { font-weight: 800; font-size: 26px; font-variation-settings: "BNCE" 30, "INFM" 50; }
+.myword b { flex: 1 1 auto; min-width: 0; font-weight: 800; font-size: 26px; font-variation-settings: "BNCE" 30, "INFM" 50; }
 .has { margin: 0; font-size: 17px; font-weight: 700; }
 .staging .foot .count { margin-left: 0; }
 
@@ -249,7 +255,7 @@ canvas.pad, canvas.view { width: 100%; height: 100%; display: block; border-radi
 .cands { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 4px 5px 6px; margin: 0 -5px; }
 .cand { position: relative; display: flex; flex-direction: column; gap: 3px; padding: 6px 6px 8px; border-radius: 16px; background: var(--paper); border: 3px solid var(--ink); text-align: left; min-width: 0; box-shadow: 3px 4px 0 var(--ink); transition: transform .12s; }
 .cand canvas { width: 100%; aspect-ratio: 1; border-radius: 9px; background: var(--paper); display: block; border: 2px solid rgba(27, 27, 34, .15); }
-.cand .w { font-weight: 800; font-size: 17px; line-height: 1.1; overflow-wrap: anywhere; padding: 2px 3px 0; }
+.cand .w { display: block; min-width: 0; font-weight: 800; font-size: 17px; line-height: 1.2; padding: 2px 3px 0; }
 .cand .by { display: flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 600; line-height: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 3px; }
 .cand .by .dot { width: 11px; height: 11px; border-width: 1.5px; }
 .cand .hrt { position: absolute; right: 2px; top: 0; width: 44px; height: 44px; display: grid; place-items: center; transform: scale(0) rotate(-30deg); transition: transform .25s cubic-bezier(.3, 1.8, .5, 1); }
@@ -276,7 +282,9 @@ ul.gains li { display: flex; justify-content: space-between; padding: 7px 0; bor
 ul.gains li b { font-weight: 800; }
 .total { margin: 14px 0 0; font-weight: 700; }
 
-@media (orientation: landscape) and (max-height: 540px) {
+/* A phone on its side. Not a phone with its keyboard up: on Android the page then is wider than tall too
+   (the viewport is resized), and this layout would squeeze the guess into a corner; hence the width. */
+@media (orientation: landscape) and (max-height: 540px) and (min-width: 560px) {
   .full-grid.drawing, .full-grid.staging { max-width: none; grid-template-columns: min(calc(var(--app-h) - 20px), 58vw) minmax(0, 1fr); column-gap: 12px; }
   .full-grid.drawing { grid-template-rows: auto auto minmax(0, 1fr) auto auto; grid-template-areas: "pad bar" "pad top" "pad ." "pad pal" "pad tools"; }
   .full-grid.staging { grid-template-rows: auto auto minmax(0, 1fr) auto; grid-template-areas: "pad bar" "pad top" "pad ." "pad foot"; }
@@ -287,6 +295,24 @@ ul.gains li b { font-weight: 800; }
   .full-grid .tools { grid-area: tools; height: auto; flex-wrap: wrap; }
   .full-grid .tools > * { height: 46px; }
   .full-grid .foot { grid-area: foot; }
+}
+/* The keyboard is up and little is left (Android resizes the page): everything but the picture gets smaller. */
+@media (max-height: 430px) and (max-width: 559px) {
+  .full-grid.staging { gap: 5px; }
+  .staging .timebar { height: 7px; }
+  .staging .top { min-height: 36px; gap: 8px; }
+  .staging .top .label { font-size: 10.5px; }
+  .staging .top .text { font-size: 18px; }
+  .staging .avatar { width: 32px; height: 32px; font-size: 15px; border-width: 2.5px; }
+  .staging .secs { min-width: 36px; height: 36px; font-size: 16px; border-width: 2.5px; }
+  .staging .foot { gap: 3px; min-height: 0; }
+  .staging .hintrow { min-height: 22px; }
+  .staging .blanks { font-size: 15px; }
+  .staging .feedback { min-height: 0; font-size: 15px; line-height: 19px; }
+  .staging .feedback:empty { display: none; }
+  .staging .guess-form input { height: 46px; font-size: 20px; padding: 6px 12px; }
+  .staging .guess-form .btn { min-height: 46px; font-size: 18px; box-shadow: 0 3px 0 var(--ink); }
+  canvas.view { box-shadow: 3px 3px 0 var(--ink); }
 }
 @media (prefers-reduced-motion: reduce) {
   .logo span, .cover span, .secs.low, .bigheart svg { animation: none; }

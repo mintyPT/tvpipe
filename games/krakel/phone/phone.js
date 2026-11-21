@@ -10,6 +10,7 @@
  */
 
 import { PartyClient } from "/_tvpipe/lib/client.js";
+import { watchFit } from "./fit.js";
 import { browserLang, num, pickLang } from "./i18n.js";
 import { drawInk, ERASER, fit, GRID, Live, MAX_POINTS, MAX_STROKES, PALETTE, progressAt, Replay, WIDTHS } from "./ink.js";
 import { strings } from "./strings.js";
@@ -163,6 +164,40 @@ function buzz(ms) {
     navigator.vibrate?.(ms);
   } catch {}
 }
+
+// ---------------------------------------------------------------------------
+// Fields
+
+/** A canvas to measure text with. @type {CanvasRenderingContext2D | null} */
+let ruler = null;
+
+/**
+ * Keeps what is typed in a field readable whole: when the text gets
+ * longer than the field, its font gets smaller (down to `min` px)
+ * instead of the text scrolling out of sight.
+ * @param {HTMLInputElement} input
+ * @param {number} [min]
+ */
+function fitField(input, min = 12) {
+  input.style.fontSize = "";
+  input.style.letterSpacing = "";
+  const text = input.value;
+  if (!text || !input.clientWidth) return;
+  const cs = getComputedStyle(input);
+  const base = parseFloat(cs.fontSize);
+  ruler ??= document.createElement("canvas").getContext("2d");
+  if (!ruler || !base) return;
+  ruler.font = `${cs.fontWeight} ${base}px ${cs.fontFamily}`;
+  const shown = cs.textTransform === "uppercase" ? text.toUpperCase() : text;
+  const spacing = parseFloat(cs.letterSpacing) || 0;
+  const width = (ruler.measureText(shown).width + spacing * [...shown].length) * 1.04;
+  const room = input.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 2;
+  if (width <= room || room <= 0) return;
+  input.style.fontSize = `${Math.max(min, (base * room) / width).toFixed(2)}px`;
+}
+// Every field: while typing, and when it comes into view with text in it.
+document.addEventListener("input", (e) => e.target instanceof HTMLInputElement && fitField(e.target));
+document.addEventListener("focusin", (e) => e.target instanceof HTMLInputElement && fitField(e.target));
 
 // ---------------------------------------------------------------------------
 // Joining
@@ -631,11 +666,11 @@ function draw(me, room) {
   const draft = draftOf(room);
   /** @type {number | null} */
   let choice = choices.length <= 1 ? 0 : draft && typeof draft.choice === "number" && draft.choice < choices.length ? draft.choice : null;
-  const wordEl = h("span", { class: "word" }, "…");
+  const wordEl = h("span", { class: "word", "data-fit": "1" }, "…");
   const swap = /** @type {HTMLButtonElement} */ (h("button", { class: "swap", type: "button" }, t.change));
   // Each word's category: the round's, or in a mixed round its own.
   const cats = /** @type {string[]} */ (Array.isArray(me.categories) ? me.categories : []);
-  const label = h("span", { class: "label" });
+  const label = h("span", { class: "label", "data-fit": "1" });
   const tag = h("div", { class: "wordtag" }, label, h("span", { class: "wordline" }, wordEl, swap));
   const hint = h("p", { class: "ontop" }, t.firstHint);
   const paper = h("div", { class: "paperbox" }, canvas, hint);
@@ -733,8 +768,8 @@ function draw(me, room) {
               save();
             },
           },
-          h("b", {}, c),
-          room.mixed ? h("small", {}, cats[i] ?? "") : null,
+          h("b", { "data-fit": "1" }, c),
+          room.mixed ? h("small", { "data-fit": "1" }, cats[i] ?? "") : null,
         ),
       ),
       h("div", { class: "sub" }, room.mixed ? t.pickHintMixed : t.pickHint),
@@ -789,7 +824,7 @@ function handedIn(room) {
       { class: "card pop center" },
       h("h1", {}, t.doneTitle),
       d ? h("div", { class: "sheet tilt" }, canvas) : null,
-      word ? h("p", { class: "caption" }, h("small", {}, t.yourWord), word) : null,
+      word ? h("p", { class: "caption" }, h("small", {}, t.yourWord), h("b", { "data-fit": "2" }, word)) : null,
       h("p", { class: "muted" }, t.doneLine),
     ),
   );
@@ -806,7 +841,7 @@ function handedIn(room) {
 
 /** The word's letters as blanks. @param {string} shape */
 function blanks(shape) {
-  const box = h("div", { class: "blanks", "aria-label": t.letters([...shape].filter((c) => c === "_").length) });
+  const box = h("div", { class: "blanks", "data-fit": "w", "aria-label": t.letters([...shape].filter((c) => c === "_").length) });
   for (const word of shape.split(" ")) {
     const w = h("span", { class: "w" });
     for (const c of word) w.append(c === "_" ? h("i") : h("b", {}, c));
@@ -829,7 +864,7 @@ function stage(me, room) {
     "div",
     { class: "top" },
     avatar(spot.artist),
-    h("div", { class: "what" }, h("span", { class: "label" }, `${room.category ?? ""} · ${spot.index ?? 1}/${spot.of ?? 1}`), h("span", { class: "text" }, artist ? t.yoursUp : t.krakelOf(spot.artist?.name ?? ""))),
+    h("div", { class: "what" }, h("span", { class: "label", "data-fit": "1" }, `${room.category ?? ""} · ${spot.index ?? 1}/${spot.of ?? 1}`), h("span", { class: "text" }, artist ? t.yoursUp : t.krakelOf(spot.artist?.name ?? ""))),
     secs,
   );
   const foot = h("div", { class: "foot" });
@@ -864,7 +899,7 @@ function stage(me, room) {
 
   if (artist) {
     const list = h("p", { class: "has" });
-    foot.append(h("div", { class: "myword" }, h("small", {}, t.yourWord), h("b", {}, me.word ?? "")), list, count);
+    foot.append(h("div", { class: "myword" }, h("small", {}, t.yourWord), h("b", { "data-fit": "1" }, me.word ?? "")), list, count);
     refresh = () => {
       const got = have();
       list.textContent = got.length === 0 ? t.nobodyYet : t.hasIt(got.map(nameOf));
@@ -913,6 +948,7 @@ function stage(me, room) {
     sending = true;
     tick();
     input.value = "";
+    fitField(input);
     try {
       const r = /** @type {any} */ (await client.act("guess", { key: me.key, text }));
       if (r?.verdict === "right") return buzz([30, 40, 80]);
@@ -925,7 +961,10 @@ function stage(me, room) {
       buzz(60);
     } catch (x) {
       const code = /** @type {any} */ (x)?.code;
-      if (code === "locked" || code === "not-yet") input.value = text;
+      if (code === "locked" || code === "not-yet") {
+        input.value = text;
+        fitField(input);
+      }
       else if (code !== "not-now" && code !== "already") feedback.textContent = message(x);
     } finally {
       sending = false;
@@ -947,7 +986,7 @@ function result(me) {
       "section",
       { class: `card pop center${me.mine ? " mine" : me.right ? " right" : " missed"}` },
       h("h2", { style: { "margin-top": "0" } }, me.mine ? t.yourDrawing : t.by(me.artist ?? "")),
-      h("p", { class: "caption" }, h("small", {}, t.itWas), me.word ?? ""),
+      h("p", { class: "caption" }, h("small", {}, t.itWas), h("b", { "data-fit": "2" }, me.word ?? "")),
       pts > 0 ? h("p", { class: "score" }, `+${num(lang, pts)}`) : null,
       me.mine ? h("p", { class: "big" }, t.named(me.got ?? 0, me.guessers ?? 0)) : me.right ? (me.first ? h("p", { class: "big" }, t.first) : null) : h("p", { class: "big" }, t.missed),
     ),
@@ -987,7 +1026,7 @@ function vote(me, room) {
         },
       },
       c,
-      h("span", { class: "w" }, g.word ?? ""),
+      h("span", { class: "w", "data-fit": "1" }, g.word ?? ""),
       h("span", { class: "by" }, h("span", { class: "dot", style: { "--c": g.artist?.color ?? colorOf(g.id) } }), mine ? t.mineTag : (g.artist?.name ?? "")),
       h("span", { class: "hrt" }, icon(HEART)),
     );
@@ -1027,8 +1066,9 @@ function ranked(me) {
     h(
       "section",
       { class: `card pop center place p${Math.min(4, me.place)}` },
-      h("h2", { style: { "margin-top": "0" } }, `${t.rankedTitle} · ${me.word ?? ""}`),
-      h("p", { class: "score" }, t.place(me.place, me.drawings ?? 1)),
+      h("h2", { style: { "margin-top": "0" } }, t.rankedTitle),
+      h("p", { class: "caption" }, h("b", { "data-fit": "2" }, me.word ?? "")),
+      h("p", { class: "score", "data-fit": "1" }, t.place(me.place, me.drawings ?? 1)),
       h("p", { class: "big" }, `+${num(lang, me.points ?? 0)} ${t.points}`),
       me.hearts > 0 ? h("p", { class: "heartline" }, icon(HEART), t.hearts(me.hearts)) : null,
       me.fav > 0 ? h("p", { class: "fav" }, `${t.favourite} +${num(lang, me.fav)}`) : null,
@@ -1054,6 +1094,8 @@ function scoreCard(me, room) {
     ),
   );
 }
+
+watchFit();
 
 // Keep the screen on while playing.
 async function wake() {

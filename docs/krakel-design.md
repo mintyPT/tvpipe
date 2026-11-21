@@ -216,6 +216,17 @@ is the bright one.
   muted.
 - **The phone**: the same paper and pens; the word above the pad, the
   pens below it, in reach of a thumb. It buzzes for right and wrong.
+- **Words are read whole.** A word a player has to read (the word to
+  draw, the word a drawing was, the blanks, the gallery) is never cut
+  off with an ellipsis and never broken in the middle
+  ("Schraubenschlüs-sel"): elements marked `data-fit` get a smaller
+  font until they fit (`phone/fit.js`, on the phone and the TV; two-word
+  names may break between the words). A typed guess stays readable too:
+  the field's font gets smaller when the text outgrows it.
+- **The keyboard.** On Android the page is resized to what the keyboard
+  leaves, which is wider than tall: that is not a phone on its side
+  (the sideways layout asks for 560 px of width), and with little
+  height left everything but the picture gets smaller.
 
 ## 7. Views and privacy
 

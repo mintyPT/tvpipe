@@ -183,11 +183,11 @@ input:disabled { opacity: .55; }
 
 /* ---------------------------------------------------------------- cards */
 .card {
-  position: relative; display: block; width: 100%; padding: 0; margin: 0; border: 0; min-height: 0;
+  position: relative; display: block; width: 100%; min-width: 0; padding: 0; margin: 0; border: 0; min-height: 0;
   background: none; color: var(--ink); font-size: 24px; text-align: center; border-radius: 12px;
 }
 .card .paper {
-  position: relative; display: grid; place-items: center; aspect-ratio: 7 / 5; border-radius: 12px; overflow: hidden;
+  position: relative; display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; aspect-ratio: 7 / 5; border-radius: 12px; overflow: hidden;
   background: var(--tomato); box-shadow: 0 0 0 2px var(--ink), 0 5px 0 2px rgba(0,0,0,.28);
 }
 .card .paper::before { content: ""; position: absolute; inset: 7px; border: 3px solid var(--paper); border-radius: 8px; }
@@ -204,7 +204,8 @@ input:disabled { opacity: .55; }
 .card.up .paper::before { border-color: var(--paper-2); }
 .card .word {
   position: relative; max-width: 100%; flex: none; padding: 0 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .02em;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  /* Never an ellipsis: a clue has to be read whole (phone.js, fitWords, makes it fit). */
+  white-space: nowrap; min-width: 0;
 }
 .card.turned .word { background: linear-gradient(transparent 55%, #ffe066 55%, #ffe066 90%, transparent 90%); }
 .card > .chip { position: absolute; left: -8px; top: -9px; --s: 34px; }
@@ -237,9 +238,11 @@ button.card.dim { opacity: .45; }
   background: var(--gold); color: var(--ink); font-size: 14px; font-weight: 700; transform: rotate(12deg);
   box-shadow: 0 0 0 3px var(--ink), 0 0 0 7px var(--tomato), 0 0 0 9px var(--ink);
 }
-.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 28px 18px; padding: 12px 6px 18px; }
-.cards.small { grid-template-columns: 1fr 1fr 1fr; gap: 26px 14px; font-size: 15px; }
+/* Columns of the same width whatever is on the cards (a long word must not widen its column: it is fitted). */
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 18px; padding: 12px 6px 18px; }
+.cards.small { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 26px 14px; font-size: 15px; }
 .cards.small .card { font-size: 17px; }
+.cards.small .card .word { padding: 0 5px; }
 .cards.small .card .who { font-size: 11px; padding: 2px 6px; }
 .cards.small .card > .chip { --s: 26px; }
 .cards.small .flame { width: 28px; height: 28px; right: -7px; top: -8px; }
@@ -255,7 +258,7 @@ button.card.dim { opacity: .45; }
     repeating-linear-gradient(transparent 0 33px, #cfe0e6 33px 35px);
 }
 .index .label { margin: 0 0 12px; color: var(--ink-2); font-size: 13px; }
-.index .word { font-size: calc(42px * var(--k, 1)); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.index .word { font-size: calc(42px * var(--k, 1)); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; line-height: 1.1; white-space: nowrap; }
 
 /* Stamps: ink on a paper sticker, at an angle. */
 .stamp {

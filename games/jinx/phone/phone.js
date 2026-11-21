@@ -294,21 +294,20 @@ function cardEl(c, o = {}) {
 }
 
 /**
- * Fits words into their card (the TV's rule): smaller down to 60 %, then
- * condensed down to 60 % (long German compounds: "GEBURTSTAGSKUCHEN"),
- * then an ellipsis. Runs after layout.
+ * Fits words into their card, so that every word can be read whole: no
+ * ellipsis, ever (a clue cut off is a clue lost), and no letters hidden
+ * behind the card's edge. On one line it gets smaller down to 60 %, then
+ * condensed down to 62 % (long German compounds: "GEBURTSTAGSKUCHEN").
+ * A word too long even for that goes on two lines of about the same
+ * length, hyphenated, as large as it fits (the secret word's card is
+ * wide: it only gets smaller). Runs after layout.
  * @param {ParentNode} [scope]
  */
 function fitWords(scope = document) {
   requestAnimationFrame(() => {
     for (const el of scope.querySelectorAll(".card .word, .index .word")) {
       const w = /** @type {HTMLElement} */ (el);
-      w.style.fontSize = "";
-      w.style.transform = "";
-      w.style.maxWidth = "";
-      w.style.width = "";
-      w.style.marginLeft = w.style.marginRight = "";
-      w.style.whiteSpace = w.style.hyphens = w.style.overflowWrap = w.style.lineHeight = "";
+      w.removeAttribute("style");
       const parent = w.parentElement;
       if (!parent) continue;
       const ps = getComputedStyle(parent);
@@ -321,29 +320,81 @@ function fitWords(scope = document) {
       const range = document.createRange();
       range.selectNodeContents(w);
       const text = () => range.getBoundingClientRect().width;
-      if (text() <= room) continue;
-      const size = parseFloat(getComputedStyle(w).fontSize);
-      w.style.fontSize = `${Math.max(size * 0.6, (size * room) / text())}px`;
-      const k = room / text();
+      const full = text();
+      if (full <= room) continue;
+      const size = parseFloat(own.fontSize);
       const index = !!w.closest(".index");
-      if (k < 0.6 && !index) {
-        // still too long (a long compound on a small card): two lines, hyphenated
-        Object.assign(w.style, { whiteSpace: "normal", hyphens: "auto", overflowWrap: "anywhere", lineHeight: "1.05", maxWidth: `${room + pad}px` });
-        continue;
+      // What one line can take: 60 % of the size, condensed to 62 %.
+      if (!index && room / full < FIT_SIZE * FIT_SQUEEZE) {
+        // Two lines, balanced ("FEUERWEHR-", "AUTO"), from nearly full size down until both fit.
+        Object.assign(w.style, { whiteSpace: "normal", hyphens: "auto", overflowWrap: "anywhere", lineHeight: "1.08", maxWidth: `${room + pad}px` });
+        w.style.setProperty("-webkit-hyphens", "auto");
+        w.style.setProperty("text-wrap", "balance");
+        w.style.setProperty("hyphenate-limit-chars", "8 4 4");
+        const twoLines = () => w.scrollWidth <= w.clientWidth + 1 && w.getBoundingClientRect().height <= parseFloat(getComputedStyle(w).lineHeight) * 2 + 2;
+        let s = size * 0.9;
+        w.style.fontSize = `${s}px`;
+        while (s > size * 0.4 && !twoLines()) {
+          s *= 0.94;
+          w.style.fontSize = `${s}px`;
+        }
+        if (twoLines()) continue;
+        // A browser that breaks no word: one line after all, as small as it takes.
+        w.removeAttribute("style");
       }
-      if (k < 1) {
-        const x = Math.max(0.6, k);
-        if (index) {
-          // the index card's word is a block as wide as the card: as wide as the text instead, centred, then condensed
-          const full = text() + pad;
-          w.style.width = `${full}px`;
-          w.style.marginLeft = w.style.marginRight = `${(inner - full) / 2}px`;
-        } else w.style.maxWidth = `${(room + pad) / x}px`;
-        w.style.transform = `scaleX(${x.toFixed(3)})`;
+      w.style.fontSize = `${size * Math.max(FIT_SIZE, room / full)}px`;
+      let k = room / text();
+      if (k >= 1) continue;
+      if (k < FIT_SQUEEZE) {
+        // Still too long when condensed: smaller yet, so nothing is cut off.
+        w.style.fontSize = `${(parseFloat(w.style.fontSize) * k) / FIT_SQUEEZE}px`;
+        k = Math.min(1, room / text());
       }
+      const x = Math.max(FIT_SQUEEZE, k);
+      if (index) {
+        // the index card's word is a block as wide as the card: as wide as the text instead, centred, then condensed
+        const wide = text() + pad;
+        w.style.width = `${wide}px`;
+        w.style.marginLeft = w.style.marginRight = `${(inner - wide) / 2}px`;
+      } else w.style.maxWidth = `${(room + pad) / x}px`;
+      w.style.transform = `scaleX(${x.toFixed(3)})`;
     }
   });
 }
+/** A word on one line: no smaller than this share of its size, no narrower than this. */
+const FIT_SIZE = 0.6;
+const FIT_SQUEEZE = 0.62;
+
+/** A canvas to measure text with. @type {CanvasRenderingContext2D | null} */
+let ruler = null;
+
+/**
+ * Keeps what is typed in a field readable whole: when the text gets
+ * longer than the field, its font gets smaller (down to `min` px)
+ * instead of the text scrolling out of sight.
+ * @param {HTMLInputElement} input
+ * @param {number} [min]
+ */
+function fitField(input, min = 12) {
+  input.style.fontSize = "";
+  input.style.letterSpacing = "";
+  const text = input.value;
+  if (!text || !input.clientWidth) return;
+  const cs = getComputedStyle(input);
+  const base = parseFloat(cs.fontSize);
+  ruler ??= document.createElement("canvas").getContext("2d");
+  if (!ruler || !base) return;
+  ruler.font = `${cs.fontWeight} ${base}px ${cs.fontFamily}`;
+  const shown = cs.textTransform === "uppercase" ? text.toUpperCase() : text;
+  const spacing = parseFloat(cs.letterSpacing) || 0;
+  const width = (ruler.measureText(shown).width + spacing * [...shown].length) * 1.04;
+  const room = input.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 2;
+  if (width <= room || room <= 0) return;
+  input.style.fontSize = `${Math.max(min, (base * room) / width).toFixed(2)}px`;
+}
+// Every field: while typing, and when it comes into view with text in it.
+document.addEventListener("input", (e) => e.target instanceof HTMLInputElement && fitField(e.target));
+document.addEventListener("focusin", (e) => e.target instanceof HTMLInputElement && fitField(e.target));
 document.fonts?.ready.then(() => fitWords());
 document.fonts?.addEventListener("loadingdone", () => fitWords());
 window.addEventListener("resize", () => fitWords());

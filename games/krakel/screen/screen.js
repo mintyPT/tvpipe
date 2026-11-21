@@ -10,6 +10,7 @@
  */
 
 import { joinText, PartyClient, qrSvg } from "/_tvpipe/lib/client.js";
+import { watchFit } from "../phone/fit.js";
 import { num, pickLang } from "../phone/i18n.js";
 import { drawInk, fit, GRID, progressAt, Replay } from "../phone/ink.js";
 import { strings } from "./strings.js";
@@ -510,7 +511,7 @@ function draw(s) {
     topline({ ...s, category: null }),
     // A mixed round has no category of its own: everyone's word is from another one.
     ((/** @type {string} */ title, /** @type {boolean} */ mixed) =>
-      h("div", { class: "catbox" }, h("div", { class: "kicker" }, mixed ? t.mixedKicker : t.category), h("div", { class: `cat${mixed ? " mixed" : ""}${[...title].length > 16 ? " long" : ""}` }, title), h("div", { class: "sub" }, mixed ? t.everyoneDrawsMixed : t.everyoneDraws)))(
+      h("div", { class: "catbox" }, h("div", { class: "kicker" }, mixed ? t.mixedKicker : t.category), h("div", { class: `cat${mixed ? " mixed" : ""}${[...title].length > 16 ? " long" : ""}`, "data-fit": "1" }, title), h("div", { class: "sub" }, mixed ? t.everyoneDrawsMixed : t.everyoneDraws)))(
       typeof s.category === "string" && s.category ? s.category : t.mixed,
       !s.category,
     ),
@@ -565,7 +566,7 @@ function draw(s) {
  * @param {string} shape @param {string} [word]
  */
 function blanks(shape, word) {
-  const box = h("div", { class: "blanks" });
+  const box = h("div", { class: "blanks", "data-fit": "w" });
   const letters = word && [...word.normalize("NFC")].length === [...shape].length ? [...word.normalize("NFC")] : null;
   let n = 0;
   for (const part of shape.split(" ")) {
@@ -627,7 +628,7 @@ function guess(s) {
     pencil.hidden = true;
     cover.hidden = true;
     replay.draw(1);
-    banner.replaceChildren(h("small", {}, t.itIs), h("b", {}, s.word ?? ""));
+    banner.replaceChildren(h("small", {}, t.itIs), h("b", { "data-fit": "1" }, s.word ?? ""));
     banner.hidden = false;
     if (s.shape && typeof s.word === "string") el.querySelector(".blankbox")?.replaceChildren(blanks(s.shape, s.word));
     const n = (s.got ?? []).length;
@@ -768,7 +769,7 @@ function gallery(s) {
       "div",
       { class: "tile", style: { "--d": `${(i * 0.07).toFixed(2)}s`, "--r": `${(jitter(`t${e.id}`) * 1.8).toFixed(1)}deg`, width: `${Math.floor(size)}px` } },
       h("div", { class: "art" }, c, medal, hearts, h("span", { class: "price" }, pts, had)),
-      h("div", { class: "cap" }, h("b", {}, e.word ?? ""), h("span", { class: "by" }, avatar(e.artist, "2.6rem"), h("span", {}, e.artist?.name ?? ""))),
+      h("div", { class: "cap" }, h("b", { "data-fit": "1" }, e.word ?? ""), h("span", { class: "by" }, avatar(e.artist, "2.6rem"), h("span", {}, e.artist?.name ?? ""))),
     );
     requestAnimationFrame(() => {
       const f = fit(c);
@@ -934,7 +935,7 @@ function final(s) {
   const side = h(
     "div",
     { class: "awards" },
-    best ? h("div", { class: "award" }, h("h2", {}, t.bestTitle), h("div", { class: "sheet", style: { "--r": "2deg" } }, c), h("div", { class: "cap" }, h("b", {}, best.word ?? ""), h("span", {}, avatar(best.artist, "3rem"), t.bestBy(best.artist?.name ?? "")))) : null,
+    best ? h("div", { class: "award" }, h("h2", {}, t.bestTitle), h("div", { class: "sheet", style: { "--r": "2deg" } }, c), h("div", { class: "cap" }, h("b", { "data-fit": "1" }, best.word ?? ""), h("span", {}, avatar(best.artist, "3rem"), t.bestBy(best.artist?.name ?? "")))) : null,
     s.eye ? h("div", { class: "eye" }, h("small", {}, t.eyeTitle), avatar(s.eye.who, "3.6rem"), h("b", {}, s.eye.who?.name ?? ""), h("span", {}, `${num(lang, s.eye.points ?? 0)} ${t.points}`)) : null,
   );
   const el = h("div", { class: "scene final" }, h("div", { class: "main" }, h("h1", {}, t.gameOver), podium, rest, h("div", { class: "again" }, t.playAgain)), side, confetti(90));
@@ -957,6 +958,8 @@ function final(s) {
   later(1900, sfx.win);
   return { el };
 }
+
+watchFit();
 
 client.connect().catch((e) => {
   stage.replaceChildren(h("div", { class: "scene lobby" }, logo(), h("p", { class: "hint" }, e?.message ?? String(e))));

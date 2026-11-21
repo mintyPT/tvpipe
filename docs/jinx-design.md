@@ -486,8 +486,13 @@ by its code in the phone's language.
 its document for hyphenation. On the TV, card words shrink to 24 px,
 then condense (§7.4), the envelope's word fits beside the verdict stamp,
 the word web's and the end's cards condense further; one-line texts are
-fitted, never wrapped. On the phone the index card's word condenses to
-60 %, a card word that still does not fit breaks onto a second line with
-a hyphen, and running text hyphenates; titles break between words only.
+fitted, never wrapped. On the phone no word is ever cut off with an
+ellipsis (a clue cut off is a clue lost): a card's word gets smaller
+down to 60 %, then condenses to 62 %, and one too long even for that
+goes on two lines of about the same length ("GEBURTS-", "TAGSKUCHEN"),
+as large as both fit; the index card's word only gets smaller. What is
+typed (a clue, the guess) stays readable whole too: a field's font gets
+smaller when the text outgrows it. Running text hyphenates; titles
+break between words only.
 The live check (`--lang de`) plays a German room with layout checks at
 390 and 320 px and on the TV page.

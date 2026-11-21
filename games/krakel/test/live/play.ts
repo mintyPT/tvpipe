@@ -9,7 +9,10 @@
  * phone at each moment, and a layout check of every phone screen at 390
  * and 320 px.
  *
- *   npm run build && node test/live/play.ts [--bots N] [--rounds N] [--lang en|de] [--hints on|off] [--mixed on|off] [--out DIR] [--shots DIR]
+ *   npm run build && node test/live/play.ts [--bots N] [--rounds N] [--lang en|de] [--hints on|off] [--mixed on|off] [--long] [--out DIR] [--shots DIR]
+ *
+ * `--long`: the first round with the longest words there are (and one
+ * longer than any in the lists), to see that none is cut off or broken.
  *
  * `--shots DIR`: the pictures for the games list (docs/game-catalog.md)
  * into DIR, from the fixed round of `scenario.ts` (four people, every
@@ -39,6 +42,7 @@ const { values: args } = parseArgs({
     lang: { type: "string", default: "en" },
     hints: { type: "string", default: "on" },
     mixed: { type: "string", default: "off" },
+    long: { type: "boolean", default: false },
     out: { type: "string" },
     shots: { type: "string" },
   },
@@ -98,6 +102,12 @@ try {
   const timings = shots ? { draw: 60_000, guess: 30_000, lead: 3000, reveal: 4000, vote: 12_000, ranked: 9000, scores: 6000 } : { draw: 30_000, guess: 16_000, lead: 3000, reveal: 4500, vote: 14_000, ranked: 10_000, scores: 6000 };
   await win.eval(`(() => { krakel.game.configure({ timings: ${JSON.stringify(timings)}, lockout: 2 }); return true; })()`);
   if (shots) await win.eval(`(() => { krakel.game.script = ${JSON.stringify(scenario.script())}; return true; })()`);
+  if (args.long && !shots) {
+    const words = lang === "de" ? ["Schraubenschlüssel", "Meeresschildkröte", "Fliegender Teppich", "Donaudampfschifffahrt", "Geschirrspülmaschine"] : ["brussels sprout", "hot air balloon", "gingerbread man", "rollercoasterride", "washing machine"];
+    const names = ["Phil", "Robo1", "Pixel1", "Gizmo1", "Bolt1"];
+    const script = { category: lang === "de" ? "Werkzeug & Werkstatt" : "Tools & workshop", words: Object.fromEntries(names.map((n, i) => [n, words[i]])) };
+    await win.eval(`(() => { krakel.game.script = ${JSON.stringify(script)}; return true; })()`);
+  }
   const links = await win.eval<{ join: string; watch: string }>(`({ join: krakel.party.links.join, watch: krakel.party.links.watch })`);
   const tv = await browser.open(`${links.watch}&mute=1`, { width: 1280, height: 720 });
   const PHONE = { width: 390, height: 844, mobile: true };
@@ -133,13 +143,20 @@ try {
       if (r.width > 0 && (r.right > W + 2 || r.left < -2) && !el.closest(".hrt")) out.push("off the side: " + el.localName + "." + el.className);
       if (document.body.classList.contains("full") && r.height > 0 && r.bottom > innerHeight + 2) out.push("off the bottom: " + el.localName + "." + el.className);
     }
+    // Words that must be read whole fit their box (fit.js), and nothing that matters ends in an ellipsis.
+    for (const el of document.querySelectorAll("[data-fit]")) {
+      if (el.checkVisibility && !el.checkVisibility()) continue;
+      if (el.scrollWidth > el.clientWidth + 1) out.push("a word does not fit: " + JSON.stringify(el.textContent) + " " + el.scrollWidth + " > " + el.clientWidth);
+    }
     // The pad and the replay: square, on screen, as large as the layout allows.
     const pad = document.querySelector("canvas.pad, canvas.view");
     if (pad) {
       const r = pad.getBoundingClientRect();
       if (Math.abs(r.width - r.height) > 2) out.push("the paper is not square");
       if (r.bottom > innerHeight + 1 || r.top < -1) out.push("the paper runs off the screen");
-      if (r.width < Math.min(W, innerHeight) * 0.6) out.push("the paper is small: " + Math.round(r.width));
+      // (With the keyboard up there is little left for it: the TV has the picture.)
+      if (innerHeight >= 480 && r.width < Math.min(W, innerHeight) * 0.6) out.push("the paper is small: " + Math.round(r.width));
+      if (innerHeight < 480 && r.width < 130) out.push("the paper is tiny: " + Math.round(r.width));
     }
     return out;
   })()`;
@@ -149,6 +166,10 @@ try {
   /** The TV: nothing wider than its box, nothing off the screen. */
   const tvLayout = `(() => {
     const out = [];
+    for (const el of document.querySelectorAll("#stage .scene:not(.leaving) [data-fit]")) {
+      if (el.checkVisibility && !el.checkVisibility()) continue;
+      if (el.scrollWidth > el.clientWidth + 1) out.push("a word does not fit: " + JSON.stringify(el.textContent) + " " + el.scrollWidth + " > " + el.clientWidth);
+    }
     for (const el of document.querySelectorAll("#stage .scene:not(.leaving) *")) {
       if (!el.checkVisibility || !el.checkVisibility()) continue;
       if (["svg", "path", "g", "canvas", "i"].includes(el.localName) || el.closest(".confetti, .pen, .doodle, .logo")) continue;
@@ -312,7 +333,7 @@ try {
       await sleep(1200);
       await tvShot(`${tag}-count-in`);
       await win.until(`krakel.party.now() >= krakel.party.screenView().screen.start`, 10_000);
-      const type = (text: string) => phone.eval(`(() => { const i = document.querySelector(".guess-form input"); i.value = ${JSON.stringify(text)}; return true; })()`);
+      const type = (text: string) => phone.eval(`(() => { const i = document.querySelector(".guess-form input"); i.value = ${JSON.stringify(text)}; i.dispatchEvent(new Event("input", { bubbles: true })); return true; })()`);
       /** Waits until a share of the guess time has passed. */
       const share = (f: number) => win.until(`(() => { const s = krakel.party.screenView().screen; return krakel.party.now() >= s.start + (s.end - s.start) * ${f}; })()`, 60_000);
       if (shots) {
@@ -331,6 +352,21 @@ try {
       await phone.eval(`document.querySelector(".guess-form").requestSubmit(); true`);
       await sleep(500);
       await shot(`${tag}-wrong`);
+      // The keyboard is up on Android: the page is resized to what is left, wider than tall.
+      // It is still a phone held upright: the picture above, the guess below it, the field wide.
+      await phone.resize({ width: 360, height: 330, mobile: true });
+      await sleep(300);
+      const field = await phone.eval<{ w: number; h: number; pad: number } | null>(`(() => { const i = document.querySelector(".guess-form input"); const c = document.querySelector("canvas.view"); return i && c ? { w: i.getBoundingClientRect().width, h: i.getBoundingClientRect().height, pad: c.getBoundingClientRect().width } : null; })()`);
+      // A long guess stays readable whole: the field's font gets smaller.
+      await type(lang === "de" ? "Donaudampfschifffahrt" : "rollercoaster carriage");
+      const typed = await phone.eval<{ need: number; has: number; font: number }>(`(() => { const i = document.querySelector(".guess-form input"); return { need: i.scrollWidth, has: i.clientWidth, font: parseFloat(getComputedStyle(i).fontSize) }; })()`);
+      if (typed.need > typed.has + 1 || typed.font < 12) problem(`${tag}: a long guess does not fit its field (${typed.need} > ${typed.has} at ${typed.font} px)`);
+      await phone.screenshot(`${out}/phone-${String(n).padStart(2, "0")}-${tag}-keyboard.png`);
+      await type("");
+      await check(`phone ${tag} with the keyboard up`, phone);
+      if (field && (field.w < 180 || field.h < 44)) problem(`${tag}: with the keyboard up the guess field is ${Math.round(field.w)} × ${Math.round(field.h)} px`);
+      await phone.resize(PHONE);
+      await sleep(150);
       const word = await win.eval<string>(`krakel.game.meant(krakel.party.players.find((p) => p.name === "Phil").id)?.word ?? ""`);
       if (!word) continue;
       await phone.until(`!document.querySelector(".guess-form .btn").disabled || !document.querySelector(".guess-form")`, 10_000).catch(() => {});
