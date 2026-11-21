@@ -267,7 +267,8 @@ test("3 players write two clues each; 6 rounds", async () => {
 });
 
 test("clue checks: too close, own clue, replacing, late; guess rules", async () => {
-  const { party, g, players, close } = await setup(3, { bot: () => ({ silent: true }) });
+  // The jinx check long enough to see the fates in (at 15 ms, Windows' timers missed it).
+  const { party, g, players, close } = await setup(3, { bot: () => ({ silent: true }), timings: { jinxBase: 1000 } });
   try {
     await players[0]!.client.act("start");
     await until(() => g.phase === "write");
