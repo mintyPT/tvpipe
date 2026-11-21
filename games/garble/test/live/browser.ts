@@ -7,6 +7,7 @@
  *   const tab = await b.open("http://…", { width: 390, height: 844, mobile: true });
  *   await tab.eval("document.title");
  *   await tab.screenshot("/tmp/x.png");
+ *   tab.errors;   // what the page reported: exceptions, console.error, failed loads
  */
 
 import { spawn, type ChildProcess } from "node:child_process";
@@ -22,11 +23,17 @@ export class Tab {
   readonly #ws: WebSocket;
   #id = 0;
   readonly #pending = new Map<number, { resolve: (v: any) => void; reject: (e: Error) => void }>();
+  /** Errors the page reported (uncaught exceptions, console.error, failed loads) since `watch()`. */
+  readonly errors: string[] = [];
 
   constructor(ws: WebSocket) {
     this.#ws = ws;
     ws.onmessage = (e) => {
       const msg = JSON.parse(String(e.data));
+      if (msg.method) {
+        this.#event(msg.method, msg.params);
+        return;
+      }
       const p = this.#pending.get(msg.id);
       if (!p) return;
       this.#pending.delete(msg.id);
@@ -39,6 +46,32 @@ export class Tab {
     const id = ++this.#id;
     this.#ws.send(JSON.stringify({ id, method, params }));
     return new Promise((resolve, reject) => this.#pending.set(id, { resolve, reject }));
+  }
+
+  #event(method: string, params: any): void {
+    if (method === "Runtime.exceptionThrown") {
+      const d = params.exceptionDetails;
+      this.errors.push(`page error: ${d.exception?.description ?? d.text} (${d.url ?? ""}:${d.lineNumber})`.slice(0, 600));
+    } else if (method === "Runtime.consoleAPICalled" && (params.type === "error" || params.type === "assert")) {
+      const args = (params.args ?? []).map((a: any) => a.value ?? a.description ?? a.type).join(" ");
+      this.errors.push(`console.${params.type}: ${args}`.slice(0, 600));
+    } else if (method === "Log.entryAdded" && params.entry.level === "error") {
+      this.errors.push(`log (${params.entry.source}): ${params.entry.text} ${params.entry.url ?? ""}`.slice(0, 600));
+    }
+  }
+
+  /** Collects the page's errors into `errors` (Runtime and Log events), from before the page loads. */
+  async watch(): Promise<void> {
+    await this.send("Runtime.enable");
+    await this.send("Log.enable");
+  }
+
+  /** Types text into the focused element, a character at a time (input events, like a keyboard). */
+  async type(text: string, gap = 0): Promise<void> {
+    for (const ch of text) {
+      await this.send("Input.insertText", { text: ch });
+      if (gap) await new Promise((r) => setTimeout(r, gap));
+    }
   }
 
   /** Evaluates an expression (awaiting promises) as a user gesture. */
@@ -167,6 +200,7 @@ export class Browser {
     });
     const tab = new Tab(ws);
     await tab.send("Page.enable");
+    await tab.watch();
     await tab.send("Emulation.setDeviceMetricsOverride", {
       width: view.width,
       height: view.height,

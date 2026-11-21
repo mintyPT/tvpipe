@@ -210,10 +210,10 @@ body::after { /* grain */
   --rh: calc((var(--sh) - 1.8vh * (var(--rows) - 1)) / var(--rows));
   --fs: min(4.4vh, calc(var(--rh) * .3));
 }
-.story .row { display: grid; grid-template-columns: minmax(0, 1fr) 3vh minmax(0, 1.1fr); align-items: center; gap: 1vh; min-height: 0; }
+.story .row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.1fr); align-items: center; gap: 1vh; min-height: 0; }
 .story .row.enter { animation: rowin .5s cubic-bezier(.2, 1.2, .4, 1) both; }
 @keyframes rowin { from { opacity: 0; transform: translateX(-4vh); } }
-.story .arrow { font-family: "Anton", sans-serif; font-size: calc(var(--fs) * .9); color: var(--muted); text-align: center; }
+.story .arrow { min-width: 3vh; font-family: "Anton", sans-serif; font-size: calc(var(--fs) * .9); color: var(--muted); text-align: center; }
 .ltag {
   position: relative; display: flex; flex-direction: column; justify-content: center; gap: .5vh; min-height: calc(var(--rh) * .8); padding: 1vh 1.6vh 1vh 2.6vh;
   transform: rotate(var(--r, -1deg)); border-left: 1.4vh solid var(--c); border-radius: .4vh;

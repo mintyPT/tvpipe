@@ -64,6 +64,7 @@ Pick the TVs (or "A browser tab on this computer"), then Start.
 npm run check && npm test          # types; the rules, the ink, the word lists, whole games with bots in Node (privacy, a TV behind, closing)
 node test/live/play.ts             # a live game: tvpipe, headless Chrome, a phone, bots; screenshots in /tmp/garble-play
 node test/live/play.ts --lang de --length 7 --undo off
+node test/live/play.ts --lang de --long   # round 1 with the longest words (and longer) and the longest guess: none cut off or broken
 node test/live/play.ts --bots 3 --shots ../../site/static/games/garble   # the games list's pictures (test/live/scenario.ts)
 node test/live/scenario.ts --preview /tmp/garble-scenario                # the scripted round's layers as one PNG
 ```
@@ -74,4 +75,6 @@ cannot see drawings: the host page tells them what the latest layer with
 ink was meant to be, and they read it right most of the time. The live
 check needs Chrome and a built tvpipe (`TVPIPE_BINARY`, else
 `target/release`, else `target/debug`); it also checks every phone
-screen for text running out of its box at 390 and 320 px.
+screen at 390 and 320 px and the TV for text running out of its box and
+words not read whole, plays a second TV with its sound on, and fails on
+any page's errors (over DevTools) and on the bots' errors.

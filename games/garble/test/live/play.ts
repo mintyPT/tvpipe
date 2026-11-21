@@ -5,10 +5,18 @@
  * 1280×720) and a phone (joining, picking a word and drawing it,
  * guessing, drawing on top, reacting, voting for the best move); bots
  * join in the window (with the game's oracle, so most layers are read
- * right). Screenshots of the TV and the phone at each moment, and a
- * layout check of every phone screen at 390 and 320 px.
+ * right). Screenshots of the TV and the phone at each moment, a layout
+ * check of every phone screen at 390 and 320 px and of the TV (nothing
+ * off the screen, every word to read whole), and the run fails on any
+ * page's errors (exceptions, console.error, failed loads, over DevTools
+ * from before the pages load) and on the bots' errors. A second TV with
+ * its sound on plays along.
  *
- *   npm run build && node test/live/play.ts [--bots N] [--rounds N] [--length 3|5|7] [--lang en|de] [--undo on|off] [--out DIR] [--shots DIR]
+ *   npm run build && node test/live/play.ts [--bots N] [--rounds N] [--length 3|5|7] [--lang en|de] [--undo on|off] [--long] [--out DIR] [--shots DIR]
+ *
+ * `--long`: the first round with the longest words there are (and some
+ * longer than any in the lists) and the longest guess the phone takes,
+ * to see that none is cut off or broken.
  *
  * `--shots DIR`: the pictures for the games list (docs/game-catalog.md)
  * into DIR, from the fixed round of `scenario.ts` (four people, every
@@ -39,6 +47,7 @@ const { values: args } = parseArgs({
     length: { type: "string", default: "5" },
     lang: { type: "string", default: "en" },
     undo: { type: "string", default: "on" },
+    long: { type: "boolean", default: false },
     out: { type: "string" },
     shots: { type: "string" },
   },
@@ -53,7 +62,12 @@ const lang = args.lang === "de" ? "de" : "en";
 const shots = args.shots;
 const nBots = Number(args.bots);
 if (shots && (nBots !== scenario.PEOPLE.length - 1 || lang !== "en")) throw new Error(`--shots plays scenario.ts (in English): --bots ${scenario.PEOPLE.length - 1}`);
-const out = args.out ?? `/tmp/garble-play${lang === "de" ? "-de" : ""}${shots ? "-shots" : ""}`;
+const out = args.out ?? `/tmp/garble-play${lang === "de" ? "-de" : ""}${shots ? "-shots" : ""}${args.long ? "-long" : ""}`;
+/** --long: the longest words (some longer than any in the lists), and the longest guess (28 characters). */
+const LONG = {
+  en: { words: ["traffic light", "rollercoasterride", "ferris wheel", "hot air balloon", "washing machine", "gingerbread man"], guess: "rollercoasterride with a cat" },
+  de: { words: ["Außerirdischer", "Donaudampfschifffahrt", "Schmetterling", "Geschirrspülmaschine", "Eichhörnchen", "Meeresschildkröte"], guess: "Geschirrspülmaschinenmonster" },
+}[lang];
 mkdirSync(out, { recursive: true });
 if (shots) mkdirSync(shots, { recursive: true });
 const t0 = Date.now();
@@ -93,18 +107,32 @@ try {
   await set("rounds", shots ? "1" : args.rounds);
   await set("length", shots ? "3" : args.length);
   await set("timers", "fast");
+  // The fast timers, but time for the phone's screenshots and checks before its guess is due.
+  await win.eval(`(() => { garble.game.configure({ timings: { ...garble.game.timings, guess: 25_000 } }); return true; })()`);
   await set("lang", lang);
   await set("undo", args.undo === "off" ? "off" : "on");
   await win.until(`garble.game.lang === ${JSON.stringify(lang)} && garble.game.settings.undo === ${args.undo !== "off"}`, 5000);
   if (shots) {
     // The scripted round; the reveal lingers on each finished picture for the TV's picture.
     await win.eval(`(() => { garble.game.script = ${JSON.stringify(scenario.script())}; garble.game.timings.legend = 9000; return true; })()`);
+  } else if (args.long) {
+    // Every picture of round 1 the longest words, each picture its own order (the bots' names: host.ts).
+    const names = ["Phil", ...["Robo", "Pixel", "Gizmo", "Bolt", "Chip", "Sprocket", "Widget", "Servo", "Cog", "Dynamo", "Fuse"].slice(0, nBots).map((x) => `${x}1`)];
+    const w = LONG.words;
+    const pictures = names.map((_, i) => {
+      const order = w.map((_, j) => w[(i + j) % w.length]!);
+      return { choices: [order[0]!, order[1]!], words: order.slice(2) };
+    });
+    await win.eval(`(() => { garble.game.script = ${JSON.stringify({ seats: names, pictures })}; return true; })()`);
   }
   const links = await win.eval<{ join: string; watch: string }>(`({ join: garble.party.links.join, watch: garble.party.links.watch })`);
   const tv = await browser.open(`${links.watch}&mute=1`, { width: 1280, height: 720 });
   const PHONE = { width: 390, height: 844, mobile: true };
   const phone = await browser.open(links.join, { ...PHONE, locale: lang === "de" ? "de-DE" : "en-US" });
   await phone.until(`!!document.getElementById("name")`, 20_000);
+  // A second TV with its sound on (the first is muted), for the sound's errors.
+  const loud = await browser.open(links.watch, { width: 640, height: 360 });
+  const pages: [string, Tab][] = [["the window", win], ["the TV", tv], ["the TV with sound", loud], ["the phone", phone]];
   await tv.screenshot(`${out}/tv-00-empty.png`);
   await phone.screenshot(`${out}/phone-00-join.png`);
   await phone.eval(`document.getElementById("name").value = "Phil"; document.querySelector("form button").click(); true`);
@@ -128,6 +156,15 @@ try {
       const r = el.getBoundingClientRect();
       if (r.width > 0 && (r.right > W + 2 || r.left < -2) && !el.closest(".slip")) out.push("off the side: " + el.localName + "." + el.className);
     }
+    // Words that must be read whole fit their box (fit.js), and a typed guess its field (fitField).
+    for (const el of document.querySelectorAll("[data-fit]")) {
+      if (el.checkVisibility && !el.checkVisibility()) continue;
+      if (el.scrollWidth > el.clientWidth + 1) out.push("a word does not fit: " + JSON.stringify(el.textContent) + " " + el.scrollWidth + " > " + el.clientWidth);
+    }
+    for (const el of document.querySelectorAll("input")) {
+      if (!el.value || (el.checkVisibility && !el.checkVisibility())) continue;
+      if (el.scrollWidth > el.clientWidth + 1) out.push("the typed text does not fit: " + JSON.stringify(el.value) + " " + el.scrollWidth + " > " + el.clientWidth);
+    }
     // The pad and the guess's picture: square, on screen, as large as the layout allows.
     const pad = document.querySelector("canvas.pad, canvas.view");
     if (pad) {
@@ -141,16 +178,42 @@ try {
   const check = async (where: string, tab: Tab) => {
     for (const f of await tab.eval<string[]>(layout).catch((e: Error) => [`cannot check: ${e.message.slice(0, 100)}`])) problem(`${where}: ${f}`);
   };
+  /** The TV: every word to read whole, nothing off the screen or wider than its box. */
+  const tvLayout = `(() => {
+    const out = [];
+    for (const el of document.querySelectorAll("#stage .scene:not(.leaving) [data-fit]")) {
+      if (el.checkVisibility && !el.checkVisibility()) continue;
+      if (el.scrollWidth > el.clientWidth + 1) out.push("a word does not fit: " + JSON.stringify(el.textContent) + " " + el.scrollWidth + " > " + el.clientWidth);
+    }
+    // What is moving now (a card flying in, a row sliding in) is checked where it lands, in a later shot.
+    const moving = document.getAnimations().filter((a) => a.playState === "running").map((a) => a.effect?.target).filter((x) => x instanceof Element);
+    for (const el of document.querySelectorAll("#stage .scene:not(.leaving) *")) {
+      if (!el.checkVisibility || !el.checkVisibility()) continue;
+      if (["svg", "path", "g", "canvas", "i"].includes(el.localName) || el.closest(".confetti, .logo")) continue;
+      if (moving.some((m) => m.contains(el))) continue;
+      const cs = getComputedStyle(el);
+      const r = el.getBoundingClientRect();
+      if (r.width > 0 && (r.right > innerWidth + 2 || r.left < -2 || r.bottom > innerHeight + 2 || r.top < -2)) out.push("off the screen: " + el.localName + "." + el.className + " " + JSON.stringify((el.innerText || "").slice(0, 30)));
+      // (An underline drawn by ::after past the ends is not text running out.)
+      const deco = ["::before", "::after"].some((p) => getComputedStyle(el, p).position === "absolute");
+      if (!deco && cs.textOverflow !== "ellipsis" && el.children.length === 0 && el.scrollWidth > el.clientWidth + 2 && el.clientWidth > 0 && cs.display !== "inline") out.push("too wide: " + el.localName + "." + el.className + " " + JSON.stringify((el.innerText || "").slice(0, 30)));
+    }
+    return out;
+  })()`;
+  const tvShot = async (name: string) => {
+    await tv.screenshot(`${out}/tv-${String(++n).padStart(2, "0")}-${name}.png`);
+    for (const f of await tv.eval<string[]>(tvLayout).catch(() => [])) problem(`tv ${name}: ${f}`);
+  };
+  let n = 0;
   const kept: string[] = [];
   const pic = async (tab: Tab, name: string, kind: "tv" | "phone", settle?: number) => {
     if (!shots || kept.some((f) => f.startsWith(`${name}.`))) return;
     kept.push(await keep(tab, shots, name, kind, settle));
     log(`picture: ${kept.at(-1)}`);
   };
-  let n = 0;
   const shot = async (name: string, tvToo = true) => {
-    const at = String(++n).padStart(2, "0");
-    if (tvToo) await tv.screenshot(`${out}/tv-${at}-${name}.png`);
+    if (tvToo) await tvShot(name);
+    const at = String(tvToo ? n : ++n).padStart(2, "0");
     await phone.screenshot(`${out}/phone-${at}-${name}.png`);
     await check(`phone ${name}`, phone);
     await phone.resize({ width: 320, height: 640, mobile: true });
@@ -270,15 +333,20 @@ try {
     } else if (phase === "play" && ph === "guess") {
       await sleep(900);
       const where = shots ? scenario.work("Phil", k) : null;
-      const text = where ? scenario.PICTURES[where.picture]!.guesses[k - 1]! : lang === "de" ? "eine Katze" : "a cat";
-      await phone.eval(`(() => { const i = document.querySelector(".guess-form input"); i.value = ${JSON.stringify(text)}; return true; })()`);
+      const text = where ? scenario.PICTURES[where.picture]!.guesses[k - 1]! : args.long && round === "1" ? LONG.guess : lang === "de" ? "eine Katze" : "a cat";
+      // Typed (input events: the field fits its text), as a keyboard would.
+      await phone.send("Page.bringToFront");
+      await phone.eval(`(() => { const i = document.querySelector(".guess-form input"); i.value = ""; i.focus(); return true; })()`);
+      const typed = Date.now();
+      await phone.type(text);
+      log(`typed ${JSON.stringify(text)} in ${Date.now() - typed} ms`);
       await shot(tag);
       if (shots && k === 1) await pic(phone, "phone-guess", "phone", 300);
       await phone.eval(`document.querySelector(".guess-form").requestSubmit(); true`);
     } else if (phase === "reveal") {
       if (stg === "layers") {
         await sleep(1800);
-        await tv.screenshot(`${out}/tv-${String(++n).padStart(2, "0")}-${tag}.png`);
+        await tvShot(tag);
         if (cursor === "0") {
           await check(`phone ${tag}`, phone);
           await phone.eval(`document.querySelectorAll(".reacts button")[${Math.floor(Math.random() * 4)}]?.click(); true`).catch(() => {});
@@ -288,7 +356,7 @@ try {
         if (shots && id === scenario.COVER) await pic(tv, "tv-reveal", "tv", 700);
         else {
           await sleep(500);
-          await tv.screenshot(`${out}/tv-${String(++n).padStart(2, "0")}-${tag}.png`);
+          await tvShot(tag);
         }
       }
     } else if (phase === "vote" && ph === "vote") {
@@ -314,7 +382,12 @@ try {
   if (!shots) {
     await sleep(2000);
     await shot("final");
+    const errors = await win.eval<string[]>(`garble.robots.flatMap((b) => b.errors.map((e) => b.name + ": " + e))`);
+    if (errors.length > 0) problem(`the bots' errors: ${errors.join(", ")}`);
+    const end = await loud.eval<string>(`document.querySelector(".scene.final") ? "final" : ""`);
+    if (end !== "final") problem("the TV with sound did not reach the end");
   }
+  for (const [name, tab] of pages) for (const e of tab.errors) problem(`${name}: ${e}`);
   log(`game over; problems: ${problems.length || "none"}; screenshots in ${out}`);
   if (problems.length > 0) failed = true;
   await win.eval(`document.getElementById("quit").click(); true`);
