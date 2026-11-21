@@ -169,7 +169,8 @@ export class Bot {
     switch (me.task) {
       case "lobby":
       case "final": {
-        if (me.task === "final") this.#handled.clear();
+        // A game over (or closed): the next one's rounds are new.
+        if (me.task === "final" || [...this.#handled].some((k) => !k.startsWith("start:"))) this.#handled.clear();
         const vip = (view["roster"] ?? []).find((r: { id: string }) => r.id === c.you?.id)?.vip;
         const ready = (view["roster"] ?? []).filter((r: { connected: boolean }) => r.connected).length;
         if (this.#o.autoStart && vip && me.task === "lobby" && ready >= (room.minPlayers ?? 3)) this.#once(`start:${ready}`, () => c.act("start"));

@@ -229,6 +229,8 @@ export class Krakel extends Emitter<GameEvents> {
   #phase: Phase = "lobby";
   #running = false;
   #abort = new AbortController();
+  /** The game being played: a game's flow writes nothing once another (or the lobby, after {@link close}) took over. */
+  #game = 0;
   #roundNo = 0;
   #round: Round | undefined;
   #spot: Spot | undefined;
@@ -392,9 +394,31 @@ export class Krakel extends Emitter<GameEvents> {
     if (JSON.stringify([this.rounds, this.settings]) !== was) this.emit("settings", this.settings);
   }
 
-  /** Ends the game and its timers (the party stays). */
+  /**
+   * Ends a running game and its timers (the party stays): the lobby is
+   * back at once (no final screen: closing is not finishing), waiting
+   * players are in, and nothing of the old game writes after this
+   * returns. A later {@link play} starts a fresh game.
+   */
   close(): void {
+    if (!this.#running) return;
+    this.#game++;
     this.#abort.abort();
+    this.#stop();
+    this.#lobby();
+  }
+
+  /** What ends a game, played out or closed: no round, no timers, nobody waiting. */
+  #stop(): void {
+    const party = this.party;
+    clearTimeout(this.#inkTimer);
+    this.#inkTimer = undefined;
+    this.#round = undefined;
+    this.#spot = undefined;
+    this.#ink = undefined;
+    this.#running = false;
+    party.inProgress = false;
+    for (const p of party.players) party.activate(p);
   }
 
   // -------------------------------------------------------------------------
@@ -476,11 +500,19 @@ export class Krakel extends Emitter<GameEvents> {
   // -------------------------------------------------------------------------
   // A game
 
-  /** Plays a whole game with the players who are there (and those who join). */
+  /**
+   * Plays a whole game with the players who are there (and those who
+   * join). It ends early, to the final screen, when fewer than
+   * {@link minPlayers} are left in it at the start of a round (a phone
+   * that is only away still counts). Closed ({@link close}), it returns
+   * the scores so far and shows nothing.
+   */
   async play(): Promise<ScoreLine[]> {
     const party = this.party;
+    const game = ++this.#game;
     this.#running = true;
     this.#abort = new AbortController();
+    const signal = this.#abort.signal;
     party.inProgress = true;
     this.scores.clear();
     this.#totals.clear();
@@ -493,21 +525,16 @@ export class Krakel extends Emitter<GameEvents> {
           if (!this.scores.has(p.id)) this.scores.set(p.id, 0);
         }
         const players = party.players.filter((p) => this.scores.has(p.id));
-        if (players.length < 2) break;
+        if (players.length < this.minPlayers) break;
         const before = new Map(this.scores);
-        await this.#playRound(r, players);
-        if (this.#abort.signal.aborted) break;
-        await this.#scores(r, before);
-        if (this.#abort.signal.aborted) break;
+        await this.#playRound(r, players, signal);
+        if (signal.aborted) break;
+        await this.#scores(r, before, signal);
+        if (signal.aborted) break;
       }
-      return this.#final();
+      return signal.aborted ? this.#table() : this.#final();
     } finally {
-      this.#round = undefined;
-      this.#spot = undefined;
-      this.#ink = undefined;
-      this.#running = false;
-      party.inProgress = false;
-      for (const p of party.players) party.activate(p);
+      if (this.#game === game) this.#stop();
     }
   }
 
@@ -546,12 +573,12 @@ export class Krakel extends Emitter<GameEvents> {
     return { category, deals, order };
   }
 
-  async #playRound(n: number, players: Player[]): Promise<void> {
+  async #playRound(n: number, players: Player[], signal: AbortSignal): Promise<void> {
     const { category, deals, order } = this.#deal(n, players);
     const round: Round = { n, category, players, deals, entries: [], order: [], votes: new Map() };
     this.#round = round;
-    await this.#draw(round);
-    if (this.#abort.signal.aborted) return;
+    await this.#draw(round, signal);
+    if (signal.aborted) return;
     const shown = round.entries.filter((e) => e.shown).map((e) => e.by);
     const fixed = (order ?? []).filter((id) => shown.includes(id));
     round.order = [...fixed, ...shuffle(shown.filter((id) => !fixed.includes(id)), this.#rng)];
@@ -562,16 +589,16 @@ export class Krakel extends Emitter<GameEvents> {
         entry.shown = false;
         continue;
       }
-      await this.#stage(round, entry, i, round.order.length);
-      if (this.#abort.signal.aborted) return;
+      await this.#stage(round, entry, i, round.order.length, signal);
+      if (signal.aborted) return;
     }
-    await this.#gallery(round);
+    await this.#gallery(round, signal);
   }
 
   // -------------------------------------------------------------------------
   // Drawing
 
-  async #draw(r: Round): Promise<void> {
+  async #draw(r: Round, signal: AbortSignal): Promise<void> {
     const party = this.party;
     this.#setPhase("draw");
     const deadline = party.deadline(this.timings.draw);
@@ -592,7 +619,7 @@ export class Krakel extends Emitter<GameEvents> {
     const got = await party.collect<{ drawing: Drawing; choice: number }>("draw", {
       from: r.players,
       until: deadline,
-      signal: this.#abort.signal,
+      signal,
       validate: (d, p) => {
         const drawing = validateDrawing(d);
         const n = r.deals.get(p.id)!.length;
@@ -606,6 +633,7 @@ export class Krakel extends Emitter<GameEvents> {
         party.screen.set({ done: [...done] });
       },
     });
+    if (signal.aborted) return;
     clearTimeout(this.#inkTimer);
     this.#inkTimer = undefined;
     this.#ink = undefined;
@@ -631,7 +659,7 @@ export class Krakel extends Emitter<GameEvents> {
   // -------------------------------------------------------------------------
   // A drawing on stage: its replay, the guesses, the reveal
 
-  async #stage(r: Round, entry: Entry, index: number, of: number): Promise<void> {
+  async #stage(r: Round, entry: Entry, index: number, of: number, signal: AbortSignal): Promise<void> {
     const party = this.party;
     this.#setPhase("guess");
     const guessers = r.players.filter((p) => p.id !== entry.by && party.player(p.id));
@@ -670,12 +698,12 @@ export class Krakel extends Emitter<GameEvents> {
       this.#others(new Set(r.players.map((p) => p.id)));
     });
     const timer = setTimeout(finish, Math.max(0, end + party.grace - party.now()));
-    this.#abort.signal.addEventListener("abort", finish, { once: true });
+    signal.addEventListener("abort", finish, { once: true });
     await over;
     clearTimeout(timer);
     clearTimeout(pause);
-    this.#abort.signal.removeEventListener("abort", finish);
-    if (this.#abort.signal.aborted) return;
+    signal.removeEventListener("abort", finish);
+    if (signal.aborted) return;
 
     // The reveal: the word, who had it, what it pays.
     spot.stage = "reveal";
@@ -706,8 +734,8 @@ export class Krakel extends Emitter<GameEvents> {
       const a = party.player(entry.by);
       a?.state.replace({ task: "result", key, word, mine: true, points, got: entry.hits.length, guessers: entry.guessers.length, ...this.#mine(a) });
     });
-    await this.#sleep(this.timings.reveal);
-    this.#spot = undefined;
+    await this.#sleep(this.timings.reveal, signal);
+    if (this.#spot === spot) this.#spot = undefined;
   }
 
   /** A typed guess at the drawing on stage. */
@@ -760,7 +788,7 @@ export class Krakel extends Emitter<GameEvents> {
   // -------------------------------------------------------------------------
   // The gallery: a heart for the favourite, then the drawings ranked
 
-  async #gallery(r: Round): Promise<void> {
+  async #gallery(r: Round, signal: AbortSignal): Promise<void> {
     const party = this.party;
     const shown = r.order.map((id) => r.entries.find((e) => e.by === id)!).filter((e) => e.shown);
     if (shown.length === 0) {
@@ -788,7 +816,7 @@ export class Krakel extends Emitter<GameEvents> {
       const votes = await party.collect<string>("vote", {
         from: voters,
         until: deadline,
-        signal: this.#abort.signal,
+        signal,
         validate: (d, p) => {
           const id = typeof d === "object" && d !== null && !Array.isArray(d) ? (d as { id?: unknown }).id : d;
           if (typeof id !== "string" || !shown.some((e) => e.by === id)) throw new PartyError("bad-vote", "Pick a drawing");
@@ -800,7 +828,7 @@ export class Krakel extends Emitter<GameEvents> {
           party.screen.set({ done: [...got.keys()].map((x) => x.id) });
         },
       });
-      if (this.#abort.signal.aborted) return;
+      if (signal.aborted) return;
       r.votes = new Map([...votes].map(([p, id]) => [p.id, id]));
     }
     const fav = favourite(r.votes);
@@ -832,7 +860,7 @@ export class Krakel extends Emitter<GameEvents> {
       }
       this.#others(ids);
     });
-    await this.#sleep(this.timings.ranked);
+    await this.#sleep(this.timings.ranked, signal);
   }
 
   // -------------------------------------------------------------------------
@@ -848,7 +876,7 @@ export class Krakel extends Emitter<GameEvents> {
       .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
   }
 
-  async #scores(round: number, before: ReadonlyMap<string, number>): Promise<void> {
+  async #scores(round: number, before: ReadonlyMap<string, number>, signal: AbortSignal): Promise<void> {
     const party = this.party;
     this.#setPhase("scores");
     const lines = this.#table(before).map((l) => ({ ...l, earned: this.#earned.get(l.id) ?? null }));
@@ -864,7 +892,7 @@ export class Krakel extends Emitter<GameEvents> {
         p.state.replace({ task: "scores", earned: line?.earned ?? null, delta: line?.delta ?? 0, ...this.#mine(p) });
       }
     });
-    await this.#sleep(this.timings.scores);
+    await this.#sleep(this.timings.scores, signal);
   }
 
   #final(): ScoreLine[] {
@@ -889,8 +917,7 @@ export class Krakel extends Emitter<GameEvents> {
 
   // -------------------------------------------------------------------------
 
-  #sleep(ms: number): Promise<void> {
-    const signal = this.#abort.signal;
+  #sleep(ms: number, signal: AbortSignal): Promise<void> {
     return new Promise((resolve) => {
       if (signal.aborted) return resolve();
       const t = setTimeout(resolve, ms);

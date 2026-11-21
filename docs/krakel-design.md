@@ -108,7 +108,14 @@ start ─▶ draw (everyone at once) ─▶ per drawing: count-in ─▶ replay 
 - **Leaving and joining.** A phone that drops out keeps its seat (the
   library); its drawing goes on stage without it, and nobody waits for
   its guess. Whoever was removed for good takes their drawing with them.
-  Latecomers play from the next round.
+  Latecomers play from the next round. When a round is to start (the
+  latecomers let in) with fewer players in the game than a game needs
+  to start (`minPlayers`, 3; removed and gone players do not count, a
+  phone that is only away does), the game ends there, to its podium.
+- **Closing a game** (`close()`, for a host page): the lobby at once,
+  without a podium (closing is not finishing), everyone waiting dealt
+  in, and nothing of that game (its timers, its replays, its changes
+  synced with the TV) writes after it; the VIP can start a new one.
 
 ## 3. Judging a guess
 
