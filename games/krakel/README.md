@@ -106,7 +106,10 @@ and TV views (`lang`), so every phone, the TV and the host page speak
 it; a phone may switch for itself on the join screen, in the lobby and
 at the end. Each language has its own words (`data/words.txt`,
 `data/words.de.txt`: 22 categories, about 570 words each) and its own
-rules for articles and endings in the matcher (`game/rules.ts`).
+rules for articles and endings in the matcher (`game/rules.ts`). The
+pages' string tables (`phone/strings.js`, `screen/strings.js`) write
+numbers, plurals and lists of names the way the language does
+(`phone/i18n.js`, Intl: "1 of 3 has it", "Ada, Bo und Cy haben es!").
 
 ## The font
 

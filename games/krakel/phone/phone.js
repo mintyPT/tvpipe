@@ -11,7 +11,7 @@
 
 import { PartyClient } from "/_tvpipe/lib/client.js";
 import { watchFit } from "./fit.js";
-import { browserLang, num, pickLang } from "./i18n.js";
+import { browserLang, pickLang } from "./i18n.js";
 import { drawInk, ERASER, fit, GRID, Live, MAX_POINTS, MAX_STROKES, PALETTE, progressAt, Replay, WIDTHS } from "./ink.js";
 import { strings } from "./strings.js";
 
@@ -307,7 +307,7 @@ function render(view) {
   const room = view.room ?? {};
   const mine = (view.roster ?? []).find((/** @type {any} */ r) => r.id === client.you?.id);
   if (useLang()) shown = "";
-  const scoreText = typeof me.score === "number" && me.task !== "lobby" && me.of > 0 ? ` · ${num(lang, me.score)}` : "";
+  const scoreText = typeof me.score === "number" && me.task !== "lobby" && me.of > 0 ? ` · ${t.n(me.score)}` : "";
   who.replaceChildren(...(mine ? [h("span", { class: "dot", style: { "--c": colorOf(mine.id) } }), h("b", {}, `${mine.vip ? "★ " : ""}${mine.name}`), scoreText] : []));
   const key = keyOf(me, room);
   if (key !== shown) {
@@ -450,7 +450,7 @@ function final() {
       "section",
       { class: "card pop" },
       h("h1", {}, me.rank === 1 && me.of > 0 ? t.won : t.gameOver),
-      h("p", { class: "score" }, num(lang, me.score ?? 0), h("small", {}, t.points)),
+      h("p", { class: "score" }, t.n(me.score ?? 0), h("small", {}, t.points)),
       h("p", { class: "muted" }, me.of ? t.rank(me.rank ?? 0, me.of) : ""),
       again,
       err,
@@ -907,7 +907,7 @@ function stage(me, room) {
     return;
   }
   if (!guessing) {
-    foot.append(h("div", { class: "gotit pop" }, h("b", {}, "✓"), h("span", {}, t.gotIt), h("strong", {}, `+${num(lang, me.points ?? 0)}`), me.first ? h("em", {}, t.first) : null), count);
+    foot.append(h("div", { class: "gotit pop" }, h("b", {}, "✓"), h("span", {}, t.gotIt), h("strong", {}, `+${t.n(me.points ?? 0)}`), me.first ? h("em", {}, t.first) : null), count);
     refresh = () => void have();
     return;
   }
@@ -987,7 +987,7 @@ function result(me) {
       { class: `card pop center${me.mine ? " mine" : me.right ? " right" : " missed"}` },
       h("h2", { style: { "margin-top": "0" } }, me.mine ? t.yourDrawing : t.by(me.artist ?? "")),
       h("p", { class: "caption" }, h("small", {}, t.itWas), h("b", { "data-fit": "2" }, me.word ?? "")),
-      pts > 0 ? h("p", { class: "score" }, `+${num(lang, pts)}`) : null,
+      pts > 0 ? h("p", { class: "score" }, `+${t.n(pts)}`) : null,
       me.mine ? h("p", { class: "big" }, t.named(me.got ?? 0, me.guessers ?? 0)) : me.right ? (me.first ? h("p", { class: "big" }, t.first) : null) : h("p", { class: "big" }, t.missed),
     ),
   );
@@ -1069,9 +1069,9 @@ function ranked(me) {
       h("h2", { style: { "margin-top": "0" } }, t.rankedTitle),
       h("p", { class: "caption" }, h("b", { "data-fit": "2" }, me.word ?? "")),
       h("p", { class: "score", "data-fit": "1" }, t.place(me.place, me.drawings ?? 1)),
-      h("p", { class: "big" }, `+${num(lang, me.points ?? 0)} ${t.points}`),
+      h("p", { class: "big" }, t.pointsN(me.points ?? 0, "+")),
       me.hearts > 0 ? h("p", { class: "heartline" }, icon(HEART), t.hearts(me.hearts)) : null,
-      me.fav > 0 ? h("p", { class: "fav" }, `${t.favourite} +${num(lang, me.fav)}`) : null,
+      me.fav > 0 ? h("p", { class: "fav" }, `${t.favourite} +${t.n(me.fav)}`) : null,
     ),
   );
 }
@@ -1088,9 +1088,9 @@ function scoreCard(me, room) {
       "section",
       { class: "card pop" },
       h("h2", { style: { "margin-top": "0" } }, `${t.roundN(room.round ?? 1)} · ${t.thisRound}`),
-      h("p", { class: "score" }, `+${num(lang, me.delta ?? 0)}`),
-      h("ul", { class: "gains" }, ...kinds.filter((k) => e[k] > 0).map((k) => h("li", {}, h("span", {}, t.kinds[k]), h("b", {}, `+${num(lang, e[k])}`)))),
-      h("p", { class: "total" }, `${num(lang, me.score ?? 0)} ${t.points} · ${me.of ? t.rank(me.rank ?? 0, me.of) : ""}`),
+      h("p", { class: "score" }, `+${t.n(me.delta ?? 0)}`),
+      h("ul", { class: "gains" }, ...kinds.filter((k) => e[k] > 0).map((k) => h("li", {}, h("span", {}, t.kinds[k]), h("b", {}, `+${t.n(e[k])}`)))),
+      h("p", { class: "total" }, `${t.pointsN(me.score ?? 0)} · ${me.of ? t.rank(me.rank ?? 0, me.of) : ""}`),
     ),
   );
 }

@@ -11,7 +11,7 @@
 
 import { joinText, PartyClient, qrSvg } from "/_tvpipe/lib/client.js";
 import { watchFit } from "../phone/fit.js";
-import { num, pickLang } from "../phone/i18n.js";
+import { pickLang } from "../phone/i18n.js";
 import { drawInk, fit, GRID, progressAt, Replay } from "../phone/ink.js";
 import { strings } from "./strings.js";
 
@@ -644,7 +644,7 @@ function guess(s) {
     banner.hidden = false;
     if (s.shape && typeof s.word === "string") el.querySelector(".blankbox")?.replaceChildren(blanks(s.shape, s.word));
     const n = (s.got ?? []).length;
-    verdict.replaceChildren(h("span", {}, n === 0 ? t.nobody : n === guessers.length ? t.everybody : t.some(n, guessers.length)), ...(n > 0 ? [h("b", {}, `+${num(lang, s.points ?? 0)}`, h("small", {}, t.forArtist(s.artist?.name ?? "")))] : []));
+    verdict.replaceChildren(h("span", {}, n === 0 ? t.nobody : n === guessers.length ? t.everybody : t.some(n, guessers.length)), ...(n > 0 ? [h("b", {}, `+${t.n(s.points ?? 0)}`, h("small", {}, t.forArtist(s.artist?.name ?? "")))] : []));
     verdict.hidden = false;
     el.classList.add("revealed");
     for (const r of rows.values()) if (!r.el.classList.contains("got")) r.el.classList.add("missed");
@@ -659,7 +659,7 @@ function guess(s) {
       list.forEach((g, i) => {
         const r = rows.get(g.id);
         if (!r) return;
-        r.pts.replaceChildren(g.first ? h("em", {}, t.first) : "", `+${num(lang, g.points)}`);
+        r.pts.replaceChildren(g.first ? h("em", {}, t.first) : "", `+${t.n(g.points)}`);
         r.el.style.order = String(i);
         if (r.el.classList.contains("got")) return;
         r.el.classList.add("got");
@@ -753,12 +753,12 @@ function tiles(n, w, hgt, gap, extra) {
 
 /** Counts a number up in an element. @param {HTMLElement} el @param {number} from @param {number} to @param {number} delay @param {string} [prefix] */
 function countUp(el, from, to, delay, prefix = "") {
-  el.textContent = prefix + num(lang, from);
+  el.textContent = prefix + t.n(from);
   later(delay, () => {
     const t0 = performance.now();
     const step = () => {
       const p = Math.min(1, (performance.now() - t0) / 1000);
-      el.textContent = prefix + num(lang, Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3))));
+      el.textContent = prefix + t.n(Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3))));
       if (p < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
@@ -840,7 +840,7 @@ function gallery(s) {
         m.el.classList.add("placed", `p${Math.min(4, r.place)}`);
         m.had.textContent = t.had(r.got ?? 0, r.of ?? 0);
         if (animate) countUp(m.pts, 0, r.points ?? 0, 0, "+");
-        else m.pts.textContent = `+${num(lang, r.points ?? 0)}`;
+        else m.pts.textContent = `+${t.n(r.points ?? 0)}`;
         if (r.hearts > 0) m.hearts.replaceChildren(svg("0 0 24 24", HEART), String(r.hearts), ...(r.fav > 0 ? [m.fav] : []));
         if (r.fav > 0) m.el.classList.add("favourite");
         if (animate) {
@@ -918,7 +918,7 @@ function scores(s) {
     last = l.score;
     const pts = h("b");
     const e = l.earned ?? {};
-    const gains = /** @type {const} */ (["drawn", "guessed", "first", "favourite"]).filter((k) => e[k] > 0).map((k) => h("span", { class: `gain ${k}` }, `${t.kinds[k]} +${num(lang, e[k])}`));
+    const gains = /** @type {const} */ (["drawn", "guessed", "first", "favourite"]).filter((k) => e[k] > 0).map((k) => h("span", { class: `gain ${k}` }, `${t.kinds[k]} +${t.n(e[k])}`));
     const bar = h("i", { class: "bar", style: { "--c": colorOf(l), "--w": `${((l.score - (l.delta ?? 0)) / top) * 100}%` } });
     board.append(h("div", { class: "row", style: { "--d": `${(0.1 + i * 0.08).toFixed(2)}s` } }, h("span", { class: "rk" }, String(rank)), avatar(l, "5rem"), h("span", { class: "nm" }, l.name), h("span", { class: "mid" }, bar, h("span", { class: "gains" }, ...gains)), h("span", { class: "pts" }, pts)));
     countUp(pts, l.score - (l.delta ?? 0), l.score, 700 + i * 80);
@@ -938,17 +938,17 @@ function final(s) {
     { class: "podium" },
     ...order.map((i) => {
       const l = lines[i];
-      return h("div", { class: `step p${i + 1}`, style: { "--d": `${[1.5, 0.9, 0.3][i]}s` } }, avatar(l, "8.4rem"), h("div", { class: "nm" }, l.name), h("div", { class: "block" }, h("b", {}, String(i + 1)), h("span", {}, num(lang, l.score))));
+      return h("div", { class: `step p${i + 1}`, style: { "--d": `${[1.5, 0.9, 0.3][i]}s` } }, avatar(l, "8.4rem"), h("div", { class: "nm" }, l.name), h("div", { class: "block" }, h("b", {}, String(i + 1)), h("span", {}, t.n(l.score))));
     }),
   );
-  const rest = h("div", { class: "rest" }, ...lines.slice(3).map((l, i) => h("span", {}, `${i + 4}. ${l.name} · ${num(lang, l.score)}`)));
+  const rest = h("div", { class: "rest" }, ...lines.slice(3).map((l, i) => h("span", {}, `${t.n(i + 4)}. ${l.name} · ${t.n(l.score)}`)));
   const best = s.best;
   const c = /** @type {HTMLCanvasElement} */ (h("canvas"));
   const side = h(
     "div",
     { class: "awards" },
     best ? h("div", { class: "award" }, h("h2", {}, t.bestTitle), h("div", { class: "sheet", style: { "--r": "2deg" } }, c), h("div", { class: "cap" }, h("b", { "data-fit": "1" }, best.word ?? ""), h("span", {}, avatar(best.artist, "3rem"), t.bestBy(best.artist?.name ?? "")))) : null,
-    s.eye ? h("div", { class: "eye" }, h("small", {}, t.eyeTitle), avatar(s.eye.who, "3.6rem"), h("b", {}, s.eye.who?.name ?? ""), h("span", {}, `${num(lang, s.eye.points ?? 0)} ${t.points}`)) : null,
+    s.eye ? h("div", { class: "eye" }, h("small", {}, t.eyeTitle), avatar(s.eye.who, "3.6rem"), h("b", {}, s.eye.who?.name ?? ""), h("span", {}, t.pointsN(s.eye.points ?? 0))) : null,
   );
   const el = h("div", { class: "scene final" }, h("div", { class: "main" }, h("h1", {}, t.gameOver), podium, rest, h("div", { class: "again" }, t.playAgain)), side, confetti(90));
   if (best) {

@@ -5,9 +5,12 @@
  * text.
  */
 
-/** @typedef {typeof EN} Strings */
+import { format } from "./i18n.js";
 
-const EN = {
+/** @param {import("./i18n.js").Format} f */
+const en = (f) => ({
+  /** A number as the language writes it. */
+  n: f.n,
   otherLang: "Deutsch",
   connecting: "Connecting…",
   scanToJoin: "Scan the QR code on the TV to join.",
@@ -43,7 +46,7 @@ const EN = {
   players: "Players",
   vip: "VIP",
   start: "Start the game",
-  vipWait: (/** @type {number} */ n) => (n === 1 ? "Waiting for 1 more player." : `Waiting for ${n} more players.`),
+  vipWait: (/** @type {number} */ n) => f.p(n, { one: "Waiting for # more player.", other: "Waiting for # more players." }),
   vipReady: "Everybody here? Start when you're ready.",
   waitVip: "The VIP starts the game.",
   settings: "Settings",
@@ -56,15 +59,15 @@ const EN = {
   modeMixed: "mixed",
   modeLine: ["Everyone draws something from the round's category.", "Everyone's words come from different categories."],
   lockLabel: "Wrong guess",
-  minutes: (/** @type {number} */ s) => (s % 60 === 0 ? `${s / 60} min` : `${Math.floor(s / 60)}½ min`),
-  seconds: (/** @type {number} */ s) => `${s} s`,
+  minutes: (/** @type {number} */ s) => (s % 60 === 0 ? `${f.n(s / 60)} min` : `${f.n(Math.floor(s / 60))}½ min`),
+  seconds: (/** @type {number} */ s) => `${f.n(s)} s`,
   hintsOn: "shown",
   hintsOff: "hidden",
   hintsLine: ["Hard: no help, just the category.", "Easy: you see how many letters the word has."],
   lockNone: "free",
-  lockLine: (/** @type {number} */ s) => (s > 0 ? `A wrong guess locks your phone for ${s} seconds.` : "Guess as often as you like."),
+  lockLine: (/** @type {number} */ s) => (s > 0 ? f.p(s, { one: "A wrong guess locks your phone for # second.", other: "A wrong guess locks your phone for # seconds." }) : "Guess as often as you like."),
   rulesLine: (/** @type {number} */ rounds, /** @type {number} */ draw, /** @type {number} */ guess, /** @type {boolean} */ hints, /** @type {boolean} */ mixed) =>
-    `${rounds === 1 ? "1 round" : `${rounds} rounds`} · ${mixed ? "mixed words" : "one category a round"} · ${draw} s to draw · ${guess} s to guess · letters ${hints ? "shown" : "hidden"}`,
+    `${f.p(rounds, { one: "# round", other: "# rounds" })} · ${mixed ? "mixed words" : "one category a round"} · ${f.n(draw)} s to draw · ${f.n(guess)} s to guess · letters ${hints ? "shown" : "hidden"}`,
   howTitle: "How it works",
   how: [
     "Pick one of three words. Draw it as well as you can: you have time.",
@@ -106,17 +109,17 @@ const EN = {
   timeUp: "Time's up!",
   gotIt: "You got it!",
   first: "First!",
-  have: (/** @type {number} */ n, /** @type {number} */ of) => `${n} of ${of} have it`,
-  letters: (/** @type {number} */ n) => (n === 1 ? "1 letter" : `${n} letters`),
+  have: (/** @type {number} */ n, /** @type {number} */ of) => f.p(n, { one: `# of ${f.n(of)} has it`, other: `# of ${f.n(of)} have it` }),
+  letters: (/** @type {number} */ n) => f.p(n, { one: "# letter", other: "# letters" }),
   // The artist
   yoursUp: "Your Krakel!",
   nobodyYet: "Nobody has it yet…",
-  hasIt: (/** @type {string[]} */ names) => `${names.join(", ")} ${names.length === 1 ? "has" : "have"} it!`,
+  hasIt: (/** @type {string[]} */ names) => `${f.list(names)} ${names.length === 1 ? "has" : "have"} it!`,
   // The result
   itWas: "It was",
   missed: "Not this time.",
   yourDrawing: "Your drawing",
-  named: (/** @type {number} */ n, /** @type {number} */ of) => (n === 0 ? "Nobody named it." : n === of ? "Everybody named it!" : `${n} of ${of} named it.`),
+  named: (/** @type {number} */ n, /** @type {number} */ of) => (n === 0 ? "Nobody named it." : n === of ? "Everybody named it!" : `${f.n(n)} of ${f.n(of)} named it.`),
   by: (/** @type {string} */ name) => `drawn by ${name}`,
   lookTv: "Look at the TV",
   // Hearts
@@ -129,23 +132,28 @@ const EN = {
   mineTag: "yours",
   // Ranked
   rankedTitle: "Your drawing",
-  place: (/** @type {number} */ n, /** @type {number} */ of) => `#${n} of ${of}`,
+  place: (/** @type {number} */ n, /** @type {number} */ of) => `#${f.n(n)} of ${f.n(of)}`,
   blankPage: "You handed in a blank page.",
-  hearts: (/** @type {number} */ n) => (n === 1 ? "1 heart" : `${n} hearts`),
+  hearts: (/** @type {number} */ n) => f.p(n, { one: "# heart", other: "# hearts" }),
   favourite: "The room's favourite!",
   // Scores
-  roundN: (/** @type {number} */ n) => `Round ${n}`,
+  roundN: (/** @type {number} */ n) => `Round ${f.n(n)}`,
   thisRound: "this round",
   kinds: { drawn: "your drawing", guessed: "your guesses", first: "first to name it", favourite: "the favourite" },
-  rank: (/** @type {number} */ r, /** @type {number} */ of) => `#${r} of ${of}`,
+  rank: (/** @type {number} */ r, /** @type {number} */ of) => `#${f.n(r)} of ${f.n(of)}`,
   points: "points",
+  /** Points with their number: "+1 point", "1,200 points". */
+  pointsN: (/** @type {number} */ n, sign = "") => sign + f.p(n, { one: "# point", other: "# points" }),
   won: "You won!",
   gameOver: "Game over",
   playAgain: "Play again",
-};
+});
 
-/** @type {Strings} */
-const DE = {
+/** @typedef {ReturnType<typeof en>} Strings */
+
+/** @type {(f: import("./i18n.js").Format) => Strings} */
+const de = (f) => ({
+  n: f.n,
   otherLang: "English",
   connecting: "Verbinde…",
   scanToJoin: "Scanne den QR-Code auf dem Fernseher, um mitzuspielen.",
@@ -180,7 +188,7 @@ const DE = {
   players: "Wer spielt mit",
   vip: "VIP",
   start: "Spiel starten",
-  vipWait: (n) => (n === 1 ? "Es fehlt noch 1 Person." : `Es fehlen noch ${n} Leute.`),
+  vipWait: (n) => f.p(n, { one: "Es fehlt noch # Person.", other: "Es fehlen noch # Leute." }),
   vipReady: "Alle da? Dann starte das Spiel.",
   waitVip: "Der VIP startet das Spiel.",
   settings: "Einstellungen",
@@ -193,15 +201,15 @@ const DE = {
   modeMixed: "gemischt",
   modeLine: ["Alle zeichnen etwas aus der Kategorie der Runde.", "Die Wörter kommen aus verschiedenen Kategorien."],
   lockLabel: "Falsch geraten",
-  minutes: (s) => (s % 60 === 0 ? `${s / 60} Min` : `${Math.floor(s / 60)}½ Min`),
-  seconds: (s) => `${s} s`,
+  minutes: (s) => (s % 60 === 0 ? `${f.n(s / 60)} Min` : `${f.n(Math.floor(s / 60))}½ Min`),
+  seconds: (s) => `${f.n(s)} s`,
   hintsOn: "zeigen",
   hintsOff: "verstecken",
   hintsLine: ["Schwer: keine Hilfe, nur die Kategorie.", "Leicht: Du siehst, wie viele Buchstaben das Wort hat."],
   lockNone: "frei",
-  lockLine: (s) => (s > 0 ? `Wer falsch rät, muss ${s} Sekunden warten.` : "Rate, so oft du willst."),
+  lockLine: (s) => (s > 0 ? f.p(s, { one: "Wer falsch rät, muss # Sekunde warten.", other: "Wer falsch rät, muss # Sekunden warten." }) : "Rate, so oft du willst."),
   rulesLine: (rounds, draw, guess, hints, mixed) =>
-    `${rounds === 1 ? "1 Runde" : `${rounds} Runden`} · ${mixed ? "gemischte Wörter" : "eine Kategorie pro Runde"} · ${draw} s zeichnen · ${guess} s raten · Buchstaben ${hints ? "sichtbar" : "versteckt"}`,
+    `${f.p(rounds, { one: "# Runde", other: "# Runden" })} · ${mixed ? "gemischte Wörter" : "eine Kategorie pro Runde"} · ${f.n(draw)} s zeichnen · ${f.n(guess)} s raten · Buchstaben ${hints ? "sichtbar" : "versteckt"}`,
   howTitle: "So geht's",
   how: [
     "Such dir eins von drei Wörtern aus. Zeichne es, so gut du kannst: Du hast Zeit.",
@@ -240,15 +248,15 @@ const DE = {
   timeUp: "Zeit ist um!",
   gotIt: "Richtig!",
   first: "Als Erste:r!",
-  have: (n, of) => `${n} von ${of} haben es`,
-  letters: (n) => (n === 1 ? "1 Buchstabe" : `${n} Buchstaben`),
+  have: (n, of) => f.p(n, { one: `# von ${f.n(of)} hat es`, other: `# von ${f.n(of)} haben es` }),
+  letters: (n) => f.p(n, { one: "# Buchstabe", other: "# Buchstaben" }),
   yoursUp: "Dein Krakel!",
   nobodyYet: "Noch hat es niemand…",
-  hasIt: (names) => `${names.join(", ")} ${names.length === 1 ? "hat" : "haben"} es!`,
+  hasIt: (names) => `${f.list(names)} ${names.length === 1 ? "hat" : "haben"} es!`,
   itWas: "Es war",
   missed: "Diesmal nicht.",
   yourDrawing: "Dein Bild",
-  named: (n, of) => (n === 0 ? "Niemand hat es erraten." : n === of ? "Alle haben es erraten!" : `${n} von ${of} haben es erraten.`),
+  named: (n, of) => (n === 0 ? "Niemand hat es erraten." : n === of ? "Alle haben es erraten!" : f.p(n, { one: `# von ${f.n(of)} hat es erraten.`, other: `# von ${f.n(of)} haben es erraten.` })),
   by: (name) => `gezeichnet von ${name}`,
   lookTv: "Schau auf den Fernseher",
   heartTitle: "Dein Lieblingsbild?",
@@ -259,21 +267,22 @@ const DE = {
   noHeart: "Schau auf den Fernseher!",
   mineTag: "deins",
   rankedTitle: "Dein Bild",
-  place: (n, of) => `Platz ${n} von ${of}`,
+  place: (n, of) => `Platz ${f.n(n)} von ${f.n(of)}`,
   blankPage: "Du hast ein leeres Blatt abgegeben.",
-  hearts: (n) => (n === 1 ? "1 Herz" : `${n} Herzen`),
+  hearts: (n) => f.p(n, { one: "# Herz", other: "# Herzen" }),
   favourite: "Das Lieblingsbild der Runde!",
-  roundN: (n) => `Runde ${n}`,
+  roundN: (n) => `Runde ${f.n(n)}`,
   thisRound: "diese Runde",
   kinds: { drawn: "dein Bild", guessed: "deine Tipps", first: "als Erste:r erraten", favourite: "Lieblingsbild" },
-  rank: (r, of) => `Platz ${r} von ${of}`,
+  rank: (r, of) => `Platz ${f.n(r)} von ${f.n(of)}`,
   points: "Punkte",
+  pointsN: (n, sign = "") => sign + f.p(n, { one: "# Punkt", other: "# Punkte" }),
   won: "Gewonnen!",
   gameOver: "Spiel vorbei",
   playAgain: "Noch mal",
-};
+});
 
-/** @param {string} lang */
+/** @param {string} lang @returns {Strings} */
 export function strings(lang) {
-  return lang === "de" ? DE : EN;
+  return lang === "de" ? de(format("de")) : en(format("en"));
 }
