@@ -11,6 +11,7 @@
  */
 import { Emitter } from "./emitter.js";
 import { Party } from "./party.js";
+import { showPairDialog } from "./pair-dialog.js";
 import { showRejoinDialog } from "./rejoin-dialog.js";
 import { TvpipeRelay } from "./relay.js";
 import { captureAudio, SurfaceEncoder } from "./surface.js";
@@ -201,6 +202,17 @@ export class Tvpipe extends Emitter {
         await this.call("pair.cancel", { device });
     }
     /**
+     * Pairs an AirPlay TV in a dialog over this page: it asks the TV for a
+     * code and people type what it shows. Resolves `true` once paired,
+     * `false` when cancelled. {@link HostedParty} shows it by itself when
+     * a cast fails because a TV needs pairing.
+     */
+    async showPairing(device) {
+        if (!globalThis.document)
+            throw new TvpipeError("unsupported", "the pairing dialog needs a page");
+        return showPairDialog(this, device);
+    }
+    /**
      * Keeps a TV's display lag (`ms`; `null` forgets it): how much later
      * than a phone it shows a picture beyond its playout delay, as the
      * launcher's tap-along sync measures it (`tapsync.ts`). tvpipe stores it
@@ -352,6 +364,12 @@ export class Tvpipe extends Emitter {
         this.#ws.close();
     }
 }
+/** The error code of a receiver that needs pairing first (AirPlay with a PIN). */
+export const PAIRING_REQUIRED = "pairing-required";
+/** The receivers of a cast status that failed because they need pairing. */
+export function needsPairing(status) {
+    return (status.receivers ?? []).filter((r) => r.state === "failed" && r.code === PAIRING_REQUIRED).map((r) => r.name);
+}
 /** A {@link Party} in a host page, with tvpipe behind it. */
 export class HostedParty extends Party {
     tvpipe;
@@ -360,11 +378,23 @@ export class HostedParty extends Party {
     links;
     /** The delay of each picture on TVs (`cast`, `surface:ID`), for `tvDelay`. */
     #pictures = new Map();
+    #pair;
+    /** Set while this party's `cast.start` call runs (its `starting` event comes before the reply). */
+    #starting = false;
+    /** The running cast is this party's (not, say, the cast picker's sync page). */
+    #mine = false;
+    /** What the running cast was asked for, to cast it again once paired. */
+    #castArgs = null;
+    /** The TVs paired (or offered pairing) since the last `cast()`: once each. */
+    #offered = new Set();
+    #pairing = false;
     constructor(tvpipe, info, relay, options) {
-        super({ maxPlayers: info.players.max, ...options });
+        const { pair, ...rest } = options;
+        super({ maxPlayers: info.players.max, ...rest });
         this.tvpipe = tvpipe;
         this.info = info;
         this.relay = relay;
+        this.#pair = pair ?? (globalThis.document ? (device) => tvpipe.showPairing(device) : false);
         this.listen(relay);
         const tv = `${info.pages.tv}#r=${this.code}&k=${this.screenKey}&role=screen`;
         this.links = {
@@ -378,7 +408,14 @@ export class HostedParty extends Party {
                 void this.refreshJoin();
             }
         });
-        tvpipe.on("cast", (s) => this.#picture("cast", s));
+        tvpipe.on("cast", (s) => {
+            // A new cast (its first event names its TVs): this party's while its call runs.
+            if (s.state === "starting" && s.to !== undefined)
+                this.#mine = this.#starting;
+            this.#picture("cast", s);
+            if (this.#mine)
+                void this.#pairFailed(s);
+        });
         tvpipe.on("surface", (s) => this.#picture(`surface:${s.id}`, s));
     }
     /**
@@ -442,9 +479,56 @@ export class HostedParty extends Party {
         catch { }
         return showRejoinDialog(this, player, link, qr);
     }
-    /** Casts the TV page to `to` (default: what the launcher chose). */
+    /**
+     * Casts the TV page to `to` (default: what the launcher chose). A TV
+     * that needs pairing is paired (the `pair` option, a dialog by
+     * default), then the page is cast again: `cast` events tell.
+     */
     cast(to, opts = {}) {
-        return this.tvpipe.cast({ page: this.links.tv, to, resolution: opts.resolution });
+        this.#offered.clear();
+        return this.#cast({ to, resolution: opts.resolution });
+    }
+    async #cast(args) {
+        this.#castArgs = args;
+        this.#starting = true;
+        try {
+            const status = await this.tvpipe.cast({ page: this.links.tv, to: args.to, resolution: args.resolution });
+            if (this.#mine)
+                void this.#pairFailed(status);
+            return status;
+        }
+        finally {
+            this.#starting = false;
+        }
+    }
+    /** Pairs the TVs of this party's cast that failed for want of it, once each, then casts again. */
+    async #pairFailed(status) {
+        const pair = this.#pair;
+        if (!pair || this.#pairing || !this.#castArgs)
+            return;
+        const devices = needsPairing(status).filter((d) => !this.#offered.has(d));
+        if (devices.length === 0)
+            return;
+        this.#pairing = true;
+        let paired = false;
+        try {
+            for (const d of devices) {
+                this.#offered.add(d);
+                try {
+                    if (await pair(d))
+                        paired = true;
+                }
+                catch {
+                    // No dialog: the cast's failure stays.
+                }
+            }
+        }
+        finally {
+            this.#pairing = false;
+        }
+        if (!paired || !this.#castArgs)
+            return;
+        await this.#cast(this.#castArgs).catch(() => { });
     }
     /**
      * The cast picker over the host page, then the TV page on what was
@@ -461,6 +545,7 @@ export class HostedParty extends Party {
         return this.cast();
     }
     stopCast() {
+        this.#castArgs = null;
         return this.tvpipe.stopCast();
     }
 }

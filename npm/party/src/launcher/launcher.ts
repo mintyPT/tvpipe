@@ -146,7 +146,7 @@ function render(): void {
   );
   $("searching").hidden = devices.some((d) => d.kind !== "browser");
   // The picker may also take every TV away (the cast stops).
-  ($("start") as HTMLButtonElement).disabled = (selected.size === 0 && !changing) || starting !== null;
+  ($("start") as HTMLButtonElement).disabled = (selected.size === 0 && !changing) || starting !== null || pairingFirst;
   renderState();
 }
 
@@ -174,8 +174,36 @@ async function startPairing(device: string): Promise<void> {
     await tvpipe.pair(device);
   } catch (err) {
     pairing.set(device, { device, state: "failed", error: (err as Error).message });
+    pairEnded(device, false);
     render();
   }
+}
+
+/** Set while Start pairs the chosen TVs. */
+let pairingFirst = false;
+/** Start waits for these pairings: called with whether the TV paired. */
+const pairWaits = new Map<string, (paired: boolean) => void>();
+
+function pairEnded(device: string, paired: boolean): void {
+  const w = pairWaits.get(device);
+  pairWaits.delete(device);
+  w?.(paired);
+}
+
+/**
+ * Pairs the chosen AirPlay TVs that show a PIN and are not paired yet,
+ * one after another (the PIN dialog for each); false when one was not
+ * paired (cancelled or failed: its status says why).
+ */
+async function pairChosen(names: string[]): Promise<boolean> {
+  for (const name of names) {
+    const d = devices.find((x) => x.name === name);
+    if (!d?.needsPairing || pairing.get(name)?.state === "done") continue;
+    const paired = new Promise<boolean>((resolve) => pairWaits.set(name, resolve));
+    void startPairing(name);
+    if (!(await paired)) return false;
+  }
+  return true;
 }
 
 function openPin(device: string, error?: string): void {
@@ -231,6 +259,13 @@ function answer(selection: Selection | null): void {
 
 async function start(devicesToUse: string[]): Promise<void> {
   showError(null);
+  // A TV that needs pairing is paired first, then the game starts on it.
+  pairingFirst = true;
+  render();
+  const paired = await pairChosen(devicesToUse);
+  pairingFirst = false;
+  render();
+  if (!paired) return;
   if (changing) {
     try {
       answer(await tvpipe.select(devicesToUse, { resolution: resolution ?? undefined }));
@@ -516,6 +551,7 @@ async function main(): Promise<void> {
     if (p.state === "pin") openPin(p.device);
     else if (pinFor === p.device && p.state !== "connecting") closePin();
     if (p.state === "done") selected.add(p.device);
+    if (p.state === "done" || p.state === "failed") pairEnded(p.device, p.state === "done");
     render();
   });
   tvpipe.on("close", () => {
@@ -551,6 +587,7 @@ async function main(): Promise<void> {
   $("pin-cancel").onclick = () => {
     if (pinFor) void tvpipe.pairCancel(pinFor);
     if (pinFor) pairing.delete(pinFor);
+    if (pinFor) pairEnded(pinFor, false);
     closePin();
     render();
   };

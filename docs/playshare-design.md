@@ -259,7 +259,10 @@ The window first shows **tvpipe's standard launcher**
 - **Sync** per TV: tapping along with flashes here and on the TV (the
   page `/_tvpipe/tvsync/`, cast to it meanwhile) measures how far it is
   behind a phone, kept per TV (`tvsync.set`; docs/party-design.md §8.1),
-- multi-select, then **Start**: `select`, then `location.assign(pages.host)`.
+- multi-select, then **Start**: the chosen AirPlay TVs that need pairing
+  are paired first, one after another (the PIN dialog; a cancel or a
+  failure stays in the launcher), then `select`, then
+  `location.assign(pages.host)`.
 
 The contract for a game's own launcher (any page of the bundle, with
 `@tvpipe/party`'s `Tvpipe` client): it may call any API method; it ends
@@ -343,10 +346,22 @@ the transport section names the relay, and the hosts table has one host.
 `devices` event, `select(devices, {resolution?})`, `selection()` (the
 TVs), `chosen()` (TVs and resolution), `pair(device)` (an object
 with `state`, `submit(pin)`, `cancel()`), `cast({page, to, resolution})`,
-`stopCast()`, `showCastPicker()` (§7.1), `qr(text)`, `quit()`, `relay()`
+`stopCast()`, `showCastPicker()` (§7.1), `showPairing(device)` (a PIN
+dialog over the page: `pair.start`, the `pair` events, `pair.pin`;
+`true` once paired), `qr(text)`, `quit()`, `relay()`
 (attaches; returns the `Relay`), events `devices`, `pair`, `cast`,
 `tunnel`, `closing`. `HostedParty.changeCast()`: the picker, then
 `cast()` (or `stopCast()` without TVs).
+
+Pairing on demand: a TV the launcher could not know needs pairing (its
+flags say no PIN, or it forgot a pairing tvpipe kept) fails the cast
+with the receiver's `code: "pairing-required"`. `HostedParty` pairs it
+(`showPairing`, or the `pair` option of `tvpipe.party()`; `false`: off)
+and casts the same page again: once per TV and `cast()` call, and only
+its own casts (the cast whose `starting` event, which names the TVs,
+came while its `cast.start` call ran; not the launcher's sync page).
+Surfaces (§17) are the game's to restart: `needsPairing(status)` names
+the TVs of a `surface` status that need pairing.
 
 ## 9. Casting
 

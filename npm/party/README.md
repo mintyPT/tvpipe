@@ -138,13 +138,14 @@ manifest's `players.max`), `lateJoin`, `moderate`, `limits`, `grace`,
 | `party.inProgress`, `party.lateJoin`, `party.activate(player)` | Joining mid-game: `closed` (refused, `bye in-progress`), `wait` (default) or `open` (waiting players until the game activates them). |
 | `party.now()` | The host's clock (ms); deadlines in views use it, phones are synced to it. |
 | `party.links` | `join` (in the QR code), `tv` (the TV page with the screen key), `watch` (a read-only screen on this computer, e.g. an `<iframe>` preview). |
-| `party.cast(to?)`, `party.stopCast()` | The TV page on receivers (default: the launcher's choice); `tvpipe.on("cast", status)` follows it. |
+| `party.cast(to?)`, `party.stopCast()` | The TV page on receivers (default: the launcher's choice); `tvpipe.on("cast", status)` follows it. An AirPlay TV that fails for want of pairing (`code: "pairing-required"`: never paired, or it forgot the pairing) gets the pairing dialog, then the page is cast again (once per TV and `cast()`; the `pair` option of `tvpipe.party()`: your own function, or `false`). |
 | `party.stats`, `party.screenView()` | What the views cost; what screens see. |
 | events | `join`, `reconnect`, `away`, `leave`, `vip`, `active`, `screen`, `screen-view`, `input`, `tv` |
 
 `Tvpipe`: `info()`, `watchDevices(on)` and the `devices` event,
 `select(names)`, `selection()`, `pair(device)`, `pairPin(device, pin)`,
-`pairCancel(device)` and the `pair` event, `setDisplayLag(device, ms)`
+`pairCancel(device)` and the `pair` event, `showPairing(device)` (the
+pairing dialog over the page), `setDisplayLag(device, ms)`
 (a TV's lag as tapped along: the launcher's Sync), `cast({ page, to })`,
 `stopCast()` and the `cast` event, `qr(text)`, `quit()`, the `tunnel`
 and `closing` events. A game's own launcher uses these, then

@@ -8,7 +8,7 @@
  * @module
  */
 export { Party, PartyError, Player, PROTOCOL, BYE, HELLO_TIMEOUT, token, MAX_TV_DELAY, LATE_JOIN, } from "./party.js";
-export { Tvpipe, TvpipeError, HostedParty, PICKER_MESSAGE, TV_DISPLAY_MS, TV_RENDER_MS, tvDelayOf, } from "./tvpipe.js";
+export { Tvpipe, TvpipeError, HostedParty, needsPairing, PAIRING_REQUIRED, PICKER_MESSAGE, TV_DISPLAY_MS, TV_RENDER_MS, tvDelayOf, } from "./tvpipe.js";
 export { TvpipeRelay, frame, OP_TEXT, OP_BINARY } from "./relay.js";
 export { Emitter } from "./emitter.js";
 export { RejoinBadge } from "./rejoin.js";

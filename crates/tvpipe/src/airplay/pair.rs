@@ -214,13 +214,29 @@ pub fn connect_within(target: &Target, store: &Store, io: Duration) -> Result<Co
     });
     // Legacy raw pairings are verified by `airplay::legacy_pair` (W7).
     match found.filter(|r| !r.raw) {
+        // A pairing the receiver refuses (it forgot it, or it was reset)
+        // needs a new one, like no pairing at all.
         Some(r) => connect_auth(
             target.addr,
             &store.identity,
             Auth::Verified(r.clone()),
             false,
             io,
-        ),
+        )
+        .map_err(|e| {
+            if e.kind() == ErrorKind::Auth {
+                Error::auth(format!(
+                    "{} refused its pairing: run `tvpipe pair {:?}` again ({})",
+                    target.label(),
+                    target.label(),
+                    e.message()
+                ))
+                .with_code("pairing-required")
+                .with_device(target.label())
+            } else {
+                e
+            }
+        }),
         None => connect_auth(
             target.addr,
             &store.identity,
@@ -569,6 +585,7 @@ mod tests {
         let err = connect(&target(&fake), &store).unwrap_err();
         assert_eq!(err.kind(), ErrorKind::Auth);
         assert!(err.message().contains("tvpipe pair"), "{err}");
+        assert_eq!(err.code(), Some("pairing-required"));
     }
 
     #[test]
@@ -621,6 +638,9 @@ mod tests {
         let err = connect(&target(&fake), &store).unwrap_err();
         assert_eq!(err.kind(), ErrorKind::Auth, "{err}");
         assert!(err.message().contains("re-pair"), "{err}");
+        // Like no pairing: the launcher and the API's `on_pin` pair again.
+        assert_eq!(err.code(), Some("pairing-required"));
+        assert_eq!(err.device(), Some(fake.addr.to_string().as_str()));
 
         // A stored key that does not match the receiver fails in M2.
         store.receivers[0].public_key = [1; 32];

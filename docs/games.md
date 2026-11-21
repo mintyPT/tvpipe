@@ -575,7 +575,10 @@ computer** to try the game (the TV picture plays in a tab). The game's
 host page follows and casts its TV page to the chosen TVs.
 
 - **AirPlay PIN.** An AirPlay TV that shows a code needs pairing once:
-  click **Pair**, type the digits the TV shows. tvpipe keeps the pairing
+  click **Pair** (or pick it and **Start**: the launcher asks first),
+  type the digits the TV shows. A TV that turns out to need it only
+  when the game casts (or forgot its pairing) brings up a pairing dialog
+  over the host page, then the game appears on it. tvpipe keeps the pairing
   (`tvpipe pair NAME` does the same in a terminal; `tvpipe unpair`
   forgets it).
 - **A TV that is not listed**: it must be on the same network (not a
