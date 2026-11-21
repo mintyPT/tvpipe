@@ -42,6 +42,20 @@
         { "src": "static/games/garble/phone-draw.png", "alt": "Turning someone's cat into a submarine on a phone: the cat's lines a shade lighter, a tower, a periscope, portholes, a propeller and waves drawn on top in black", "kind": "phone" },
         { "src": "static/games/garble/phone-guess.png", "alt": "Guessing on a phone what the picture is now: a cat, the guess typed below it", "kind": "phone" }
       ]
+    },
+    {
+      "name": "krakel",
+      "title": "Krakel",
+      "summary": "Everyone draws a word of the same category; the TV redraws each picture stroke by stroke, and the sooner you type what it is, the more you and the artist score",
+      "players": { "min": 3, "max": 10 },
+      "languages": ["en", "de"],
+      "source": "gh:mitsuhiko/tvpipe/krakel@krakel-v*",
+      "home": "https://github.com/mitsuhiko/tvpipe/tree/main/games/krakel",
+      "screenshots": [
+        { "src": "static/games/krakel/tv-guess.png", "alt": "The TV redrawing Mia's picture under a pencil: a grey shape with four legs and a big pink ear so far, eight blanks for its letters, a pencil for the time left; Lena has it (first, +900), Phil's hippo and Jonas's rhino are struck out", "kind": "tv" },
+        { "src": "static/games/krakel/phone-draw.png", "alt": "Drawing a giraffe on a phone: yellow with brown spots, the pens in thirteen colours, an eraser, four widths and undo below the pad", "kind": "phone" },
+        { "src": "static/games/krakel/phone-guess.png", "alt": "Guessing on a phone: the same half-drawn picture, hippo was wrong, elephant typed and about to be sent", "kind": "phone" }
+      ]
     }
   ]
 }

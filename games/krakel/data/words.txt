@@ -1,0 +1,634 @@
+# krakel words (English): what the players draw and the others type.
+# `== Title` starts a category (shown on the TV, at most 26 characters);
+# a round draws all its words from one category, so each holds things
+# that look alike when doodled (fox, wolf; violin, cello, ukulele) and
+# can still be told apart by a detail. At least 20 words a category.
+# One entry per line: the word first (a concrete thing a child can draw
+# and spell, lowercase, singular), then `|` and the other words people
+# type for the same thing (synonyms, British and American names, short
+# and long forms, irregular plurals), never a broader word (`bird` for
+# `eagle`). Misspellings and regular plurals are forgiven by the game
+# (game/rules.ts, judge), so they are not listed.
+# A word is in one category only, and in a category no word or other
+# name says another entry's (the same stem, or inside a longer word from
+# four letters): `node scripts/words.ts` checks it. That keeps a few out:
+# pineapple has an apple, cupcake a cake, rainbow rain, balloon a ball
+# (it flies in the sky instead), lighthouse and treehouse a house.
+# Lines starting with # are comments; blank lines are ignored.
+
+== Pets & farm animals
+cat|kitten|kitty
+dog|puppy
+rabbit|bunny
+hamster
+guinea pig
+mouse|mice
+rat
+goldfish
+tortoise|turtle
+horse|pony
+donkey|mule
+cow
+bull
+pig|piglet|hog
+sheep|lamb
+ram
+goat
+chicken|hen
+rooster|cockerel
+duck|duckling
+goose|geese
+turkey
+llama|alpaca
+
+== Zoo animals
+lion
+tiger
+leopard|cheetah|jaguar
+elephant
+giraffe
+zebra
+hippo|hippopotamus
+rhino|rhinoceros
+monkey|chimp|chimpanzee
+gorilla
+orangutan
+panda|panda bear
+polar bear|ice bear
+koala|koala bear
+kangaroo
+camel|dromedary
+crocodile|alligator|croc
+snake|python|cobra
+lizard|gecko|iguana
+chameleon
+sloth
+meerkat
+anteater
+bison|buffalo
+antelope|gazelle
+porcupine
+
+== Forest & pond animals
+fox|red fox
+wolf
+bear|brown bear|black bear|grizzly|grizzly bear
+deer|stag|doe|fawn
+moose|elk
+wild boar|boar
+hare|wild rabbit|rabbit|bunny|jackrabbit
+squirrel
+chipmunk
+hedgehog
+mole
+badger
+raccoon
+skunk
+beaver
+otter
+bat
+frog|tree frog
+toad
+tadpole
+salamander|newt
+lynx|bobcat
+groundhog|marmot|woodchuck
+
+== Under the sea
+shark|great white shark|great white
+whale|blue whale
+dolphin
+orca|killer whale
+octopus
+squid
+jellyfish
+starfish|sea star
+seahorse
+crab|hermit crab
+lobster
+shrimp|prawn
+seal|sea lion
+walrus
+sea turtle|turtle
+stingray|ray|manta ray|manta
+swordfish
+clownfish
+pufferfish|puffer fish|blowfish
+eel|moray eel|moray
+seashell|shell|conch
+clam|mussel|oyster
+coral
+seaweed|kelp|algae
+anglerfish|angler fish
+narwhal
+sea urchin|urchin
+
+== Birds
+eagle|bald eagle
+owl|barn owl|snowy owl
+parrot|macaw
+cockatoo
+budgie|parakeet|budgerigar
+toucan
+flamingo
+swan
+peacock
+ostrich|emu
+pelican
+stork
+heron|crane
+seagull|gull
+pigeon|dove
+crow|raven
+woodpecker
+hummingbird
+robin
+penguin
+puffin
+vulture
+hawk|falcon
+chick|baby bird
+dodo
+
+== Bugs & creepy-crawlies
+ant
+bee|honeybee|bumblebee
+wasp|hornet
+fly|housefly
+mosquito|gnat
+butterfly
+moth
+caterpillar
+ladybug|ladybird
+beetle|stag beetle
+spider|tarantula|daddy long legs
+scorpion
+snail
+slug
+worm|earthworm
+centipede|millipede
+grasshopper|cricket|locust
+dragonfly
+firefly|lightning bug
+praying mantis|mantis
+cockroach|roach
+stick insect|walking stick
+cocoon|chrysalis
+pill bug|woodlouse|roly poly
+
+== Fruit & nuts
+apple
+pear
+banana
+orange|mandarin|tangerine|clementine
+lemon|lime
+cherry
+strawberry
+raspberry|blackberry
+blueberry
+grape|bunch of grapes
+watermelon|melon
+peach|nectarine|apricot
+plum
+kiwi
+mango
+coconut
+pomegranate
+peanut
+walnut
+hazelnut
+chestnut|conker
+almond
+cashew
+acorn
+
+== Vegetables
+carrot
+potato|spud|sweet potato
+tomato
+cucumber|pickle|gherkin
+onion
+garlic
+leek
+pepper|bell pepper|capsicum
+chili|chilli|chili pepper|hot pepper
+corn|sweetcorn|maize|corn cob
+pea|pea pod
+bean|green bean
+broccoli
+cauliflower
+cabbage
+lettuce|salad
+pumpkin|squash
+eggplant|aubergine
+radish
+beet|beetroot
+mushroom
+asparagus
+avocado
+olive
+brussels sprout|sprout
+
+== Sweets & baking
+cake|birthday cake
+muffin
+cookie|biscuit
+gingerbread man|gingerbread
+donut|doughnut
+bagel
+croissant
+pretzel
+baguette|french bread
+waffle
+pie|apple pie
+cinnamon roll|cinnamon bun
+ice cream|ice cream cone
+popsicle|ice lolly|ice pop
+lollipop|lolly|sucker
+candy|sweet|bonbon
+candy cane
+cotton candy|candy floss
+caramel apple|toffee apple
+chocolate|chocolate bar
+gummy bear|gummi bear
+marshmallow
+bubble gum|chewing gum|gum
+honey|honey jar|honeypot
+
+== Meals, snacks & drinks
+pizza
+burger|hamburger
+hot dog
+sausage|bratwurst
+sandwich|sub
+taco
+burrito|wrap
+fries|french fries|chips
+spaghetti|pasta|noodles
+soup|stew
+sushi
+egg|fried egg|boiled egg
+bacon
+toast
+bread|loaf
+cheese
+pancake|crepe
+popcorn
+drumstick|chicken leg|fried chicken
+steak|meat
+kebab|skewer
+salad|salad bowl
+cereal|cornflakes|bowl of cereal
+juice|juice box|orange juice
+milkshake|shake|smoothie
+soda|cola|soda can|pop|lemonade
+
+== On the road
+car|automobile|sports car
+police car|cop car|patrol car
+race car|racing car
+taxi|cab
+ambulance
+bus|school bus|double decker
+truck|lorry|semi|semi truck|pickup truck
+fire truck|fire engine
+dump truck|tipper|dumper
+garbage truck|bin lorry|trash truck
+tow truck|breakdown truck
+monster truck
+ice cream van|ice cream truck
+van|minivan|delivery van
+camper van|camper|motorhome|caravan
+limousine|limo
+tractor
+motorcycle|motorbike|dirt bike
+scooter|kick scooter|moped
+go-kart|kart
+excavator|digger|backhoe
+bulldozer
+steamroller|road roller
+cement mixer|concrete mixer
+crane
+forklift
+
+== Planes, boats & trains
+airplane|plane|aeroplane|jet|jumbo jet
+helicopter|chopper
+hot air balloon
+blimp|zeppelin
+hang glider|glider|paraglider
+parachute
+drone
+jetpack|jet pack
+ship|cruise ship|cargo ship|steamship|ocean liner
+ferry|car ferry
+sailboat|sailing boat|yacht
+rowboat|rowing boat|dinghy
+motorboat|speedboat
+pedal boat|paddle boat|pedalo
+canoe|kayak
+raft
+gondola
+submarine|sub
+jet ski
+train|railway|bullet train|freight train
+locomotive|steam engine|steam train
+tram|streetcar|trolley
+subway|underground|metro|tube
+cable car|ski lift|chairlift
+
+== Musical instruments
+guitar|electric guitar|acoustic guitar|bass guitar
+ukulele
+banjo
+violin|fiddle|viola
+cello|double bass|contrabass
+harp
+piano|grand piano
+keyboard|synthesizer|synth
+accordion
+harmonica|mouth organ
+flute
+recorder
+clarinet|oboe
+saxophone|sax
+trumpet|cornet|bugle
+trombone
+tuba|sousaphone
+french horn|horn
+bagpipes|bagpipe
+drum|drum kit|drum set|snare drum
+bongos|bongo|congas
+tambourine
+triangle
+xylophone|glockenspiel|marimba
+maracas|shaker|rattle
+cymbals|cymbal
+bell|handbell
+gong
+
+== Sports
+soccer|football|soccer ball
+rugby|american football|rugby ball
+basketball|basketball hoop
+volleyball
+baseball|baseball bat
+tennis|tennis racket|tennis ball
+ping pong|table tennis
+badminton|shuttlecock
+golf|minigolf|golf club|golf ball
+hockey|ice hockey|field hockey|hockey stick
+bowling|bowling ball|bowling pin|skittles
+boxing|boxing gloves
+karate|judo|martial arts
+fencing
+archery|bow and arrow
+swimming|swimmer
+diving|diving board|high dive
+surfing|surfboard|surf
+skiing|ski
+snowboarding|snowboard
+ice skating|ice skates|figure skating
+roller skating|roller skates|rollerblades
+skateboarding|skateboard
+sledding|sled|sledge|toboggan
+bicycle|bike|cycling|mountain bike
+horse riding|horseback riding|riding
+weightlifting|dumbbell|barbell|weights
+darts|dartboard
+
+== In the kitchen
+fork
+spoon|teaspoon|tablespoon|wooden spoon
+knife
+plate|dish
+bowl
+cup|mug|teacup|coffee cup
+glass|drinking glass|wine glass
+bottle|water bottle
+jug|pitcher
+pot|saucepan|cooking pot
+pan|frying pan|skillet
+teapot
+kettle
+ladle
+whisk
+spatula|turner
+rolling pin
+cutting board|chopping board
+grater|cheese grater
+colander|strainer|sieve
+chopsticks
+salt shaker|salt
+oven mitt|oven glove|pot holder
+toaster
+microwave
+oven|stove|cooker
+fridge|refrigerator
+blender|mixer
+
+== Tools & workshop
+hammer
+screwdriver
+wrench|spanner
+pliers|tongs
+saw|handsaw
+chainsaw
+drill|power drill
+axe|hatchet
+pickaxe|pick
+shovel|spade
+rake
+wheelbarrow
+ladder|stepladder
+tape measure|measuring tape
+paintbrush|brush
+paint roller|roller
+paint can|paint bucket|paint pot
+toolbox|tool box
+nail
+scissors
+rope
+flashlight|torch
+light bulb|bulb
+hard hat|helmet|safety helmet
+padlock|lock
+key
+anvil
+
+== Clothes
+t-shirt|tee|shirt
+blouse|dress shirt|button shirt
+sweater|jumper|pullover
+hoodie|hoody
+jacket|anorak
+coat|raincoat|winter coat
+dress|gown
+skirt
+pants|trousers|jeans
+shorts
+underwear|briefs|boxers|undies
+sock|stocking
+shoe|sneaker|trainer
+boot|rubber boot|rain boot|welly
+sandal|flip flop
+high heel|high heels|heels
+hat|sun hat|straw hat
+cap|baseball cap
+beanie|woolly hat|bobble hat|winter hat
+top hat
+scarf
+glove
+mitten
+tie|necktie
+bow tie
+bikini|swimsuit|bathing suit
+pajamas|pyjamas|pjs
+glasses|sunglasses|spectacles
+
+== In the house
+chair|rocking chair
+stool
+sofa|couch|settee
+table|dining table|coffee table
+desk
+bed|bunk bed
+wardrobe|closet|cupboard
+dresser|chest of drawers|drawers
+bookshelf|bookcase|shelf
+lamp|floor lamp
+clock|alarm clock|wall clock
+mirror
+door
+window
+stairs|staircase|steps
+fireplace|hearth
+television|tv|telly
+computer|laptop
+phone|telephone|smartphone|cell phone|mobile
+vacuum cleaner|vacuum|hoover
+washing machine|washer
+broom
+mop
+trash can|garbage can|bin|dustbin|wastebasket
+bathtub|bath|tub
+shower
+toilet|loo
+sink|washbasin|basin
+
+== Buildings & places
+log cabin|cabin|hut|cottage
+castle|fortress|palace
+church|chapel|cathedral
+tower|watchtower
+lighthouse
+skyscraper|high-rise
+windmill|mill
+barn|stable
+igloo
+tent|camping tent
+teepee|tipi|wigwam
+circus|circus tent|big top
+pyramid
+treehouse|tree house
+greenhouse|glasshouse
+doghouse|dog house|kennel
+birdhouse|bird house|nest box
+bridge
+fire station|fire department
+train station|railway station
+gas station|petrol station
+stadium|arena
+factory|power plant
+fountain
+swimming pool|pool
+ferris wheel|big wheel
+rollercoaster|roller coaster
+carousel|merry-go-round|roundabout
+
+== Fairy tales & fantasy
+dragon
+unicorn
+mermaid
+fairy|pixie
+elf
+gnome|dwarf|garden gnome
+witch
+wizard|sorcerer|magician
+princess
+queen
+king
+knight
+pirate
+ghost
+vampire
+zombie
+mummy
+skeleton
+werewolf
+genie|magic lamp
+phoenix|firebird
+magic wand|wand
+broomstick|flying broom|magic broom
+cauldron
+crown|tiara
+treasure chest|treasure|chest
+sword|saber|sabre
+magic carpet|flying carpet
+
+== Sky, weather & space
+sun
+sunset|sunrise
+moon|crescent moon|half moon|full moon
+star
+comet|shooting star|meteor
+planet|saturn|jupiter|mars
+earth|globe|world
+cloud|rain cloud|storm cloud
+rainbow
+lightning|thunder|lightning bolt
+tornado|twister|whirlwind|hurricane
+snowflake
+snowman
+icicle
+umbrella
+balloon
+rocket|spaceship|space rocket
+space shuttle|shuttle
+satellite
+astronaut|spaceman
+alien|martian
+ufo|flying saucer
+telescope
+moon rover|rover|mars rover|moon buggy
+galaxy|milky way
+
+== Toys & games
+ball|beach ball
+teddy bear|teddy
+doll
+puppet|hand puppet|marionette
+kite
+yo-yo
+spinning top|top|spinner
+marbles
+dice|die
+playing cards|cards|card game|deck of cards
+chess|chessboard|chess piece
+puzzle|jigsaw|jigsaw puzzle
+building blocks|blocks|bricks
+rocking horse
+jump rope|skipping rope
+hula hoop
+frisbee|flying disc
+swing
+slide
+seesaw|teeter-totter
+trampoline
+sandbox|sandpit
+tricycle|trike
+robot|toy robot
+video game|game controller|controller|gamepad
+water gun|squirt gun|water pistol
+bubbles|soap bubbles
+rubber duck|rubber ducky

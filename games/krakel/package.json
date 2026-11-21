@@ -1,0 +1,23 @@
+{
+  "name": "krakel",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A drawing game for tvpipe (tvpipe game play): everyone draws a word from the same category, then the TV redraws each picture stroke by stroke and the fastest to name it scores",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node scripts/build.ts",
+    "zip": "node scripts/pack.ts",
+    "check": "tsc -p tsconfig.json && tsc -p tsconfig.pages.json && tsc -p tsconfig.build.json --noEmit",
+    "test": "node --test \"test/*.test.ts\"",
+    "words": "node scripts/words.ts"
+  },
+  "devDependencies": {
+    "@tvpipe/party": "file:../../npm/party",
+    "@types/node": "^22.19.0",
+    "typescript": "~5.9.3"
+  }
+}

@@ -1,0 +1,143 @@
+// @ts-check
+/**
+ * What the TV says, per language (the room's: `screen.lang`). Names,
+ * words and guesses are passed in, rendered as text.
+ */
+
+/** @typedef {typeof EN} Strings */
+
+const EN = {
+  reconnecting: "Reconnecting…",
+  over: "The game has ended.",
+  // Lobby
+  tagline: "Draw it. Name it. Fast.",
+  scanToJoin: "Scan to play",
+  joinCorner: "Join in:",
+  players: "Players",
+  waitingSeat: "waiting…",
+  freeSeat: "free",
+  needed: (/** @type {number} */ n) => (n === 1 ? "1 more player to start" : `${n} more players to start`),
+  vipStarts: (/** @type {string | undefined} */ name) => (name ? `${name} starts the game on the phone` : "The VIP starts the game"),
+  how: [
+    ["Draw", "Everyone draws a word from the same category."],
+    ["Guess", "The TV redraws each picture. Type what it is!"],
+    ["Score", "The sooner it is named, the more points for both."],
+  ],
+  rounds: (/** @type {number} */ n) => (n === 1 ? "1 round" : `${n} rounds`),
+  drawTime: (/** @type {number} */ s) => `${s} s to draw`,
+  guessTime: (/** @type {number} */ s) => `${s} s to guess`,
+  hintsOn: "letters shown",
+  hintsOff: "letters hidden",
+  lockout: (/** @type {number} */ s) => (s > 0 ? `wrong guess: wait ${s} s` : "guess freely"),
+  // Drawing
+  round: (/** @type {number} */ n, /** @type {number} */ of) => `Round ${n} of ${of}`,
+  category: "Category",
+  everyoneDraws: "Everyone draws something from this category",
+  tips: [
+    "Start with what gives it away: the TV redraws your picture in the order you drew it.",
+    "Everyone has a different word. Draw what makes yours different!",
+    "The sooner the others name your picture, the more points for you.",
+    "Colours help. So does the eraser.",
+  ],
+  doneCount: (/** @type {number} */ n, /** @type {number} */ of) => `${n} of ${of} handed in`,
+  // Guessing
+  drawing: (/** @type {number} */ n, /** @type {number} */ of) => `Krakel ${n} of ${of}`,
+  next: "Next up",
+  krakelOf: (/** @type {string} */ name) => `${name}'s Krakel`,
+  whatIsIt: "What is it? Type it on your phone!",
+  ready: "Get ready…",
+  close: "so close!",
+  first: "first!",
+  itIs: "It was",
+  forArtist: (/** @type {string} */ name) => `for ${name}`,
+  nobody: "Nobody had it!",
+  everybody: "Everybody had it!",
+  some: (/** @type {number} */ n, /** @type {number} */ of) => `${n} of ${of} had it`,
+  // Gallery
+  heartTitle: "Which one do you like best?",
+  heartHelp: "Give it your heart on your phone.",
+  voted: (/** @type {number} */ n, /** @type {number} */ of) => `${n} of ${of} hearts given`,
+  rankedTitle: "The round's Krakels",
+  rankedHelp: "The sooner it was named, the higher it ranks.",
+  favourite: "favourite",
+  had: (/** @type {number} */ n, /** @type {number} */ of) => `${n}/${of}`,
+  // Scores
+  scoresTitle: "Scores",
+  scoresAfter: (/** @type {number} */ n, /** @type {number} */ of) => (n >= of ? "final round" : `after round ${n} of ${of}`),
+  kinds: { drawn: "drawing", guessed: "guesses", first: "first", favourite: "♥" },
+  // The end
+  gameOver: "Game over!",
+  playAgain: "Play again? The VIP starts the next game.",
+  bestTitle: "Krakel of the game",
+  bestBy: (/** @type {string} */ name) => `by ${name}`,
+  eyeTitle: "Sharpest eye",
+  points: "points",
+};
+
+/** @type {Strings} */
+const DE = {
+  reconnecting: "Verbinde neu…",
+  over: "Das Spiel ist vorbei.",
+  tagline: "Zeichnen. Erraten. Schnell sein.",
+  scanToJoin: "Scannen und mitspielen",
+  joinCorner: "Mitspielen:",
+  players: "Wer spielt mit",
+  waitingSeat: "wartet…",
+  freeSeat: "frei",
+  needed: (n) => (n === 1 ? "Noch 1 Person, dann geht's los" : `Noch ${n} Leute, dann geht's los`),
+  vipStarts: (name) => (name ? `${name} startet das Spiel am Handy` : "Der VIP startet das Spiel"),
+  how: [
+    ["Zeichnen", "Alle zeichnen ein Wort aus derselben Kategorie."],
+    ["Raten", "Der Fernseher zeichnet jedes Bild nach. Tippt, was es ist!"],
+    ["Punkten", "Je früher erraten, desto mehr Punkte für beide."],
+  ],
+  rounds: (n) => (n === 1 ? "1 Runde" : `${n} Runden`),
+  drawTime: (s) => `${s} s zeichnen`,
+  guessTime: (s) => `${s} s raten`,
+  hintsOn: "Buchstaben sichtbar",
+  hintsOff: "Buchstaben versteckt",
+  lockout: (s) => (s > 0 ? `falsch geraten: ${s} s warten` : "frei raten"),
+  round: (n, of) => `Runde ${n} von ${of}`,
+  category: "Kategorie",
+  everyoneDraws: "Alle zeichnen etwas aus dieser Kategorie",
+  tips: [
+    "Fangt mit dem an, was es verrät: Der Fernseher zeichnet euer Bild in eurer Reihenfolge nach.",
+    "Alle haben ein anderes Wort. Zeichnet, was eures besonders macht!",
+    "Je früher die anderen euer Bild erraten, desto mehr Punkte gibt es für euch.",
+    "Farben helfen. Der Radierer auch.",
+  ],
+  doneCount: (n, of) => `${n} von ${of} abgegeben`,
+  drawing: (n, of) => `Krakel ${n} von ${of}`,
+  next: "Als Nächstes",
+  krakelOf: (name) => `Krakel von ${name}`,
+  whatIsIt: "Was ist das? Tippt es ins Handy!",
+  ready: "Gleich geht's los…",
+  close: "ganz knapp!",
+  first: "Erste:r!",
+  itIs: "Es war",
+  forArtist: (name) => `für ${name}`,
+  nobody: "Niemand hat es erraten!",
+  everybody: "Alle haben es erraten!",
+  some: (n, of) => `${n} von ${of} haben es erraten`,
+  heartTitle: "Welches gefällt euch am besten?",
+  heartHelp: "Schenkt ihm am Handy euer Herz.",
+  voted: (n, of) => `${n} von ${of} Herzen verschenkt`,
+  rankedTitle: "Die Krakel der Runde",
+  rankedHelp: "Je früher erraten, desto weiter vorn.",
+  favourite: "Lieblingsbild",
+  had: (n, of) => `${n}/${of}`,
+  scoresTitle: "Punkte",
+  scoresAfter: (n, of) => (n >= of ? "letzte Runde" : `nach Runde ${n} von ${of}`),
+  kinds: { drawn: "Bild", guessed: "Tipps", first: "Erste:r", favourite: "♥" },
+  gameOver: "Spiel vorbei!",
+  playAgain: "Noch mal? Der VIP startet das nächste Spiel.",
+  bestTitle: "Krakel des Spiels",
+  bestBy: (name) => `von ${name}`,
+  eyeTitle: "Schärfstes Auge",
+  points: "Punkte",
+};
+
+/** @param {string} lang */
+export function strings(lang) {
+  return lang === "de" ? DE : EN;
+}

@@ -131,8 +131,9 @@ and relays the phones' WebSockets (through a public link: OpenTunnel by
 default, or `--lan`) to the host page. Rooms, players, reconnects and
 views live in the browser library [`@tvpipe/party`](npm/party/README.md);
 this repository's games are [`games/drawbluff`](games/drawbluff/)
-(3–50 players), [`games/jinx`](games/jinx/) (3–8) and
-[`games/garble`](games/garble/) (3–12), each released on its own as
+(3–50 players), [`games/jinx`](games/jinx/) (3–8),
+[`games/garble`](games/garble/) (3–12) and
+[`games/krakel`](games/krakel/) (3–10), each released on its own as
 `NAME-vX.Y.Z`. Closing
 the window ends everything. Design: [`docs/playshare-design.md`](docs/playshare-design.md).
 
