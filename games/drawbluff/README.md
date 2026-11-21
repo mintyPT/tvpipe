@@ -71,7 +71,11 @@ stamps, a drum roll and a fanfare for the truth, the sad trombone for
 the game's own lie, applause for the winner; muted in the host page's
 preview), the phones a quiet tap, a bell and a buzz when it is your
 turn, coins for points; the speaker button in the phone's header turns
-them off (kept on that phone).
+them off (kept on that phone). A title (the prompt to draw, a lie, the
+truth) is never cut off or broken in a word: where it is too long for
+its place (a label in the gallery, the frame's plate, a line of the
+reveal, the phone's options) its font gets smaller (`phone/fit.js`, as
+Krakel's), and so does a long lie in the phone's field.
 
 It is a web app for [`tvpipe game play`](../../docs/playshare-design.md):
 tvpipe serves it, the game runs in its host page (a window on the
@@ -84,7 +88,7 @@ phones join with the QR code.
 | `game/` | the rules (`rules.ts`), the game (`game.ts`), bots (`bots.ts`) | TypeScript on `@tvpipe/party`, tested in Node |
 | `host/` | the host page | tvpipe's standard host page (`HostPage`: the party, the TV, the players, a preview of the TV) with Drawbluff's settings as a spec (`host.ts`) and its look (`host.css`); `strings.ts` (the status line) |
 | `screen/` | the TV page | the screen view (`{ roster, screen, join }`); `strings.js` |
-| `phone/` | the phone page | drawing, lies, votes; `strings.js`, `i18n.js` (languages, `Intl`), `sfx.js` (the sounds, the TV's too) |
+| `phone/` | the phone page | drawing, lies, votes; `strings.js`, `i18n.js` (languages, `Intl`), `sfx.js` (the sounds, the TV's too), `fit.js` (titles that fit, the TV's too) |
 | `data/prompts.txt`, `data/prompts.de.txt` | the prompts, English and German | fetched by the host page |
 | `data/prompts.adult.txt`, `data/prompts.adult.de.txt` | the adult prompts (18+), English and German | dealt instead when the room turned adult on |
 | `scripts/prompts.ts` | numbers about a prompts file | structures, words, near duplicates, repeats per session |

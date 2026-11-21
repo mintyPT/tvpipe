@@ -8,6 +8,7 @@
  */
 
 import { PartyClient } from "/_tvpipe/lib/client.js";
+import { watchFit } from "./fit.js";
 import { browserLang, pickLang } from "./i18n.js";
 import { Sfx } from "./sfx.js";
 import { strings } from "./strings.js";
@@ -49,6 +50,55 @@ const who = /** @type {HTMLElement} */ (document.getElementById("who"));
 const langButton = /** @type {HTMLButtonElement} */ (document.getElementById("lang"));
 const soundButton = /** @type {HTMLButtonElement} */ (document.getElementById("sound"));
 const header = /** @type {HTMLElement} */ (document.querySelector("header"));
+
+// Titles (`data-fit`) get smaller instead of cut off or broken in a word (fit.js).
+watchFit();
+
+/** A canvas to measure text with. @type {CanvasRenderingContext2D | null} */
+let ruler = null;
+
+/**
+ * Keeps what is typed in a field readable whole (a long lie): when the
+ * text gets longer than the field, its font gets smaller (down to `min`
+ * px: 40 letters on a 320 px phone) instead of the text scrolling out of
+ * sight (as Krakel's).
+ * @param {HTMLInputElement} input
+ * @param {number} [min]
+ */
+function fitField(input, min = 10) {
+  input.style.fontSize = "";
+  const text = input.value;
+  if (!text || !input.clientWidth) return;
+  const cs = getComputedStyle(input);
+  const base = parseFloat(cs.fontSize);
+  ruler ??= document.createElement("canvas").getContext("2d");
+  if (!ruler || !base) return;
+  ruler.font = `${cs.fontWeight} ${base}px ${cs.fontFamily}`;
+  const shown = cs.textTransform === "uppercase" ? text.toUpperCase() : text;
+  const spacing = parseFloat(cs.letterSpacing) || 0;
+  const width = (ruler.measureText(shown).width + spacing * [...shown].length) * 1.04;
+  const room = input.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 2;
+  if (width <= room || room <= 0) return;
+  input.style.fontSize = `${Math.max(min, (base * room) / width).toFixed(2)}px`;
+}
+// Every field: while typing, and when it comes into view with text in it.
+document.addEventListener("input", (e) => e.target instanceof HTMLInputElement && fitField(e.target));
+document.addEventListener("focusin", (e) => e.target instanceof HTMLInputElement && fitField(e.target));
+addEventListener("resize", () => {
+  for (const i of document.querySelectorAll("input")) fitField(i);
+});
+
+/**
+ * A sentence with a title in it (a lie): the title never broken in a word.
+ * @param {string} text
+ * @param {string} title
+ * @returns {(string | HTMLElement)[]}
+ */
+function titled(text, title) {
+  const at = title ? text.indexOf(title) : -1;
+  if (at < 0) return [text];
+  return [text.slice(0, at), h("span", { class: "title" }, title), text.slice(at + title.length)];
+}
 
 // ---------------------------------------------------------------------------
 // The language: the phone's own choice, else the room's, else the browser's.
@@ -358,7 +408,7 @@ function build(view) {
     case "artist":
       return waiting(t.artist);
     case "lie":
-      return me.done ? waiting(t.lieDone(me.lie ?? "", !!me.early)) : lie(me);
+      return me.done ? waiting(titled(t.lieDone(me.lie ?? "", !!me.early), me.lie ?? "")) : lie(me);
     case "vote":
       return me.done ? waiting(t.voteDone) : vote(me.options ?? [], room.drawing);
     case "watch":
@@ -373,11 +423,11 @@ function build(view) {
 }
 
 /**
- * @param {string} text
+ * @param {string | (string | HTMLElement)[]} text
  * @param {...Node} extra
  */
 function waiting(text, ...extra) {
-  show(h("section", { class: "card" }, h("p", { class: "big" }, text), doodle(), ...extra));
+  show(h("section", { class: "card" }, h("p", { class: "big" }, ...(Array.isArray(text) ? text : [text])), doodle(), ...extra));
 }
 
 /** A pencil line that draws itself over and over (the card is waiting). */
@@ -430,15 +480,16 @@ function watch(me, room) {
   }
   const r = me.result;
   if (me.note === "result" && r) {
+    /** @type {(string | HTMLElement)[][]} */
     const lines = [];
-    if (r.kind === "artist") lines.push(t.artistResult(r.count ?? 0, r.seen ?? 0));
-    if (r.kind === "found") lines.push(t.found);
-    if (r.kind === "fooled") lines.push(r.by?.length ? t.fellFor(r.by) : t.fellForOurs);
-    if (r.lie !== undefined) lines.push(t.lieFooled(r.lie, r.fooledCount ?? 0));
+    if (r.kind === "artist") lines.push([t.artistResult(r.count ?? 0, r.seen ?? 0)]);
+    if (r.kind === "found") lines.push([t.found]);
+    if (r.kind === "fooled") lines.push([r.by?.length ? t.fellFor(r.by) : t.fellForOurs]);
+    if (r.lie !== undefined) lines.push(titled(t.lieFooled(r.lie, r.fooledCount ?? 0), r.lie));
     return scoreCard(
       r.points > 0 ? `+${formatNumber(r.points)}` : t.lookAtTv,
       me,
-      ...lines.map((l) => h("p", { class: "big" }, l)),
+      ...lines.map((l) => h("p", { class: "big" }, ...l)),
     );
   }
   return scoreCard(t.lookAtTv, me);
@@ -913,8 +964,8 @@ function draw(me) {
   const err = h("p", { class: "error" });
   const swatches = h("div", { class: "swatches" });
   const sizes = h("div", { class: "sizes" });
-  const done = /** @type {HTMLButtonElement} */ (h("button", { class: "done", id: "done", onclick: () => submit() }, t.done));
-  const top = h("div", { class: "top" }, h("div", { class: "what" }, h("span", { class: "label" }, nFrames > 1 ? t.animate : t.draw), h("span", { class: "prompt" }, me.prompt ?? "")), timer);
+  const done = /** @type {HTMLButtonElement} */ (h("button", { class: "done", id: "done", "data-fit": "w", onclick: () => submit() }, t.done));
+  const top = h("div", { class: "top" }, h("div", { class: "what" }, h("span", { class: "label" }, nFrames > 1 ? t.animate : t.draw), h("span", { class: "prompt", "data-fit": "2" }, me.prompt ?? "")), timer);
   const clear = /** @type {HTMLButtonElement} */ (h("button", { class: "icon", id: "clear", "aria-label": t.clear }, icon(TRASH)));
   const undo = me.undo ? /** @type {HTMLButtonElement} */ (h("button", { class: "icon", id: "undo", "aria-label": t.undo }, icon(UNDO))) : null;
   const bar = h("div", { class: "toolbar" }, sizes, clear, undo, done);
@@ -1107,6 +1158,7 @@ function lie(me) {
   const form = h(
     "form",
     {
+      class: "lie",
       autocomplete: "off",
       onsubmit: (/** @type {Event} */ e) => {
         e.preventDefault();
@@ -1151,7 +1203,7 @@ function vote(options, drawing) {
           } catch {}
         },
       },
-      o.text,
+      h("span", { class: "tx", "data-fit": "w" }, o.text),
     );
     list.append(b);
   }

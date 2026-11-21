@@ -16,6 +16,7 @@
  */
 
 import { joinText, PartyClient, qrSvg } from "/_tvpipe/lib/client.js";
+import { watchFit } from "../phone/fit.js";
 import { pickLang } from "../phone/i18n.js";
 import { Sfx } from "../phone/sfx.js";
 import { drawDrawing, FRAME_MS, framesOf, GRID, PALETTE, PAPER } from "../phone/strokes.js";
@@ -25,6 +26,9 @@ const client = PartyClient.fromLocation({ role: /** @type {any} */ (new URLSearc
 const stage = /** @type {HTMLElement} */ (document.getElementById("stage"));
 const status = /** @type {HTMLElement} */ (document.getElementById("status"));
 const joined = /** @type {HTMLElement} */ (document.getElementById("joined"));
+
+// Titles (`data-fit`) get smaller instead of cut off or broken in a word (fit.js).
+watchFit();
 
 /** The room's language (English until the first view says). */
 let lang = pickLang(undefined);
@@ -375,7 +379,7 @@ function paper(s, still = false) {
   const key = `${s.round}:${s.spot}:${s.artist?.id}`;
   const fresh = !still && !drawnIn.has(key);
   drawnIn.add(key);
-  const plate = h("i", { class: "plate" }, h("b", {}, t.untitled), h("span", {}, t.by(s.artist?.name ?? "?")));
+  const plate = h("i", { class: "plate" }, h("b", { "data-fit": "1" }, t.untitled), h("span", {}, t.by(s.artist?.name ?? "?")));
   const el = h("div", { class: `paper frame ${frameOf(key)}${fresh && !calm() ? " slide" : ""}` }, h("div", { class: "mat" }, cv), h("i", { class: "glint" }), plate);
   tint(el, s.artist?.id ?? "");
   if (fresh && !calm()) later(520, () => play("drop", { vol: 1.3, pitch: 0.7 }));
@@ -1030,7 +1034,7 @@ function gallery(view) {
   const rings = new Map(liarIds.map((id) => [id, tint(h("i", { class: "lr" }), id)]));
   const cells = (s.items ?? []).map((/** @type {any} */ it, /** @type {number} */ i) => {
     const cv = /** @type {HTMLCanvasElement} */ (h("canvas"));
-    const cap = h("div", { class: "cap" }, h("b", {}, it.prompt), h("span", {}, avatar(it.id, it.name), t.by(it.name)));
+    const cap = h("div", { class: "cap" }, h("b", { "data-fit": "2" }, it.prompt), h("span", {}, avatar(it.id, it.name), t.by(it.name)));
     const frame = h("div", { class: `frame ${frameOf(`${s.round}:g:${it.id}`)}` }, h("div", { class: "mat" }, cv));
     const pol = h("div", { class: `pol${calm() ? "" : " drop"}`, style: `--r:${(((i * 37) % 7) - 3).toFixed(1)}deg;animation-delay:${i * 110}ms` }, h("i", { class: "nail" }), frame, cap);
     tint(pol, it.id);
@@ -1109,7 +1113,7 @@ function guess(view) {
     const opts = h(
       "div",
       { class: `opts${options.length >= 6 ? " many" : ""}` },
-      ...options.map((o, i) => h("div", { class: `opt${calm() ? "" : " in"}`, style: `animation-delay:${(inPlace ? 350 : 150) + i * 80}ms` }, o.text)),
+      ...options.map((o, i) => h("div", { class: `opt${calm() ? "" : " in"}`, style: `animation-delay:${(inPlace ? 350 : 150) + i * 80}ms`, "data-fit": "2" }, o.text)),
     );
     const right = h(
       "div",
@@ -1213,7 +1217,7 @@ function reveal(view) {
       "div",
       { class: `ropt${animate && !calm() ? " flip" : ""}` },
       h("i", { class: "shine" }, h("i", {})),
-      h("div", { class: "body" }, h("div", { class: "tx" }, it.text), h("div", { class: "meta" }, h("span", { class: "dots" }, ...holes), more, who, gain)),
+      h("div", { class: "body" }, h("div", { class: "tx", "data-fit": many ? "1" : "2" }, it.text), h("div", { class: "meta" }, h("span", { class: "dots" }, ...holes), more, who, gain)),
       stamp,
     );
     if (it.truth) for (const c of cards) c.classList.add("dim");

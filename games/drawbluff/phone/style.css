@@ -68,6 +68,9 @@ header button:active { transform: none; box-shadow: none; background: rgba(255,2
 main { padding: .5rem 1rem 1.5rem; max-width: 34rem; margin: 0 auto; }
 /* German compounds ("regenbogenreparaturdienst") break with a hyphen where the language allows. */
 main { overflow-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; }
+/* But titles (the prompt, the lies): never broken in a word, never cut off; they get smaller (fit.js). */
+[data-fit], .title { overflow-wrap: normal; word-break: normal; hyphens: manual; -webkit-hyphens: manual; }
+[data-fit="1"] { white-space: nowrap; }
 
 /* A card: a sheet of paper taped to the page. */
 .card {
@@ -90,6 +93,8 @@ input {
   width: 100%; font: inherit; font-size: 1.2rem; padding: .7rem .9rem; border-radius: .5rem;
   border: 2px solid var(--dark); background: #fff; color: var(--dark); box-shadow: inset 0 3px 0 rgba(0,0,0,.08);
 }
+/* A lie of 40 letters fits whole (fitField makes its font smaller). */
+form.lie input { padding-left: .6rem; padding-right: .6rem; }
 input:focus { outline: none; border-color: var(--dark); box-shadow: inset 0 3px 0 rgba(0,0,0,.08), 0 0 0 3px var(--accent); }
 
 /* Buttons: stickers with an ink edge, pressed down when tapped. */
@@ -118,6 +123,7 @@ ul.players li button { padding: .2rem .6rem; font-size: .85rem; box-shadow: 0 2p
 
 /* Voting: gallery placards; yours gets the red dot (sold!). */
 .options { display: flex; flex-direction: column; gap: .7rem; }
+.options button .tx { display: block; }
 .options button { text-align: left; background: #fff; color: var(--dark); font-weight: 600; padding: .85rem 2.6rem .85rem 1.1rem; border-radius: .3rem; }
 .options button::before { content: ""; position: absolute; left: .45rem; top: 25%; bottom: 25%; width: 3px; border-radius: 2px; background: #c99a3c; }
 .options button.chosen { background: #fff3c4; }
@@ -140,7 +146,7 @@ body.drawing main {
 body.drawing #banner { position: fixed; top: 0; left: 0; right: 0; z-index: 5; }
 .draw {
   height: 100%; max-width: 40rem; margin: 0 auto;
-  display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto auto; gap: 8px;
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto auto; grid-template-columns: minmax(0, 1fr); gap: 8px;
   -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
 }
 .draw button { box-shadow: 0 3px 0 var(--deep); border-color: var(--deep); }
@@ -149,8 +155,7 @@ body.drawing #banner { position: fixed; top: 0; left: 0; right: 0; z-index: 5; }
 .draw .what { flex: 1; min-width: 0; }
 .draw .label { display: block; font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; opacity: .65; }
 .draw .prompt {
-  margin: 0; font-size: 1rem; line-height: 1.25;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  display: block; margin: 0; font-size: 1rem; line-height: 1.25;
 }
 .draw #timer { font-size: 1rem; padding: .2rem .55rem; min-width: 3.2ch; text-align: center; }
 .padbox { min-height: 0; container-type: size; display: grid; place-items: start center; touch-action: none; }
@@ -198,7 +203,7 @@ canvas.pad {
 .toolbar .icon { width: 48px; border-radius: 10px; display: grid; place-items: center; padding: 0; }
 .toolbar .icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .toolbar .icon.arm { background: var(--hot); width: auto; padding: 0 .7rem; font-size: .85rem; }
-.toolbar .done { flex: 1; min-width: 0; border-radius: 10px; background: var(--accent); color: var(--dark); padding: 0 .3rem; font-size: clamp(.95rem, 4.6vw, 1.15rem); hyphens: manual; -webkit-hyphens: manual; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.toolbar .done { flex: 1; min-width: 0; border-radius: 10px; background: var(--accent); color: var(--dark); padding: 0 .3rem; font-size: clamp(.95rem, 4.6vw, 1.15rem); white-space: nowrap; }
 .draw .error { min-height: 0; margin: 0; text-align: center; font-size: .9rem; color: #ffb3c7; }
 .draw .error:empty { display: none; }
 @media (orientation: landscape) and (max-height: 540px) {
