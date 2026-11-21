@@ -56,6 +56,21 @@
         { "src": "static/games/krakel/phone-draw.png", "alt": "Drawing a giraffe on a phone: yellow with brown spots, the pens in thirteen colours, an eraser, four widths and undo below the pad", "kind": "phone" },
         { "src": "static/games/krakel/phone-guess.png", "alt": "Guessing on a phone: the same half-drawn picture, hippo was wrong, elephant typed and about to be sent", "kind": "phone" }
       ]
+    },
+    {
+      "name": "shifty",
+      "title": "Shifty",
+      "summary": "Everyone but the phony knows the secret word on a board of sixteen; one-word clues are typed while the TV shows the typing as a lie detector's needle, then the room accuses someone and the phony can still win by naming the word",
+      "players": { "min": 3, "max": 10 },
+      "languages": ["en", "de"],
+      "source": "gh:mitsuhiko/tvpipe/shifty@shifty-v*",
+      "home": "https://github.com/mitsuhiko/tvpipe/tree/main/games/shifty",
+      "screenshots": [
+        { "src": "static/games/shifty/tv-clue.png", "alt": "The TV's line-up of four suspects in front of a height chart: Phil in the spotlight typing his clue as three blank tiles, his lie detector's strip kicking where he deleted a false start; Mia's spots and Lena's savanna pinned below their strips; sixteen zoo animals on the cork board", "kind": "tv" },
+        { "src": "static/games/shifty/tv-verdict.png", "alt": "The verdict: red strings from every name plate to the accused, three on Lena and one on Mia, Lena stamped PHONY; the clues spots, savanna, neck and leaves under the strips", "kind": "tv" },
+        { "src": "static/games/shifty/phone-card.png", "alt": "A phone's card turned up: the word is giraffe, the category zoo animals, and the board below", "kind": "phone" },
+        { "src": "static/games/shifty/phone-clue.png", "alt": "Phil's turn on his phone: nec typed in the clue field, the time running out, his card face down above the board", "kind": "phone" }
+      ]
     }
   ]
 }

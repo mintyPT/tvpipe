@@ -82,7 +82,7 @@ By default through a public link: OpenTunnel, which tvpipe sets up once and reus
 | `--window=none` | No window: tvpipe prints its link |
 | `--browser PATH` | The browser for the window and for rendering the TV |
 | `--resolution RES` | The TV picture at the start: `auto` (up to 1080p, the default), `720p`, `1080p` or `4k`; the window can change it. The game looks the same, only sharper |
-| `--dev` | Test mode: the game may offer test tools in its window. Drawbluff, Garble, Jinx and Krakel get "Add a bot" buttons there: dummy players that join and play by themselves, to try a game alone |
+| `--dev` | Test mode: the game may offer test tools in its window. Drawbluff, Garble, Jinx, Krakel and Shifty get "Add a bot" buttons there: dummy players that join and play by themselves, to try a game alone |
 
 The QR code holds the link with the room's code and a key, so only people who can see the TV can join. On the Wi-Fi (`--lan`) the page is plain HTTP and the key crosses the network unencrypted: use the public link on networks with strangers. With Cloudflare, Cloudflare can read the game's traffic. With OpenTunnel, nobody else can.
 

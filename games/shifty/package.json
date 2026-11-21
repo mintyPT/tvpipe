@@ -1,0 +1,23 @@
+{
+  "name": "shifty",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A social deduction word game for tvpipe (tvpipe game play): everyone but the phony knows the secret word; one-word clues are typed while the TV shows the typing as a lie detector's needle, then the room accuses someone",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node scripts/build.ts",
+    "zip": "node scripts/pack.ts",
+    "check": "tsc -p tsconfig.json && tsc -p tsconfig.pages.json && tsc -p tsconfig.build.json --noEmit",
+    "test": "node --test \"test/*.test.ts\"",
+    "words": "node scripts/words.ts"
+  },
+  "devDependencies": {
+    "@tvpipe/party": "file:../../npm/party",
+    "@types/node": "^22.19.0",
+    "typescript": "~5.9.3"
+  }
+}
