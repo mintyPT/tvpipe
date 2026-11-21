@@ -3,7 +3,7 @@
  * `scripts/prompts.ts` and the prompt lints (test/prompts.test.ts).
  */
 
-import { deck, PromptDeck, seeded, SPREAD, type Lang, type Prompt } from "../game/rules.ts";
+import { ARTICLES, deck, PromptDeck, seeded, SPREAD, type Lang, type Prompt } from "../game/rules.ts";
 
 /** Words that say little about a prompt (articles, prepositions, …). */
 export const STOP: Record<Lang, ReadonlySet<string>> = {
@@ -35,6 +35,43 @@ export function nearDuplicates(prompts: readonly Prompt[], lang: Lang): [string,
     }
   }
   return out;
+}
+
+/** How a set of titles looks (the prompts, or their decoys): what a player could tell them by. */
+export interface Forms {
+  /** The share starting with an article ("a …", "the …", "ein …", "der …"). */
+  article: number;
+  /** The share of at most three words. */
+  short: number;
+  /** Words on average. */
+  words: number;
+  /** The most common first word and its share. */
+  opening: [string, number];
+}
+
+/** Whether a title starts with an article (the ones {@link titleKey} drops). */
+export function hasArticle(text: string, lang: Lang): boolean {
+  return ARTICLES[lang].test(text);
+}
+
+/** {@link Forms} of `texts`. */
+export function forms(texts: readonly string[], lang: Lang): Forms {
+  const n = texts.length || 1;
+  const words = texts.map((t) => t.split(" ").length);
+  const first = new Map<string, number>();
+  for (const t of texts) first.set(t.split(" ")[0]!, (first.get(t.split(" ")[0]!) ?? 0) + 1);
+  const [w, c] = [...first].sort((a, b) => b[1] - a[1])[0] ?? ["", 0];
+  return {
+    article: texts.filter((t) => hasArticle(t, lang)).length / n,
+    short: words.filter((x) => x <= 3).length / n,
+    words: words.reduce((a, b) => a + b, 0) / n,
+    opening: [w, c / n],
+  };
+}
+
+/** Prompts that are the odd one out of their line: no decoy shares whether it starts with an article. */
+export function oddForms(prompts: readonly Prompt[], lang: Lang): string[] {
+  return prompts.filter((p) => p.decoys?.length && !p.decoys.some((d) => hasArticle(d, lang) === hasArticle(p.text, lang))).map((p) => p.text);
 }
 
 /** Prompts per structure, in the file's order. */

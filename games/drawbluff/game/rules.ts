@@ -224,7 +224,7 @@ export function pickLang(tag: unknown): Lang {
 }
 
 /** The leading articles {@link titleKey} drops, per language. */
-const ARTICLES: Record<Lang, RegExp> = {
+export const ARTICLES: Record<Lang, RegExp> = {
   en: /^(a|an|the) /,
   de: /^(der|die|das|den|dem|des|ein|eine|einen|einem|einer|eines) /,
 };

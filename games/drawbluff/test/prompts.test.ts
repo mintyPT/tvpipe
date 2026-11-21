@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { DECK_RESERVE, displayTitle, LANGS, LIE_SOFT, PromptDeck, seeded, titleKey, type Lang, type Prompt } from "../game/rules.ts";
-import { nearDuplicates, perStructure, repeats } from "../scripts/prompt-stats.ts";
+import { forms, nearDuplicates, oddForms, perStructure, repeats } from "../scripts/prompt-stats.ts";
 import { ADULT_BY_LANG, PROMPTS_BY_LANG } from "./prompts.ts";
 
 /** What a prompt may contain, per language (its display form, so lowercase). */
@@ -36,6 +36,30 @@ function decoys(prompts: readonly Prompt[], lang: Lang): void {
   }
 }
 
+const pct = (x: number): string => `${Math.round(100 * x)} %`;
+
+/**
+ * The file's titles in the forms players type their lies in, and the
+ * prompts in the forms of their decoys: not mostly "a … at the …", a
+ * leading article on about a third (players often leave it out), short
+ * ones (at most three words) among them, no opening word everywhere;
+ * the prompts and the decoys alike in all of it, and no prompt the only
+ * one of its line with (or without) a leading article.
+ */
+function looks(prompts: readonly Prompt[], lang: Lang): void {
+  const p = forms(prompts.map((x) => x.text), lang);
+  const d = forms(prompts.flatMap((x) => x.decoys ?? []), lang);
+  for (const [who, f] of [["prompts", p], ["decoys", d]] as const) {
+    assert.ok(f.article >= 0.15 && f.article <= 0.45, `${who}: ${pct(f.article)} start with an article`);
+    assert.ok(f.short >= 0.15, `${who}: ${pct(f.short)} have at most three words`);
+    assert.ok(f.opening[1] <= 0.2, `${who}: ${pct(f.opening[1])} start with ${f.opening[0]}`);
+  }
+  assert.ok(Math.abs(p.article - d.article) <= 0.05, `a leading article: prompts ${pct(p.article)}, decoys ${pct(d.article)}`);
+  assert.ok(Math.abs(p.short - d.short) <= 0.05, `at most three words: prompts ${pct(p.short)}, decoys ${pct(d.short)}`);
+  assert.ok(Math.abs(p.words - d.words) <= 0.5, `words: prompts ${p.words.toFixed(1)}, decoys ${d.words.toFixed(1)}`);
+  assert.deepEqual(oddForms(prompts, lang), [], "prompts whose decoys all differ in their leading article");
+}
+
 for (const lang of LANGS) {
   const prompts = PROMPTS_BY_LANG[lang];
 
@@ -44,6 +68,8 @@ for (const lang of LANGS) {
   });
 
   test(`prompts (${lang}): three decoys each, none a prompt, none twice`, () => decoys(prompts, lang));
+
+  test(`prompts (${lang}): in the forms of players' lies, the truth like its decoys`, () => looks(prompts, lang));
 
   test(`prompts (${lang}): no two alike, not even nearly`, () => {
     const keys = new Map<string, string>();
@@ -82,6 +108,8 @@ for (const lang of LANGS) {
   });
 
   test(`adult prompts (${lang}): three decoys each, none a prompt, none twice`, () => decoys(prompts, lang));
+
+  test(`adult prompts (${lang}): in the forms of players' lies, the truth like its decoys`, () => looks(prompts, lang));
 
   test(`adult prompts (${lang}): no two alike, none like a family prompt`, () => {
     const keys = new Map<string, string>();

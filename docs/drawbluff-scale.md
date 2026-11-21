@@ -180,6 +180,40 @@ NFC, at most 40 characters (`test/prompts.test.ts` checks it). The phone's lie i
 the longest prompt; the host still accepts up to 48), with
 `autocapitalize="none"` and autocorrect left on.
 
+The display form makes the case and punctuation alike, not the words.
+The prompts and their decoys were all one polished shape (in English
+85 % of the prompts and 88 % of the decoys began with "a", "an" or
+"the", in German 78 % and 81 % with "ein", "der", …:
+"a vampire at the dentist", "the moment the wifi drops"), and players
+typing on a phone mostly do not write like that ("vampire at dentist",
+"wifi died"): the file's titles stood out from the players' lies, and
+the truth was among them. So both are written in the forms of lies:
+about a third with a leading article, the rest without, in plural, as
+a short label ("sweaty snowman", "schwitzender schneemann"), a
+sentence ("the snowman is melting", "der schneemann schmilzt"),
+"when …"/"wenn …", "my …"/"mein …", telegraphic ("cat doing taxes",
+"katze macht steuer"), short and long; an idiom stays the idiom. The
+prompts are in the forms of their decoys. The lints
+(`test/prompts.test.ts`, `forms` and `oddForms` in
+`scripts/prompt-stats.ts`), for all four files: a leading article on
+15–45 % of the prompts and of the decoys, at least 15 % of at most
+three words, no first word on more than 20 %; prompts and decoys
+within 5 points of each other in the share with an article and the
+share of short ones, within half a word in length; and no prompt is the
+only one of its line with (or without) a leading article.
+
+| | prompts (en) | decoys (en) | prompts (de) | decoys (de) |
+|---|---|---|---|---|
+| a leading article | 85 % → 27 % | 88 % → 29 % | 78 % → 30 % | 81 % → 31 % |
+| the commonest first word | "a" 56 % → 14 % | "a" 67 % → "the" 14 % | "ein" 41 % → 10 % | "ein" 44 % → "der" 10 % |
+| at most three words | 13 % → 27 % | 9 % → 26 % | 26 % → 49 % | 19 % → 49 % |
+| words on average | 5.0 → 4.3 | 5.3 → 4.3 | 4.2 → 3.5 | 4.3 → 3.5 |
+
+The forms were rewritten by model agents per structure (the prompt's
+idea and drawing kept, the decoys still lies for the same drawing),
+reviewed by another pass, then linted; the adult files the same
+(English 23 % and 25 % with an article now, German 28 % and 29 %).
+
 ### Prompts
 
 The first prompts were all one shape ("a nervous cactus": an adjective
@@ -191,23 +225,23 @@ kinds of lie:
 
 | Tag | Structure | Example | Prompts (en) | (de) |
 |---|---|---|---|---|
-| `odd` | odd combinations | a lonely lighthouse at a party | 46 | 47 |
+| `odd` | odd combinations | lonely lighthouse at a party | 46 | 47 |
 | `idiom` | idioms taken literally | raining cats and dogs | 50 | 61 |
-| `wort` | German compounds taken literally | ein glückspilz | – | 46 |
-| `feeling` | abstract ideas and feelings | the fear of mondays | 42 | 39 |
+| `wort` | German compounds taken literally | glückspilz | – | 46 |
+| `feeling` | abstract ideas and feelings | fear of mondays | 42 | 39 |
 | `moment` | the moment when … | the moment the ice cream falls | 38 | 38 |
-| `secret` | the secret lives of things | what the fridge does at night | 43 | 34 |
+| `secret` | the secret lives of things | what my fridge does at night | 43 | 34 |
 | `invented` | invented jobs, sports, holidays | a puddle inspector | 40 | 37 |
-| `contra` | misleading or contradictory pairs | a shy fireworks show | 42 | 42 |
+| `contra` | misleading or contradictory pairs | shy fireworks show | 42 | 42 |
 | `view` | an unusual point of view | the world seen by an ant | 42 | 35 |
-| `drama` | tiny dramas | the last cookie standoff | 43 | 38 |
+| `drama` | tiny dramas | last cookie standoff | 43 | 38 |
 | `title` | famous-sounding invented titles | the phantom of the bakery | 43 | 39 |
-| `animal` | animals with human problems | a cat filing its taxes | 38 | 38 |
+| `animal` | animals with human problems | cat filing its taxes | 38 | 38 |
 | `food` | food with a life of its own | soup that fights back | 35 | 36 |
 | `place` | places that should not exist | a school for baby dragons | 33 | 34 |
-| `gadget` | inventions nobody needs | a hat that waters your plants | 33 | 34 |
-| `power` | useless superpowers | the power to sneeze glitter | 33 | 32 |
-| `then` | history mixed up | a caveman with a selfie stick | 32 | 33 |
+| `gadget` | inventions nobody needs | hat that waters your plants | 33 | 34 |
+| `power` | useless superpowers | sneezing glitter | 33 | 32 |
+| `then` | history mixed up | caveman with a selfie stick | 32 | 33 |
 | `scene` | everyday scenes gone wrong | grandpa's first video call | 32 | 35 |
 
 All are written for Drawbluff, drawable, family friendly and in the
@@ -257,6 +291,10 @@ display form.
   linted.
 
 ### Variety: before and after
+
+(Measured when the structures came; the forms changed later, see
+"Titles look alike", which changed the word counts a little but not
+the structures, the near duplicates or the repeats.)
 
 `node scripts/prompts.ts [--lang de] [--file F] [--players N] [--rounds
 N] [--games N] [--spread N] [--near]` measures a prompts file; the

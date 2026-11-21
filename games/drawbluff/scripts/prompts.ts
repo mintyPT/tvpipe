@@ -1,9 +1,11 @@
 /**
  * Numbers about a prompts file (docs/drawbluff-scale.md "Prompts"): per
- * structure, lengths, distinct words, the most used openings and words,
- * near duplicates, and how often a session of several games in one room
- * deals a prompt again: with a fresh deck per game (as before) and with
- * the room's deck (`PromptDeck`).
+ * structure, lengths, the forms of the prompts and their decoys (a
+ * leading article, short ones, the commonest opening), distinct words,
+ * the most used openings and words, near duplicates, and how often a
+ * session of several games in one room deals a prompt again: with a
+ * fresh deck per game (as before) and with the room's deck
+ * (`PromptDeck`).
  *
  *   node scripts/prompts.ts [--lang de] [--file PATH] [--games 5] [--players 8] [--rounds 2] [--runs 200] [--spread N] [--near]
  *
@@ -14,7 +16,7 @@ import { readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 
 import { parsePrompts, pickLang, titleKey } from "../game/rules.ts";
-import { contentWords, nearDuplicates, perStructure, repeats } from "./prompt-stats.ts";
+import { contentWords, forms, nearDuplicates, oddForms, perStructure, repeats } from "./prompt-stats.ts";
 
 const { values: args } = parseArgs({
   options: {
@@ -56,6 +58,17 @@ for (const p of prompts) {
 }
 const opens = [...open].sort((a, b) => b[1] - a[1]);
 console.log(`most used openings: ${opens.slice(0, 8).map(([w, n]) => `"${w}" ${n}`).join(", ")}`);
+
+for (const [who, texts] of [["prompts", prompts.map((p) => p.text)], ["decoys", prompts.flatMap((p) => p.decoys ?? [])]] as const) {
+  if (!texts.length) continue;
+  const f = forms(texts, lang);
+  console.log(
+    `${who.padEnd(7)}: a leading article ${(100 * f.article).toFixed(0)} %, at most three words ${(100 * f.short).toFixed(0)} %, ` +
+      `${f.words.toFixed(1)} words, most common opening "${f.opening[0]}" ${(100 * f.opening[1]).toFixed(0)} %`,
+  );
+}
+const odd = oddForms(prompts, lang);
+console.log(`prompts the odd one out of their line (leading article): ${odd.length}${odd.length ? ` (${odd.slice(0, 5).join(", ")})` : ""}`);
 
 const near = nearDuplicates(prompts, lang);
 const keys = new Set(prompts.map((p) => titleKey(p.text, lang)));
