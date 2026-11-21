@@ -134,6 +134,7 @@ h1 small { font-size: 2.2rem; margin-left: 1.6rem; color: var(--ink); -webkit-te
   animation: stamp .6s .15s cubic-bezier(.3, 1.4, .5, 1) both; --r: -1.5deg; max-width: 112rem;
 }
 .draw .cat.long { font-size: 6.4rem; }
+.draw .cat.mixed { background: linear-gradient(100deg, var(--sky), #b9f18a 45%, #ffd21f 70%, #ff9fc2); }
 .draw .sub { margin-top: 1.8rem; font-size: 2.6rem; font-weight: 700; }
 .easels { position: absolute; left: 4rem; right: 4rem; top: 32.5rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 1.6rem 2.6rem; }
 .easel { width: 14rem; display: flex; flex-direction: column; align-items: center; gap: .7rem; animation: drop .5s var(--d) cubic-bezier(.3, 1.4, .5, 1) both; }

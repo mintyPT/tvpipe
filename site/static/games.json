@@ -46,7 +46,7 @@
     {
       "name": "krakel",
       "title": "Krakel",
-      "summary": "Everyone draws a word of the same category; the TV redraws each picture stroke by stroke, and the sooner you type what it is, the more you and the artist score",
+      "summary": "Everyone draws a word of the same category (or, mixed, of any); the TV redraws each picture stroke by stroke, and the sooner you type what it is, the more you and the artist score",
       "players": { "min": 3, "max": 10 },
       "languages": ["en", "de"],
       "source": "gh:mitsuhiko/tvpipe/krakel@krakel-v*",

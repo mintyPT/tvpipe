@@ -20,6 +20,8 @@ drawing is one that is named early.
 - **Near misses.** A round's words come from one category (zoo animals:
   fox, wolf, jackal …), a different word for each player. A rough
   sketch is not enough: what tells a wolf from a fox has to be there.
+  (Or, as a setting, mixed words: everyone draws from another category,
+  and a round is a bit of everything.)
 - **The replay is a race.** The TV redraws the picture under a pencil,
   in the order it was drawn, squeezed or stretched to the guess time.
   The room watches a grey shape grow legs ("hippo!", "rhino!") until
@@ -43,14 +45,23 @@ start ─▶ draw (everyone at once) ─▶ per drawing: count-in ─▶ replay 
 ```
 
 - **The deal.** The room's category deck deals a category (none twice
-  until all were dealt, game after game), and from it a different word
-  for every player: two to pick from when the category has twice as
-  many words as there are players (ours always have: at least 20), else
-  one. The category is on the TV and on every phone; a word only on its
-  artist's phone.
+  until all were dealt, game after game), and from it different words
+  for every player: three to pick from while the category has three
+  for everyone, else two, else one (ours have 23 to 28 words: three
+  each up to seven players, two each for eight to ten). The category is
+  on the TV and on every phone; a word only on its artist's phone.
+- **Mixed words** (a setting, off by default): no category for the
+  round. Every player is dealt three words from three different
+  categories (the phone shows each word's category), from one deck of
+  all the words (none twice until all were dealt), and none whose name
+  would be right for another word of the round (`ball` and `balloon`
+  are in different categories; one category never has both). The TV
+  says "A bit of everything" while everyone draws; on stage every
+  drawing comes with its own category, on the TV and the phones, so the
+  guessers know as much as in a round of one category.
 - **Drawing.** The pad: thirteen pens (black, grey, eleven colours) and
   an eraser (it paints paper), four widths, undo, clear (asks once).
-  Until the first stroke the word can be swapped for the other one. The
+  Until the first stroke the word can be swapped for another one. The
   page is kept on the phone while it is drawn (`localStorage`), so a
   reload or another app loses nothing. "Done" asks once while more
   than 15 s are left (it cannot be taken back); when time is up the
@@ -88,9 +99,10 @@ start ─▶ draw (everyone at once) ─▶ per drawing: count-in ─▶ replay 
   guessing).
 - **Settings** (the host page, or the VIP's phone in the lobby): rounds
   1–4 (default 2), time to draw 1, 1½, 2 or 3 minutes (default 2), time
-  to guess 30, 45, 60 or 90 s (default 45), letters shown or hidden
-  (§3), the lockout, and on the host page the language and whether
-  latecomers join at the next round or not during a game.
+  to guess 30, 45, 60 or 90 s (default 45), the words (one category a
+  round, or mixed), letters shown or hidden (§3), the lockout, and on
+  the host page the language and whether latecomers join at the next
+  round or not during a game.
 - **A game** of two rounds with six players takes about 15 minutes:
   2 min drawing and 6 × (4 + ≤ 45 + 6.5) s on stage a round.
 - **Leaving and joining.** A phone that drops out keeps its seat (the
@@ -165,8 +177,8 @@ polar bear|ice bear
 ```
 
 - A category has at least 20 words (two to pick from for each of ten
-  players) and holds things that look alike when doodled and can still
-  be told apart by a detail.
+  players; ours have 23 to 28) and holds things that look alike when
+  doodled and can still be told apart by a detail.
 - A word is concrete, drawable by a nine-year-old in two minutes, and
   spellable by one. Other names are true alternatives for the same
   thing (synonyms, regional names: `Karotte|Möhre|Mohrrübe`, short and
@@ -233,4 +245,6 @@ The host is the only authority; phones and the TV get views
   has to be played.
 - **Fill.** A bucket is not a stroke; the brush does it for now.
 - **Words by age**, and more categories (jobs, school, the beach).
+- **Choosing categories**: the room has no say in which one comes (a
+  vote between three, or categories switched off on the host page).
 - **Sound on the phones.**

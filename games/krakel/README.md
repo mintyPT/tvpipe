@@ -9,9 +9,12 @@ and for the artist: the round's drawings are ranked by how well the room
 read them. ("Krakel": German for a scrawl.)
 
 - **The category** is for the room ("Zoo animals"), the word is yours:
-  a different one for every player, two to pick from. The words of a
-  category are close on purpose (fox, wolf, jackal): draw what makes
-  yours different.
+  a different one for every player, three to pick from (two with eight
+  players and more). The words of a category are close on purpose (fox,
+  wolf, jackal): draw what makes yours different.
+- **Or mixed words** (a setting): no category for the round; everyone
+  picks one of three words from three different categories, and every
+  drawing comes with its own category when it is on stage.
 - **Draw** for 1 to 3 minutes: thirteen pens, an eraser, four widths,
   undo. The page is kept on the phone while you draw (a reload loses
   nothing). The TV shows how much everyone drew, never what.
@@ -65,9 +68,9 @@ Pick the TVs (or "A browser tab on this computer"), then Start. The
 first player is the VIP and starts the game from their phone once three
 are in (or the host page's Start). Settings (the host page, or the
 VIP's phone in the lobby): language, rounds (1–4), time to draw (1, 1½,
-2 or 3 minutes), time to guess (30, 45, 60 or 90 s), letters shown or
-hidden, the wait after a wrong guess, latecomers (next round, or not
-during a game).
+2 or 3 minutes), time to guess (30, 45, 60 or 90 s), the words (one
+category a round, or mixed), letters shown or hidden, the wait after a
+wrong guess, latecomers (next round, or not during a game).
 
 ## Checking it
 
@@ -75,7 +78,7 @@ during a game).
 npm run check && npm test          # types; the rules, the ink, the word lists, whole games with bots in Node (privacy included)
 npm run words                      # the word lists: categories, counts, what is wrong
 node test/live/play.ts             # a live game: tvpipe, headless Chrome, a phone, bots; screenshots in /tmp/krakel-play
-node test/live/play.ts --lang de --bots 9 --hints off
+node test/live/play.ts --lang de --bots 9 --hints off --mixed on
 node test/live/play.ts --bots 3 --shots ../../site/static/games/krakel   # the games list's pictures (test/live/scenario.ts)
 node test/live/scenario.ts --preview /tmp/krakel-scenario                # the scripted round's drawings, whole and half replayed
 ```

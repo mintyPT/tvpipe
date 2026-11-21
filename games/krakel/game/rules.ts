@@ -7,8 +7,8 @@
  * docs/krakel-design.md.
  *
  * A round: one category for the room, a different word of it for every
- * player (two to pick from when the category has enough). Everyone draws
- * at once. Then the TV redraws each picture stroke by stroke, stretched
+ * player (three to pick from when the category has enough), or, mixed,
+ * three words from three categories each. Everyone draws at once. Then the TV redraws each picture stroke by stroke, stretched
  * or squeezed to the guess time, and the others type what it is: the
  * sooner, the more points, and the artist earns with every one of them.
  */
@@ -338,12 +338,18 @@ export class Deck<T> {
 
 export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 10;
+/** Words each player picks from, when there are enough. */
+export const CHOICES = 3;
 /** Words a category of our lists has at least: two to pick from for each of {@link MAX_PLAYERS} players. */
 export const MIN_CATEGORY = 2 * MAX_PLAYERS;
 
-/** Words each player picks from: two when the category has enough for everyone, else one. */
+/**
+ * Words each player picks from in a round of one category: three
+ * ({@link CHOICES}) when the category has enough for everyone, else two,
+ * else one.
+ */
 export function choicesFor(size: number, players: number): number {
-  return size >= 2 * players ? 2 : 1;
+  return Math.max(1, Math.min(CHOICES, Math.floor(size / Math.max(1, players))));
 }
 
 /**
@@ -359,6 +365,41 @@ export function dealRound(category: Category, players: number, rng: () => number
     return pile.pop()!;
   };
   return Array.from({ length: players }, () => Array.from({ length: per }, next));
+}
+
+/** A word with the category it is from: what a player is dealt. */
+export interface Card {
+  word: Word;
+  category: string;
+}
+
+/** Every word of a list as a card. */
+export function cardsOf(categories: readonly Category[]): Card[] {
+  return categories.flatMap((c) => c.words.map((word) => ({ word, category: c.title })));
+}
+
+/** Whether one word's name is right for the other (the same word, or a name that says it). */
+function clash(a: Word, b: Word, lang: Lang): boolean {
+  return a.word === b.word || [a.word, ...a.also].some((f) => says(f, b, lang)) || [b.word, ...b.also].some((f) => says(f, a, lang));
+}
+
+/**
+ * The words of a mixed round: for each of `players` players
+ * {@link CHOICES} words from as many categories, no word twice, and none
+ * whose name would be right for another of the round (`ball` and
+ * `balloon` are in different categories).
+ */
+export function dealMixed(deck: Deck<Card>, players: number, lang: Lang = "en"): Card[][] {
+  const dealt: Card[] = [];
+  return Array.from({ length: players }, () => {
+    const mine: Card[] = [];
+    for (let i = 0; i < CHOICES; i++) {
+      const c = deck.draw((x) => !mine.some((m) => m.category === x.category) && !dealt.some((d) => clash(d.word, x.word, lang)));
+      mine.push(c);
+      dealt.push(c);
+    }
+    return mine;
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -443,6 +484,8 @@ export interface Entry {
   /** The artist's id. */
   by: string;
   word: Word;
+  /** The word's category (its title). */
+  category: string;
   drawing: Drawing;
   /** The players who could guess it. */
   guessers: string[];

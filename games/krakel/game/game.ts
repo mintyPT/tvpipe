@@ -1,7 +1,8 @@
 /**
  * Krakel on a party, for 3 to 10 players (docs/krakel-design.md): the
  * lobby, then per round one category for the room and a word of it for
- * everyone to draw at once; then every drawing in turn is redrawn on the
+ * everyone to draw at once (three to pick from; or, with `mixed`, words
+ * from different categories for everyone); then every drawing in turn is redrawn on the
  * TV stroke by stroke, stretched or squeezed to the guess time, while
  * the others type what it is (the sooner, the more points; a wrong
  * guess locks the phone for a moment); then the round's gallery, a heart
@@ -10,12 +11,13 @@
  * authority: phones and screens only ever get views.
  *
  * Views:
- * - `party.room` (every phone): `{ phase, lang, round, rounds, drawTime, guessTime, hints, lockout, minPlayers, colors,
- *   category?, deadline?, spot?, got?, stage?, gallery? }`; `spot` is the drawing on stage: `{ key, index, of, artist,
+ * - `party.room` (every phone): `{ phase, lang, round, rounds, drawTime, guessTime, hints, lockout, mixed, minPlayers,
+ *   colors, category?, deadline?, spot?, got?, stage?, gallery? }` (`category`: the round's, or on stage the drawing's;
+ *   null while a mixed round draws and in its gallery); `spot` is the drawing on stage: `{ key, index, of, artist,
  *   drawing, start, end, shape, asked }` (`shape`: the word's letters as blanks, with `hints`; `asked`: how many guess),
  *   `got` who named it so far, `reveal` (`word`, `points`) once it is over.
  * - `player.state` (one phone): `{ task, color, score, rank, of, … }`, `task` one of `lobby`, `wait` (a late
- *   joiner), `draw` (`category`, `choices`, `deadline`, `done`), `guess` (`key`, `right`, `points`, `first`,
+ *   joiner), `draw` (`choices`, `categories`: each choice's, `deadline`, `done`), `guess` (`key`, `right`, `points`, `first`,
  *   `lockedUntil`, `tries`), `artist` (`key`, `word`), `result` (`key`, `word`, `mine`, `right`, `points`, …),
  *   `vote` (`own`, `deadline`, `done`, `choice`), `ranked` (`place`, `of`, `points`, `hearts`, `fav`), `scores`
  *   (`earned`, `delta`), `final`
@@ -31,6 +33,8 @@ import { Emitter, PartyError, type Json, type Party, type Player, type Sender } 
 
 import {
   cleanGuess,
+  cardsOf,
+  dealMixed,
   dealRound,
   Deck,
   earnedTotal,
@@ -46,6 +50,7 @@ import {
   shapeOf,
   shuffle,
   validateDrawing,
+  type Card,
   type Category,
   type Drawing,
   type Earned,
@@ -107,6 +112,8 @@ export interface Settings {
   hints: boolean;
   /** Seconds a phone is locked after a wrong guess (0: not at all). */
   lockout: number;
+  /** Mixed words: everyone's words come from different categories (off: one category a round). */
+  mixed: boolean;
 }
 
 /**
@@ -131,6 +138,7 @@ export interface GameOptions {
   hints?: boolean | undefined;
   /** Seconds (tests: a fraction). */
   lockout?: number | undefined;
+  mixed?: boolean | undefined;
 }
 
 export interface ScoreLine {
@@ -166,10 +174,11 @@ const SOMEONE: Record<Lang, string> = { en: "someone", de: "jemand" };
 /** A round as it is played. */
 interface Round {
   n: number;
-  category: Category;
+  /** The round's category; null in a mixed round (every word has its own). */
+  category: Category | null;
   players: Player[];
   /** The words each player picks from, by id. */
-  deals: Map<string, Word[]>;
+  deals: Map<string, Card[]>;
   /** One per player, once the drawings are in. */
   entries: Entry[];
   /** The artists whose drawings go on stage, in that order (ids). */
@@ -208,6 +217,9 @@ export class Krakel extends Emitter<GameEvents> {
   #lang: Lang;
   #hints: boolean;
   #lockout: number;
+  #mixed: boolean;
+  /** The room's word decks for mixed rounds by language, kept from game to game. */
+  readonly #cards = new Map<Lang, Deck<Card>>();
   /** Each player's colour (an index of {@link COLORS}), by id. */
   readonly #colors = new Map<string, number>();
   /** Names by id, kept after a player left (drawings still name them). */
@@ -249,10 +261,11 @@ export class Krakel extends Emitter<GameEvents> {
     if (!this.#words.has(this.#lang)) throw new Error(`krakel: no words in ${this.#lang}`);
     this.#hints = options.hints ?? true;
     this.#lockout = options.lockout ?? 4;
+    this.#mixed = options.mixed ?? false;
   }
 
   get settings(): Settings {
-    return { drawTime: this.timings.draw / 1000, guessTime: this.timings.guess / 1000, hints: this.#hints, lockout: this.#lockout };
+    return { drawTime: this.timings.draw / 1000, guessTime: this.timings.guess / 1000, hints: this.#hints, lockout: this.#lockout, mixed: this.#mixed };
   }
 
   get phase(): Phase {
@@ -315,7 +328,7 @@ export class Krakel extends Emitter<GameEvents> {
     });
     party.handle("settings", (d, from) => {
       vipOnly(from);
-      if (typeof d !== "object" || d === null || Array.isArray(d)) throw new PartyError("bad-settings", "rounds, drawTime, guessTime, hints, lockout");
+      if (typeof d !== "object" || d === null || Array.isArray(d)) throw new PartyError("bad-settings", "rounds, drawTime, guessTime, hints, lockout, mixed");
       const v = d as Record<string, Json>;
       const o: Partial<Settings> & { rounds?: number } = {};
       const oneOf = (key: "drawTime" | "guessTime" | "lockout" | "rounds", list: readonly number[]) => {
@@ -330,9 +343,10 @@ export class Krakel extends Emitter<GameEvents> {
         "rounds",
         Array.from({ length: MAX_ROUNDS }, (_, i) => i + 1),
       );
-      if (v["hints"] !== undefined) {
-        if (typeof v["hints"] !== "boolean") throw new PartyError("bad-settings", "hints: true or false");
-        o.hints = v["hints"];
+      for (const key of ["hints", "mixed"] as const) {
+        if (v[key] === undefined) continue;
+        if (typeof v[key] !== "boolean") throw new PartyError("bad-settings", `${key}: true or false`);
+        o[key] = v[key];
       }
       this.configure(o);
       return null;
@@ -369,6 +383,7 @@ export class Krakel extends Emitter<GameEvents> {
     if (o.drawTime !== undefined && o.drawTime > 0) this.timings.draw = o.drawTime * 1000;
     if (o.guessTime !== undefined && o.guessTime > 0) this.timings.guess = o.guessTime * 1000;
     if (o.hints !== undefined) this.#hints = o.hints;
+    if (o.mixed !== undefined) this.#mixed = o.mixed;
     if (o.lockout !== undefined && o.lockout >= 0) this.#lockout = o.lockout;
     if (this.#phase === "lobby" || this.#phase === "final") {
       this.party.room.set({ lang: this.#lang, rounds: this.rounds, ...this.settings });
@@ -502,22 +517,33 @@ export class Krakel extends Emitter<GameEvents> {
     return d;
   }
 
-  /** The category and the words of a round: dealt, or the script's (round 1). */
-  #deal(n: number, players: Player[]): { category: Category; deals: Map<string, Word[]>; order: string[] | undefined } {
+  /**
+   * The words of a round: one category and a few of its words for
+   * everyone, or (mixed) words from different categories for everyone;
+   * or the script's (round 1, always one category).
+   */
+  #deal(n: number, players: Player[]): { category: Category | null; deals: Map<string, Card[]>; order: string[] | undefined } {
     const script = n === 1 ? this.script : undefined;
     if (n === 1) this.script = undefined;
     const list = this.#words.get(this.#lang)!;
+    if (this.#mixed && !script) {
+      let deck = this.#cards.get(this.#lang);
+      if (!deck) this.#cards.set(this.#lang, (deck = new Deck(cardsOf(list), this.#rng)));
+      const dealt = dealMixed(deck, players.length, this.#lang);
+      return { category: null, deals: new Map(players.map((p, i) => [p.id, dealt[i]!])), order: undefined };
+    }
     const scripted = script ? (list.find((c) => c.title === script.category) ?? { title: script.category, words: [] }) : undefined;
-    const category = scripted && scripted.words.length >= players.length ? scripted : this.#deck().draw((c) => c.words.length >= players.length);
-    const dealt = dealRound(category, players.length, this.#rng);
-    const deals = new Map(players.map((p, i) => [p.id, dealt[i]!]));
+    const drawn = scripted && scripted.words.length >= players.length ? scripted : this.#deck().draw((c) => c.words.length >= players.length);
+    const category = scripted ? { ...drawn, title: scripted.title } : drawn;
+    const dealt = dealRound(drawn, players.length, this.#rng);
+    const deals = new Map(players.map((p, i) => [p.id, dealt[i]!.map((word) => ({ word, category: category.title }))]));
     if (!script) return { category, deals, order: undefined };
     for (const p of players) {
       const w = script.words[p.name];
-      if (w !== undefined) deals.set(p.id, [category.words.find((x) => x.word === w) ?? { word: w, also: [] }]);
+      if (w !== undefined) deals.set(p.id, [{ word: drawn.words.find((x) => x.word === w) ?? { word: w, also: [] }, category: category.title }]);
     }
     const order = script.order?.flatMap((name) => players.find((p) => p.name === name)?.id ?? []);
-    return { category: scripted ? { ...category, title: scripted.title } : category, deals, order };
+    return { category, deals, order };
   }
 
   async #playRound(n: number, players: Player[]): Promise<void> {
@@ -549,14 +575,16 @@ export class Krakel extends Emitter<GameEvents> {
     const party = this.party;
     this.#setPhase("draw");
     const deadline = party.deadline(this.timings.draw);
-    const category = r.category.title;
+    // Null in a mixed round: every word shows its own category.
+    const category = r.category?.title ?? null;
     const ids = new Set(r.players.map((p) => p.id));
     this.#ink = new Map(r.players.map((p) => [p.id, 0]));
     party.withTv(() => {
       this.#room({ phase: "draw", category, deadline });
       this.#screen({ phase: "draw", category, deadline, duration: this.timings.draw, players: r.players.map((p) => this.#who(p.id)), done: [], ink: {} });
       for (const p of r.players) {
-        p.state.replace({ task: "draw", category, choices: r.deals.get(p.id)!.map((w) => w.word), deadline, done: false, ...this.#mine(p) });
+        const cards = r.deals.get(p.id)!;
+        p.state.replace({ task: "draw", choices: cards.map((c) => c.word.word), categories: cards.map((c) => c.category), deadline, done: false, ...this.#mine(p) });
       }
       this.#others(ids);
     });
@@ -584,7 +612,8 @@ export class Krakel extends Emitter<GameEvents> {
     r.entries = r.players.map((p) => {
       const a = got.get(p);
       const drawing = a?.drawing ?? { strokes: [] };
-      return { by: p.id, word: r.deals.get(p.id)![a?.choice ?? 0]!, drawing, guessers: [], hits: [], shown: hasInk(drawing) };
+      const card = r.deals.get(p.id)![a?.choice ?? 0]!;
+      return { by: p.id, word: card.word, category: card.category, drawing, guessers: [], hits: [], shown: hasInk(drawing) };
     });
   }
 
@@ -610,7 +639,8 @@ export class Krakel extends Emitter<GameEvents> {
     const start = party.deadline(this.timings.lead);
     const end = start + this.timings.guess;
     const key = `${r.n}:${index + 1}`;
-    const category = r.category.title;
+    // The drawing's own category: in a mixed round another one for each.
+    const category = entry.category;
     const artist = this.#who(entry.by);
     const view = { key, index: index + 1, of, artist, drawing: entry.drawing, start, end, shape: this.#hints ? shapeOf(entry.word.word) : null, asked: guessers.length };
     let finish = () => {};
@@ -738,7 +768,7 @@ export class Krakel extends Emitter<GameEvents> {
       return;
     }
     this.#setPhase("gallery");
-    const category = r.category.title;
+    const category = r.category?.title ?? null;
     const gallery = shown.map((e) => ({ id: e.by, artist: this.#who(e.by), word: e.word.word, drawing: e.drawing }));
     const ids = new Set(r.players.map((p) => p.id));
     // A heart needs two drawings to choose from that are not one's own.

@@ -29,6 +29,7 @@ interface Opts {
   oracle?: boolean;
   lang?: "en" | "de";
   hints?: boolean;
+  mixed?: boolean;
   lockout?: number;
   timings?: Partial<Timings>;
   /** Players the test plays by hand (they leave these tasks alone). */
@@ -40,7 +41,7 @@ interface Opts {
 async function game(n: number, opts: Opts = {}) {
   const relay = new MemoryRelay();
   const party = new Party({ grace: 100, maxPlayers: 10 }).listen(relay);
-  const g = new Krakel(party, { words: WORDS, rounds: opts.rounds ?? 1, timings: { ...fast, ...opts.timings }, rng: seeded(11), lang: opts.lang, hints: opts.hints, lockout: opts.lockout ?? 0.05 });
+  const g = new Krakel(party, { words: WORDS, rounds: opts.rounds ?? 1, timings: { ...fast, ...opts.timings }, rng: seeded(11), lang: opts.lang, hints: opts.hints, mixed: opts.mixed, lockout: opts.lockout ?? 0.05 });
   g.script = opts.script;
   g.open();
   const phases: string[] = [];
@@ -70,9 +71,9 @@ async function game(n: number, opts: Opts = {}) {
     players.push(b);
   }
   /** The rounds' drawings once they are ranked (the game forgets them at the end). */
-  const rounds: { category: string; entries: Entry[]; votes: Map<string, string> }[] = [];
+  const rounds: { category: string | null; entries: Entry[]; votes: Map<string, string> }[] = [];
   g.on("phase", (p) => {
-    if (p === "scores" && g.round) rounds.push({ category: g.round.category.title, entries: structuredClone(g.round.entries), votes: new Map(g.round.votes) });
+    if (p === "scores" && g.round) rounds.push({ category: g.round.category?.title ?? null, entries: structuredClone(g.round.entries), votes: new Map(g.round.votes) });
   });
   const screen = () => party.screenView()["screen"] as Record<string, any>;
   return { relay, party, g, players, phases, rounds, screen, close: () => party.close() };
@@ -103,6 +104,7 @@ test("a whole game with 4 players", async () => {
       for (const e of r.entries) {
         assert.ok(e.shown && e.drawing.strokes.length > 0);
         assert.ok(list.words.some((x) => x.word === e.word.word), "a word of the round's category");
+        assert.equal(e.category, r.category);
         assert.equal(e.guessers.length, 3);
         assert.equal(e.hits.length, 3, "the bots know the word");
         assert.equal(e.hits.filter((h) => h.first).length, 1);
@@ -379,28 +381,107 @@ test("the settings: the VIP's, checked; the host's; none during a game", async (
     assert.equal(await code(other.client.act("settings", { hints: false })), "not-vip");
     assert.equal(await code(vip.client.act("settings", { drawTime: 61 })), "bad-settings");
     assert.equal(await code(vip.client.act("settings", { hints: "no" })), "bad-settings");
+    assert.equal(await code(vip.client.act("settings", { mixed: 1 })), "bad-settings");
     assert.equal(await code(vip.client.act("settings", { rounds: 9 })), "bad-settings");
     const changed: unknown[] = [];
     g.on("settings", (s) => changed.push(s));
-    assert.equal(await code(vip.client.act("settings", { drawTime: 180, guessTime: 30, hints: false, lockout: 8, rounds: 3 })), "ok");
-    assert.deepEqual(g.settings, { drawTime: 180, guessTime: 30, hints: false, lockout: 8 });
+    assert.equal(await code(vip.client.act("settings", { drawTime: 180, guessTime: 30, hints: false, lockout: 8, rounds: 3, mixed: true })), "ok");
+    assert.deepEqual(g.settings, { drawTime: 180, guessTime: 30, hints: false, lockout: 8, mixed: true });
     assert.equal(g.rounds, 3);
     assert.equal(g.timings.draw, 180_000);
     assert.equal(g.timings.guess, 30_000);
     assert.equal(changed.length, 1);
     await until(() => other.client.view["room"].drawTime === 180);
     const room = other.client.view["room"];
-    assert.deepEqual([room.guessTime, room.hints, room.lockout, room.rounds], [30, false, 8, 3]);
+    assert.deepEqual([room.guessTime, room.hints, room.lockout, room.rounds, room.mixed], [30, false, 8, 3, true]);
     const s = party.screenView()["screen"] as Record<string, unknown>;
     assert.deepEqual([s["drawTime"], s["guessTime"], s["hints"], s["lockout"], s["rounds"]], [180, 30, false, 8, 3]);
-    g.configure({ lang: "de", timings: fast, lockout: 0 });
+    g.configure({ lang: "de", timings: fast, lockout: 0, mixed: false });
     await until(() => other.client.view["room"].lang === "de");
     assert.throws(() => g.configure({ lang: "fr" as "de" }), { code: "bad-lang" });
     await vip.client.act("start");
     await until(() => g.phase === "draw");
     assert.throws(() => g.configure({ rounds: 1 }), { code: "running" });
     assert.equal(await code(vip.client.act("settings", { hints: true })), "running");
-    assert.ok(WORDS.de.some((c) => c.title === g.round!.category.title), "a German category");
+    assert.ok(WORDS.de.some((c) => c.title === g.round!.category?.title), "a German category");
+  } finally {
+    for (const b of players) b.close();
+    close();
+  }
+});
+
+test("everyone has three words to pick from (two when the category is short of them), each with its category", async () => {
+  for (const [n, per] of [
+    [4, 3],
+    [10, 2],
+  ] as const) {
+    const { g, players, close } = await game(n);
+    try {
+      await players[0]!.client.act("start");
+      await until(() => g.phase === "draw" && players.every((b) => b.client.view["me"]?.task === "draw"));
+      const title = g.round!.category!.title;
+      const size = g.round!.category!.words.length;
+      assert.equal(per, Math.min(3, Math.floor(size / n)), `${size} words for ${n}`);
+      const all: string[] = [];
+      for (const b of players) {
+        const me = b.client.view["me"];
+        assert.equal(me.choices.length, per);
+        assert.deepEqual(me.categories, me.choices.map(() => title));
+        all.push(...me.choices);
+      }
+      assert.equal(new Set(all).size, per * n, "no word twice");
+      assert.equal(players[0]!.client.view["room"].category, title);
+    } finally {
+      for (const b of players) b.close();
+      close();
+    }
+  }
+});
+
+test("mixed words: three words from three categories each; no category while drawing, every drawing's own on stage", async () => {
+  const { party, g, players, rounds, screen, close } = await game(4, { mixed: true, rounds: 2, timings: { guess: 900, reveal: 60 } });
+  try {
+    const end = new Promise((r) => g.once("end", r));
+    const staged: { category: string; word: string; phone: string }[] = [];
+    party.on("screen-view", () => {
+      const s = screen();
+      if (s["phase"] === "guess" && s["stage"] === "reveal" && !staged.some((x) => x.word === s["word"])) {
+        staged.push({ category: s["category"], word: s["word"], phone: players[0]!.client.view["room"]?.category });
+      }
+    });
+    await players[0]!.client.act("start");
+    await until(() => g.phase === "draw" && players.every((b) => b.client.view["me"]?.task === "draw"));
+    assert.equal(g.round!.category, null);
+    assert.equal(screen()["category"], null);
+    assert.equal(players[0]!.client.view["room"].category, null);
+    assert.equal(players[0]!.client.view["room"].mixed, true);
+    const home = new Map(WORDS.en.flatMap((c) => c.words.map((x) => [x.word, c.title] as const)));
+    const all: string[] = [];
+    for (const b of players) {
+      const me = b.client.view["me"];
+      assert.equal(me.choices.length, 3);
+      assert.equal(new Set(me.categories).size, 3, "three categories");
+      me.choices.forEach((word: string, i: number) => assert.equal(me.categories[i], home.get(word), word));
+      all.push(...me.choices);
+    }
+    assert.equal(new Set(all).size, 12, "no word twice");
+    await end;
+    assert.equal(rounds.length, 2);
+    for (const r of rounds) {
+      assert.equal(r.category, null);
+      for (const e of r.entries) {
+        assert.equal(e.category, home.get(e.word.word));
+        assert.equal(e.hits.length, 3, "the bots know the word");
+      }
+    }
+    // On stage every drawing came with its own category, on the TV and on the phones.
+    assert.equal(staged.length, 8);
+    for (const s of staged) assert.equal(s.category, home.get(s.word), s.word);
+    assert.ok(new Set(staged.map((s) => s.category)).size > 2, "from several categories");
+    assert.deepEqual(
+      players.map((b) => b.errors),
+      [[], [], [], []],
+    );
   } finally {
     for (const b of players) b.close();
     close();

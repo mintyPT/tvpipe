@@ -349,6 +349,7 @@ function settings(err) {
   add("rounds", [1, 2, 3, 4], ["1", "2", "3", "4"], t.roundsLabel, false);
   add("drawTime", [60, 90, 120, 180], [60, 90, 120, 180].map(t.minutes), t.drawLabel, false);
   add("guessTime", [30, 45, 60, 90], [30, 45, 60, 90].map(t.seconds), t.guessLabel, false);
+  add("mixed", [false, true], [t.modeCategory, t.modeMixed], t.modeLabel, true);
   add("hints", [true, false], [t.hintsOn, t.hintsOff], t.hintsLabel, true);
   add("lockout", [0, 2, 4, 8], [t.lockNone, "2 s", "4 s", "8 s"], t.lockLabel, true);
   const update = () => {
@@ -358,6 +359,7 @@ function settings(err) {
       const cur = room[it.key];
       it.buttons.forEach((b, i) => b.classList.toggle("on", it.values[i] === cur));
       if (it.key === "hints" && it.line) it.line.textContent = t.hintsLine[cur ? 1 : 0];
+      if (it.key === "mixed" && it.line) it.line.textContent = t.modeLine[cur ? 1 : 0];
       if (it.key === "lockout" && it.line) it.line.textContent = t.lockLine(cur ?? 0);
     }
   };
@@ -397,7 +399,7 @@ function lobby() {
     start.disabled = ready < min;
     hint.textContent = vip ? (ready < min ? t.vipWait(min - ready) : t.vipReady) : t.waitVip;
     const room = v.room ?? {};
-    rulesLine.textContent = t.rulesLine(room.rounds ?? 2, room.drawTime ?? 120, room.guessTime ?? 45, room.hints !== false);
+    rulesLine.textContent = t.rulesLine(room.rounds ?? 2, room.drawTime ?? 120, room.guessTime ?? 45, room.hints !== false, !!room.mixed);
     rulesLine.hidden = vip;
     set.update();
   };
@@ -631,7 +633,10 @@ function draw(me, room) {
   let choice = choices.length <= 1 ? 0 : draft && typeof draft.choice === "number" && draft.choice < choices.length ? draft.choice : null;
   const wordEl = h("span", { class: "word" }, "…");
   const swap = /** @type {HTMLButtonElement} */ (h("button", { class: "swap", type: "button" }, t.change));
-  const tag = h("div", { class: "wordtag" }, h("span", { class: "label" }, `${me.category ?? ""} · ${t.drawA}`), h("span", { class: "wordline" }, wordEl, swap));
+  // Each word's category: the round's, or in a mixed round its own.
+  const cats = /** @type {string[]} */ (Array.isArray(me.categories) ? me.categories : []);
+  const label = h("span", { class: "label" });
+  const tag = h("div", { class: "wordtag" }, label, h("span", { class: "wordline" }, wordEl, swap));
   const hint = h("p", { class: "ontop" }, t.firstHint);
   const paper = h("div", { class: "paperbox" }, canvas, hint);
   const done = /** @type {HTMLButtonElement} */ (h("button", { class: "btn", id: "done", type: "button" }, t.done));
@@ -681,7 +686,7 @@ function draw(me, room) {
     saver = 0;
     saveDraft(room.round, choice, pad.strokes);
   };
-  /** @type {HTMLElement | null} the two words to pick from, while they are open */
+  /** @type {HTMLElement | null} the words to pick from, while they are open */
   let box = null;
   const changed = () => {
     undo.disabled = clear.disabled = pad.strokes.length === 0;
@@ -707,14 +712,15 @@ function draw(me, room) {
     if (saver) clearTimeout(saver);
   });
 
-  // Two words to pick from: cards over the pad until one is taken.
+  // The words to pick from: cards over the pad until one is taken.
   const ask = () => {
     pad.locked = true;
     done.disabled = true;
     hint.hidden = true;
+    label.textContent = room.mixed ? t.drawA : `${cats[0] ?? ""} · ${t.drawA}`;
     box = h(
       "div",
-      { class: "choices" },
+      { class: `choices n${choices.length}` },
       h("div", { class: "h" }, t.pick),
       ...choices.map((c, i) =>
         h(
@@ -727,10 +733,11 @@ function draw(me, room) {
               save();
             },
           },
-          c,
+          h("b", {}, c),
+          room.mixed ? h("small", {}, cats[i] ?? "") : null,
         ),
       ),
-      h("div", { class: "sub" }, t.pickHint),
+      h("div", { class: "sub" }, room.mixed ? t.pickHintMixed : t.pickHint),
     );
     paper.append(box);
     swap.hidden = true;
@@ -741,6 +748,7 @@ function draw(me, room) {
     hint.hidden = false;
     swap.hidden = choices.length <= 1 || pad.strokes.length > 0;
     wordEl.textContent = choices[choice ?? 0] ?? "";
+    label.textContent = `${cats[choice ?? 0] ?? ""} · ${t.drawA}`;
     pad.locked = false;
     done.disabled = false;
   };

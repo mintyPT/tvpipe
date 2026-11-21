@@ -9,7 +9,7 @@
  * phone at each moment, and a layout check of every phone screen at 390
  * and 320 px.
  *
- *   npm run build && node test/live/play.ts [--bots N] [--rounds N] [--lang en|de] [--hints on|off] [--out DIR] [--shots DIR]
+ *   npm run build && node test/live/play.ts [--bots N] [--rounds N] [--lang en|de] [--hints on|off] [--mixed on|off] [--out DIR] [--shots DIR]
  *
  * `--shots DIR`: the pictures for the games list (docs/game-catalog.md)
  * into DIR, from the fixed round of `scenario.ts` (four people, every
@@ -38,6 +38,7 @@ const { values: args } = parseArgs({
     rounds: { type: "string", default: "2" },
     lang: { type: "string", default: "en" },
     hints: { type: "string", default: "on" },
+    mixed: { type: "string", default: "off" },
     out: { type: "string" },
     shots: { type: "string" },
   },
@@ -91,6 +92,7 @@ try {
   await set("rounds", shots ? "1" : args.rounds);
   await set("lang", lang);
   await set("hints", args.hints === "off" ? "off" : "on");
+  await set("mixed", args.mixed === "on" && !shots ? "on" : "off");
   await win.until(`krakel.game.lang === ${JSON.stringify(lang)} && krakel.game.settings.hints === ${args.hints !== "off"}`, 5000);
   // Short timers; the phone gets time to draw and to guess twice.
   const timings = shots ? { draw: 60_000, guess: 30_000, lead: 3000, reveal: 4000, vote: 12_000, ranked: 9000, scores: 6000 } : { draw: 30_000, guess: 16_000, lead: 3000, reveal: 4500, vote: 14_000, ranked: 10_000, scores: 6000 };

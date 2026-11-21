@@ -154,7 +154,7 @@ function renderPlayers(): void {
   const short = party.connectedPlayers.length < game.minPlayers;
   $<HTMLButtonElement>("start").disabled = running || short;
   $("start").textContent = running ? t.playing : short ? t.waitingMore(game.minPlayers - party.connectedPlayers.length) : t.start;
-  for (const id of ["rounds", "drawTime", "guessTime", "hints", "lockout", "late", "lang"]) $<HTMLSelectElement>(id).disabled = running;
+  for (const id of ["rounds", "drawTime", "guessTime", "mixed", "hints", "lockout", "late", "lang"]) $<HTMLSelectElement>(id).disabled = running;
   renderSettings();
 }
 
@@ -164,6 +164,7 @@ function renderSettings(): void {
   $<HTMLSelectElement>("drawTime").value = String(s.drawTime);
   $<HTMLSelectElement>("guessTime").value = String(s.guessTime);
   $<HTMLSelectElement>("hints").value = s.hints ? "on" : "off";
+  $<HTMLSelectElement>("mixed").value = s.mixed ? "on" : "off";
   $<HTMLSelectElement>("lockout").value = String(s.lockout);
   $<HTMLSelectElement>("rounds").value = String(game.rounds);
   $<HTMLSelectElement>("late").value = party.lateJoin === "closed" ? "closed" : "wait";
@@ -311,6 +312,7 @@ async function main(): Promise<void> {
   $<HTMLSelectElement>("drawTime").onchange = (e) => game.configure({ drawTime: Number((e.target as HTMLSelectElement).value) });
   $<HTMLSelectElement>("guessTime").onchange = (e) => game.configure({ guessTime: Number((e.target as HTMLSelectElement).value) });
   $<HTMLSelectElement>("hints").onchange = (e) => game.configure({ hints: (e.target as HTMLSelectElement).value === "on" });
+  $<HTMLSelectElement>("mixed").onchange = (e) => game.configure({ mixed: (e.target as HTMLSelectElement).value === "on" });
   $<HTMLSelectElement>("lockout").onchange = (e) => game.configure({ lockout: Number((e.target as HTMLSelectElement).value) });
   $<HTMLSelectElement>("late").onchange = (e) => {
     party.lateJoin = (e.target as HTMLSelectElement).value as LateJoin;

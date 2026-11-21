@@ -474,7 +474,7 @@ function lobby() {
       const ready = roster.filter((r) => r.connected).length;
       hint.textContent = ready < min ? t.needed(min - ready) : t.vipStarts(roster.find((r) => r.vip)?.name);
       hint.classList.toggle("ready", ready >= min);
-      const b = [t.rounds(s.rounds ?? 2), t.drawTime(s.drawTime ?? 120), t.guessTime(s.guessTime ?? 45), s.hints === false ? t.hintsOff : t.hintsOn, t.lockout(s.lockout ?? 0)];
+      const b = [t.rounds(s.rounds ?? 2), s.mixed ? t.modeMixed : t.modeCategory, t.drawTime(s.drawTime ?? 120), t.guessTime(s.guessTime ?? 45), s.hints === false ? t.hintsOff : t.hintsOn, t.lockout(s.lockout ?? 0)];
       const key = b.join("|");
       if (badges.dataset["k"] !== key) {
         badges.dataset["k"] = key;
@@ -508,7 +508,12 @@ function draw(s) {
     "div",
     { class: `scene draw${players.length > 5 ? " crowd" : ""}` },
     topline({ ...s, category: null }),
-    h("div", { class: "catbox" }, h("div", { class: "kicker" }, t.category), h("div", { class: `cat${[...String(s.category ?? "")].length > 16 ? " long" : ""}` }, s.category ?? ""), h("div", { class: "sub" }, t.everyoneDraws)),
+    // A mixed round has no category of its own: everyone's word is from another one.
+    ((/** @type {string} */ title, /** @type {boolean} */ mixed) =>
+      h("div", { class: "catbox" }, h("div", { class: "kicker" }, mixed ? t.mixedKicker : t.category), h("div", { class: `cat${mixed ? " mixed" : ""}${[...title].length > 16 ? " long" : ""}` }, title), h("div", { class: "sub" }, mixed ? t.everyoneDrawsMixed : t.everyoneDraws)))(
+      typeof s.category === "string" && s.category ? s.category : t.mixed,
+      !s.category,
+    ),
     h("div", { class: `easels${players.length > 5 ? " two" : ""}`, style: { "--cols": String(Math.ceil(players.length / 2)) } }, ...cards.map((c) => c.el)),
     tip,
     h("div", { class: "clockrow" }, clock.el, count),

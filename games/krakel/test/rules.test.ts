@@ -3,8 +3,11 @@ import { test } from "node:test";
 
 import {
   artistPoints,
+  cardsOf,
+  CHOICES,
   choicesFor,
   cleanGuess,
+  dealMixed,
   dealRound,
   Deck,
   distance,
@@ -214,21 +217,56 @@ test("decks deal every card before any twice", () => {
   assert.throws(() => new Deck([], seeded(1)));
 });
 
-test("the deal: two words each to pick from when the category has enough, no word twice", () => {
-  const cat: Category = { title: "T", words: Array.from({ length: 20 }, (_, i) => w(`w${i}`)) };
-  assert.equal(choicesFor(20, 10), 2);
-  assert.equal(choicesFor(19, 10), 1);
-  assert.equal(choicesFor(6, 3), 2);
-  for (const n of [3, 7, 10]) {
+test("the deal: three words each to pick from when the category has enough (else two, else one), no word twice", () => {
+  const cat: Category = { title: "T", words: Array.from({ length: 23 }, (_, i) => w(`w${i}`)) };
+  assert.equal(CHOICES, 3);
+  assert.deepEqual(
+    [3, 7, 8, 10, 11, 12, 23, 24, 40].map((n) => choicesFor(23, n)),
+    [3, 3, 2, 2, 2, 1, 1, 1, 1],
+  );
+  assert.equal(choicesFor(30, 10), 3);
+  assert.equal(choicesFor(9, 3), 3);
+  assert.equal(choicesFor(8, 3), 2);
+  assert.equal(choicesFor(0, 0), 1);
+  for (const n of [3, 7, 8, 10]) {
+    const per = n <= 7 ? 3 : 2;
     const deal = dealRound(cat, n, seeded(n));
     assert.equal(deal.length, n);
-    assert.ok(deal.every((d) => d.length === 2));
-    assert.equal(new Set(deal.flat().map((x) => x.word)).size, 2 * n);
+    assert.ok(deal.every((d) => d.length === per));
+    assert.equal(new Set(deal.flat().map((x) => x.word)).size, per * n);
   }
   const small: Category = { title: "S", words: cat.words.slice(0, 7) };
   const deal = dealRound(small, 5, seeded(1));
   assert.ok(deal.every((d) => d.length === 1));
   assert.equal(new Set(deal.flat().map((x) => x.word)).size, 5);
+});
+
+test("the mixed deal: three words from three categories each, no word twice, none that says another of the round", () => {
+  const cats: Category[] = Array.from({ length: 6 }, (_, c) => ({ title: `C${c}`, words: Array.from({ length: 8 }, (_, i) => w(`c${c}word${i}`)) }));
+  const cards = cardsOf(cats);
+  assert.equal(cards.length, 48);
+  assert.deepEqual(cards[9], { word: w("c1word1"), category: "C1" });
+  for (const n of [3, 10]) {
+    const deal = dealMixed(new Deck(cards, seeded(n)), n);
+    assert.equal(deal.length, n);
+    for (const mine of deal) {
+      assert.equal(mine.length, 3);
+      assert.equal(new Set(mine.map((c) => c.category)).size, 3, "three categories");
+    }
+    assert.equal(new Set(deal.flat().map((c) => c.word.word)).size, 3 * n);
+  }
+  // `balloon` and `football` have a `ball` inside: a round with the ball has neither.
+  const tricky: Category[] = [
+    { title: "Toys", words: [w("ball"), w("kite"), w("doll"), w("robot"), w("puzzle")] },
+    { title: "Sky", words: [w("balloon"), w("moon"), w("star"), w("cloud"), w("comet")] },
+    { title: "Sports", words: [w("football", "soccer"), w("tennis"), w("judo"), w("golf"), w("rugby")] },
+    { title: "Farm", words: [w("pig"), w("cow"), w("hen"), w("goat"), w("horse")] },
+  ];
+  for (let seed = 1; seed <= 30; seed++) {
+    const words = dealMixed(new Deck(cardsOf(tricky), seeded(seed)), 3).flat().map((c) => c.word.word);
+    assert.equal(new Set(words).size, 9);
+    assert.ok(!words.includes("ball") || !(words.includes("balloon") || words.includes("football")), words.join(" "));
+  }
 });
 
 test("points: a right guess pays by time, the artist half of what the guessers earned by time", () => {
@@ -257,6 +295,7 @@ test("the favourite: the most hearts, at least two; ties split it", () => {
 const entry = (by: string, hits: [string, number][], shown = true): Entry => ({
   by,
   word: w(`word of ${by}`),
+  category: "T",
   drawing: { strokes: shown ? [[1, 14, 1, 1]] : [] },
   guessers: ["a", "b", "c", "d"].filter((x) => x !== by),
   hits: hits.map(([id, at], i) => ({ by: id, at, points: guessPoints(at), first: i === 0 })),
