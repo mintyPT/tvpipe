@@ -228,11 +228,15 @@ button.card:active:not(:disabled) { transform: translateY(3px) scale(.98); }
 button.card.down .paper { box-shadow: 0 0 0 2px var(--ink), 0 6px 0 2px rgba(0,0,0,.35); }
 button.card.chosen .paper { box-shadow: 0 0 0 4px var(--gold), 0 6px 0 4px var(--ink); }
 button.card.dim { opacity: .45; }
-/* The card the guesser picked, turning on the TV: lifted, ringed in gold, until its word shows there. */
-.card.turning { transform: translateY(-8px) scale(1.04); transition: transform .24s; }
-.card.turning .paper { box-shadow: 0 0 0 4px var(--gold), 0 10px 0 2px rgba(0,0,0,.35); animation: turning 0.9s ease-in-out infinite alternate; }
+/* The card the guesser picked: lifted and ringed in gold at the tap, turned over as soon as its word
+   is here (flipin), and lifted until the TV has turned it too. */
+.card.turning { transform: translateY(-8px) scale(1.04); transition: transform .12s; }
+.card.turning .paper { box-shadow: 0 0 0 4px var(--gold), 0 10px 0 2px rgba(0,0,0,.35); }
+.card.turning.down .paper { animation: turning 0.45s ease-in-out infinite alternate; }
 @keyframes turning { from { filter: brightness(1); } to { filter: brightness(1.18); } }
-@media (prefers-reduced-motion: reduce) { .card.turning .paper { animation: none; } }
+.card.flipin .paper { animation: flipin .34s cubic-bezier(.2, .8, .3, 1); }
+@keyframes flipin { from { transform: perspective(600px) rotateY(90deg); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .card.turning.down .paper, .card.flipin .paper { animation: none; } }
 .card .rosette {
   position: absolute; right: -10px; top: -12px; width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center;
   background: var(--gold); color: var(--ink); font-size: 14px; font-weight: 700; transform: rotate(12deg);

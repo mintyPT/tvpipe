@@ -562,15 +562,19 @@ try {
       const by = args.shots ? JSON.stringify(scenario.TURN[i]) : "null";
       const picked = Date.now();
       await phone.eval(`[...document.querySelectorAll(".cards button.card.down")].find((b) => ${by} === null || b.querySelector(".who")?.textContent === ${by}).click(); true`);
-      // The card turns on the TV first: the phone shows it turning, its word when the TV shows it.
-      await phone.until(`!!document.querySelector(".cards .card.turning")`, 3000).catch(() => problem("reveal: the picked card does not show as turning on the phone"));
-      if (i === 0) await shot(`${at}-reveal-turning`);
+      // The guesser's phone turns the card at once (its word there), and keeps it lifted, with no
+      // lock-in, until the TV has turned it too.
+      await phone.until(`!!document.querySelector(".cards .card.turning")`, 3000).catch(() => problem("reveal: the picked card does not lift on the phone"));
       await phone.until(`document.querySelectorAll(".cards .card.turned").length === ${i + 1}`);
       const ms = Date.now() - picked;
+      if (i === 0) await shot(`${at}-reveal-turning`);
       const flip = await win.eval<number>(`jinx.game.timings.flip + jinx.party.tvDelay`);
-      if (ms < flip - 150) problem(`reveal: the phone showed the word ${ms} ms after the pick, before the TV's flip (${flip} ms)`);
+      if (ms > 600) problem(`reveal: the guesser's phone showed the word ${ms} ms after the pick (not at once)`);
+      await phone.until(`!document.querySelector(".cards .card.turning")`, flip + 3000);
+      const lockIn = Date.now() - picked;
+      if (lockIn < flip - 150) problem(`reveal: the guesser could lock in ${lockIn} ms after the pick, before the TV's flip (${flip} ms)`);
       await win.until(`jinx.party.screen.peek().cards?.filter((c) => c.turned).length === ${i + 1}`);
-      log(`phone: turned card ${i + 1} of ${cards}: "${await phone.eval<string>(`[...document.querySelectorAll(".cards .card.turned .word")].at(-1).textContent`)}" (its word ${ms} ms after the pick; the TV's flip and lag: ${flip} ms)`);
+      log(`phone: turned card ${i + 1} of ${cards}: "${await phone.eval<string>(`[...document.querySelectorAll(".cards .card.turned .word")].at(-1).textContent`)}" (its word ${ms} ms after the pick, lock-in after ${lockIn} ms; the TV's flip and lag: ${flip} ms)`);
       if (i === 0) await shot(`${at}-reveal-turned`, { wait: 2500 });
     }
     const secret = (await state()).secret!;

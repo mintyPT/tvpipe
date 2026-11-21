@@ -71,7 +71,7 @@ export interface Timings {
   fateBefore: number;
   /** Phones get the verdict this long into it (the TV opens the envelope first). */
   resultAfter: number;
-  /** A turned card's word shows on the TV this long after the pick (the lift, then the flip): the phones get it then. */
+  /** A turned card's word shows on the TV this long after the pick (the lift, then the flip): the other phones get it then, the guesser's at once. */
   flip: number;
   /** Picking the best clue. */
   best: number;
@@ -99,7 +99,7 @@ export const DEFAULT_TIMINGS: Timings = {
   verdict: 6000,
   fateBefore: 1500,
   resultAfter: 3000,
-  flip: 1600,
+  flip: 900,
   best: 20_000,
   replay: 8000,
   replayHold: 4000,
@@ -1004,10 +1004,13 @@ export class Jinx extends Emitter<JinxEvents> {
   }
 
   /**
-   * A card turns: on the TV at once (the lift, then the flip); the phones
-   * get its word when the TV shows it (`flip` later, with the TV's lag).
-   * Meanwhile the guesser's phone shows the card turning (`turning`), and
-   * the next decision's time counts from when the word is there.
+   * A card turns: on the TV at once (the lift, then the flip), and on the
+   * guesser's phone at once with its word, so the pick feels like turning
+   * a card in hand; the other phones get it when the TV shows it (`flip`
+   * later, with the TV's lag). Until then the guesser's phone marks the
+   * card `turning`: no other pick and no lock-in yet (typing the guess
+   * is fine: the draft rides on the TV beside the flip), and the next
+   * decision's time counts from when the TV has the word.
    */
   #turn(r: Round, card: RoundCard): void {
     const party = this.party;
@@ -1018,7 +1021,7 @@ export class Jinx extends Emitter<JinxEvents> {
     r.deadline = party.deadline(this.timings.flip + this.timings.decide);
     const started = r.deadline - this.timings.decide;
     this.#screenSet({ cards: this.#alive(r).map((c) => this.#cardView(c, false)), pot: r.pot, picked: card.id, typing: false, started, deadline: r.deadline });
-    r.guesser.state.set({ turning: card.id });
+    r.guesser.state.set({ cards: this.#alive(r).map((c) => this.#cardView(c, false)), pot: r.pot, deadline: r.deadline, turning: card.id });
     clearTimeout(r.flipping);
     r.flipping = setTimeout(() => {
       r.flipping = undefined;

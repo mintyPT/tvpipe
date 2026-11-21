@@ -226,7 +226,7 @@ export class Bot {
   #guess(round: string, me: { cards?: { id: string; turned?: number }[]; turning?: string }): void {
     const style = this.#o.guess ?? "mixed";
     if (style === "silent") return;
-    // A card is turning on the TV: its word comes when the TV shows it.
+    // A card is turning on the TV: nothing until the TV shows its word.
     if (me.turning) return;
     const cards = me.cards ?? [];
     if (this.#plan?.key !== round) {

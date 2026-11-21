@@ -410,7 +410,7 @@ The TV page is rendered in a headless Chrome and H.264-encoded at about
 | Hot seat | "Anna guesses. Get ready." | "You're in the hot seat. Don't look at anyone's phone." |
 | Writing | the word on an index card, one field, the bold flame toggle, Send; a rejected clue shows the reason and stays editable; then "Sent: BEACON 🔥" | "Eyes on the TV: your friends are writing", who is done |
 | Jinx check | your card's fate ("JINXED with Esme: plural"), not the other words | "3 clues survived · 4 were jinxed" |
-| Reveal | the cards (face down or turned) and "Shh, no hints!" | the face-down cards as buttons with their authors' faces, the pot, the guess field, Pass; a picked card shows as turning ("Ben's card is turning: look at the TV!") until the TV has flipped it |
+| Reveal | the cards (face down or turned) and "Shh, no hints!" | the face-down cards as buttons with their authors' faces, the pot, the guess field, Pass; a picked card turns over at once with its word, and stays lifted, without Guess, Pass or another pick ("The TV turns Ben's card too…"), until the TV has flipped it |
 | Verdict | the word, what the room banked ("+7 for the room · bank 23"), what your card did ("Your clue was turned", "Bold paid: +2 to the pot", "Jinxed: the pot lost 3") | ✓ or ✗, the word, the bank |
 | Replay | the replay; "Anna is picking the best clue…"; "Your clue helped most!" | all clues as buttons: "Which clue helped most?" |
 | Bank | the room's bank, the next title ("6 more chips to *Mind readers*"); "You're up next!" for the next guesser | the same |
@@ -419,7 +419,8 @@ The TV page is rendered in a headless Chrome and H.264-encoded at about
 **No phone beats the TV.** What the TV shows reaches the phones when the
 TV picture with it is up (`party.withTv`: the TV's lag, `tvDelay`), and
 where the TV takes its time, later still: a turned card's word after its
-lift and flip (`flip`, 1.6 s after the pick), a giver's fate near the end
+lift and flip (`flip`, 0.9 s after the pick; the guesser's own phone
+turns it at once, but locks in nothing until then), a giver's fate near the end
 of the slams (`fateBefore`), the result once the envelope is open
 (`resultAfter`). Deadlines count from when the phones and the TV show
 them (`party.deadline`): the next decision's 30 s from when the turned

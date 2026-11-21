@@ -404,6 +404,7 @@ export type PlayerState =
   | { task: "fate"; word: string; cards: { text: string; bold: boolean; fate: "alive" | "jinxed"; with: string[]; reason?: Reason }[] }
   | { task: "check"; survived: number; jinxed: number }
   | { task: "tv" }
+  /** `turning`: the card just turned (its word already here) that the TV is still turning: no pick, no guess or pass until it is gone. */
   | { task: "guess"; cards: Card[]; pot: number; deadline: number; jinxed: number; turning?: string }
   | { task: "watch"; word: string; cards: Card[]; pot: number }
   | { task: "result"; word: string; result: "right" | "wrong" | "pass" | "lost"; guesser: boolean; banked: number; bank: number; parts: Part[] }

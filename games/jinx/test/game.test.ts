@@ -748,7 +748,7 @@ test("no spoilers on phones: fate after the TV's slams, the result after the env
   }
 });
 
-test("a turned card: the TV at once, the phones when the TV shows its word (the flip, the TV's lag)", async () => {
+test("a turned card: the TV and the guesser's phone at once, the other phones when the TV shows its word (the flip, the TV's lag)", async () => {
   const tvDelay = 300;
   const flip = 400;
   const { party, g, players, close } = await setup(4, {
@@ -774,16 +774,21 @@ test("a turned card: the TV at once, the phones when the TV shows its word (the 
     assert.equal(tv.picked, card.id);
     assert.ok(tv.cards.find((c) => c.id === card.id)?.word, "the TV has the word to show");
     assert.equal(tv.deadline - tv.started, 5000, "the TV's dial: the whole decision");
-    // The guesser's phone: the card turning at once, its word only when the TV shows it.
-    await until(() => (guesser.client.view["me"] as Me).turning === card.id, 1000);
-    assert.ok(Date.now() - t0 < flip, "turning at once");
-    await until(() => !!(guesser.client.view["me"] as Me).cards?.find((c) => c.id === card.id)?.word, 3000);
+    // The guesser's phone: the card turned with its word at once, marked turning until the TV shows it.
+    const mine = (guesser.client.view["me"] as Me);
+    assert.equal(mine.turning, card.id, "turning at once");
+    assert.ok(mine.cards?.find((c) => c.id === card.id)?.word, "the guesser's word at once");
+    assert.ok(Date.now() - t0 < flip, "at once");
     await until(() => !!(giver.client.view["me"] as Me).cards?.find((c) => c.id === card.id)?.turned, 3000);
     const first = (who: string) => seen.find((s) => s.who === who && s.at >= t0 && s.me?.cards?.find((c) => c.id === card.id)?.turned)!;
-    for (const who of [guesser.name, giver.name]) {
-      const s = first(who);
-      assert.ok(s.at - t0 >= flip + tvDelay - 30, `${who}: the word after the flip and the TV's lag (${s.at - t0} ms)`);
-    }
+    const s = first(giver.name);
+    assert.ok(s.at - t0 >= flip + tvDelay - 30, `the giver: the word after the flip and the TV's lag (${s.at - t0} ms)`);
+    await until(() => (guesser.client.view["me"] as Me).turning === undefined, 3000);
+    const mineSeen = seen.filter((x) => x.who === guesser.name && x.at >= t0);
+    const from = mineSeen.findIndex((x) => x.me.turning === card.id);
+    assert.ok(from >= 0 && mineSeen[from]!.at - t0 < flip, "turning at once");
+    const done = mineSeen.slice(from).find((x) => x.me.task === "guess" && x.me.turning === undefined)!;
+    assert.ok(done.at - t0 >= flip + tvDelay - 30, `the guesser's lock-in once the TV has the word (${done.at - t0} ms)`);
     const me = guesser.client.view["me"] as Me;
     assert.equal(me.turning, undefined);
     assert.ok(me.deadline! - party.now() > 5000 - 400, "the whole decision from when the word shows");

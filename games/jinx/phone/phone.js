@@ -1261,10 +1261,34 @@ function guess(me) {
     go,
   );
   let busy = false;
-  /** A card turning on the TV (`me.turning`): its word comes when the TV shows it. */
+  /**
+   * The card just turned that the TV is still turning (`me.turning`): its
+   * word is here at once, but no other pick and no lock-in until the TV
+   * has it too.
+   */
   let turning = "";
+  /** The card tapped, until the host answers: lifted at once. */
+  let picking = "";
   let cards = me.cards;
   let lastCards = "";
+  /** Cards already face up here (one turned since flips over once). */
+  const up = new Set(me.cards.filter((c) => c.turned).map((c) => c.id));
+  function drawGrid() {
+    grid.replaceChildren(
+      ...cards.map((c) => {
+        if (c.turned) {
+          const fresh = !up.has(c.id);
+          up.add(c.id);
+          if (fresh) buzz([15]);
+          const extra = [c.id === turning ? "turning" : "", fresh ? "flipin" : ""].filter(Boolean).join(" ");
+          return cardEl(c, { extra: extra || undefined });
+        }
+        if (c.id === turning || c.id === picking) return cardEl(c, { words: false, extra: "turning" });
+        return cardEl(c, { tag: "button", onclick: () => pick(c.id), label: t.turnCard(nameOf(c.author)), words: false });
+      }),
+    );
+    fitWords(grid);
+  }
   input.addEventListener("input", () => {
     client.input({ draft: input.value.slice(0, MAX_WORD) });
     sync();
@@ -1285,10 +1309,15 @@ function guess(me) {
   function pick(id) {
     if (busy || turning) return;
     busy = true;
+    picking = id;
+    drawGrid();
     sync();
     buzz([20]);
     act("pick", { card: id }, err)
-      .catch(() => {})
+      .catch(() => {
+        picking = "";
+        drawGrid();
+      })
       .finally(() => {
         busy = false;
         sync();
@@ -1298,7 +1327,8 @@ function guess(me) {
     const turned = cards.filter((c) => c.turned).length;
     const left = cards.length - turned;
     const wait = busy || !!turning;
-    input.disabled = wait || turned === 0;
+    // Typing may start while the TV still turns the card (the draft shows beside it).
+    input.disabled = busy || turned === 0;
     input.placeholder = turned === 0 ? t.turnFirst : t.guessPlaceholder;
     go.disabled = wait || turned === 0 || !input.value.trim();
     pass.disabled = wait || turned === 0;
@@ -1314,23 +1344,14 @@ function guess(me) {
       if (m.task !== "guess") return;
       cards = m.cards;
       turning = m.turning ?? "";
+      if (picking && cards.some((c) => c.id === picking && c.turned)) picking = "";
       const key = JSON.stringify([m.cards, m.pot, turning]);
       if (key !== lastCards) {
-        const before = lastCards;
         lastCards = key;
         potBox.replaceChildren(potEl(m.pot));
         const jinx = main.querySelector(".jinxed");
         if (jinx) jinx.textContent = t.cardsSurvived(m.cards.length, m.jinxed);
-        fitWords(grid);
-        grid.replaceChildren(
-          ...m.cards.map((c) => {
-            const name = nameOf(c.author);
-            if (c.turned) return cardEl(c);
-            if (c.id === turning) return cardEl(c, { words: false, extra: "turning" });
-            return cardEl(c, { tag: "button", onclick: () => pick(c.id), label: t.turnCard(name), words: false });
-          }),
-        );
-        if (before) buzz([15]);
+        drawGrid();
       }
       sync();
     },

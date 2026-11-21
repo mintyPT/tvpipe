@@ -223,7 +223,7 @@ const en = (f) => ({
   noCardsLeft: "No cards left: guess or pass.",
   another: "Turn another (−2 chips) or guess now.",
   /** @param {string} name */
-  turning: (name) => `${/s$/i.test(name) ? `${name}’` : `${name}’s`} card is turning: look at the TV!`,
+  turning: (name) => `The TV turns ${/s$/i.test(name) ? `${name}’` : `${name}’s`} card too…`,
   yourTurn: "Your turn",
   /** @param {number} n @param {number} jinxed */
   cardsSurvived: (n, jinxed) => `${f.p(n, { one: "#\u00a0card", other: "#\u00a0cards" })} survived · ${f.n(jinxed)}\u00a0jinxed`,
@@ -485,7 +485,7 @@ const de = (f) => ({
   whoseCard: "Wessen Karte traust du? Tippen zum Umdrehen.",
   noCardsLeft: "Keine Karten mehr: raten oder passen.",
   another: "Noch eine umdrehen (−2 Chips) oder jetzt raten.",
-  turning: (name) => `${/[sßxz]$/i.test(name) ? `${name}’` : `${name}s`} Karte wird umgedreht: Schau auf den Fernseher!`,
+  turning: (name) => `Der Fernseher dreht ${/[sßxz]$/i.test(name) ? `${name}’` : `${name}s`} Karte auch um …`,
   yourTurn: "Du bist dran",
   cardsSurvived: (n, jinxed) => `${f.p(n, { one: "#\u00a0Karte", other: "#\u00a0Karten" })} übrig · ${f.n(jinxed)}\u00a0gejinxt`,
   turnCard: (name) => `${/[sßxz]$/i.test(name) ? `${name}’` : `${name}s`} Karte umdrehen`,

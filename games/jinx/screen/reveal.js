@@ -125,7 +125,11 @@ export function reveal(ctx, v, prev) {
     if (v.typing) dymo.set(v.draft ?? "", anim);
   };
 
-  /** A card turns: "ANNA TRUSTS… BEN", lift, hold, flip, badge, the pot drains. @param {Card} c @param {number} potFrom @param {number} potTo */
+  /**
+   * A card turns: "ANNA TRUSTS… BEN", lift, a short hold, flip (the word
+   * is up 850 ms after the pick: the game's `flip`), badge, the pot drains.
+   * @param {Card} c @param {number} potFrom @param {number} potTo
+   */
   const turn = async (c, potFrom, potTo) => {
     const el = els.get(c.id);
     const s = slots.get(c.id);
@@ -136,13 +140,13 @@ export function reveal(ctx, v, prev) {
     el.style.zIndex = "10";
     A(el, [{ transform: "none" }, { transform: "translateY(-14px) scale(1.05)" }], 240);
     sfx.pop();
-    if (!(await ctx.wait(1000))) return;
+    if (!(await ctx.wait(350))) return;
     sfx.whoosh();
-    ctx.later(250, sfx.flipTick);
+    ctx.later(200, sfx.flipTick);
     const flip = el.querySelector(".flip");
-    if (flip) A(flip, [{ transform: "rotateY(180deg)" }, { transform: "rotateY(0deg)" }], 640, { easing: EASE.inout });
-    A(el, [{ transform: "translateY(-14px) scale(1.05)" }, { offset: 0.5, transform: "translateY(-50px) scale(1.32)" }, { transform: "none" }], 640, { easing: EASE.inout });
-    if (!(await ctx.wait(620))) return;
+    if (flip) A(flip, [{ transform: "rotateY(180deg)" }, { transform: "rotateY(0deg)" }], 520, { easing: EASE.inout });
+    A(el, [{ transform: "translateY(-14px) scale(1.05)" }, { offset: 0.5, transform: "translateY(-50px) scale(1.32)" }, { transform: "none" }], 520, { easing: EASE.inout });
+    if (!(await ctx.wait(500))) return;
     el.classList.remove("down");
     el.getAnimations().forEach((a) => a.cancel());
     el.querySelectorAll(".flip").forEach((f) => f.getAnimations().forEach((a) => a.cancel()));
