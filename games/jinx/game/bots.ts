@@ -161,7 +161,7 @@ export class Bot {
     const pool = dict.length > 0 ? dict : FALLBACK[lang];
     for (let i = 0; i < 20; i++) {
       const w = this.#pick(pool)!;
-      if (/^\p{L}{3,12}$/u.test(w)) return w;
+      if (/^\p{L}{3,24}$/u.test(w)) return w;
     }
     return this.#pick(FALLBACK[lang])!;
   }

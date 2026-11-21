@@ -68,10 +68,11 @@ FORM", "WORTFAMILIE"). The pages' texts are in `strings.js`/`strings.ts`,
 written for each language rather than translated (German: "du", the
 same cheeky host, German stamps: RICHTIG!, DANEBEN, EINGELOGGT; JINX! stays
 the game's word). A language whose data files are missing cannot be
-picked. Long German compounds fit: card words shrink, then condense, then
-break onto a second line on the phone's small cards; the secret word on
-the phone's index card condenses further; running text hyphenates
-(`lang` on every page).
+picked. Long German compounds fit, never cut with an ellipsis: card words
+shrink, then condense, then go on two hyphenated lines (the longest
+clues on the TV, the phone's small cards); the secret word on the
+phone's index card condenses further; running text hyphenates (`lang`
+on every page). `node test/live/play.ts --long` checks it.
 
 ## Tests
 
@@ -87,15 +88,35 @@ a closed bot, the secrecy of the word on the TV and the guesser's
 phone; a German game with bots, the language switched between games
 (each language with its own dealt words) and a German refusal.
 
-`node test/live/play.ts [--bots N] [--rounds auto|1|2] [--lang en|de] [--out DIR]` (after
-`npm run build`; not part of `npm test`): a whole game on the real `tvpipe
-game play` with headless Chrome as the host window, the TV and a phone, bots
-for the others; screenshots of every phase, layout checks, and checks that
-no phone shows a jinx, the word or a turned card's word before the TV
-does. Bots write the
-word's category or another word from the word list, so they jinx now and
-then, and they peek at the word to guess. They are for tests: the host
-page's bot buttons show only with `?bots` in its URL or with `tvpipe
-game play --dev`. `--lang de` plays a
-German room (screenshots in `/tmp/jinx-live-de`): the phone's browser in
-German, German clues and guesses, the same layout checks.
+## Checking it
+
+```sh
+npm run check && npm test             # types; the matchers, the rules, whole games with bots in Node
+npm run build                         # dist/, which the live check plays
+node test/live/play.ts                # a live game: tvpipe, headless Chrome, a phone, 3 bots; screenshots in /tmp/jinx-live
+node test/live/play.ts --bots 7       # a full table: 8 players, the seats beside the join badge
+node test/live/play.ts --lang de      # a German room (/tmp/jinx-live-de)
+node test/live/play.ts --long         # the longest words and clues (also with --lang de: compounds)
+node test/live/play.ts --bots 7 --shots ../../site/static/games/jinx   # the games list's pictures (test/live/scenario.ts)
+```
+
+`node test/live/play.ts [--bots N] [--rounds auto|1|2] [--lang en|de] [--long] [--out DIR] [--shots DIR]`
+(not part of `npm test`): a whole game on the real `tvpipe game play`
+with headless Chrome as the host window, the TV and a phone (each in a
+window of its own, so all of them animate), bots for the others;
+screenshots of every phase, layout checks (the phone at 390 and 320 px,
+the TV page: no text out of its box or off the screen, nothing under
+the join badge), checks that no phone shows a jinx, the word or a turned
+card's word before the TV does, and every tab's errors and the bots'
+refused actions fail the run. Bots write the word's category or another
+word from the word list, so they jinx now and then, and they peek at
+the word to guess. They are for tests: the host page's bot buttons show
+only with `?bots` in its URL or with `tvpipe game play --dev`. `--lang
+de` plays a German room: the phone's browser in German, German clues
+and guesses, the same layout checks. `--long` deals the language's
+longest words and has the bots and the phone write clues of 18–24
+letters, to see that none is cut off or broken. `--shots DIR` writes
+the games list's pictures (`tv-reveal`, `phone-lobby`, `phone-guess`;
+docs/game-catalog.md) from a fixed round and ends there. The live check
+needs Chrome and a built tvpipe (`TVPIPE_BINARY`, else `target/release`,
+else `target/debug`).

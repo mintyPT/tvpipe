@@ -10,10 +10,21 @@
  * window, the TV (the stream, and the TV page itself) and the phone per
  * phase; every shot also checks the layout (the phone, also at 320 px wide,
  * and the TV page: no text running out of its box, nothing off the
- * screen), the secrecy of the word on the TV, and every tab's console for
- * errors.
+ * screen, nothing under tvpipe's join badge in the bottom-left corner),
+ * the secrecy of the word on the TV, and every tab's errors (over
+ * DevTools: exceptions, console errors, failed loads); the bots' refused
+ * actions fail the run too. Every tab has a window of its own (headless
+ * Chrome animates only a window's front tab).
  *
- *   npm run build && node test/live/play.ts [--bots N] [--rounds auto|1|2] [--lang en|de] [--out DIR] [--shots DIR]
+ *   npm run build && node test/live/play.ts [--bots N] [--rounds auto|1|2] [--lang en|de] [--long] [--out DIR] [--shots DIR]
+ *
+ * `--bots 7`: a full table (8 players): the seats of the write scene and
+ * the verdict, two rows of cards, beside the join badge.
+ *
+ * `--long`: the longest secret words of the language's list are dealt
+ * (the window's fetch of the list answered with them only), the bots and
+ * the phone write clues of 18–24 letters and guess the long word: to see
+ * that no word is cut off or broken on the TV or the phone.
  *
  * `--lang de`: the room in German (the host page's Language setting), the
  * phone's browser in German, German clues and guesses; screenshots in
@@ -49,6 +60,7 @@ const { values: args } = parseArgs({
     out: { type: "string" },
     shots: { type: "string" },
     lang: { type: "string", default: "en" },
+    long: { type: "boolean", default: false },
   },
 });
 const de = args.lang === "de";
@@ -65,7 +77,12 @@ const binary =
   ["release", "debug"].map((p) => fileURLToPath(new URL(`target/${p}/${exe}`, repo))).find((p) => existsSync(p));
 if (!binary) throw new Error("build tvpipe first (cargo build --release -p tvpipe-cli)");
 const bundle = fileURLToPath(here);
-const out = args.out ?? (de ? "/tmp/jinx-live-de" : "/tmp/jinx-live");
+const out = args.out ?? `/tmp/jinx-live${de ? "-de" : ""}${args.long ? "-long" : ""}`;
+if (args.long && args.shots) throw new Error("--long and --shots: one at a time");
+/** --long: clues of 18–24 letters (German compounds), and wrong guesses as long. */
+const LONG = de
+  ? ["Donaudampfschifffahrt", "Geschirrspülmaschine", "Weihnachtsbaumschmuck", "Streichholzschächtelchen", "Rindfleischetikettierung", "Sonnenblumenkernbrot", "Feuerwehrhauptmann", "Eichhörnchenfutter"]
+  : ["incomprehensibilities", "electroencephalograph", "counterrevolutionary", "uncharacteristically", "internationalization", "telecommunications", "photosynthesizing", "overenthusiastically"];
 mkdirSync(out, { recursive: true });
 if (args.shots) mkdirSync(args.shots, { recursive: true });
 const nBots = Number(args.bots);
@@ -103,19 +120,47 @@ const reportErrors = () => {
     for (const e of tab.errors.splice(0)) problem(`${name} console: ${e.replace(/:\d+\/favicon/, ":PORT/favicon")}`);
   }
 };
+/**
+ * --long: the window's word lists hold their 16 longest words only
+ * (headers kept), over the DevTools Fetch domain: the deck deals them.
+ * Call before the host page loads.
+ */
+async function dealLong(win: Tab): Promise<void> {
+  type Paused = { requestId: string; request: { url: string }; responseStatusCode?: number; responseHeaders?: { name: string; value: string }[] };
+  const answer = async (p: Paused): Promise<void> => {
+    if (p.responseStatusCode !== 200) return void (await win.send("Fetch.continueRequest", { requestId: p.requestId }));
+    const body = (await win.send("Fetch.getResponseBody", { requestId: p.requestId })) as { body: string; base64Encoded: boolean };
+    const text = body.base64Encoded ? Buffer.from(body.body, "base64").toString("utf8") : body.body;
+    const lines = text.split("\n").filter((l) => l.trim() !== "");
+    const head = lines.filter((l) => l.startsWith("#"));
+    const words = lines.filter((l) => !l.startsWith("#")).sort((a, b) => [...b.split("\t")[0]!].length - [...a.split("\t")[0]!].length).slice(0, 16);
+    log(`--long: ${p.request.url.replace(/.*\//, "")}: ${words.map((l) => l.split("\t")[0]).join(", ")}`);
+    await win.send("Fetch.fulfillRequest", {
+      requestId: p.requestId,
+      responseCode: 200,
+      responseHeaders: (p.responseHeaders ?? []).filter((h) => !/^content-(length|encoding)$/i.test(h.name)),
+      body: Buffer.from([...head, ...words].join("\n") + "\n").toString("base64"),
+    });
+  };
+  win.on("Fetch.requestPaused", (p: Paused) => void answer(p).catch((e: Error) => problem(`--long: ${p.request.url}: ${e.message}`)));
+  await win.send("Fetch.enable", { patterns: [{ urlPattern: "*/data/words*.txt*", requestStage: "Response" }] });
+}
+
 type HostMon = { at: number; phase: string; round: number; until: number; task: string; secret: string; guesser: boolean };
 type PhoneMon = { at: number; fate: boolean; result: boolean; text: string };
 /**
  * The phones' secrecy over time: no jinx fate (the fate screen, or the
  * guesser's "survived"/"jinxed" counts) before the TV's jinx `until` − 1.5 s,
- * no word or result before the verdict's start + 3 s; on the host (Phil's
- * task) and on the phone's screen.
+ * no word or result before the verdict's start + 3 s; on the phone's
+ * screen, and on the host (Phil's task), which sets it the TV's lag
+ * earlier (`party.withTv`: the phone applies it when the TV shows it).
  */
 async function timing(win: Tab, phone: Tab): Promise<void> {
   const FATE_BEFORE = 1500;
   const RESULT_AFTER = 3000;
   const SLACK = 120; // the monitors' poll and the view's way to the phone
   const verdictMs = await win.eval<number>(`jinx.game.timings.verdict`);
+  const lag = await win.eval<number>(`jinx.party.tvDelay`);
   const host = await win.eval<HostMon[]>(`globalThis.__mon`);
   const ph = await phone.eval<PhoneMon[]>(`globalThis.__mon`);
   // The windows: per round, from the jinx (or verdict) start to its limit.
@@ -133,11 +178,10 @@ async function timing(win: Tab, phone: Tab): Promise<void> {
   let seenFate = 0;
   let seenResult = 0;
   for (const w of windows) {
-    const early = (at: number) => at >= w.from && at < w.to - SLACK;
     for (const e of host) {
-      if (!early(e.at)) continue;
-      if (w.what === "jinx" && (e.task === "fate" || e.task === "check")) problem(`timing: round ${w.round}: Phil's task was ${e.task} ${w.to - e.at} ms before the TV's jinx until − 1.5 s`);
-      if (w.what === "verdict" && e.task === "result") problem(`timing: round ${w.round}: Phil's task was result ${w.to - e.at} ms before verdict start + 3 s`);
+      if (!(e.at >= w.from && e.at < w.to - lag - SLACK)) continue;
+      if (w.what === "jinx" && (e.task === "fate" || e.task === "check")) problem(`timing: round ${w.round}: Phil's task was ${e.task} ${w.to - lag - e.at} ms before the TV's jinx until − 1.5 s − the TV's lag (${lag} ms)`);
+      if (w.what === "verdict" && e.task === "result") problem(`timing: round ${w.round}: Phil's task was result ${w.to - lag - e.at} ms before verdict start + 3 s − the TV's lag (${lag} ms)`);
     }
     // The phone's screen, sampled every 40 ms (after 400 ms: the new view's way to the phone).
     for (let t = w.from + 400; t < w.to - SLACK; t += 40) {
@@ -173,6 +217,7 @@ try {
   const win = await browser.open(start, { width: 1280, height: 800 });
   tabs.push(["host window", win]);
   if (args.shots) await scenario.deal(win);
+  if (args.long) await dealLong(win);
   await win.until(`document.querySelectorAll("#devices .device").length > 0`);
   await sleep(1500); // a discovery round: real TVs show up too
   await win.screenshot(`${out}/launcher.png`);
@@ -242,6 +287,10 @@ try {
     left -= n;
   }
   log(`${nBots} bots joined from the host page`);
+  if (args.long) {
+    // The bots' random clues and wrong guesses: long words (their dictionary is the window's).
+    await win.eval(`(() => { jinx.dict[${JSON.stringify(args.lang)}] = ${JSON.stringify(LONG)}; return true; })()`);
+  }
 
   /**
    * Layout problems in the page: text running out of the box it is drawn
@@ -267,7 +316,12 @@ try {
       if (!el.checkVisibility({ opacityProperty: true, visibilityProperty: true })) continue;
       if (el.closest("svg, script, style, option, select")) continue;
       const cs = getComputedStyle(el);
-      if (cs.textOverflow === "ellipsis" || cs.webkitLineClamp !== "none") continue;
+      if (cs.textOverflow === "ellipsis" || cs.webkitLineClamp !== "none") {
+        // Names may be cut (they are short()ened anyway); anything else players read never.
+        const name = el.closest(".seatname, .who-guesses, .name, .who, .n, .gone");
+        if (!name && el.scrollWidth > el.clientWidth + 1) out.push("cut with an ellipsis: " + el.localName + "." + String(el.className).trim().split(/\s+/).join(".") + " " + JSON.stringify(t.textContent.trim().slice(0, 40)));
+        continue;
+      }
       const range = document.createRange();
       range.selectNodeContents(t);
       const r = range.getBoundingClientRect();
@@ -294,8 +348,43 @@ try {
     }
     return out;
   })()`;
+  /**
+   * The TV page: nothing of the picture under tvpipe's join badge (its
+   * small card bottom left; the rejoin card that grows from it while a
+   * phone is away lies over the picture): text, chips, cards, labels.
+   */
+  const underBadge = `(() => {
+    const out = [];
+    const mini = document.querySelector("tvpipe-rejoin")?.shadowRoot?.querySelector(".mini.shown");
+    if (!mini || !document.documentElement.hasAttribute("data-tvpipe-join")) return out;
+    const b = mini.getBoundingClientRect();
+    if (b.width === 0) return out;
+    const hit = (r) => r.width > 0 && r.height > 0 && r.left < b.right - 1 && r.right > b.left + 1 && r.top < b.bottom - 1 && r.bottom > b.top + 1;
+    const animated = (e) => { for (let p = e; p; p = p.parentElement) if (p.getAnimations().some((x) => x.playState === "running" && !(x.effect?.getComputedTiming().iterations === Infinity))) return true; return false; };
+    const layer = [...document.querySelectorAll(".stage .layer")].at(-1);
+    const scope = [layer, ...document.querySelectorAll(".stage .head, .stage .pot, .stage .hostline")].filter(Boolean);
+    const seen = new Set();
+    for (const root of scope) {
+      for (const el of root.querySelectorAll("*")) {
+        if (el.closest("svg") || el.closest(".burst, .zone, .yarn") || !el.checkVisibility({ opacityProperty: true, visibilityProperty: true })) continue;
+        const cs = getComputedStyle(el);
+        const solid = !/rgba\(.*, 0\)$|transparent/.test(cs.backgroundColor) || cs.backgroundImage !== "none";
+        const text = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+        if (!solid && !text) continue;
+        const r = el.getBoundingClientRect();
+        if (r.width > 900 || r.height > 500 || !hit(r) || animated(el)) continue;
+        const what = el.localName + (typeof el.className === "string" && el.className ? "." + el.className.trim().split(/\s+/).join(".") : "");
+        const key = what + el.textContent.trim().slice(0, 20);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push("under the join badge: " + what + " " + JSON.stringify(el.textContent.trim().slice(0, 30)) + " " + [r.left, r.top, r.right, r.bottom].map(Math.round).join(","));
+      }
+    }
+    return out;
+  })()`;
   const check = async (where: string, tab: Tab) => {
     const found = await tab.eval<string[]>(layout).catch((e: Error) => [`cannot check: ${e.message.slice(0, 120)}`]);
+    if (tab === screen) found.push(...(await tab.eval<string[]>(underBadge).catch((e: Error) => [`cannot check the badge: ${e.message.slice(0, 120)}`])));
     for (const f of found) problem(`${where}: ${f}`);
   };
   /** The TV page must not show the secret word before the verdict. */
@@ -335,6 +424,29 @@ try {
   };
   await shot("lobby");
   await pic(phone, "phone-lobby", "phone");
+
+  // The VIP's settings on the phone (below the table): words easy, then back to normal, from the phone.
+  if (!args.shots) {
+    await phone.until(`!!document.querySelector("section.settings:not([hidden])")`, 5000).catch(() => problem("phone lobby: the VIP has no settings"));
+    const pick = async (key: number, i: number) => {
+      await phone.eval(`(() => { const s = document.querySelectorAll("section.settings .setting")[${key}]; s.scrollIntoView({ block: "center" }); s.querySelectorAll(".seg button")[${i}].click(); return true; })()`);
+      await phone.until(`document.querySelectorAll("section.settings .setting")[${key}].querySelectorAll(".seg button")[${i}].classList.contains("on")`, 5000);
+    };
+    await pick(2, 0);
+    await win.until(`jinx.game.difficulty === "easy"`, 3000).catch(() => problem("phone lobby: the VIP's words setting did not reach the game"));
+    await sleep(300);
+    await phone.screenshot(`${out}/phone-lobby-settings.png`);
+    await check("phone lobby settings", phone);
+    await phone.resize({ width: 320, height: 568, mobile: true });
+    await sleep(300);
+    await phone.eval(`document.querySelector("section.settings").scrollIntoView({ block: "end" }); true`);
+    await phone.screenshot(`${out}/phone-small-lobby-settings.png`);
+    await check("small phone lobby settings", phone);
+    await phone.resize(PHONE);
+    await pick(2, 1);
+    await win.until(`jinx.game.difficulty === "normal"`, 3000).catch(() => problem("phone lobby: the VIP's words setting did not reach the game"));
+    log("phone: the VIP's settings (words easy, then normal)");
+  }
 
   // Timing monitors (every 40 ms, Date.now() in both tabs, one machine):
   // the host's screen phase with its deadlines and Phil's task; the phone's
@@ -384,7 +496,9 @@ try {
       .map((f) => [f[0]!, de ? (CATEGORY_DE[f[2]!] ?? f[2]!) : f[2]!]),
   );
   let writeRounds = 0;
-  const clueWords = de
+  const clueWords = args.long
+    ? LONG
+    : de
     ? ["Galaxie", "Flüstern", "Gurke", "Laterne", "Samt", "Donner", "Kompass", "Keks", "Umlaufbahn", "Wiese"]
     : ["galaxy", "whisper", "pickle", "lantern", "velvet", "thunder", "compass", "biscuit", "orbit", "meadow"];
   let clueN = 0;
@@ -464,7 +578,7 @@ try {
     if (args.shots && secret !== scenario.WORD) problem(`shots: the word is "${secret}", not the scenario's "${scenario.WORD}" (dealt from ${scenario.dealt.join(", ") || "no list"})`);
     // The first time right (a wrong letter first, deleted), later a wrong guess.
     const right = guesserRounds === 1;
-    const [wrong1, wrong2] = de ? ["Elefant", "Giraffe"] : ["elephant", "giraffe"];
+    const [wrong1, wrong2] = args.long ? [LONG[0]!, LONG[1]!] : de ? ["Elefant", "Giraffe"] : ["elephant", "giraffe"];
     const guess = right ? secret : secret === wrong1 ? wrong2 : wrong1;
     await phone.eval(`document.querySelector("input.tape-field").focus(); true`);
     const half = Math.ceil(guess.length / 2);
@@ -602,6 +716,9 @@ try {
   if (args.shots) {
     if (kept.length < 3) problem(`pictures: only ${kept.join(", ")}`);
   } else await timing(win, phone);
+  // The bots' refused actions (codes the game answered with).
+  const botErrors = await win.eval<string[]>(`jinx.robots.flatMap((b) => b.errors.map((e) => b.name + ": " + e))`);
+  if (botErrors.length > 0) problem(`the bots' errors: ${botErrors.join(", ")}`);
   log(`${shots.length} screenshot sets in ${out}; problems: ${problems.length || "none"}`);
   // The End button: tvpipe ends, everyone is told. Pages trying to reconnect after that are fine.
   reportErrors();

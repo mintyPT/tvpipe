@@ -199,8 +199,8 @@ async function main(): Promise<void> {
     for (const b of robots) b.close();
   });
   await page.castChosen();
-  // For checks and tests (DevTools): the party and the game.
-  Object.assign(globalThis, { jinx: { party, game, tvpipe: page.tvpipe, page, addBots, robots } });
+  // For checks and tests (DevTools): the party and the game; `dict`, the bots' words per language (the live check's --long gives them long ones).
+  Object.assign(globalThis, { jinx: { party, game, tvpipe: page.tvpipe, page, addBots, robots, dict: dictWords } });
 }
 
 void main();

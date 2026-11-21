@@ -118,6 +118,7 @@ export class Tab {
    * px from the top left, times `scale`) for a picture of a fixed size.
    */
   async capture(o: { format?: "png" | "webp" | "jpeg"; quality?: number; clip?: { width: number; height: number; scale: number } } = {}): Promise<Buffer> {
+    await this.send("Page.bringToFront");
     const r = await this.send("Page.captureScreenshot", {
       format: o.format ?? "png",
       ...(o.quality === undefined ? {} : { quality: o.quality }),
@@ -163,6 +164,10 @@ export class Browser {
         "--no-first-run",
         "--no-default-browser-check",
         "--autoplay-policy=no-user-gesture-required",
+        // Every tab animates as if it were in front (the TV and the phone side by side).
+        "--disable-background-timer-throttling",
+        "--disable-renderer-backgrounding",
+        "--disable-backgrounding-occluded-windows",
         "about:blank",
       ],
       { stdio: "ignore" },
@@ -182,9 +187,26 @@ export class Browser {
 
   /** A tab at a viewport; `locale` (`de-DE`) for its language (`navigator.language`, Intl). */
   async open(url: string, view: { width: number; height: number; mobile?: boolean; locale?: string }): Promise<Tab> {
-    const t = (await (await fetch(`http://127.0.0.1:${this.#port}/json/new?about:blank`, { method: "PUT" })).json()) as {
-      webSocketDebuggerUrl: string;
-    };
+    // A window of its own: headless Chrome renders (and animates) only the front tab of a window.
+    const version = (await (await fetch(`http://127.0.0.1:${this.#port}/json/version`)).json()) as { webSocketDebuggerUrl: string };
+    const root = new WebSocket(version.webSocketDebuggerUrl);
+    await new Promise((r, j) => {
+      root.onopen = r;
+      root.onerror = j;
+    });
+    const targetId = await new Promise<string>((resolve, reject) => {
+      root.onmessage = (e) => {
+        const msg = JSON.parse(String(e.data));
+        if (msg.id !== 1) return;
+        if (msg.error) reject(new Error(JSON.stringify(msg.error)));
+        else resolve(msg.result.targetId);
+      };
+      root.send(JSON.stringify({ id: 1, method: "Target.createTarget", params: { url: "about:blank", newWindow: true } }));
+    });
+    root.close();
+    const list = (await (await fetch(`http://127.0.0.1:${this.#port}/json/list`)).json()) as { id: string; webSocketDebuggerUrl: string }[];
+    const t = list.find((x) => x.id === targetId);
+    if (!t) throw new Error("the new window has no target");
     const ws = new WebSocket(t.webSocketDebuggerUrl);
     await new Promise((r, j) => {
       ws.onopen = r;
