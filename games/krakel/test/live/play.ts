@@ -167,6 +167,9 @@ try {
   /** The TV: nothing wider than its box, nothing off the screen. */
   const tvLayout = `(() => {
     const out = [];
+    // What is on its way (a tile gliding into the ranking, a sticker stamped on) is checked where it lands.
+    const moving = document.getAnimations().filter((a) => a.playState === "running").map((a) => a.effect?.target).filter((x) => x instanceof Element);
+    const still = (el) => !moving.some((m) => m.contains(el));
     for (const el of document.querySelectorAll("#stage .scene:not(.leaving) [data-fit]")) {
       if (el.checkVisibility && !el.checkVisibility()) continue;
       if (el.scrollWidth > el.clientWidth + 1) out.push("a word does not fit: " + JSON.stringify(el.textContent) + " " + el.scrollWidth + " > " + el.clientWidth);
@@ -176,7 +179,7 @@ try {
       if (["svg", "path", "g", "canvas", "i"].includes(el.localName) || el.closest(".confetti, .pen, .doodle, .logo")) continue;
       const cs = getComputedStyle(el);
       const r = el.getBoundingClientRect();
-      if (r.width > 0 && (r.right > innerWidth + 2 || r.left < -2 || r.bottom > innerHeight + 2 || r.top < -2)) out.push("off the screen: " + el.localName + "." + el.className + " " + JSON.stringify((el.innerText || "").slice(0, 30)));
+      if (r.width > 0 && still(el) && (r.right > innerWidth + 2 || r.left < -2 || r.bottom > innerHeight + 2 || r.top < -2)) out.push("off the screen: " + el.localName + "." + el.className + " " + JSON.stringify((el.innerText || "").slice(0, 30)));
       if (cs.textOverflow !== "ellipsis" && el.children.length === 0 && el.scrollWidth > el.clientWidth + 2 && el.clientWidth > 0 && cs.display !== "inline") out.push("too wide: " + el.localName + "." + el.className + " " + JSON.stringify((el.innerText || "").slice(0, 30)));
     }
     return out;
