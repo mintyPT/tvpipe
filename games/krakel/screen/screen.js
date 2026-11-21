@@ -94,21 +94,42 @@ const PENCIL = `<g transform="rotate(45 0 100)"><path class="lead" d="M0 100l-7-
 
 // ---------------------------------------------------------------------------
 // Sound: a toy xylophone, a wood block and a pencil on paper, all
-// synthesized (the preview is muted: the TV plays them).
+// synthesized (the preview is muted: the TV plays them), mixed through
+// one master gain and a compressor, as Drawbluff's TV does, so nothing
+// clips when sounds overlap.
 
 const MUTED = params.get("mute") === "1";
 /** @type {AudioContext | null} */
 let audio = null;
+/** Where every voice goes: the master gain, into the compressor. @type {GainNode | null} */
+let master = null;
 function ac() {
   if (MUTED) return null;
   try {
-    audio ??= new AudioContext();
+    if (!audio) {
+      const a = new AudioContext();
+      const comp = a.createDynamicsCompressor();
+      comp.threshold.value = -14;
+      comp.knee.value = 12;
+      comp.ratio.value = 4;
+      comp.attack.value = 0.003;
+      comp.release.value = 0.2;
+      const out = a.createGain();
+      out.gain.value = 0.9;
+      out.connect(comp).connect(a.destination);
+      audio = a;
+      master = out;
+    }
     if (audio.state === "suspended") void audio.resume();
     return audio;
   } catch {
     return null;
   }
 }
+/** The master gain of the context {@link ac} made. @param {AudioContext} a @returns {AudioNode} */
+const mix = (a) => master ?? a.destination;
+/** A watch page opened by hand gets its sound with the first tap (browsers start audio in a gesture). */
+addEventListener("pointerdown", () => void ac(), { once: true });
 
 /** A mallet on a wooden bar: a sine with its fourth harmonic, a quick decay. @param {number} freq @param {number} [delay] s @param {number} [vol] */
 function mallet(freq, delay = 0, vol = 0.22) {
@@ -123,7 +144,7 @@ function mallet(freq, delay = 0, vol = 0.22) {
     g.gain.setValueAtTime(0.0001, at);
     g.gain.exponentialRampToValueAtTime(v, at + 0.006);
     g.gain.exponentialRampToValueAtTime(0.0001, at + len);
-    o.connect(g).connect(a.destination);
+    o.connect(g).connect(mix(a));
     o.start(at);
     o.stop(at + len + 0.02);
   }
@@ -142,7 +163,7 @@ function slide(from, to, len, type = "triangle", vol = 0.12, delay = 0) {
   g.gain.setValueAtTime(0.0001, at);
   g.gain.exponentialRampToValueAtTime(vol, at + 0.012);
   g.gain.exponentialRampToValueAtTime(0.0001, at + len);
-  o.connect(g).connect(a.destination);
+  o.connect(g).connect(mix(a));
   o.start(at);
   o.stop(at + len + 0.02);
 }
@@ -171,7 +192,7 @@ function burst(freq, len, vol = 0.4, delay = 0, q = 1) {
   const g = a.createGain();
   g.gain.setValueAtTime(vol, at);
   g.gain.exponentialRampToValueAtTime(0.0001, at + len);
-  src.connect(f).connect(g).connect(a.destination);
+  src.connect(f).connect(g).connect(mix(a));
   src.start(at, Math.random());
   src.stop(at + len + 0.02);
 }
@@ -199,7 +220,7 @@ const scratch = (() => {
         filter.Q.value = 0.8;
         gain = a.createGain();
         gain.gain.value = 0;
-        src.connect(filter).connect(gain).connect(a.destination);
+        src.connect(filter).connect(gain).connect(mix(a));
         src.start();
       }
       on = down;

@@ -227,8 +227,10 @@ is the bright one.
   xylophone (joins, right guesses climbing a pentatonic scale, medals,
   the fanfare), a wood block for the last five seconds, a boing for a
   wrong guess, and the pencil's scratch on paper while the replay's pen
-  is down, brighter the faster it moves. The host page's preview is
-  muted.
+  is down, brighter the faster it moves. Every sound goes through one
+  master gain and a compressor (nothing clips when they overlap). The
+  host page's preview is muted; a watch page opened by hand in a
+  browser gets its sound with the first tap.
 - **The phone**: the same paper and pens; the word above the pad, the
   pens below it, in reach of a thumb. It buzzes for right and wrong.
 - **Words are read whole.** A word a player has to read (the word to
