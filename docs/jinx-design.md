@@ -74,6 +74,14 @@ counts as missed, the bank stays as it is.
   way. A player who leaves is
   skipped as guesser; a clue-giver who is gone when writing ends simply
   has no card.
+- **Too few left:** at the start of each round (after the latecomers are
+  dealt in) the game ends early, to its normal end (§6), when fewer than
+  the minimum (3, `minPlayers`) are still in it; a player who left does
+  not count, a phone that is only away does.
+- **Closing** (`close()`, the host page's code): ends a running game and
+  all its timers without an end (no final screen); the TV and the phones
+  are in the lobby at once, and nothing of the old game is written after
+  it. The next Start plays a fresh game.
 - **End of the game:** the room's result first, then the best clues of
   the night, then the awards, then the word web (§6). The VIP's phone offers
   "Play again".

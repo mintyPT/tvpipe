@@ -81,7 +81,8 @@ awards, the web), and whole games with bots on `@tvpipe/party`'s relay
 in memory (`test/game.test.ts`): 3 and 4 players, play again, clue
 refusals and replacing, all clues jinxed, wrong guesses and passes (the bank never below 0), the bank, best clues and the record, timers
 for a silent or disconnected guesser, a late joiner, a room closed to latecomers, a player who leaves,
-a guesser who leaves, the secrecy of the word on the TV and the guesser's
+a guesser who leaves, too few left (the game ends), closing a game mid-round,
+a closed bot, the secrecy of the word on the TV and the guesser's
 phone; a German game with bots, the language switched between games
 (each language with its own dealt words) and a German refusal.
 

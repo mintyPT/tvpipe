@@ -246,6 +246,8 @@ export class Jinx extends Emitter<JinxEvents> {
   #running = false;
   #gameAbort = new AbortController();
   #endAbort = new AbortController();
+  /** Counts games and closes: what a game queued for the TV (`#withTv`) is dropped once this moved on. */
+  #gen = 0;
   #round: Round | undefined;
   /** The screen view without `people` (added on every set). */
   #view: Record<string, unknown> = {};
@@ -341,10 +343,26 @@ export class Jinx extends Emitter<JinxEvents> {
     if (o.write !== undefined) this.timings = { ...this.timings, write: o.write };
   }
 
-  /** Ends the game and its timers (the party stays). */
+  /**
+   * Ends a running game and its timers, the end's steps too (the party
+   * stays). Closing is not finishing: no final screen, no `end` event; a
+   * running game's room goes back to the lobby at once (the TV, the
+   * phones), and once this returns the game's rounds and timers write
+   * nothing more to the party. The VIP or the host starts a fresh game.
+   */
   close(): void {
+    this.#gen++;
     this.#gameAbort.abort();
     this.#endAbort.abort();
+    clearTimeout(this.#draftTimer);
+    this.#draftTimer = undefined;
+    if (this.#round) clearTimeout(this.#round.flipping);
+    if (!this.#running) return;
+    this.#round = undefined;
+    this.#running = false;
+    this.party.inProgress = false;
+    for (const p of this.party.players) this.party.activate(p);
+    this.#lobby();
   }
 
   /** Shows the lobby and handles the phones' actions. */
@@ -404,6 +422,14 @@ export class Jinx extends Emitter<JinxEvents> {
       });
     }
     for (const p of party.players) this.#profile(p);
+    this.#lobby();
+  }
+
+  /** The lobby on the TV and every phone (opening, a game closed). */
+  #lobby(): void {
+    const party = this.party;
+    this.#left = [];
+    for (const [id] of this.#profiles) if (!party.player(id)) this.#profiles.delete(id);
     this.#setPhase("lobby");
     this.#screen({ phase: "lobby", minPlayers: this.minPlayers, maxPlayers: party.maxPlayers });
     this.#roomView({ phase: "lobby" });
@@ -506,7 +532,9 @@ export class Jinx extends Emitter<JinxEvents> {
    * 0.3.1 has none and sends it at once). The TV gets it at once.
    */
   #withTv(fn: () => void): void {
-    if (typeof this.party.withTv === "function") this.party.withTv(fn);
+    // A game closed (or the next one started) meanwhile: dropped.
+    const gen = this.#gen;
+    if (typeof this.party.withTv === "function") this.party.withTv(() => gen === this.#gen && fn());
     else fn();
   }
 
@@ -602,6 +630,7 @@ export class Jinx extends Emitter<JinxEvents> {
     this.#endAbort.abort();
     this.#gameAbort = new AbortController();
     const signal = this.#gameAbort.signal;
+    const gen = ++this.#gen;
     this.#running = true;
     party.inProgress = true;
     this.#ingame.clear();
@@ -636,12 +665,15 @@ export class Jinx extends Emitter<JinxEvents> {
         if (this.#history.length < n) n--; // dropped (the guesser left)
       }
     } finally {
-      this.#round = undefined;
-      this.#running = false;
-      party.inProgress = false;
-      for (const p of party.players) party.activate(p);
+      // Closed: close() did this, and nothing more is written.
+      if (gen === this.#gen) {
+        this.#round = undefined;
+        this.#running = false;
+        party.inProgress = false;
+        for (const p of party.players) party.activate(p);
+      }
     }
-    if (signal.aborted) return this.#bank;
+    if (signal.aborted || gen !== this.#gen) return this.#bank;
     return this.#end();
   }
 
@@ -719,6 +751,7 @@ export class Jinx extends Emitter<JinxEvents> {
     if (gameSignal.aborted) return;
     this.#results(r);
     await this.#sleep(this.timings.verdict - resultAfter, gameSignal);
+    if (gameSignal.aborted) return;
     await this.#replay(r, gameSignal);
     if (gameSignal.aborted) return;
     await this.#bankPhase(r, gameSignal);
@@ -1130,6 +1163,7 @@ export class Jinx extends Emitter<JinxEvents> {
     while (r.picking && !signal.aborted && party.now() < deadline + party.grace && party.players.includes(r.guesser)) {
       await this.#until(deadline + party.grace, signal, true);
     }
+    if (signal.aborted) return;
     if (r.picking) {
       r.picking = false;
       this.#withTv(() => {

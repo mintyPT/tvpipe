@@ -98,6 +98,9 @@ export class Bot {
   readonly #rng: () => number;
   readonly #category = new Map<string, string>();
   #handled = new Set<string>();
+  /** Moves waiting to be made: cleared on close, so a closed bot never acts. */
+  readonly #timers = new Set<ReturnType<typeof setTimeout>>();
+  #closed = false;
   /** Per round: how many cards to turn before guessing, and how to end. */
   #plan: { key: string; target: number; end: "right" | "wrong" | "pass" } | undefined;
 
@@ -121,9 +124,25 @@ export class Bot {
   #once(key: string, fn: () => Promise<unknown>, delay = this.#delay()): void {
     if (this.#handled.has(key)) return;
     this.#handled.add(key);
-    setTimeout(() => {
-      fn().catch((e: { code?: string }) => this.errors.push(e.code ?? String(e)));
+    const t = setTimeout(() => {
+      this.#timers.delete(t);
+      fn().catch((e: { code?: string }) => {
+        if (!this.#closed) this.errors.push(e.code ?? String(e));
+      });
     }, delay);
+    this.#timers.add(t);
+  }
+
+  /** Waits `ms` (a tracked timer); false once the bot is closed. */
+  #wait(ms: number): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (this.#closed) return resolve(false);
+      const t = setTimeout(() => {
+        this.#timers.delete(t);
+        resolve(!this.#closed);
+      }, ms);
+      this.#timers.add(t);
+    });
   }
 
   #pick<T>(xs: readonly T[]): T | undefined {
@@ -169,7 +188,7 @@ export class Bot {
   }
 
   #onView(view: Record<string, any>): void {
-    if (this.#o.silent) return;
+    if (this.#o.silent || this.#closed) return;
     const me = view["me"] ?? {};
     const room = view["room"] ?? {};
     const c = this.client;
@@ -234,13 +253,17 @@ export class Bot {
     this.#once(`end:${round}`, async () => {
       for (let i = 1; i <= word.length; i++) {
         c.input({ draft: word.slice(0, i) });
-        await new Promise((r) => setTimeout(r, Math.min(120, this.#delay() / 4)));
+        if (!(await this.#wait(Math.min(120, this.#delay() / 4)))) return;
       }
       await c.act("guess", { text: word });
     });
   }
 
+  /** Leaves the party; no move it planned is made. */
   close(): void {
+    this.#closed = true;
+    for (const t of this.#timers) clearTimeout(t);
+    this.#timers.clear();
     this.client.close();
   }
 }

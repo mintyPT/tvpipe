@@ -530,6 +530,93 @@ test("a player who leaves: skipped as guesser, kept on the TV as left", async ()
   }
 });
 
+test("too few left: the game ends at the next round's start, to the final screen; a phone only away still counts", async () => {
+  const { party, g, players, screens, close } = await setup(4, { rounds: 1, bot: () => ({ clues: "random" }), timings: { write: 300 } });
+  try {
+    const end = new Promise((r) => g.once("end", r));
+    await players[0]!.client.act("start");
+    await until(() => g.phase === "write");
+    // One phone goes away (it does not leave), another leaves: three still count (the away one too).
+    const guesser = (party.screen.peek() as { guesser: string }).guesser;
+    const givers = players.filter((b) => b.client.you!["id"] !== guesser);
+    givers[0]!.client.close();
+    givers[1]!.client.leave();
+    await until(() => party.players.length === 3);
+    await until(() => of(screens, "hotseat").length >= 2, 15_000);
+    // One more leaves: 2 left, fewer than minPlayers (3); the round being played ends, no other starts.
+    givers[2]!.client.leave();
+    await until(() => party.players.length === 2);
+    const rounds = of(screens, "hotseat").length;
+    await end;
+    assert.equal(g.phase, "end");
+    assert.equal(of(screens, "hotseat").length, rounds, "no round after the one being played");
+    assert.ok(of(screens, "end").length > 0, "the final screen");
+    const guesserBot = players.find((b) => b.client.you!["id"] === guesser)!;
+    await until(() => guesserBot.client.view["me"]?.task === "final");
+  } finally {
+    close();
+  }
+});
+
+test("close() mid-round: the lobby at once, nothing written after, no final screen; a fresh game after", async () => {
+  const { party, g, players, screens, close } = await setup(4, { rounds: 1, timings: { write: 200, decide: 2000 }, tvDelay: 50 });
+  try {
+    let ended = 0;
+    g.on("end", () => ended++);
+    await players[0]!.client.act("start");
+    await until(() => g.phase === "reveal");
+    g.close();
+    assert.equal(g.running, false);
+    assert.equal(g.phase, "lobby");
+    assert.equal(party.inProgress, false);
+    assert.equal((party.screen.peek() as { phase: string }).phase, "lobby");
+    assert.equal((party.room.peek() as { phase: string }).phase, "lobby");
+    for (const p of party.players) assert.equal((p.state.peek() as { task: string }).task, "lobby");
+    const screen = JSON.stringify(party.screen.peek());
+    const room = JSON.stringify(party.room.peek());
+    const states = JSON.stringify(party.players.map((p) => p.state.peek()));
+    // Longer than every timer of the round (the TV's lag, the flip, the decision).
+    await new Promise((r) => setTimeout(r, 2500));
+    assert.equal(JSON.stringify(party.screen.peek()), screen);
+    assert.equal(JSON.stringify(party.room.peek()), room);
+    assert.equal(JSON.stringify(party.players.map((p) => p.state.peek())), states);
+    assert.equal(ended, 0);
+    assert.equal(of(screens, "end").length, 0, "no final screen");
+    await until(() => players.every((b) => b.client.view["me"]?.task === "lobby"));
+    assert.equal(players[0]!.client.view["me"]?.canStart, true);
+    // The VIP starts a fresh game.
+    const end = new Promise<number>((r) => g.once("end", r));
+    const before = of(screens, "verdict").length;
+    await players[0]!.client.act("start");
+    await end;
+    const verdicts = of(screens, "verdict").slice(before);
+    assert.equal(verdicts.length, 4);
+    assert.equal(verdicts[0]!.round, 1);
+    assert.equal(verdicts[0]!.bank.chips, verdicts[0]!.banked, "a fresh bank");
+  } finally {
+    close();
+  }
+});
+
+test("a closed bot never acts", async () => {
+  const { party, g, players, close } = await setup(3, { rounds: 1, bot: (i) => ({ think: () => (i === 0 ? 5 : 300) }) });
+  try {
+    await players[0]!.client.act("start");
+    await until(() => g.phase === "write");
+    // A giver's clue is planned (300 ms): closed before, it never comes.
+    const givers = (party.screen.peek() as { givers: string[] }).givers;
+    const bea = players.find((b) => b !== players[0] && givers.includes(b.client.you!["id"]))!;
+    const id = bea.client.you!["id"];
+    bea.close();
+    await new Promise((r) => setTimeout(r, 600));
+    const w = party.screen.peek() as { sentBy?: Record<string, number> };
+    assert.equal(w.sentBy?.[id] ?? 0, 0);
+    assert.deepEqual(bea.errors, []);
+  } finally {
+    close();
+  }
+});
+
 test("the guesser leaves mid-round: the round is dropped", async () => {
   const { party, g, players, screens, close } = await setup(4, { rounds: 1, bot: (i) => (i === 0 ? { guess: "silent" } : { clues: "random" }), timings: { decide: 2000 } });
   try {
