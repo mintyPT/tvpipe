@@ -106,16 +106,15 @@ function render(): void {
       box.setAttribute("aria-label", d.name);
       const text = el("div", "grow");
       const browser = d.kind === "browser";
-      text.append(
-        el("div", "name", browser ? (d.title ?? "A browser tab on this computer") : d.name),
-        el("div", "meta", browser ? "Try the game without a TV: the TV picture plays in a tab" : (d.model ?? "")),
-      );
+      // One line under the name: the model and the sync (rows stay low for many TVs).
+      const synced = typeof d.displayMs === "number" ? `Synced with phones: ${d.displayMs} ms of its own` : "";
+      const meta = browser ? "Try the game without a TV: the TV picture plays in a tab" : [d.model, synced].filter(Boolean).join(" · ");
+      text.append(el("div", "name", browser ? (d.title ?? "A browser tab on this computer") : d.name), el("div", "meta", meta));
       const p = pairing.get(d.name);
       if (p) {
         const [t, c] = pairingText(p);
         text.append(el("div", `pairing ${c}`, t));
       }
-      if (!browser && typeof d.displayMs === "number") text.append(el("div", "synced", `Synced with phones: ${d.displayMs} ms of its own`));
       const end = el("div", "end");
       end.append(el("span", "tag", KIND[d.kind] ?? d.kind));
       if (!browser && !(d.needsPairing && pairing.get(d.name)?.state !== "done")) {
@@ -148,22 +147,6 @@ function render(): void {
   // The picker may also take every TV away (the cast stops).
   ($("start") as HTMLButtonElement).disabled = (selected.size === 0 && !changing) || starting !== null || pairingFirst;
   renderState();
-}
-
-function renderPhones(): void {
-  const t = info.tunnel;
-  const url = (u: string) => el("code", "", u);
-  const parts: (string | Node)[] =
-    t.state === "starting"
-      ? ["Opening the public link for phones…"]
-      : t.state === "up" && t.url
-        ? ["Phones join through ", url(t.url), ", on any network."]
-        : info.phone.mode === "lan"
-          ? ["Phones on this Wi-Fi join at ", url(info.phone.lan ?? info.phone.url), "."]
-          : t.state === "failed"
-            ? [el("span", "bad", `No public link for phones (${t.error ?? "the tunnel failed"}).`), " Phones on this computer only."]
-            : ["Phones on this computer only: no public link (", url("--no-tunnel"), ")."];
-  $("phones").replaceChildren(...parts);
 }
 
 async function startPairing(device: string): Promise<void> {
@@ -458,6 +441,13 @@ function themes(): void {
 
 async function main(): Promise<void> {
   themes();
+  // The cast picker (`data-mode="change"` is set by the page's head: no header or footer).
+  if (changing) {
+    $("title").textContent = "Change the TVs";
+    $("message").textContent = "The TVs you pick show the game; they start the picture again.";
+    $("start").textContent = "Apply";
+    $("no-tv").textContent = "Cancel";
+  }
   $("where").textContent = `tvpipe game · ${location.host}`;
   try {
     tvpipe = await Tvpipe.connect();
@@ -474,15 +464,7 @@ async function main(): Promise<void> {
   $("game").title = info.title;
   const { min, max } = info.players;
   $("players").textContent = min === max ? `${min}` : `${min}–${max}`;
-  $("message").textContent = `${info.title} shows on the TVs you pick. Everyone plays on their own phone.`;
-  if (changing) {
-    document.documentElement.dataset["mode"] = "change";
-    $("title").textContent = "Change the TVs";
-    $("message").textContent = "The TVs you pick show the game; they start the picture again.";
-    $("start").textContent = "Apply";
-    $("no-tv").textContent = "Cancel";
-  }
-  renderPhones();
+  if (!changing) $("message").textContent = `${info.title} shows on the TVs you pick. Everyone plays on their own phone.`;
   const chosen = await tvpipe.chosen();
   for (const name of chosen.devices) selected.add(name);
   resolution = chosen.resolution;
@@ -490,11 +472,6 @@ async function main(): Promise<void> {
   tvpipe.on("devices", (list) => {
     devices = list;
     render();
-  });
-  tvpipe.on("tunnel", (t) => {
-    info.tunnel = t;
-    if (t.state === "up" && t.url) info.phone = { ...info.phone, url: t.url, mode: "tunnel" };
-    renderPhones();
   });
   tvpipe.on("pair", (p) => {
     pairing.set(p.device, p);

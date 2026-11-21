@@ -8,7 +8,8 @@
 <link rel="preload" href="/_tvpipe/fonts/plex-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/_tvpipe/fonts/michroma.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/_tvpipe/fonts/sixtyfour.woff2" as="font" type="font/woff2" crossorigin>
-<script>try { document.documentElement.dataset.theme = localStorage.getItem('tvpipe-theme') || 'auto'; } catch (e) {}</script>
+<script>try { document.documentElement.dataset.theme = localStorage.getItem('tvpipe-theme') || 'auto'; } catch (e) {}
+if (new URLSearchParams(location.search).get('mode') === 'change') document.documentElement.dataset.mode = 'change';</script>
 <link rel="stylesheet" href="/_tvpipe/ui.css">
 <link rel="stylesheet" href="launcher.css">
 <script type="module" src="launcher.js"></script>
@@ -40,31 +41,30 @@
   <div class="pair">Players<span id="players">–</span></div>
 </header>
 
-<main>
-  <section class="row ph">
-    <div class="meta"><span class="lbl">Status</span><span class="state" id="state">Connecting…</span></div>
-    <div class="body">
-      <h1 id="title">Pick the TVs</h1>
-      <p class="lead" id="message">The game shows on the TVs you pick. Everyone plays on their own phone.</p>
-      <ul id="devices" class="devices"></ul>
-      <p id="searching" class="searching">Looking for TVs on this network: they appear here as they answer.</p>
+<main class="pick">
+  <div class="head">
+    <h1 id="title">Pick the TVs</h1>
+    <span class="state" id="state">Connecting…</span>
+  </div>
+  <p class="lead" id="message">The game shows on the TVs you pick. Everyone plays on their own phone.</p>
+  <ul id="devices" class="devices"></ul>
+  <p id="searching" class="searching">Looking for TVs on this network: they appear here as they answer.</p>
+  <div class="gap"></div>
+  <!-- Always in view: the picture and Start stick to the bottom of the window. -->
+  <div class="bar">
+    <p id="error" class="error bad" hidden></p>
+    <div class="bar-row">
       <div id="res" class="res" hidden>
         <span class="lbl">Picture</span>
         <div id="res-options" class="seg" role="radiogroup" aria-label="Resolution"></div>
         <p id="res-note" class="res-note"></p>
       </div>
-      <p id="error" class="error bad" hidden></p>
       <div class="buttons">
-        <button id="start" class="btn primary" disabled>Start</button>
         <button id="no-tv" class="btn">Start without a TV</button>
+        <button id="start" class="btn primary" disabled>Start</button>
       </div>
     </div>
-  </section>
-
-  <section class="row sec" id="phones-row">
-    <div class="meta"><span class="lbl">Phones</span></div>
-    <p class="body phones" id="phones">–</p>
-  </section>
+  </div>
 </main>
 
 <footer class="foot">

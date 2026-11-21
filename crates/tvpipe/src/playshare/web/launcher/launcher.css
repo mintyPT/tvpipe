@@ -3,15 +3,22 @@
 body { min-height: 100vh; display: flex; flex-direction: column; }
 .top, main, .foot { width: 100%; }
 main { flex: 1; }
-.ph { padding-bottom: 40px; }
-.lead { color: var(--ink-2); }
+
+/* One column (no label column: the list needs the width), the status
+   beside the title, the picture and the buttons in a bar that sticks to
+   the bottom of the window however many TVs there are. */
+main.pick { padding-top: 36px; padding-bottom: 0; display: flex; flex-direction: column; }
+.head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px 24px; flex-wrap: wrap; }
+.head h1 { margin: 0; }
+.head .state { font-size: 14px; }
+.lead { color: var(--ink-2); font-size: 16px; margin: 8px 0 22px; }
 
 /* The TVs: rows between rules. */
 .devices { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
 .device { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; column-gap: 16px; align-items: center;
-          padding: 14px 4px; border-bottom: 1px solid var(--rule); cursor: pointer; }
+          padding: 11px 4px; border-bottom: 1px solid var(--rule); cursor: pointer; line-height: 1.5; }
 .device:hover { background: var(--panel); }
-.device input { appearance: none; display: grid; place-items: center; align-self: start; width: 16px; height: 16px; margin: 4px 0 0;
+.device input { appearance: none; display: grid; place-items: center; align-self: start; width: 16px; height: 16px; margin: 3px 0 0;
                 border: 1.5px solid var(--ink-3); border-radius: 2px; background: var(--bg); cursor: pointer; }
 .device input:checked { background: var(--accent); border-color: var(--accent); }
 .device input:checked::after { content: ""; width: 4px; height: 8px; margin-top: -2px; border: solid var(--bg); border-width: 0 2px 2px 0; transform: rotate(45deg); }
@@ -27,26 +34,30 @@ main { flex: 1; }
 
 .searching { margin: 14px 0 0; font-size: 13.5px; color: var(--ink-3); }
 
+/* The bar: the picture left, the buttons right. */
+/* The gap above it: at least 24 px, the rest of the window when the list is short. */
+.pick > .gap { flex: 1 0 24px; }
+.bar { position: sticky; bottom: 0; z-index: 1; padding: 16px 0 20px; background: var(--bg); border-top: 1px solid var(--rule); }
+.bar-row { display: flex; align-items: center; justify-content: space-between; gap: 14px 24px; flex-wrap: wrap; }
+.bar .buttons { margin-left: auto; }
+.error { margin: 0 0 14px; font-size: 14.5px; }
+
 /* The resolution: one of a few. */
-.res { margin-top: 26px; }
-.res .lbl { display: block; margin-bottom: 10px; }
+.res { display: grid; grid-template-columns: auto auto; align-items: center; column-gap: 14px; }
+.res .seg { justify-self: start; }
 .seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 3px; overflow: hidden; }
 .seg button { font: 500 14px/1 var(--sans, inherit); padding: 9px 16px; border: 0; border-right: 1px solid var(--rule);
               background: var(--bg); color: var(--ink-2); cursor: pointer; }
 .seg button:last-child { border-right: 0; }
 .seg button:hover { background: var(--panel); }
 .seg button[aria-checked="true"] { background: var(--accent); color: var(--bg); }
-.res-note { margin: 10px 0 0; font-size: 13.5px; color: var(--ink-3); }
+.res-note { grid-column: 2; margin: 6px 0 0; font-size: 12.5px; line-height: 1.4; color: var(--ink-3); }
 .res-note:empty { display: none; }
 
-/* The cast picker (in a dialog over the host page): the TVs only. */
-[data-mode="change"] #phones-row, [data-mode="change"] .foot { display: none; }
-.error { margin: 18px 0 0; font-size: 14.5px; }
-.ph .buttons { margin-top: 30px; }
-
-/* How phones join. */
-.phones { margin: 0; color: var(--ink-2); font-size: 14.5px; }
-.phones code { font-size: 13px; color: var(--ink); word-break: break-all; }
+/* The cast picker (in a dialog over the host page): no header or footer,
+   the dialog is the frame. */
+[data-mode="change"] .top, [data-mode="change"] .foot { display: none; }
+[data-mode="change"] main.pick { padding: 28px 28px 0; }
 
 /* The AirPlay PIN. */
 dialog { width: min(440px, calc(100vw - 40px)); padding: 28px 32px 30px; border: 1px solid var(--rule); border-radius: 4px;
@@ -64,7 +75,6 @@ dialog .error { margin-top: 12px; }
 dialog .buttons { margin-top: 24px; }
 
 /* TV sync: this screen's flashes, moved until they come with the TV's. */
-.device .synced { font-size: 13.5px; color: var(--ink-2); }
 dialog.sync { width: min(520px, calc(100vw - 40px)); }
 .sync .pad { display: grid; place-items: center; height: 210px; margin: 22px 0 0;
              border: 1px solid var(--rule); border-radius: 4px; background: var(--panel); }
@@ -78,6 +88,9 @@ dialog.sync { width: min(520px, calc(100vw - 40px)); }
 .sync .value b { color: var(--ink); }
 
 @media (max-width: 720px) {
+  main.pick, [data-mode="change"] main.pick { padding: 24px 20px 0; }
+  .res { grid-template-columns: auto; row-gap: 8px; }
+  .res-note { grid-column: 1; margin: 0; }
   .device { grid-template-columns: 18px minmax(0, 1fr); }
   .device .end { grid-column: 2; justify-content: flex-start; margin-top: 8px; }
 }
