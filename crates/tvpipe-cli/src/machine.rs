@@ -33,6 +33,14 @@ const FORWARD_QUEUE: usize = 16;
 
 static END_SENT: AtomicBool = AtomicBool::new(false);
 
+/// `share URL`'s tab, for `navigate` commands.
+static PAGE: OnceLock<tvpipe::__cli::opts::PageControl> = OnceLock::new();
+
+/// The page control of this process's `share URL` (`main`).
+pub fn set_page(control: tvpipe::__cli::opts::PageControl) {
+    let _ = PAGE.set(control);
+}
+
 /// Writes one line on stdout. A closed stdout is ignored: the parent
 /// stopped listening.
 fn write_line(line: &str) {
@@ -443,7 +451,28 @@ fn command(s: &Shared, payload: &[u8], pins: &mpsc::Sender<String>) {
             }
             None => warn!("stdin: pin command without a pin"),
         },
+        Some("navigate") => navigate(v["url"].as_str()),
         other => warn!("stdin: unknown command {other:?}"),
+    }
+}
+
+/// `{"type":"navigate","url":…}`: `share URL` shows another page in its
+/// tab (the receivers keep their sessions); refusals are warnings.
+fn navigate(url: Option<&str>) {
+    let Some(url) = url else {
+        warn!("stdin: navigate command without a url");
+        return;
+    };
+    let Some(page) = PAGE.get() else {
+        warn!("stdin: navigate: only share URL shows pages");
+        return;
+    };
+    match tvpipe::__cli::page_url(url) {
+        Ok(url) => {
+            debug!("stdin: navigate to {url}");
+            page.navigate(url);
+        }
+        Err(e) => warn!("stdin: navigate: {e}"),
     }
 }
 

@@ -96,6 +96,7 @@ JSON object of at most 64 KiB.
 |---|---|
 | `{"type":"stop"}` | stop now, without playing out what is queued; receivers get their TEARDOWN/STOP; exit status 0 |
 | `{"type":"pin","pin":"1234"}` | the answer to `pin-required` |
+| `{"type":"navigate","url":"https://…"}` | `share URL`: show this page in the same tab (an `http(s)://` or `file://` URL, or a host name, as the `URL` argument); the receivers keep their sessions and the page shares again (`log` lines say so). Refused (another command, a scheme tvpipe does not open, Google Meet): a `warn` log line |
 
 Unknown commands are logged and ignored. Outside machine mode kind 6 is an
 error like any unknown kind.

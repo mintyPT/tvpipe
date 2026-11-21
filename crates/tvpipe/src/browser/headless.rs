@@ -948,19 +948,25 @@ impl Keeper {
         let tab = self.tab.as_mut()?;
         if let Some(url) = self.opts.control.as_ref().and_then(|c| c.take()) {
             // The same document with another fragment would only change
-            // the hash: load it for real (a game's next TV page).
+            // the hash: the page changes it and loads itself again, in one
+            // task (a navigation, then a reload, raced: the reload could
+            // load the old fragment, a game's last TV key).
             let same_doc = without_fragment(&url) == without_fragment(&tab.url);
             info!("browser: opening {url} in the same tab");
-            let r =
-                tab.navigate(&url, false).and_then(
-                    |()| {
-                        if same_doc {
-                            tab.reload()
-                        } else {
-                            Ok(())
-                        }
-                    },
-                );
+            let r = if same_doc {
+                let target = Value::from(url.as_str()).to_json();
+                let js = format!("location.replace({target}); location.reload()");
+                match tab.evaluate(&js, false) {
+                    // The document goes away while it answers.
+                    Err(e) if e.kind() != ErrorKind::Timeout => {
+                        trace!("browser: reload: {e}");
+                        Ok(())
+                    }
+                    r => r.map(|_| ()),
+                }
+            } else {
+                tab.navigate(&url, false)
+            };
             if let Err(e) = r {
                 warn!("browser: {e}");
             }

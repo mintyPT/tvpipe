@@ -77,7 +77,7 @@ await play("x.mp4", { to: "Living Room", onPin: askUser }); // pairs on demand, 
 | `play(input, opts)` | `play` | `Session` once streaming started |
 | `testPattern(opts)` | `debug pattern` | `Session` |
 | `preview(input?, opts?)` | `preview` | `Session` (`playerUrl` set) |
-| `share(url?, opts)` | `share [URL]` | `Session` (`shareUrl` without URL) |
+| `share(url?, opts)` | `share [URL]` | `Session` (`shareUrl` without URL); with URL a `PageSession`, whose `navigate(url)` sends the machine interface's `navigate` |
 | `stream(opts)` | `play … -` (SLRW) | `StreamSession` once receivers are connected |
 | `version(opts?)` / `resolveBinary(opts?)` | `--version` | string / path |
 

@@ -9,7 +9,7 @@ import { resolveBinary, type BinaryOptions } from "./binary.ts";
 import { TvpipeError } from "./errors.ts";
 import type { DevicesEvent, RawDevice, StartedEvent, TunnelProvider, TvpipeEvent } from "./events.ts";
 import { TvpipeProcess, type ProcessOptions } from "./process.ts";
-import { Session, type SessionOptions } from "./session.ts";
+import { PageSession, Session, type SessionOptions } from "./session.ts";
 import { StreamSession, type AudioSpec, type VideoSpec } from "./stream.ts";
 
 // ---------------------------------------------------------------------------
@@ -436,11 +436,12 @@ export interface ShareOptions extends CommonOptions {
 }
 
 /**
- * Shares a web page (rendered by a headless Chromium of tvpipe's own) or,
- * without URL, whatever a person picks on the share page
- * (`session.shareUrl`; resolves once that page listens).
+ * Shares a web page (rendered by a headless Chromium of tvpipe's own;
+ * `session.navigate(url)` shows another one in the same tab) or, without
+ * URL, whatever a person picks on the share page (`session.shareUrl`;
+ * resolves once that page listens).
  */
-export function share(url: string | URL, options: ShareOptions): Promise<Session>;
+export function share(url: string | URL, options: ShareOptions): Promise<PageSession>;
 export function share(options: ShareOptions): Promise<Session>;
 export function share(a: string | URL | ShareOptions, b?: ShareOptions): Promise<Session> {
   const url = typeof a === "string" || a instanceof URL ? String(a) : undefined;
@@ -468,7 +469,7 @@ export function share(a: string | URL | ShareOptions, b?: ShareOptions): Promise
   return start(
     options,
     build,
-    (proc) => new Session(proc, options),
+    (proc) => (url !== undefined ? new PageSession(proc, options) : new Session(proc, options)),
     url !== undefined ? isStarted : options.tunnel ? (ev) => ev.type === "tunnel" : (ev) => ev.type === "share-page",
   );
 }

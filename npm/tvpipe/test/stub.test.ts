@@ -9,7 +9,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 
-import { discover, pair, play, share, testPattern, TvpipeError } from "../src/index.ts";
+import { discover, pair, PageSession, Session, play, share, testPattern, TvpipeError } from "../src/index.ts";
 import { stubBinary } from "./helpers.ts";
 
 const unix = process.platform !== "win32";
@@ -198,4 +198,36 @@ test("share with a public link resolves once the link works", { skip: !unix }, a
   const args = (JSON.parse(readFileSync(join(dir, "state.json"), "utf8")) as { calls: string[][] }).calls[0]!;
   assert.ok(args.includes("--tunnel=opentunnel") && args.includes("--yes"), String(args));
   await assert.rejects(share("https://x.example", { binary, to: "TV", tunnel: true }), TvpipeError);
+});
+
+test("a shared page goes to another page in the same tab", { skip: !unix }, async () => {
+  const { binary, dir } = stubBinary(`
+    emit({ type: "receiver", name: "TV", protocol: "cast", state: "connected" });
+    emit({ type: "connected", receivers: ["TV"] });
+    emit({ type: "capture", surface: "browser", label: "page", width: 1280, height: 720, audio: false });
+    emit({ type: "started", route: "browser", video: { codec: "h264", width: 1280, height: 720, fps: 30 }, audio: [], latency_ms: 100 });
+    for (;;) {
+      const c = await nextCommand();
+      state.commands = (state.commands || []).concat([c]);
+      save();
+      if (!c || c.type === "stop") break;
+    }
+    emit({ type: "end", reason: "stopped", receivers: [] });
+    finish(0);
+  `);
+  const s = await share("https://status.example/", { binary, to: "TV" });
+  assert.ok(s instanceof PageSession);
+  s.navigate("https://status.example/next#k=2");
+  s.navigate(new URL("https://other.example/"));
+  assert.throws(() => s.navigate(" "), (e: unknown) => e instanceof TvpipeError && e.code === "invalid-argument");
+  await s.stop();
+  assert.throws(() => s.navigate("https://late.example/"), (e: unknown) => e instanceof TvpipeError && e.code === "closed");
+  const commands = (JSON.parse(readFileSync(join(dir, "state.json"), "utf8")) as { commands: unknown[] }).commands;
+  assert.deepEqual(commands, [
+    { type: "navigate", url: "https://status.example/next#k=2" },
+    { type: "navigate", url: "https://other.example/" },
+    { type: "stop" },
+  ]);
+  // Without a URL there is no page to change.
+  assert.equal("navigate" in Session.prototype, false);
 });

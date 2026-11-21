@@ -65,7 +65,14 @@ The test pattern, frames from code, and MP4/MKV files with H.264 that
 tvpipe can send unchanged need no ffmpeg. Other files, URLs and capture
 devices need [ffmpeg](https://ffmpeg.org) in `PATH` (or `ffmpeg:
 "/path"`). If ffmpeg is missing, the error has the code `ffmpeg-missing`.
-`share(url)` needs Chrome, Edge, Chromium or Brave.
+`share(url)` needs Chrome, Edge, Chromium or Brave. Its session can show
+another page in the same tab: the TVs keep their sessions and the picture
+pauses for a moment (about 0.2 s) instead of starting over:
+
+```js
+const s = await share("https://status.example.com", { to: "TV" });
+s.navigate("https://status.example.com/next"); // a log warning if tvpipe refuses it
+```
 
 ## Frames from code
 

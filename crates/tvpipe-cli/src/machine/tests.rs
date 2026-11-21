@@ -132,6 +132,25 @@ fn stop_command_while_holding() {
 }
 
 #[test]
+fn navigate_hands_the_page_on() {
+    let f = Fixture::new();
+    f.send(slrw::MAGIC.to_vec());
+    // No share URL in this process yet: a warning, nothing else.
+    f.command(r#"{"type":"navigate","url":"https://example.com/"}"#);
+    let page = tvpipe::__cli::opts::PageControl::default();
+    set_page(page.clone());
+    // Refused: not a page, Google Meet, no url.
+    f.command(r#"{"type":"navigate","url":"ftp://example.com/"}"#);
+    f.command(r#"{"type":"navigate","url":"https://meet.google.com/abc"}"#);
+    f.command(r#"{"type":"navigate"}"#);
+    f.command(r#"{"type":"navigate","url":"example.com/next"}"#);
+    f.command(r#"{"type":"stop"}"#);
+    f.until("stop", |f| f.stops() == 1);
+    assert_eq!(page.take().as_deref(), Some("https://example.com/next"));
+    assert_eq!(page.take(), None);
+}
+
+#[test]
 fn forwards_after_claim_and_keeps_config() {
     let mut f = Fixture::new();
     f.send(slrw::MAGIC.to_vec());

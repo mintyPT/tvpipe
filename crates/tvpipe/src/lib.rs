@@ -122,6 +122,15 @@ pub mod __cli {
         format!("{list:#}\n")
     }
     pub use crate::net::tunnel::{start as start_tunnel, Tunnel};
+
+    /// A page `share URL` may show (`Session::navigate`, the machine
+    /// interface's `navigate`): the URL to open, or why not.
+    #[cfg(feature = "headless")]
+    pub fn page_url(arg: &str) -> crate::Result<String> {
+        let url = crate::browser::headless::page_url(arg)?;
+        crate::browser::headless::check_url(&url)?;
+        Ok(url)
+    }
     #[cfg(feature = "playshare")]
     pub mod playshare {
         pub use crate::playshare::remote::FetchOptions;

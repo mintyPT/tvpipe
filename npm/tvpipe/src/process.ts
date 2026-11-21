@@ -194,7 +194,7 @@ export class TvpipeProcess extends EventEmitter<{ event: [TvpipeEvent]; exit: [E
     return this.child.stdin!.write(data);
   }
 
-  /** Sends a command record (`stop`, `pin`). */
+  /** Sends a command record (`stop`, `pin`, `navigate`). */
   command(cmd: Record<string, unknown>): boolean {
     return this.write(slrw.command(cmd));
   }

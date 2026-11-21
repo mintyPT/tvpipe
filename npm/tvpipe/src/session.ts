@@ -263,3 +263,24 @@ export class Session extends EventEmitter<SessionEvents> implements AsyncDisposa
     await this.stop().catch(() => {});
   }
 }
+
+/**
+ * `share(url)`: a web page in tvpipe's headless browser, which can show
+ * other pages while it runs.
+ */
+export class PageSession extends Session {
+  /**
+   * Shows `url` in the same tab (an `http(s)://` or `file://` URL, or a
+   * host name). The receivers keep their sessions and the browser stays:
+   * the picture pauses while the page loads and shares again (a quarter
+   * of a second or so) instead of the TVs starting over. Returns at once;
+   * tvpipe logs a warning (a `log` event) when it refuses the page.
+   */
+  navigate(url: string | URL): void {
+    const target = String(url);
+    if (!target.trim()) throw new TvpipeError("invalid-argument", "navigate: an empty URL");
+    if (!this.running || !this.proc.command({ type: "navigate", url: target })) {
+      throw new TvpipeError("closed", "navigate: the session is over");
+    }
+  }
+}

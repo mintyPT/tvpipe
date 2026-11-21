@@ -263,7 +263,16 @@ fn run(command: Command, ctx: tvpipe::__cli::Ctx, global: &cli::Global) -> error
                 QrFormat::Rows => qr.rows().join("\n") + "\n",
             })
         }
-        command => {
+        mut command => {
+            // `share URL`: the machine interface's `navigate` shows other
+            // pages in its tab.
+            if let Command::Share(o) = &mut command {
+                if let Some(page) = o.page.as_mut().filter(|_| global.machine) {
+                    let control = tvpipe::__cli::opts::PageControl::default();
+                    page.control = Some(control.clone());
+                    machine::set_page(control);
+                }
+            }
             let io = tvpipe::__cli::GameIo {
                 // With --machine, the stdin router hands SLRW over and
                 // keyframe requests become events.

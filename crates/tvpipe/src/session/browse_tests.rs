@@ -835,20 +835,36 @@ fn chrome_browser_goes_to_another_page() {
         bin,
         Some(control),
         Box::new(
-            move |_dir: &std::path::Path, tally: &SharedTally, base: &str| {
+            move |dir: &std::path::Path, tally: &SharedTally, base: &str| {
                 wait_frames(tally, 30, "at the start");
                 c.navigate(format!("{base}next#k=1"));
                 let gap = wait_frames(tally, 30, "after the navigation");
                 eprintln!("30 frames {} ms after the navigation", gap.as_millis());
-                // The same document with another fragment: loaded again.
-                c.navigate(format!("{base}next#k=2"));
-                std::thread::sleep(Duration::from_millis(1500));
-                wait_frames(tally, 30, "after the second navigation");
+                // The same document with another fragment: loaded again, with
+                // the new fragment (not the old one: a game's TV key).
+                for k in 2..5 {
+                    c.navigate(format!("{base}next#k={k}"));
+                    std::thread::sleep(Duration::from_millis(1500));
+                    wait_frames(tally, 30, "after another navigation");
+                    let targets = devtools(dir)
+                        .call(None, "Target.getTargets", Value::object())
+                        .unwrap();
+                    let url = targets
+                        .get("targetInfos")
+                        .and_then(Value::as_array)
+                        .unwrap()
+                        .iter()
+                        .find(|t| t.get("type").and_then(Value::as_str) == Some("page"))
+                        .and_then(|t| t.get("url").and_then(Value::as_str))
+                        .unwrap()
+                        .to_owned();
+                    assert_eq!(url, format!("{base}next#k={k}"));
+                }
             },
         ),
     );
     let count = |p: &str| seen.iter().filter(|s| s.as_str() == p).count();
-    assert_eq!((count("/"), count("/next")), (1, 2), "{seen:?}");
+    assert_eq!((count("/"), count("/next")), (1, 4), "{seen:?}");
 }
 
 /// `share URL` with browser `bin` while `crash(profile, tally)` crashes
