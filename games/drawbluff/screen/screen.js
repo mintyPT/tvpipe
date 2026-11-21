@@ -15,23 +15,11 @@
  * confetti, no ambient motion, shorter drawing in.
  */
 
-import { PartyClient, qrSvg } from "/_tvpipe/lib/client.js";
+import { joinText, PartyClient, qrSvg } from "/_tvpipe/lib/client.js";
 import { pickLang } from "../phone/i18n.js";
 import { Sfx } from "../phone/sfx.js";
 import { drawDrawing, FRAME_MS, framesOf, GRID, PALETTE, PAPER } from "../phone/strokes.js";
 import { strings } from "./strings.js";
-
-/**
- * What the TV shows people to type: the short link without its scheme
- * (`tvpipe.party/BCDF`) when tvpipe has one, else the room's code.
- * @param {any} join `view.join`
- * @returns {string}
- */
-function joinText(join) {
-  const s = join?.short;
-  if (typeof s === "string" && /^https?:\/\/[^/?#\s]+\/[A-Za-z]{1,16}$/.test(s)) return s.replace(/^https?:\/\//, "");
-  return typeof join?.code === "string" ? join.code : "";
-}
 
 const client = PartyClient.fromLocation({ role: /** @type {any} */ (new URLSearchParams(location.hash.slice(1)).get("role") ?? "screen") });
 const stage = /** @type {HTMLElement} */ (document.getElementById("stage"));
@@ -664,7 +652,8 @@ function lobby(view) {
       qrBox.dataset.url = v.join?.url ?? "";
       qrBox.innerHTML = qrSvg(v.join?.qr, { quiet: 3 });
     }
-    const text = joinText(v.join);
+    // What people type: the short link (tvpipe.party/BCDF), else the room's code.
+    const text = joinText(v.join) ?? (typeof v.join?.code === "string" ? v.join.code : "");
     const cut = text.lastIndexOf("/") + 1;
     shortHost.textContent = text.slice(0, cut);
     shortCode.textContent = text.slice(cut);
