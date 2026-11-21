@@ -173,6 +173,58 @@ fn check_place(eval: &mut dyn FnMut(&str) -> Value) {
     }
 }
 
+/// The page's timing (capture.js `L.pacer`, `L.captureClock`, `L.audioClock`),
+/// known answers worked out by hand.
+fn check_timing(eval: &mut dyn FnMut(&str) -> Value) {
+    // 25 fps: slots 40 ms apart, an eighth of each offset followed. On
+    // time; 1 ms late; 10.1 ms early (the slot stays, the grid moves
+    // 1.27 ms earlier); 18 ms early (0.45 slots: skipped); after a gap
+    // (two slots on); early but forced (the next slot).
+    let js = eval(
+        "const p = tvpipeCapture.pacer(40000); return JSON.stringify([p(1000000), p(1041000), \
+         p(1070000), p(1100859), p(1200000), p(1210000, true)])",
+    );
+    assert_eq!(
+        js.as_str(),
+        Some("[1000000,1040000,1080125,null,1198859.375,1239001.953125]")
+    );
+    // The first delay (100 ms) is the offset; longer ones creep it up
+    // 2 µs; a shorter one takes over; a timestamp going back, or none,
+    // is the arrival time and starts over; a second's jump starts over.
+    let js = eval(
+        "const c = tvpipeCapture.captureClock(); return JSON.stringify([c(5000, 105000), \
+         c(38000, 140000), c(71000, 171500), c(104000, 203000), c(104000, 240000), \
+         c(137000, 236000), c(undefined, 250000), c(170000, 1500000), c(203000, 1533500), \
+         c(236000, 2800000)])",
+    );
+    assert_eq!(
+        js.as_str(),
+        Some("[105000,138002,171004,203000,240000,236000,250000,1500000,1533002,2800000]")
+    );
+    // 10 ms chunks at 48 kHz: on time; 25 ms late (keeps its count);
+    // 2 ms early (the count moves earlier); 2 s late (a gap: starts over).
+    let js = eval(
+        "const a = tvpipeCapture.audioClock(48000); return JSON.stringify([a(480, 1010000), \
+         a(480, 1045000), a(480, 1028000), a(480, 3100000), a(480, 3135000)])",
+    );
+    assert_eq!(
+        js.as_str(),
+        Some("[1000000,1010000,1018000,3090000,3100000]")
+    );
+    // Every chunk after the first 30 ms late: the first two-second window
+    // had the on-time one, the second moves the count 30 ms later.
+    let js = eval(
+        "const b = tvpipeCapture.audioClock(48000), out = []; \
+         for (let k = 0; k <= 398; k++) { \
+         const v = b(480, k ? 1e6 + (k + 1) * 10000 + 30000 : 1010000); \
+         if ([0, 1, 396, 397, 398].includes(k)) out.push(v); } return JSON.stringify(out)",
+    );
+    assert_eq!(
+        js.as_str(),
+        Some("[1000000,1010000,4960000,5000000,5010000]")
+    );
+}
+
 /// Streams for a while, sampling the page's stats; asks for a keyframe
 /// halfway and checks the encoder made one.
 fn watch(eval: &mut dyn FnMut(&str) -> Value, report: &Report) {
@@ -321,6 +373,7 @@ fn chrome_share_to_fakes() {
         );
         assert!(g.contains(",1,"), "scale: {geo}");
         check_place(&mut eval);
+        check_timing(&mut eval);
         // Something that moves and something that sounds.
         eval(
             "const c = document.createElement('canvas'); c.width = 640; c.height = 200; \
@@ -466,6 +519,7 @@ fn firefox_share_to_fakes() {
             "Firefox's how-to is missing: {howto}"
         );
         check_place(&mut eval);
+        check_timing(&mut eval);
         eval(
             "const c = document.createElement('canvas'); c.width = 640; c.height = 200; \
              document.body.prepend(c); const g = c.getContext('2d'); let n = 0; \
@@ -648,6 +702,7 @@ fn safari_share_to_fakes() {
             "Safari's how-to is missing: {howto}"
         );
         check_place(&mut eval);
+        check_timing(&mut eval);
         let r = eval(
             "const c = document.createElement('canvas'); c.width = 1280; c.height = 800; \
              document.body.prepend(c); const g = c.getContext('2d'); let n = 0; \

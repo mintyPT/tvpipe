@@ -819,6 +819,8 @@ impl<S: ControlStream> MirrorSink<S> {
             max_pixels_per_second: None,
             min_latency_ms: None,
             preferred_latency_ms: Some(session.leads.video_ms),
+            // An IDR at least every ~0.5 s (docs/airplay-mirroring.md §6.6).
+            max_key_interval_ms: Some(500),
             // The canvas from SETUP is the screen's shape.
             display_aspect: crate::types::aspect_of(c.width, c.height)
                 .or(Some(crate::types::DEFAULT_DISPLAY_ASPECT)),

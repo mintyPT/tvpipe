@@ -594,6 +594,11 @@ fn plan(d: &Desired, encoder: Encoder, caps: &[&Capabilities], audio: bool) -> R
         }
     }
     let latency_ms = latency(d, caps);
+    let key_ms = caps
+        .iter()
+        .filter_map(|c| c.max_key_interval_ms)
+        .min()
+        .unwrap_or(1000);
     let mut audio_plans = Vec::new();
     if audio {
         for family in [AudioFamily::Cast, AudioFamily::AirPlay] {
@@ -619,12 +624,12 @@ fn plan(d: &Desired, encoder: Encoder, caps: &[&Capabilities], audio: bool) -> R
             height: size.height,
             fps,
             bitrate_kbps: bitrate.max(100),
-            // AirPlay receivers want an IDR at least every ~0.5 s.
-            gop: if caps.iter().any(|c| c.audio_family == AudioFamily::AirPlay) {
-                fps.ceil().div_ceil(2).max(1)
-            } else {
-                fps.ceil().max(1)
-            },
+            // An IDR a second, or as often as a receiver wants (AirPlay:
+            // every ~0.5 s). The browser player takes AirPlay's audio but
+            // not its rule: more keyframes cost the other pictures bits.
+            gop: (fps.ceil() as u64 * key_ms as u64)
+                .div_ceil(1000)
+                .clamp(1, u32::MAX as u64) as u32,
         },
         audio: audio_plans,
         latency_ms,
@@ -2508,6 +2513,7 @@ mod tests {
             max_pixels_per_second: None,
             min_latency_ms: None,
             preferred_latency_ms: Some(200),
+            max_key_interval_ms: None,
             display_aspect: None,
         }
     }
@@ -2754,6 +2760,33 @@ mod tests {
             q.video.height
         );
         assert_eq!(p.video.gop, 30);
+        // A receiver wanting IDRs every 0.5 s (AirPlay) halves it, also at
+        // 25 fps (12.5 frames: 13); AirPlay's audio alone (the browser
+        // player) does not.
+        let mut half = caps(1920, 1080, 30, 10_000);
+        half.max_key_interval_ms = Some(500);
+        assert_eq!(
+            plan(&d, Encoder::Auto, &[&a, &half], false)
+                .unwrap()
+                .video
+                .gop,
+            15
+        );
+        let mut pal = half.clone();
+        pal.max_fps = Ratio::integer(25);
+        assert_eq!(
+            plan(&d, Encoder::Auto, &[&pal], false).unwrap().video.gop,
+            13
+        );
+        let mut player = caps(1920, 1080, 30, 10_000);
+        player.audio_family = AudioFamily::AirPlay;
+        assert_eq!(
+            plan(&d, Encoder::Auto, &[&player], false)
+                .unwrap()
+                .video
+                .gop,
+            30
+        );
         assert_eq!(p.video.bitrate_kbps, 4000);
         assert_eq!(p.latency_ms, 250);
         assert_eq!(p.audio.len(), 1);

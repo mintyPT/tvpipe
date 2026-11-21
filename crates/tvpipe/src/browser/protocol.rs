@@ -113,6 +113,11 @@ pub enum PageMsg {
         level: String,
         message: String,
     },
+    /// This socket carries the records of the page that was given `key`
+    /// (the page's worker sends them without passing the page's thread).
+    Media {
+        key: String,
+    },
     /// A type this version does not know (ignored).
     Unknown(String),
 }
@@ -162,6 +167,9 @@ pub fn parse_page(text: &str) -> Result<PageMsg> {
         "log" => PageMsg::Log {
             level: opt_str(&v, "level").unwrap_or_else(|| "info".into()),
             message: opt_str(&v, "message").unwrap_or_default(),
+        },
+        "media" => PageMsg::Media {
+            key: v.require_str("key")?.to_owned(),
         },
         other => PageMsg::Unknown(other.to_owned()),
     })
@@ -256,6 +264,19 @@ pub fn keyframe() -> String {
     Value::object().with("type", "keyframe").to_json()
 }
 
+/// The key a page's worker opens its media socket with (`channel`).
+pub fn channel(key: &str) -> String {
+    Value::object()
+        .with("type", "channel")
+        .with("key", key)
+        .to_json()
+}
+
+/// The media socket's key was taken (`media`).
+pub fn media_ok() -> String {
+    Value::object().with("type", "media").to_json()
+}
+
 pub fn busy() -> String {
     Value::object().with("type", "busy").to_json()
 }
@@ -340,6 +361,11 @@ mod tests {
             parse_page(r#"{"type":"future"}"#).unwrap(),
             PageMsg::Unknown("future".into())
         );
+        assert_eq!(
+            parse_page(r#"{"type":"media","key":"ab12"}"#).unwrap(),
+            PageMsg::Media { key: "ab12".into() }
+        );
+        assert!(parse_page(r#"{"type":"media"}"#).is_err());
         assert!(parse_page("[1]").is_err());
         assert!(parse_page("not json").is_err());
     }
@@ -376,5 +402,7 @@ mod tests {
             r#"{"type":"config","version":1,"fps":30.0,"audio":false,"sampleRate":48000,"channels":2,"receivers":["TV"]}"#
         );
         assert_eq!(keyframe(), r#"{"type":"keyframe"}"#);
+        assert_eq!(channel("ab12"), r#"{"type":"channel","key":"ab12"}"#);
+        assert_eq!(media_ok(), r#"{"type":"media"}"#);
     }
 }

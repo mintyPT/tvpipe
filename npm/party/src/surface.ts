@@ -71,6 +71,72 @@ export function wallMicros(): number {
   return Math.round((performance.timeOrigin + performance.now()) * 1000);
 }
 
+/**
+ * Which frames are encoded and their timestamps (µs), as tvpipe's capture
+ * script (`L.pacer` in capture.js) does. Receivers show each frame at its
+ * timestamp, so the timestamps keep an even cadence: a frame takes the
+ * next slot of a grid one interval apart when it comes up to 0.4
+ * intervals before it or half an interval after it, the nearest slot
+ * after a gap, and is skipped when earlier (of a page drawing at twice
+ * the rate, every other frame, never alternating). The grid follows the
+ * frames' phase by an eighth of each offset. `force` never skips.
+ * Returns `null` for a skipped frame.
+ */
+export function pacer(frameUs: number): (ts: number, force?: boolean) => number | null {
+  let next: number | null = null;
+  const half = frameUs / 2;
+  return (ts, force = false) => {
+    if (next === null) next = ts;
+    if (ts < next - 0.4 * frameUs && !force) return null;
+    let pts = next;
+    if (ts >= next + half) pts = next + Math.round((ts - next) / frameUs) * frameUs;
+    const e = Math.max(-half, Math.min(half, ts - pts));
+    next = pts + frameUs + e / 8;
+    return pts;
+  };
+}
+
+/**
+ * Audio timestamps (µs) for chunks of `n` samples at `rate` Hz arriving
+ * at `now`, as capture.js's `L.audioClock`: by the sample count, so a
+ * message that waited for a busy thread keeps its place. The count starts
+ * at the first chunk's arrival minus its length, moves earlier when a
+ * chunk comes before its counted end, and later when one ends up a second
+ * behind (a gap) or every chunk of two seconds came more than 20 ms after
+ * its counted end.
+ */
+export function audioClock(rate: number): (n: number, now: number) => number {
+  let base: number | null = null;
+  let count = 0;
+  let least = Infinity;
+  let since = 0;
+  return (n, now) => {
+    const dur = (n / rate) * 1e6;
+    if (base === null) {
+      base = now - dur;
+      since = now;
+    }
+    let pts = base + (count / rate) * 1e6;
+    let delay = now - (pts + dur);
+    if (delay < 0 || delay > 1e6) {
+      base += delay;
+      pts += delay;
+      delay = 0;
+    }
+    least = Math.min(least, delay);
+    if (now - since >= 2e6) {
+      if (least > 20000) {
+        base += least;
+        pts += least;
+      }
+      least = Infinity;
+      since = now;
+    }
+    count += n;
+    return pts;
+  };
+}
+
 /** One SLRW record: `u8 kind | u64le pts_us | u32le len | payload`. */
 export function slrwRecord(kind: number, ptsUs: number, payload: Uint8Array, prefix?: number): Uint8Array {
   const extra = prefix === undefined ? 0 : 1;
@@ -119,7 +185,7 @@ export class SurfaceEncoder extends Emitter<SurfaceEvents> {
   #wantKey = true;
   #config: string | undefined;
   #timer: ReturnType<typeof setTimeout> | undefined;
-  #lastFrame = -Infinity;
+  readonly #pace: (ts: number, force?: boolean) => number | null;
   #closed = false;
   #skipped = 0;
   #encodeMs = 0;
@@ -137,6 +203,7 @@ export class SurfaceEncoder extends Emitter<SurfaceEvents> {
     this.info = info;
     this.canvas = canvas;
     this.#keyInterval = (opts.keyInterval ?? 2) * 1e6;
+    this.#pace = pacer(1e6 / info.fps);
     const url =
       opts.url ??
       `${globalThis.location.protocol === "https:" ? "wss:" : "ws:"}//${globalThis.location.host}${info.path}`;
@@ -274,20 +341,19 @@ export class SurfaceEncoder extends Emitter<SurfaceEvents> {
 
   /**
    * Encodes what the canvas shows now (call it after drawing; faster than
-   * the surface's rate is paced down). Skipped while the encoder or the
-   * socket are behind.
+   * the surface's rate is paced down, with an even cadence: `pacer`).
+   * Skipped while the encoder or the socket are behind.
    */
   frame(force = false): void {
     const enc = this.#encoder;
     if (this.#closed || !enc || enc.state !== "configured" || this.#ws.readyState !== 1) return;
-    const now = performance.now();
-    if (!force && now - this.#lastFrame < 850 / this.info.fps) return;
-    this.#lastFrame = now;
+    const slot = this.#pace(wallMicros(), force);
+    if (slot === null) return;
+    const ts = Math.round(slot);
     if (enc.encodeQueueSize > 2 || this.#ws.bufferedAmount > 4 << 20) {
       this.#skipped++;
       return;
     }
-    const ts = wallMicros();
     const key = this.#wantKey || ts - this.#lastKey >= this.#keyInterval;
     let frame: VideoFrame;
     try {
@@ -353,6 +419,7 @@ export async function captureAudio(
   const tap = new AudioWorkletNode(ctx, "tvpipe-pcm", { numberOfInputs: 1, numberOfOutputs: 0, channelCount: channels, channelCountMode: "explicit" });
   node.connect(tap);
   const per = Math.round(ctx.sampleRate / 100);
+  const stamp = audioClock(ctx.sampleRate);
   let buf = new Int16Array(per * channels);
   let fill = 0;
   tap.port.onmessage = (ev: MessageEvent<Float32Array[]>) => {
@@ -364,7 +431,7 @@ export async function captureAudio(
         buf[fill * channels + c] = Math.max(-32768, Math.min(32767, Math.round(v * 32767)));
       }
       if (++fill === per) {
-        onPcm(buf, wallMicros() - 10_000);
+        onPcm(buf, stamp(per, wallMicros()));
         buf = new Int16Array(per * channels);
         fill = 0;
       }

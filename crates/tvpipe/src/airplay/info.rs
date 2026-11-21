@@ -281,6 +281,8 @@ impl Info {
             max_pixels_per_second: None,
             min_latency_ms: latency,
             preferred_latency_ms: None,
+            // An IDR at least every ~0.5 s (docs/airplay-mirroring.md §6.6).
+            max_key_interval_ms: Some(500),
             // The screen's shape comes with the SETUP canvas.
             display_aspect: Some(crate::types::DEFAULT_DISPLAY_ASPECT),
         }

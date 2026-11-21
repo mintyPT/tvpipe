@@ -39,13 +39,16 @@ Version 1. Using them: [Sharing the screen](https://tvpipe.party/manual/screen/)
 
 ```
 page                                    tvpipe
+ |<------------------------------ channel |  (on connect: the media socket's key)
  |-- hello ------------------------------>|
  |<-------------------------------- config |  (once the receivers are resolved)
  |<-------------------------------- status |  (any time)
  |   user picks a surface (getDisplayMedia)
  |-- capture ---------------------------->|  tvpipe connects the receivers
  |<---------------------------------- plan |
- |-- record h264-config, h264, audio ... ->|
+ |   worker: media socket, `media` + key ->|  (optional, see Media socket)
+ |<------------------------------- media --|
+ |-- record h264-config, h264, audio ... ->|  (video over the media socket if any)
  |<------------------------------ keyframe |  (any time, coalesced)
  |-- stats ------------------------------>|  (every 2 s)
  |-- ended ------------------------------>|  share stopped: tvpipe ends
@@ -79,18 +82,21 @@ Page → tvpipe:
 |---|---|
 | `hello` | `version` (1), `clock` (the page's media clock, µs), `agent` (user agent), `features` (what the browser has; informational) |
 | `capture` | `width`, `height` (of the first frame; the track's settings if none comes within 1.5 s), `fps` (or null), `audio` (bool: an audio track was shared), `surface` (`browser`/`window`/`monitor`), `label` |
-| `stats` | `fps`, `sourceFps`, `kbps`, `audioKbps`, `audioPeak` (the loudest sample since the last stats, 0–1), `encodeMs`, `dropped`, `repeated`, `keyRequests`, `queue`, `buffered`, `codec`, `width`, `height` (logged at `--debug`; sound that stays at peak 0 for 10 s is noted once) |
+| `stats` | `fps`, `sourceFps`, `kbps`, `audioKbps`, `audioPeak` (the loudest sample since the last stats, 0–1), `encodeMs`, `dropped`, `paced` (skipped for the cadence), `repeated`, `keyRequests`, `queue`, `buffered`, `codec`, `width`, `height` (logged at `--debug`; sound that stays at peak 0 for 10 s is noted once) |
 | `ended` | `reason` |
 | `log` | `level` (`error`/`warn`/`info`), `message` (shown in tvpipe's log) |
+| `media` | `key`: the first message of a *media socket* (below), not of a page |
 
 tvpipe → page:
 
 | type | fields |
 |---|---|
+| `channel` | `key` (32 hex digits): what this page's media socket says; sent first, to every socket |
 | `config` | `version`, `fps` (what to ask getDisplayMedia for), `audio` (whether to ask for audio), `sampleRate`, `channels` (the PCM tvpipe wants), `receivers` (names) |
 | `status` | `state` (`waiting`, `connecting`, `streaming`), `message`, `receivers` |
 | `plan` | `width`, `height` (encode size), `content` (`{x, y, width, height}`: where the capture goes, black around it), `fps`, `bitrate` (bit/s), `keyInterval` (frames between IDRs), `audio` (`{sampleRate, channels}` or null: send no audio) |
 | `keyframe` | — make the next frame an IDR (soon: a still screen re-encodes its last frame) |
+| `media` | — the media socket's key was taken; records may follow on it |
 | `busy` | — another page is the source |
 | `end` | `reason`: tvpipe stopped (Ctrl-C, receivers gone, an error) |
 
@@ -109,11 +115,38 @@ pts_us | u32le len | payload`, `len` = message length − 13.
 | 0 `end` | empty (accepted; `ended` is preferred) |
 
 Other kinds are an error and end the session. `pts_us` is the page's
-media clock (`performance.now()` in µs) for audio and video alike: video
-frames are stamped when the page receives them from the capture, audio
-records with their arrival time minus their duration. tvpipe takes media
-time 0 from the first record it keeps and times audio by its sample count
-(resyncing on drift over 50 ms), as for games.
+media clock (`performance.timeOrigin + performance.now()` in µs) for audio
+and video alike. tvpipe takes media time 0 from the first record it keeps
+and times audio by its sample count (resyncing on drift over 50 ms), as
+for games.
+
+Receivers show every frame at its timestamp, so the timestamps say when
+a picture was *captured*, at an even cadence, not when the script got to
+it (the page's thread, busy with the page, hands frames on tens of ms
+late and unevenly; stamped on arrival, a 30 fps share had frames 31 to
+93 ms apart, docs/measurements.md):
+
+- **Capture time** (`L.captureClock`): a `VideoFrame`'s own `timestamp`
+  (Chrome: its capture time, steady to ±0.3 ms), moved onto the media
+  clock by the smallest arrival delay seen (creeping up 2 µs a frame for
+  clocks that drift); the arrival time when the timestamp goes back, is
+  missing or is a second off.
+- **Cadence** (`L.pacer`): frames go on a grid one plan interval apart. A
+  frame takes the next slot when it was captured up to 0.4 intervals
+  before it or half an interval after it, the nearest slot after a gap,
+  and is skipped when earlier (a source faster than the plan: of a 60 Hz
+  source every other frame, never alternating). The grid follows the
+  frames' phase by an eighth of each one's offset. Keyframes asked for
+  while frames flow are the next captured frame; a still source's last
+  picture is encoded again (`force`, never skipped) only when no frame
+  came for 2 intervals (keyframes) or 250 ms (repeats).
+- **Audio** (`L.audioClock`): by the sample count from the first chunk's
+  arrival minus its length; moved earlier when a chunk arrives before its
+  counted end, later when one is a second late (a gap) or every chunk of
+  two seconds came over 20 ms after its counted end.
+
+The surfaces of `@tvpipe/party` (`npm/party/src/surface.ts`) use the
+same pacer and audio clock.
 
 The H.264 must have no B-frames (decode order = presentation order). The
 script asks for Constrained Baseline first (then Main, High), at the
@@ -174,9 +207,25 @@ keyframe, the page discards chunks: non-key ones, and keyframes more than
 
 tvpipe reads records as fast as the session takes them; when it falls
 behind, the socket backs up. The page drops source frames *before* the
-encoder while `WebSocket.bufferedAmount` exceeds 4 MiB or the encoder has
-more than 2 frames queued, so the stream stays decodable. Audio records
-are dropped above the same threshold.
+encoder while `WebSocket.bufferedAmount` (the media socket's, when there
+is one) exceeds 4 MiB or the encoder has more than 2 frames queued, so
+the stream stays decodable. Audio records are dropped above the same
+threshold.
+
+## Media socket
+
+A video engine in a worker sends its records (`h264-config`, `h264`)
+over a WebSocket of its own, so they never wait for the page's thread
+(with the page's own work in 10–40 ms tasks, records through the page
+reached tvpipe up to 38 ms after capture, through the worker's socket
+within 7 ms). tvpipe sends every socket `channel` with a key of its own
+first; the worker opens the same `/ws?t=TOKEN` URL and sends `media` with
+its page's key before anything else. tvpipe answers `media`, takes the
+socket's records as the page's (while the page is the source) and closes
+it when the page goes. A wrong key is closed with 1008. The worker
+configures its encoder only once the socket is taken (or after 1 s
+without an answer, then the page sends its records), so records never
+switch paths mid-stream. Audio stays on the page's socket.
 
 ## Browsers
 
@@ -184,15 +233,19 @@ are dropped above the same threshold.
 |---|---|---|---|
 | getDisplayMedia offers | tabs, windows, screens | windows, screens (no tabs) | windows, screens (no tabs) |
 | Sound | tab audio; with a screen the system's (Windows, macOS 14.2+; Linux only with a feature switch), with a window its app's (Windows 11, macOS 14.2+): [`screen.md`](screen.md) | none | none (`share URL`: the tab's sound, see below) |
-| Video engine | page (MediaStreamTrackProcessor) | worker (track moved to a worker, MediaStreamTrackProcessor there) | page (`<video>` + VideoFrame) |
+| Video engine | worker (a MediaStreamTrackProcessor's `readable` moved to it) | worker (track moved to a worker, MediaStreamTrackProcessor there) | page (`<video>` + VideoFrame) |
 | Tested | headless, CDP-driven, real tab capture | WebDriver, synthetic stream (picker needs a human) | headless, BiDi-driven, its own tab captured (below) |
 
 - The engine runs in a worker whenever the browser can transfer the video
   track to one (`postMessage(track, [track])` and MediaStreamTrackProcessor,
-  VideoEncoder, OffscreenCanvas in the worker): a worker is not throttled
-  while the share page is a background tab, which it is in Safari when the
-  user shares the Safari window and switches to the tab to show. The same
-  engine code runs on the page otherwise.
+  VideoEncoder, OffscreenCanvas in the worker), or else a
+  MediaStreamTrackProcessor's `readable` made on the page (Chrome, which
+  cannot transfer tracks; its frames then reach the worker without the
+  page's thread): a worker is not throttled while the share page is a
+  background tab, which it is in Safari when the user shares the Safari
+  window and switches to the tab to show, and is not held up by the page
+  `share URL` captures (a game's TV page). The same engine code runs on
+  the page otherwise.
 - Safari/Firefox: the page asks for no audio (a refused constraint could
   not be retried without a new click) and hints `displaySurface: "window"`,
   and the page explains: share the Safari window (or the screen), then

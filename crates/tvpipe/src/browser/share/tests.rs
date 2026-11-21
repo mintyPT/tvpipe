@@ -29,6 +29,9 @@ pub(crate) struct PageScript {
     /// Come as a browser over the tunnel would: this `Host`, and
     /// `https://HOST` as `Origin`.
     pub public_host: Option<String>,
+    /// Send the video over a second socket opened with the page's
+    /// `channel` key, as the capture script's worker does.
+    pub media: bool,
 }
 
 impl Default for PageScript {
@@ -41,6 +44,7 @@ impl Default for PageScript {
             send_ended: true,
             bad_record: None,
             public_host: None,
+            media: false,
         }
     }
 }
@@ -58,6 +62,8 @@ pub(crate) struct PageSeen {
     /// IDRs the page made because tvpipe asked.
     pub requested_idrs: usize,
     pub frames_sent: usize,
+    /// The key from `channel`.
+    pub channel: Option<String>,
 }
 
 type Seen = Arc<(Mutex<PageSeen>, Condvar)>;
@@ -121,6 +127,7 @@ fn run_page(ws_url: &str, script: PageScript) -> PageSeen {
                 let v = Value::parse(&t).unwrap();
                 match v.get("type").and_then(Value::as_str).unwrap_or("") {
                     "config" => g.config = Some(v.clone()),
+                    "channel" => g.channel = v.get("key").and_then(Value::as_str).map(Into::into),
                     "plan" => g.plan = Some(v.clone()),
                     "status" => g
                         .statuses
@@ -170,7 +177,21 @@ fn run_page(ws_url: &str, script: PageScript) -> PageSeen {
     }
     let plan = seen.0.lock().unwrap().plan.clone();
     if let Some(plan) = plan {
-        stream(&tx, &seen, &plan, &script, &clock);
+        let media = script.media.then(|| {
+            let key = seen
+                .0
+                .lock()
+                .unwrap()
+                .channel
+                .clone()
+                .expect("no channel key");
+            media_socket(ws_url, &key).expect("the media socket was refused")
+        });
+        let video = media.as_ref().map_or(&tx, |(_, m)| m);
+        stream(&tx, video, &seen, &plan, &script, &clock);
+        if let Some((_, m)) = media {
+            let _ = m.close(close_code::NORMAL, "");
+        }
     }
     if script.send_ended {
         let _ = tx.send_text(r#"{"type":"ended","reason":"the fake page is done"}"#);
@@ -186,8 +207,37 @@ fn run_page(ws_url: &str, script: PageScript) -> PageSeen {
     out
 }
 
+/// A worker's media socket: `media` with `key`; `None` if tvpipe refuses.
+pub(crate) fn media_socket(
+    ws_url: &str,
+    key: &str,
+) -> Option<(
+    websocket::Receiver<TcpStream, TcpStream>,
+    websocket::Sender<TcpStream>,
+)> {
+    let (mut rx, tx) = websocket::connect(
+        ws_url,
+        Duration::from_secs(10),
+        websocket::Limits::default(),
+    )
+    .ok()?;
+    let hello = Value::object().with("type", "media").with("key", key);
+    tx.send_text(&hello.to_json()).ok()?;
+    // Like any socket it hears `channel`, `config` and `status` first.
+    loop {
+        match rx.read_message() {
+            Ok(Message::Text(t)) if t == protocol::media_ok() => return Some((rx, tx)),
+            Ok(Message::Text(_)) => {}
+            _ => return None,
+        }
+    }
+}
+
+/// Streams over `tx` (audio) and `video` (video: the same socket, or the
+/// media socket).
 fn stream(
     tx: &websocket::Sender<TcpStream>,
+    video: &websocket::Sender<TcpStream>,
     seen: &Seen,
     plan: &Value,
     script: &PageScript,
@@ -214,7 +264,8 @@ fn stream(
     .unwrap();
     let mut cfg = vec![slrw::CONFIG_AVCC];
     cfg.extend_from_slice(&enc.avcc());
-    tx.send_binary(&protocol::record(Kind::H264Config, clock(), &cfg))
+    video
+        .send_binary(&protocol::record(Kind::H264Config, clock(), &cfg))
         .unwrap();
     let start = Instant::now();
     let mut answered = 0;
@@ -243,7 +294,7 @@ fn stream(
             (Some(bad), 1) => bad.clone(),
             _ => protocol::record(Kind::H264, pts, &payload),
         };
-        if tx.send_binary(&msg).is_err() {
+        if video.send_binary(&msg).is_err() {
             return;
         }
         seen.0.lock().unwrap().frames_sent += 1;
@@ -347,6 +398,38 @@ fn streams_video_and_pcm_until_the_share_ends() {
     );
     assert_eq!(seen.plan.unwrap().get("width").unwrap().as_u32(), Some(320));
     // The page ended the share itself: it gets no `end`, just the close.
+    assert!(seen.closed && seen.end.is_none());
+}
+
+/// The worker's own socket (`channel`, `media`): video over it, audio
+/// over the page's, both reach the input; it is not a page (no config,
+/// no capture of its own), and a wrong key is refused.
+#[test]
+fn video_over_the_media_socket() {
+    let server = ShareServer::bind(0).unwrap();
+    server.configure(&config(&["TV"]));
+    assert!(media_socket(&server.ws_url(), "00").is_none());
+    let page = spawn_page(
+        server.ws_url(),
+        PageScript {
+            media: true,
+            ..PageScript::default()
+        },
+    );
+    server.wait_capture(&never()).unwrap();
+    let mut input = server
+        .start(&plan(320, 180, 15, true), input_opts(true), never())
+        .unwrap();
+    let frames = drain(&mut input);
+    let video = frames
+        .iter()
+        .filter(|f| f.track == TrackKind::Video)
+        .count();
+    assert_eq!(video, 30);
+    assert!((130..=137).contains(&(frames.len() - video)));
+    Box::new(input).finish(true).unwrap();
+    let seen = page.join().unwrap();
+    assert_eq!(seen.channel.as_ref().map(String::len), Some(32));
     assert!(seen.closed && seen.end.is_none());
 }
 

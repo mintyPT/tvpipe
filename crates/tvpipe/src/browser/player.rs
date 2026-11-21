@@ -119,6 +119,7 @@ pub fn capabilities(opts: &PlayerOptions) -> Capabilities {
         max_pixels_per_second: None,
         min_latency_ms: None,
         preferred_latency_ms: Some(opts.latency_ms),
+        max_key_interval_ms: None,
         // Any shape: the page fits the picture into its window, so
         // `share` with only browsers keep the source's shape.
         display_aspect: None,

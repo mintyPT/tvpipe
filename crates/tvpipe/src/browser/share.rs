@@ -78,6 +78,8 @@ enum Event {
 struct State {
     next_id: u64,
     clients: Vec<(u64, Sender<TcpStream>)>,
+    /// Each page's key for its media socket (`channel`).
+    keys: Vec<(u64, String)>,
     /// The `config` message, once the session knows it.
     config: Option<String>,
     /// The last `status` message, for pages that connect later.
@@ -207,11 +209,20 @@ impl Shared {
         let Ok((mut rx, tx)) = websocket::pair(tcp, rest, Role::Server, limits) else {
             return;
         };
+        // The key its worker may open a media socket with (without one,
+        // the page sends every record itself).
+        let key = crate::crypto::ring::random_array::<16>()
+            .ok()
+            .map(|k| crate::util::hex::encode(&k));
         let id = {
             let mut st = self.lock();
             st.next_id += 1;
             let id = st.next_id;
             st.clients.push((id, tx.clone()));
+            if let Some(k) = &key {
+                st.keys.push((id, k.clone()));
+                let _ = tx.send_text(&protocol::channel(k));
+            }
             for m in [&st.config, &st.status].into_iter().flatten() {
                 let _ = tx.send_text(m);
             }
@@ -227,9 +238,17 @@ impl Shared {
         );
         let mut clock = None;
         let mut page_agent = String::new();
+        // This socket carries the records of that page (its worker's).
+        let mut media_of: Option<u64> = None;
         let why = loop {
-            if self.lock().shutdown {
-                break "tvpipe stopped".to_owned();
+            {
+                let st = self.lock();
+                if st.shutdown {
+                    break "tvpipe stopped".to_owned();
+                }
+                if media_of.is_some_and(|page| !st.clients.iter().any(|(c, _)| *c == page)) {
+                    break "its page went away".to_owned();
+                }
             }
             match rx.read_message() {
                 Err(e) if e.kind() == ErrorKind::Timeout => {}
@@ -311,13 +330,38 @@ impl Shared {
                         "error" | "warn" => warn!("share page: {message}"),
                         _ => debug!("share page: {message}"),
                     },
+                    Ok(PageMsg::Media { key }) => {
+                        let mut st = self.lock();
+                        let page = st
+                            .keys
+                            .iter()
+                            .find(|(c, k)| *c != id && *k == key)
+                            .map(|(c, _)| *c);
+                        match page {
+                            Some(page) if media_of.is_none() && clock.is_none() => {
+                                debug!("share: page {id} carries page {page}'s records");
+                                media_of = Some(page);
+                                // Not a page: no broadcasts, no key.
+                                st.clients.retain(|(c, _)| *c != id);
+                                st.keys.retain(|(c, _)| *c != id);
+                                drop(st);
+                                let _ = tx.send_text(&protocol::media_ok());
+                            }
+                            _ => {
+                                drop(st);
+                                let _ = tx.close(close_code::POLICY, "unknown media key");
+                                break "a media socket with an unknown key".to_owned();
+                            }
+                        }
+                    }
                     Ok(PageMsg::Unknown(t)) => trace!("share: page {id}: unknown message {t:?}"),
                     Err(e) => debug!("share: page {id}: {e}"),
                 },
                 Ok(Message::Binary(b)) => {
+                    let source = media_of.unwrap_or(id);
                     let streaming = {
                         let st = self.lock();
-                        st.streaming && st.active == Some(id)
+                        st.streaming && st.active == Some(source)
                     };
                     if !streaming {
                         continue;
@@ -342,6 +386,7 @@ impl Shared {
         debug!("share: page {id}: {why}");
         let mut st = self.lock();
         st.clients.retain(|(c, _)| *c != id);
+        st.keys.retain(|(c, _)| *c != id);
         if st.active == Some(id) {
             if st.streaming && st.rejoin {
                 st.active = None;
@@ -758,13 +803,21 @@ pub struct ShareInputOptions {
     pub audio_families: Vec<(AudioFamily, AudioOut)>,
 }
 
-/// Capture-to-tvpipe delay of video records (page clock vs. arrival).
+/// Capture-to-tvpipe delay of video records (page clock vs. arrival),
+/// and how evenly their timestamps are spaced (receivers show frames at
+/// their timestamps: uneven spacing is uneven motion).
 #[derive(Default)]
 struct Lag {
     since: Option<Instant>,
     n: u64,
     sum_ms: f64,
     max_ms: f64,
+    last_pts: Option<u64>,
+    /// Gaps between timestamps (ms): count, sum, sum of squares, largest.
+    gaps: u64,
+    gap_sum: f64,
+    gap_sq: f64,
+    gap_max: f64,
     seen: u64,
     total_n: u64,
     total_sum_ms: f64,
@@ -772,7 +825,15 @@ struct Lag {
 }
 
 impl Lag {
-    fn add(&mut self, ms: f64) {
+    fn add(&mut self, ms: f64, pts_us: u64) {
+        if let Some(last) = self.last_pts.filter(|&l| l < pts_us) {
+            let gap = (pts_us - last) as f64 / 1000.0;
+            self.gaps += 1;
+            self.gap_sum += gap;
+            self.gap_sq += gap * gap;
+            self.gap_max = self.gap_max.max(gap);
+        }
+        self.last_pts = Some(pts_us);
         let now = Instant::now();
         let since = *self.since.get_or_insert(now);
         self.n += 1;
@@ -786,14 +847,21 @@ impl Lag {
             self.total_max_ms = self.total_max_ms.max(ms);
         }
         if now.duration_since(since) >= LAG_REPORT {
+            let n = self.gaps.max(1) as f64;
+            let mean = self.gap_sum / n;
             debug!(
-                "share: {:.1} fps from the page, capture to tvpipe avg {:.1} ms, max {:.1} ms",
+                "share: {:.1} fps from the page, capture to tvpipe avg {:.1} ms, max {:.1} ms; \
+                 frames {:.1} ms apart (deviation {:.1} ms, longest {:.1} ms)",
                 self.n as f64 / now.duration_since(since).as_secs_f64(),
                 self.sum_ms / self.n as f64,
-                self.max_ms
+                self.max_ms,
+                mean,
+                (self.gap_sq / n - mean * mean).max(0.0).sqrt(),
+                self.gap_max
             );
             *self = Lag {
                 since: Some(now),
+                last_pts: self.last_pts,
                 seen: self.seen,
                 total_n: self.total_n,
                 total_sum_ms: self.total_sum_ms,
@@ -951,7 +1019,8 @@ impl ShareInput {
                 self.last_video = Some(now);
                 if let Some((at, page_us)) = self.clock {
                     let page_now = page_us as f64 + at.elapsed().as_secs_f64() * 1e6;
-                    self.lag.add((page_now - p.pts_us as f64) / 1000.0);
+                    self.lag
+                        .add((page_now - p.pts_us as f64) / 1000.0, p.pts_us);
                 }
                 let annexb = p.payload[0] & slrw::H264_ANNEX_B != 0;
                 if !annexb && self.length_size != 4 {

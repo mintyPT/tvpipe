@@ -661,14 +661,15 @@ page (window or worker)                      tvpipe
 - **The library** (`npm/party/src/surface.ts`): `tvpipe.surface({canvas,
   fps, to, audio: {context, node}})` opens a surface and returns a
   `SurfaceEncoder`; the game calls `frame()` after drawing (paced down to
-  the surface's rate), or `clock: "timer"`. `tvpipe.openSurface()` plus
+  the surface's rate at an even cadence, the capture script's pacer:
+  `docs/share-protocol.md`, "Binary messages"), or `clock: "timer"`. `tvpipe.openSurface()` plus
   `new SurfaceEncoder(info, offscreenCanvas)` runs the encoder in a
   worker. H.264 Constrained Baseline at the smallest level that fits
   (then Main, High), `latencyMode: "realtime"`, hardware preferred, an
   IDR every 2 s and on request. Backpressure: a frame is skipped while
   the encoder holds more than 2 or the socket more than 4 MiB.
   `captureAudio(context, node)` taps a Web Audio node with an
-  AudioWorklet (10 ms of s16 PCM per record).
+  AudioWorklet (10 ms of s16 PCM per record, timed by its sample count).
 - **Warm-up** (as `capture.js`, `docs/share-protocol.md`): a hardware
   encoder's first pictures come out most of a second after their frames
   (VideoToolbox in Chrome: ~0.9 s). A first keyframe that old anchored

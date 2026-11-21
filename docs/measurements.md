@@ -32,6 +32,39 @@ this Apple TV, which is why the automatic profile is the default.
 Not measured yet: more calibration photos, TV game mode, lower
 `--latency`, the ffmpeg path, Cast hardware.
 
+## Share capture cadence (2026-11-21)
+
+What the receivers get from `share URL` (and `game play`'s TV): headless
+Chrome 158 on a MacBook Pro (M5 Max, macOS 26.6), `tvpipe -v share URL --to browser`,
+1920x1080@30, the timestamps of the video records as tvpipe receives them.
+Two pages: a canvas animation (light), and 40 CSS-animated boxes plus a
+text update per frame with a 10–40 ms busy loop in 15 % of the frames
+(a game's TV page doing work). "Uneven" is the share of frames a 60 Hz
+screen would not hold for exactly two refreshes (simulated over 20
+phases, the browser player's rule).
+
+| | encoded fps (of 30 captured) | frame spacing | uneven at 60 Hz | capture → tvpipe p99 |
+|---|---|---|---|---|
+| light, before | 29.5 | 31–67 ms (sd 4.8) | 7.1 % | 4.6 ms |
+| busy, before | 21.5 | 31–93 ms (sd 13.4) | 39 % | 34 ms |
+| light, after | 30 | 33.3 ms (sd 0.04) | 0.2 % | 7.4 ms |
+| busy, after | 30 | 33.3 ms (sd 0.05) | 0.3 % | 9.2 ms |
+
+Before, the engine ran on the page's thread in Chrome, stamped each frame
+when that thread got to it, and skipped a frame that came less than
+31.3 ms after the last one encoded: arrival jitter of a few ms skipped
+2–3 % of the frames of an idle page (a 67 ms hole each), and a busy page
+lost a quarter of them. Chrome's own `VideoFrame.timestamp` stayed
+33.3 ± 0.3 ms apart throughout, also while the page's thread delivered
+the frames up to 50 ms late. Now (docs/share-protocol.md, "Binary
+messages", "Media socket"): the engine runs in a worker (the track
+processor's `readable` moved there), frames are stamped with their
+capture time on an even grid, and the worker sends them over its own
+socket. Audio stamped on arrival at the busy page made tvpipe resync its
+PCM timeline (±50 ms) several times a minute; timed by its sample count
+it does not. `--fps 60` on the busy page: 60 fps, 16.7 ms apart (sd
+0.01).
+
 ## Cast default delay
 
 openscreen's sender defaults to a 200 ms target delay. 5-minute soaks on a

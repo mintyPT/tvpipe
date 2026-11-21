@@ -319,11 +319,15 @@
   // instead of up to a whole one late.
   var halfRefresh = 0, lastTick = 0;
 
-  function draw() {
+  // `at`: the refresh's own time (requestAnimationFrame's, µs), steady
+  // where the callback's start is not, so frames due near the middle of
+  // a refresh do not flip between two refreshes with the page's load.
+  function draw(at) {
     if (P.offsetUs === null || P.delayMs === null || !frames.length) return;
     var now = nowUs();
+    if (!(at > now - 50000 && at <= now)) at = now;
     var pick = -1;
-    for (var i = 0; i < frames.length && dueUs(frames[i].timestamp) <= now + halfRefresh; i++) pick = i;
+    for (var i = 0; i < frames.length && dueUs(frames[i].timestamp) <= at + halfRefresh; i++) pick = i;
     if (pick < 0) return;
     for (var j = 0; j < pick; j++) {
       frames.shift().close();
@@ -362,7 +366,7 @@
     var dt = (t - lastTick) * 1000;
     lastTick = t;
     if (dt > 2000 && dt < 50000) halfRefresh += (dt / 2 - halfRefresh) * 0.1;
-    draw();
+    draw(t * 1000);
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);

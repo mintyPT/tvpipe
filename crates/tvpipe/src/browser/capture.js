@@ -89,6 +89,76 @@
       }
       return buf.buffer;
     };
+    // Which captured frames are encoded and their timestamps (µs).
+    // Receivers show each frame at its timestamp, so the timestamps keep
+    // an even cadence: a frame takes the next slot of a grid one plan
+    // interval apart when it was captured up to 0.4 intervals before it
+    // or half an interval after it, the slot nearest to it after a gap,
+    // and is skipped when it comes earlier (a source faster than the
+    // plan: of a source at twice the rate, every other frame, never
+    // alternating, which half an interval would). The grid follows the
+    // source's phase slowly (an eighth of each frame's offset), so slots
+    // stay centered on the capture times and capture jitter never moves
+    // a frame to another slot. `force` (keyframes, repeats of a still
+    // picture) never skips.
+    L.pacer = function (frameUs) {
+      var next = null, half = frameUs / 2;
+      return function (ts, force) {
+        if (next === null) next = ts;
+        if (ts < next - 0.4 * frameUs && !force) return null;
+        var pts = next;
+        if (ts >= next + half) pts = next + Math.round((ts - next) / frameUs) * frameUs;
+        var e = Math.max(-half, Math.min(half, ts - pts));
+        next = pts + frameUs + e / 8;
+        return pts;
+      };
+    };
+    // When a frame was captured, on the media clock (µs): its own
+    // timestamp (the browser's capture time, steady even when the thread
+    // reading the frames is busy) moved onto the clock by the smallest
+    // delay seen between capture and arrival (creeping up 2 µs a frame,
+    // for clocks that drift apart). Where the timestamp is of no use
+    // (missing, going back, or a second off), the arrival time.
+    L.captureClock = function () {
+      var offset = null, last = -Infinity;
+      return function (ts, now) {
+        if (typeof ts !== 'number' || !isFinite(ts) || ts <= last) {
+          offset = null;
+          last = typeof ts === 'number' && isFinite(ts) ? ts : -Infinity;
+          return now;
+        }
+        last = ts;
+        var off = now - ts;
+        if (offset === null || off < offset || off - offset > 1e6) offset = off;
+        else offset += Math.min(2, off - offset);
+        return ts + offset;
+      };
+    };
+    // Audio timestamps (µs) for chunks of `n` samples at `rate` Hz that
+    // arrive at `now`: by the sample count, so a late message (the page's
+    // thread was busy) keeps its place. The count starts at the first
+    // chunk's arrival minus its length, moves earlier when a chunk comes
+    // before its counted end, and later when it ends up a second behind
+    // (a gap) or every chunk of two seconds came more than 20 ms after
+    // its counted end (the clocks drifted, or the start was early).
+    L.audioClock = function (rate) {
+      var base = null, count = 0, least = Infinity, since = 0;
+      return function (n, now) {
+        var dur = n / rate * 1e6;
+        if (base === null) { base = now - dur; since = now; }
+        var pts = base + count / rate * 1e6;
+        var delay = now - (pts + dur);
+        if (delay < 0 || delay > 1e6) { base += delay; pts += delay; delay = 0; }
+        least = Math.min(least, delay);
+        if (now - since >= 2e6) {
+          if (least > 20000) { base += least; pts += least; }
+          least = Infinity;
+          since = now;
+        }
+        count += n;
+        return pts;
+      };
+    };
     L.bytesOf = function (src) {
       if (src instanceof ArrayBuffer) return new Uint8Array(src.slice(0));
       return new Uint8Array(src.buffer.slice(src.byteOffset, src.byteOffset + src.byteLength));
@@ -122,16 +192,19 @@
     var DEFAULT_PROFILES = ['42E0', '4D40', '6400'];
 
     var plan = null, capture = null, enc = null, frameUs = 33333;
-    var lastFrame = null, lastEncodeAt = -1e15, needKey = true, sinceKey = 0;
+    var lastFrame = null, lastEncodeAt = -1e15, lastSourceAt = -1e15, needKey = true, sinceKey = 0;
+    var pace = null, captured = L.captureClock();
     var lastDesc = null, lastChunkTs = -1, sentKey = false, firstChunkAt = null;
     var buffered = 0, canvas = null, g2d = null, sizeSent = false, stopped = false;
     var timers = [], reader = null, track = null, keyAskedAt = null, warnedOrder = false;
+    // The worker's own socket for its records (`media`), when it has one.
+    var sock = null;
     var codec = '';
     var stats = fresh();
 
     function fresh() {
       return {
-        since: L.clock(), source: 0, encoded: 0, repeated: 0, dropped: 0, chunks: 0, keys: 0,
+        since: L.clock(), source: 0, encoded: 0, repeated: 0, dropped: 0, paced: 0, chunks: 0, keys: 0,
         bytes: 0, latencySum: 0, keyRequests: 0, warmup: 0, keyLatencyMs: null
       };
     }
@@ -146,17 +219,23 @@
       }
       if (lastFrame) lastFrame.close();
       lastFrame = f;
+      var now = L.clock();
+      var t = captured(f.timestamp, now);
+      lastSourceAt = now;
       if (!enc) return;
       stats.source++;
-      var t = L.clock();
-      // Pace to the plan's frame rate (sources may deliver more).
-      if (t - lastEncodeAt < frameUs - 2000 && !needKey) return;
-      encode(f, t);
+      encode(f, t, false);
     }
 
     function readTrack(tr) {
       track = tr;
-      var r = new MediaStreamTrackProcessor({ track: tr }).readable.getReader();
+      readFrames(new MediaStreamTrackProcessor({ track: tr }).readable);
+    }
+
+    // Frames from a MediaStreamTrackProcessor's readable (made here, or
+    // on the page and moved here: Chrome cannot move the track itself).
+    function readFrames(readable) {
+      var r = readable.getReader();
       reader = r;
       var pump = function () {
         r.read().then(function (x) {
@@ -191,11 +270,58 @@
       return next();
     }
 
+    // A record to tvpipe: over the media socket, else through the page.
+    function send(rec) {
+      if (sock && sock.readyState === 1) sock.send(rec);
+      else post({ type: 'record', data: rec }, [rec]);
+    }
+
+    // A worker opens a socket of its own for its records, so they never
+    // wait for the page's thread (busy with the page itself). Resolves
+    // once tvpipe took the key, or without a socket (no worker, no key,
+    // refused, or no answer within a second): then the page sends them.
+    function openMedia(media) {
+      if (!media || !media.key || typeof WebSocket !== 'function' || typeof window !== 'undefined') {
+        return Promise.resolve();
+      }
+      return new Promise(function (resolve) {
+        var ws, done = false;
+        var settle = function (ok) {
+          if (done) return;
+          done = true;
+          if (ok && !stopped) {
+            sock = ws;
+            ws.onclose = function () { sock = null; };
+          } else {
+            try { ws.close(); } catch (e) { /* closed */ }
+          }
+          resolve();
+        };
+        try {
+          ws = new WebSocket(media.url);
+        } catch (e) {
+          resolve();
+          return;
+        }
+        ws.binaryType = 'arraybuffer';
+        ws.onopen = function () { ws.send(JSON.stringify({ type: 'media', key: media.key })); };
+        ws.onmessage = function (e) {
+          var m = null;
+          try { m = JSON.parse(e.data); } catch (err) { /* binary or junk */ }
+          if (m && m.type === 'media') settle(true);
+        };
+        ws.onerror = ws.onclose = function () { settle(false); };
+        setTimeout(function () { settle(false); }, 1000);
+      });
+    }
+
     function start(m) {
       plan = m.plan;
       capture = m.capture;
       frameUs = 1e6 / (plan.fps || 30);
-      pickCodec(plan, m.profiles || DEFAULT_PROFILES).then(function (cfg) {
+      pace = L.pacer(frameUs);
+      Promise.all([pickCodec(plan, m.profiles || DEFAULT_PROFILES), openMedia(m.media)]).then(function (r) {
+        var cfg = r[0];
         if (stopped) return;
         codec = cfg.codec;
         enc = new VideoEncoder({
@@ -209,15 +335,17 @@
         timers.push(every(IDLE_REPEAT_MS / 2, idle));
         timers.push(every(STATS_MS, report));
         // A frame that arrived before the plan starts the stream.
-        if (lastFrame) encode(lastFrame, L.clock());
+        if (lastFrame) encode(lastFrame, L.clock(), true);
       }, function (e) { fail(e && e.message || e); });
     }
 
+    // A still source: the last picture again (not while frames come and
+    // are dropped: the encoder or the socket are behind).
     function idle() {
-      var t = L.clock();
-      if (lastFrame && t - lastEncodeAt >= IDLE_REPEAT_MS * 1000) {
+      var t = L.clock(), idleUs = IDLE_REPEAT_MS * 1000;
+      if (lastFrame && t - lastEncodeAt >= idleUs && t - lastSourceAt >= idleUs) {
         stats.repeated++;
-        encode(lastFrame, t);
+        encode(lastFrame, t, true);
       }
     }
 
@@ -225,9 +353,12 @@
       needKey = true;
       stats.keyRequests++;
       if (keyAskedAt === null) keyAskedAt = L.clock();
-      // Static content may send no frame for a while: encode one now.
+      // The next captured frame becomes the keyframe; static content may
+      // send none for a while: then encode the last one again now.
       var t = L.clock();
-      if (lastFrame && t - lastEncodeAt >= frameUs / 2) encode(lastFrame, t);
+      if (lastFrame && t - lastSourceAt >= 2 * frameUs && t - lastEncodeAt >= frameUs / 2) {
+        encode(lastFrame, t, true);
+      }
     }
 
     // Where a w x h source goes: the plan's rectangle while the capture
@@ -257,12 +388,20 @@
       return new VideoFrame(canvas, { timestamp: t, alpha: 'discard' });
     }
 
-    function encode(src, t) {
+    // Encodes `src` captured at `t` (µs, media clock) if the pacer gives
+    // it a slot (`force`: always).
+    function encode(src, t, force) {
       if (!enc || enc.state !== 'configured') return;
-      if (buffered > MAX_BUFFERED || enc.encodeQueueSize > 2) {
+      var pts = pace(t, force);
+      if (pts === null) {
+        stats.paced++;
+        return;
+      }
+      if ((sock ? sock.bufferedAmount : buffered) > MAX_BUFFERED || enc.encodeQueueSize > 2) {
         stats.dropped++;
         return;
       }
+      t = Math.round(pts);
       var f;
       try {
         var w = src.displayWidth, h = src.displayHeight, r = rect(w, h);
@@ -282,7 +421,7 @@
         f.close();
       }
       if (key) { needKey = false; sinceKey = 0; } else { sinceKey++; }
-      lastEncodeAt = t;
+      lastEncodeAt = L.clock();
       stats.encoded++;
     }
 
@@ -294,7 +433,7 @@
         if (!L.sameBytes(desc, lastDesc)) {
           lastDesc = desc;
           var rec = L.record(L.KIND_CONFIG, c.timestamp, [new Uint8Array([0]), desc]);
-          post({ type: 'record', data: rec }, [rec]);
+          send(rec);
         }
       }
       var now = L.clock(), late = (now - c.timestamp) / 1000;
@@ -323,7 +462,7 @@
       }
       lastChunkTs = c.timestamp;
       var buf = L.record(L.KIND_H264, c.timestamp, [new Uint8Array([flags]), data]);
-      post({ type: 'record', data: buf }, [buf]);
+      send(buf);
       if (flags & L.FLAG_KEY) {
         stats.keys++;
         if (keyAskedAt !== null) {
@@ -349,9 +488,9 @@
         sourceFps: +(s.source / secs).toFixed(1),
         kbps: Math.round(s.bytes * 8 / secs / 1000),
         encodeMs: s.chunks ? +(s.latencySum / s.chunks).toFixed(1) : null,
-        dropped: s.dropped, repeated: s.repeated, keyRequests: s.keyRequests, keys: s.keys,
+        dropped: s.dropped, paced: s.paced, repeated: s.repeated, keyRequests: s.keyRequests, keys: s.keys,
         keyLatencyMs: s.keyLatencyMs, warmup: s.warmup,
-        queue: enc ? enc.encodeQueueSize : 0, buffered: buffered, codec: codec,
+        queue: enc ? enc.encodeQueueSize : 0, buffered: sock ? sock.bufferedAmount : buffered, codec: codec,
         width: plan ? plan.width : 0, height: plan ? plan.height : 0
       });
       stats = fresh();
@@ -366,12 +505,14 @@
       if (track) track.stop();
       if (enc && enc.state !== 'closed') { try { enc.close(); } catch (e) { /* closed */ } }
       if (lastFrame) { lastFrame.close(); lastFrame = null; }
+      if (sock) { try { sock.close(); } catch (e) { /* closed */ } sock = null; }
     }
 
     return function (m) {
       switch (m.type) {
         case 'start': start(m); break;
         case 'track': readTrack(m.track); break;
+        case 'readable': readFrames(m.readable); break;
         case 'frame': frame(m.frame); break;
         case 'keyframe': keyframe(); break;
         case 'buffered': buffered = m.bytes; break;
@@ -392,8 +533,8 @@
     'var L = (' + lib.toString() + ')();\n' +
     'var handle = (' + engine.toString() + ')(L, function (m, t) { postMessage(m, t || []); },\n' +
     '  function (ms, fn) { var id = setInterval(fn, ms); return function () { clearInterval(id); }; });\n' +
-    'postMessage({ type: "hello", ok: typeof MediaStreamTrackProcessor === "function" &&\n' +
-    '  typeof VideoEncoder === "function" && typeof OffscreenCanvas === "function" });\n' +
+    'postMessage({ type: "hello", ok: typeof VideoEncoder === "function" && typeof OffscreenCanvas === "function",\n' +
+    '  processor: typeof MediaStreamTrackProcessor === "function" });\n' +
     'onmessage = function (e) { handle(e.data); };\n';
 
   // Which browser family: what getDisplayMedia can capture differs.
@@ -571,6 +712,10 @@
 
   Capture.prototype._message = function (m) {
     switch (m.type) {
+      case 'channel':
+        // The key the worker's own socket for records takes (`media`).
+        this.mediaKey = m.key;
+        break;
       case 'config':
         this.config = m;
         this._emit('config', m);
@@ -694,7 +839,10 @@
     return this._startEngine(vt);
   };
 
-  // The engine in a worker when the track can move there, else here.
+  // The engine in a worker when the track can move there (Safari) or a
+  // MediaStreamTrackProcessor's readable made here can (Chrome: the
+  // frames then reach the worker without passing this page's thread,
+  // which the page itself keeps busy), else here.
   Capture.prototype._startEngine = function (vt) {
     var self = this;
     var onEngine = function (m) { self._fromEngine(m); };
@@ -731,12 +879,21 @@
         var m = e.data;
         if (m.type !== 'hello') { onEngine(m); return; }
         if (!m.ok) { settle(false); return; }
-        try {
-          w.postMessage({ type: 'track', track: vt }, [vt]);
-        } catch (err) {
-          settle(false);
-          return;
+        var moved = false;
+        if (m.processor) {
+          try {
+            w.postMessage({ type: 'track', track: vt }, [vt]);
+            moved = true;
+          } catch (err) { /* not transferable here */ }
         }
+        if (!moved && typeof global.MediaStreamTrackProcessor === 'function') {
+          try {
+            var readable = new global.MediaStreamTrackProcessor({ track: vt }).readable;
+            w.postMessage({ type: 'readable', readable: readable }, [readable]);
+            moved = true;
+          } catch (err) { /* streams are not transferable here */ }
+        }
+        if (!moved) { settle(false); return; }
         self.worker = w;
         self.mode = 'worker';
         settle(true);
@@ -831,7 +988,8 @@
     var c = this.captureInfo;
     this._toEngine({
       type: 'start', plan: plan, capture: { width: c.width, height: c.height },
-      profiles: this.opts.profiles
+      profiles: this.opts.profiles,
+      media: this.worker && this.mediaKey ? { url: this.url, key: this.mediaKey } : null
     });
     var self = this;
     this._startAudio(plan).catch(function (e) {
@@ -854,12 +1012,13 @@
         numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1],
         processorOptions: { rate: rate, channels: ch, chunk: Math.round(rate / 100) }
       });
+      var stamp = L.audioClock(rate);
       node.port.onmessage = function (e) {
         // Nothing before the first keyframe went out (tvpipe's timeline
         // starts there).
         if (self.stopped || self.ws.readyState !== 1 || !self.sentKey) return;
         var pcm = new Uint8Array(e.data);
-        var dur = pcm.length / (2 * ch) / rate * 1e6;
+        var pts = stamp(pcm.length / (2 * ch), L.clock());
         // The loudest sample since the last stats (silent system audio is
         // how a missing permission shows on macOS).
         var smp = new Int16Array(e.data), peak = self.audioPeak;
@@ -869,7 +1028,7 @@
         }
         self.audioPeak = peak;
         if (self.ws.bufferedAmount > MAX_BUFFERED) { self.audioDropped++; return; }
-        self.ws.send(L.record(L.KIND_AUDIO, L.clock() - dur, [pcm]));
+        self.ws.send(L.record(L.KIND_AUDIO, pts, [pcm]));
         self.audioBytes += pcm.length;
       };
       src.connect(node);
@@ -959,6 +1118,9 @@
     version: VERSION,
     features: features,
     place: L.place,
+    pacer: L.pacer,
+    captureClock: L.captureClock,
+    audioClock: L.audioClock,
     connect: function (url, opts) { return new Capture(url, opts); }
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

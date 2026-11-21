@@ -953,6 +953,7 @@ pub(crate) mod tests {
             max_pixels_per_second: None,
             min_latency_ms: None,
             preferred_latency_ms: None,
+            max_key_interval_ms: None,
             display_aspect: None,
         }
     }

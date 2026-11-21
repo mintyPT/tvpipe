@@ -658,6 +658,7 @@ impl Negotiated {
             max_pixels_per_second: max_pixels,
             min_latency_ms: None,
             preferred_latency_ms: delay,
+            max_key_interval_ms: None,
             display_aspect: self
                 .answer
                 .display

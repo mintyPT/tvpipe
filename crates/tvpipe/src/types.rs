@@ -120,6 +120,10 @@ pub struct Capabilities {
     /// shape, the receiver fits the picture into its window itself (the
     /// browser player).
     pub display_aspect: Option<(u32, u32)>,
+    /// The longest the receiver wants to wait for the next IDR, if it
+    /// says (AirPlay: about 0.5 s, docs/airplay-mirroring.md §6.6);
+    /// otherwise encodes plan one a second.
+    pub max_key_interval_ms: Option<u32>,
 }
 
 /// The screen shape of a TV that does not say (TVs and projectors are
