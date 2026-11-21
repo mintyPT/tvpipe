@@ -12,7 +12,7 @@
 
 import { A, EASE, h, rnd, short } from "./dom.js";
 import { dust, stampAt } from "./fx.js";
-import { seatRow } from "./layout.js";
+import { joinRoom, seatRow } from "./layout.js";
 import { PENCIL, cardEl, chip, dial, envelope } from "./pieces.js";
 import { sfx } from "./sound.js";
 import { t as tr } from "./strings.js";
@@ -45,8 +45,11 @@ export function hotseat(ctx, v, prev) {
   const b = h("span", { class: "gold" }, second);
   const title = h("div", { class: "bigline", style: "top:500px" }, a, b);
   L.append(title);
-  // a long name (or language) shrinks the line to the safe area
-  if (title.scrollWidth > 1152) title.style.fontSize = `${Math.max(36, Math.floor((60 * 1152) / title.scrollWidth))}px`;
+  // a long name (or language) shrinks the line to the safe area, centred and clear of the join badge
+  const j = joinRoom();
+  const pad = j && 570 > j.top ? Math.max(64, j.right) : 64;
+  title.style.left = title.style.right = `${pad}px`;
+  if (title.scrollWidth > 1280 - 2 * pad) title.style.fontSize = `${Math.max(36, Math.floor((60 * (1280 - 2 * pad)) / title.scrollWidth))}px`;
   if (!anim) {
     t.append(blind);
     return {};

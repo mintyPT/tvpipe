@@ -15,7 +15,7 @@
 
 import { meter } from "./bank.js";
 import { joinRoom, rowLefts } from "./layout.js";
-import { A, EASE, clamp, fitText, h, hm, short, svg } from "./dom.js";
+import { A, EASE, clamp, fitLines, fitText, h, hm, short, svg } from "./dom.js";
 import { confetti, shake, stampAt } from "./fx.js";
 import { INK, cardEl, chip } from "./pieces.js";
 import { sfx } from "./sound.js";
@@ -120,7 +120,7 @@ function room(ctx, box, v, anim) {
     const c = h("div", { class: `mc ${w.found ? "won" : "lost"}`, style: `left:${x}px;top:${y}px;width:${cw}px;height:${ch}px;transform:rotate(${a}deg);z-index:${i}` }, h("span", null, w.word.toUpperCase()));
     box.append(c);
     // long compounds ("GEBURTSTAGSKUCHEN") condense further than clue cards: the card is small
-    fitText(/** @type {HTMLElement} */ (c.firstElementChild), 28, 24, cw - 18, 0.5);
+    fitLines(/** @type {HTMLElement} */ (c.firstElementChild), 28, 24, cw - 18, 0.5, ch - 4);
     if (anim) {
       A(c, [{ transform: `translate(${CX - x - cw / 2}px,420px) rotate(${a * 8}deg)` }, { transform: `rotate(${a}deg)` }], 480, { delay: at.words + i * 80 });
       ctx.later(at.words + i * 80, sfx.slide);
@@ -357,12 +357,21 @@ function web(ctx, box, v, anim) {
   const spots = words.map((_, i) => grid[slotOf[i] ?? i] ?? C);
 
   // hubs: in the band nearest the middle of their words, side by side without overlap
-  const hubs = links.map((l) => {
+  const all = links.map((l) => {
     const ps = l.words.map((i) => spots[i] ?? C);
     const mx = ps.reduce((s, p) => s + p.x, 0) / ps.length;
     const my = ps.reduce((s, p) => s + p.y, 0) / ps.length;
     const y = bands.reduce((b, y) => (Math.abs(y - my) < Math.abs(b - my) ? y : b), bands[0] ?? my);
-    return { l, x: mx, y, w: Math.min(260, 34 + [...l.clue].length * 19) };
+    return { l, x: mx, y, w: Math.min(380, 34 + [...l.clue].length * 19) };
+  });
+  // a band holds the tags that fit side by side (the links shared by the most words first): no tag over another
+  /** @type {Map<number, number>} */
+  const used = new Map();
+  const hubs = all.filter((hb) => {
+    const w = (used.get(hb.y) ?? 0) + hb.w + 60;
+    if (w > 1152 + 20) return false;
+    used.set(hb.y, w);
+    return true;
   });
   for (const band of new Set(hubs.map((hb) => hb.y))) {
     const row = hubs.filter((hb) => hb.y === band).sort((a, b) => a.x - b.x);
@@ -409,7 +418,7 @@ function web(ctx, box, v, anim) {
     const c = h("div", { class: `wcard ${w.found ? "won" : "lost"}`, style: `left:${p.x - cw / 2}px;top:${p.y - ch / 2}px;width:${cw}px;height:${ch}px;transform:rotate(${rot}deg)` }, word, own.length ? clues : null);
     if (!w.found) c.append(h("div", { class: "missed" }, tr.missed));
     box.append(c);
-    fitText(word, ch >= 150 ? 40 : 32, 26, cw - 24, 0.6);
+    fitLines(word, ch >= 150 ? 40 : 32, 26, cw - 24, 0.6);
     if (own.length) fitClues(clues, ch - word.offsetHeight - 26);
     if (anim) {
       A(c, [{ transform: "scale(1.5) rotate(-12deg)", opacity: 0 }, { transform: `rotate(${rot}deg)`, opacity: 1 }], 300, { delay: 200 + i * 80, easing: EASE.in });
@@ -417,8 +426,11 @@ function web(ctx, box, v, anim) {
     }
   });
   const tags = hubs.map((hb) => {
-    const e = h("div", { class: "wtag", style: `left:${hb.x}px;top:${hb.y}px;max-width:${hb.w + 40}px` }, h("i", { class: "pin" }), h("span", null, hb.l.clue.toUpperCase()));
+    const label = h("span", null, hb.l.clue.toUpperCase());
+    const e = h("div", { class: "wtag", style: `left:${hb.x}px;top:${hb.y}px;max-width:${hb.w + 8}px` }, h("i", { class: "pin" }), label);
     box.append(e);
+    // a long shared clue gets smaller to fit its tag, never cut
+    for (let fs = 26; label.scrollWidth > hb.w - 20 && fs > 18; ) label.style.fontSize = `${(fs -= 1)}px`;
     if (anim) e.style.opacity = "0";
     return e;
   });

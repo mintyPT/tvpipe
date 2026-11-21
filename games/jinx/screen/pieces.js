@@ -10,7 +10,7 @@
  */
 
 import { COLORS, FLAME, INK, faceSvg } from "../phone/faces.js";
-import { A, EASE, clamp, fitText, h, hm, removeLater, short } from "./dom.js";
+import { A, EASE, clamp, fitLines, fitText, h, hm, removeLater, short } from "./dom.js";
 import { sfx } from "./sound.js";
 import { t } from "./strings.js";
 
@@ -88,18 +88,9 @@ export function fitWord(card, font = 40) {
   const word = /** @type {HTMLElement | null} */ (card.querySelector(".word"));
   if (!word) return;
   const w = parseFloat(card.style.width) || card.offsetWidth;
-  const fit = () => {
-    let s = font;
-    word.style.fontSize = s + "px";
-    word.style.transform = "";
-    word.style.letterSpacing = "";
-    const avail = w - 26;
-    while (word.scrollWidth > avail && s > 24) word.style.fontSize = (s -= 2) + "px";
-    if (word.scrollWidth > avail) word.style.letterSpacing = "0";
-    // condensed: ≥ 0.74 fits 15 letters; the longest clues (24) go further rather than overflow
-    if (word.scrollWidth > avail) word.style.transform = `scaleX(${Math.max(0.5, avail / word.scrollWidth)})`;
-  };
-  fit();
+  const hh = parseFloat(card.style.height) || card.offsetHeight;
+  // down to 24 px, condensed: ≥ 0.74 fits 15 letters, 0.6 more; the longest clues (24 letters) go on two lines
+  fitLines(word, font, 24, w - 26, 0.6, hh - 34);
 }
 
 /** Sets a card's word (turning it face up later). @param {HTMLElement} card @param {string} text @param {number} [font] */

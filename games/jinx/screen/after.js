@@ -10,10 +10,10 @@
  * @typedef {import("./tv.js").Ctx} Ctx
  */
 
-import { A, EASE, fitText, h, hm, rnd, short } from "./dom.js";
+import { A, EASE, fitLines, fitText, h, hm, rnd, short } from "./dom.js";
 import { dust, shake } from "./fx.js";
 import { groupReason } from "./jinx.js";
-import { clearOfJoin } from "./layout.js";
+import { clearOfJoin, joinRoom } from "./layout.js";
 import { cardEl, chip, fitRosette, rosette } from "./pieces.js";
 import { sfx } from "./sound.js";
 import { t as tr } from "./strings.js";
@@ -64,8 +64,11 @@ export function replay(ctx, v, prev) {
   const OFF = 30;
   const GAP = 34;
   const cardsW = (/** @type {{ cards: Card[] }} */ u) => W + (u.cards.length - 1) * OFF;
-  /** A stack's caption is often wider than its cards (24 px uppercase tape). */
-  const width = (/** @type {{ cards: Card[], stack: boolean, caption?: string }} */ u) => Math.max(cardsW(u), u.stack ? [...(u.caption ?? "")].length * 16 + 34 : 0);
+  // The row's room: right of the join badge when it shows (it is beside the lower rows), up to the notes' column.
+  const join = joinRoom();
+  const capMax = 975 - Math.max(64, join?.right ?? 64);
+  /** A stack's caption is often wider than its cards (24 px uppercase tape; a long one is condensed to the row's room). */
+  const width = (/** @type {{ cards: Card[], stack: boolean, caption?: string }} */ u) => Math.max(cardsW(u), u.stack ? Math.min(capMax, [...(u.caption ?? "")].length * 16 + 34) : 0);
   /** @type {(typeof units)[]} */
   let rows = [];
   const flow = () => {
@@ -85,11 +88,12 @@ export function replay(ctx, v, prev) {
   };
   flow();
   if (rows.length > 2) {
-    W = 176;
-    H = 118;
+    // three rows: each a card and its name tab or a stack's caption tape under it (about 52 px)
+    W = 160;
+    H = 104;
     flow();
   }
-  const ys = rows.length === 1 ? [250] : rows.length === 2 ? [200, 414] : [188, 344, 500];
+  const ys = rows.length === 1 ? [250] : rows.length === 2 ? [200, 414] : [176, 338, 500];
 
   /** @type {Map<string, { el: HTMLElement, x: number, y: number }>} */
   const els = new Map();
@@ -131,6 +135,11 @@ export function replay(ctx, v, prev) {
         ];
         const cap = h("div", { class: "tape small", style: `left:${x + w / 2}px;top:${y + H + 18}px;transform:translateX(-50%) rotate(-1.5deg);z-index:9` }, u.caption ?? "");
         L.append(...bits, cap);
+        // a long caption ("Zwei von euch schrieben RINDFLEISCHETIKETTIERUNG") condensed to the row's room
+        if (cap.offsetWidth > capMax) {
+          fitText(cap, 24, 24, capMax - 6, 0.6);
+          cap.style.transform = `translateX(-50%) rotate(-1.5deg) ${cap.style.transform}`;
+        }
         x = x0;
         if (anim) {
           bits.forEach((b, i) => {
@@ -201,7 +210,8 @@ export function replay(ctx, v, prev) {
       bestNote.classList.add("has-rosette");
       bestNote.replaceChildren(big, wordEl, who);
       fitRosette(big);
-      fitText(wordEl, 36, 24, 200, 0.6);
+      // the note's width less its padding
+      fitLines(wordEl, 36, 24, 184, 0.6);
       const n = /** @type {HTMLElement} */ (who.querySelector(".n"));
       fitText(n, 26, 24, 150, 0.6);
       ctx.pool.to(at.x + W / 2, at.y + H / 2, 200, anim);

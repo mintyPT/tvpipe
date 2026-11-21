@@ -85,7 +85,7 @@ html, body { margin: 0; height: 100%; background: #0d1716; overflow: hidden; }
 .hostline { position: absolute; left: 64px; right: 64px; top: 100px; height: 52px; display: flex; justify-content: center; z-index: 21; pointer-events: none; }
 .hostline .strip {
   background: #f4e4a6; color: var(--ink); font-size: 28px; font-weight: 600; padding: 7px 28px; white-space: nowrap; transform: rotate(-.6deg);
-  max-width: 1100px; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 4px 0 rgba(0,0,0,.25);
+  max-width: 1100px; overflow: hidden; box-shadow: 0 4px 0 rgba(0,0,0,.25);
   clip-path: polygon(0 0, 100% 0, 98.8% 25%, 100% 50%, 98.8% 75%, 100% 100%, 0 100%, 1.2% 75%, 0 50%, 1.2% 25%);
 }
 .hostline .strip b { font-weight: 700; }
@@ -149,7 +149,7 @@ html, body { margin: 0; height: 100%; background: #0d1716; overflow: hidden; }
 .card .face { position: absolute; inset: 0; border-radius: 14px; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: 0 6px 0 rgba(0,0,0,.28), 0 12px 20px rgba(0,0,0,.2); }
 .card .front { background: var(--paper); color: var(--ink); display: grid; place-items: center; }
 .card .front::before { content: ""; position: absolute; inset: 9px; border: 3px solid var(--paper-2); border-radius: 9px; }
-.card .word { position: absolute; left: 50%; top: 50%; translate: -50% -50%; font-weight: 700; font-size: 40px; letter-spacing: .02em; white-space: nowrap; text-transform: uppercase; padding: 0 4px; }
+.card .word { position: absolute; left: 50%; top: 50%; translate: -50% -50%; font-weight: 700; font-size: 40px; letter-spacing: .02em; white-space: nowrap; text-transform: uppercase; padding: 0 4px; text-align: center; }
 .card .back { background: var(--tomato); transform: rotateY(180deg); }
 .card .back::before { content: ""; position: absolute; inset: 10px; border: 4px solid var(--paper); border-radius: 9px; }
 .card .back .emblem { position: absolute; left: 50%; top: 50%; width: 74px; height: 74px; transform: translate(-50%, -50%) rotate(45deg); background: var(--paper); border-radius: 12px; display: grid; place-items: center; }
@@ -256,7 +256,8 @@ html, body { margin: 0; height: 100%; background: #0d1716; overflow: hidden; }
 .note .bignum.zero { color: var(--ink-2); }
 .note .minichips { transform: scale(.85); }
 .note.bestnote.has-rosette { padding-top: 124px; }
-.note .bestword { font-size: 36px; line-height: 1.1; white-space: nowrap; transform-origin: center; }
+/* the best clue: as wide as it is, centred on the note (condensed about its centre, or two lines as wide as the note) */
+.note .bestword { position: relative; left: 50%; translate: -50% 0; width: max-content; font-size: 36px; line-height: 1.1; white-space: nowrap; transform-origin: center; text-align: center; }
 .rosette { position: absolute; z-index: 30; }
 .rosette-mid { position: absolute; border-radius: 50%; background: var(--paper); box-shadow: 0 0 0 4px var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; font-size: 28px; line-height: 1; letter-spacing: .02em; color: var(--ink); }
 .rosette-mid span { display: block; white-space: nowrap; transform-origin: center; }
@@ -336,5 +337,5 @@ html, body { margin: 0; height: 100%; background: #0d1716; overflow: hidden; }
 .wcard.lost { background: #b9ab93; color: var(--ink); }
 .wcard .missed { position: absolute; right: -10px; bottom: -16px; font-size: 24px; font-weight: 700; background: var(--tomato); color: var(--paper); padding: 0 8px; border-radius: 6px; transform: rotate(-4deg); }
 .wtag { position: absolute; transform: translate(-50%, -50%); padding: 4px 14px; font-size: 26px; font-weight: 700; letter-spacing: .06em; background: #f4e4a6; color: var(--ink); border-radius: 4px; box-shadow: 0 4px 0 rgba(0,0,0,.3); white-space: nowrap; text-transform: uppercase; z-index: 3; overflow: visible; }
-.wtag span { display: block; overflow: hidden; text-overflow: ellipsis; }
+.wtag span { display: block; white-space: nowrap; }
 .wtag .pin { position: absolute; left: 50%; top: -12px; width: 20px; height: 20px; margin-left: -10px; border-radius: 50%; background: var(--tomato); box-shadow: 0 0 0 3px var(--ink); }

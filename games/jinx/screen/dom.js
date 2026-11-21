@@ -117,6 +117,46 @@ export function fitText(el, max, min, avail, minScale = 0.74) {
 }
 
 /**
+ * A word players must read, fitted to `avail` px without cutting it: as
+ * {@link fitText} (smaller down to `min` px, then condensed down to
+ * `minScale`); one too long even for that (a clue of 24 letters, a long
+ * compound) goes on two lines of about the same length, hyphenated where
+ * its language allows ("STREICHHOLZ-", "SCHÄCHTELCHEN"; `lang` is on the
+ * document), as large as both fit (not over `max`, not under 18 px, the
+ * two lines not over `maxHeight`). A browser that breaks no word there:
+ * one line after all, condensed and smaller until it fits.
+ * @param {HTMLElement} el must be in the document
+ * @param {number} max @param {number} min @param {number} avail
+ * @param {number} [minScale] @param {number} [maxHeight]
+ */
+export function fitLines(el, max, min, avail, minScale = 0.74, maxHeight = Infinity) {
+  const reset = () => {
+    for (const p of ["white-space", "hyphens", "-webkit-hyphens", "text-wrap", "hyphenate-limit-chars", "width", "line-height"]) el.style.removeProperty(p);
+  };
+  reset();
+  fitText(el, max, min, avail, minScale);
+  if (el.scrollWidth * minScale <= avail + 1) return;
+  // Two lines.
+  el.style.transform = "";
+  el.style.letterSpacing = "0";
+  Object.assign(el.style, { whiteSpace: "normal", hyphens: "auto", width: `${avail}px`, lineHeight: "1.05" });
+  el.style.setProperty("-webkit-hyphens", "auto");
+  el.style.setProperty("text-wrap", "balance");
+  el.style.setProperty("hyphenate-limit-chars", "6 3 3");
+  const fits = (/** @type {number} */ size) => el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= Math.min(maxHeight, size * 1.05 * 2 + 4);
+  for (let size = max; size >= 18; size -= 2) {
+    el.style.fontSize = `${size}px`;
+    if (fits(size)) return;
+  }
+  // One line, as small as it takes.
+  reset();
+  let size = min;
+  el.style.fontSize = `${size}px`;
+  while (el.scrollWidth * minScale > avail && size > 12) el.style.fontSize = `${(size -= 1)}px`;
+  el.style.transform = `scaleX(${Math.min(1, Math.max(minScale, avail / el.scrollWidth))})`;
+}
+
+/**
  * A person's name for tabs and copy (players type anything: cut, no newlines).
  * @param {string | undefined} name
  * @param {number} [max]

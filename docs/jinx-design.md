@@ -371,9 +371,10 @@ The TV page is rendered in a headless Chrome and H.264-encoded at about
   close up, the word web's last row starts right of it with narrower
   cards. The rejoin card that grows from it while a phone is away lies
   over the picture for that time.
-- Nothing under 24 px; clue words 40–44 px, shrinking to 24 px, then
-  condensed (`scaleX` ≥ 0.74) so 15 letters fit on a card. 5–7 surviving
-  cards use two rows.
+- Nothing under 24 px (but the longest clues, §11); clue words 40–44 px,
+  shrinking to 24 px, then condensed (`scaleX` ≥ 0.74) so 15 letters fit
+  on a card, down to 0.6 for longer ones, two lines beyond (§11). 5–7
+  surviving cards use two rows.
 - Flat colours and hard edges, short shadows; no grain, noise, fine
   patterns or large gradients; few, big particles.
 - Only transform and opacity are animated (plus small clip-path and
@@ -519,15 +520,25 @@ by its code in the phone's language.
 **Long words.** German compounds are long ("Geburtstagskuchen",
 "Feuerwehrauto"; clues up to 24 characters). Every page sets `lang` on
 its document for hyphenation. On the TV, card words shrink to 24 px,
-then condense (§7.4), the envelope's word fits beside the verdict stamp,
-the word web's and the end's cards condense further; one-line texts are
-fitted, never wrapped. On the phone no word is ever cut off with an
+then condense (§7.4, down to 60 %), and a clue too long even for that
+(up to 24 letters: "STREICHHOLZSCHÄCHTELCHEN") goes on two lines of
+about the same length, hyphenated where the language allows
+("DONAUDAMPF-", "SCHIFFFAHRT"; a browser that cannot hyphenate: one
+smaller line); so does the best clue's note and the end's word cards.
+The envelope's word fits beside the verdict stamp, the word web's cards
+condense further, its shared clues' tags get smaller (a band holds the
+tags that fit, the links of the most words first), the host's line gets
+smaller, the replay's long captions condense to their row; one-line
+texts are fitted, never cut with an ellipsis (names aside). On the phone no word is ever cut off with an
 ellipsis (a clue cut off is a clue lost): a card's word gets smaller
 down to 60 %, then condenses to 62 %, and one too long even for that
 goes on two lines of about the same length ("GEBURTS-", "TAGSKUCHEN"),
 as large as both fit; the index card's word only gets smaller. What is
 typed (a clue, the guess) stays readable whole too: a field's font gets
-smaller when the text outgrows it. Running text hyphenates; titles
+smaller when the text outgrows it, and so does a sent clue ("Sent:
+DONAUDAMPFSCHIFFFAHRT", on a line of its own). A small card's two
+lines are drawn over its author's chip. Running text hyphenates; titles
 break between words only.
 The live check (`--lang de`) plays a German room with layout checks at
-390 and 320 px and on the TV page.
+390 and 320 px and on the TV page; `--long` deals the longest words and
+has everyone write clues of 18–24 letters.

@@ -324,8 +324,9 @@ button.boldtoggle[aria-pressed="true"] .icon svg { filter: none; opacity: 1; }
 .slot.is-bold input { background: var(--ink); color: var(--gold); box-shadow: 0 0 0 3px var(--gold); }
 .slot.is-bold input::placeholder { color: #a08a5c; }
 .sent { display: flex; align-items: center; gap: 12px; min-height: 52px; }
-.sent .text { flex: 1; min-width: 0; font-weight: 700; font-size: 19px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.sent .word { text-transform: uppercase; color: var(--gold); }
+/* The sent clue is read whole (no ellipsis): the label, then the word, on a line of its own when it needs it (phone.js makes it fit). */
+.sent .text { flex: 1; min-width: 0; font-weight: 700; font-size: 19px; line-height: 1.2; }
+.sent .word { display: inline-block; white-space: nowrap; text-transform: uppercase; color: var(--gold); }
 .mini-back {
   flex: none; width: 46px; height: 33px; border-radius: 5px; background: var(--tomato); display: grid; place-items: center;
   box-shadow: 0 0 0 2px var(--ink), inset 0 0 0 3px var(--tomato), inset 0 0 0 5px var(--paper); transform: rotate(-6deg);

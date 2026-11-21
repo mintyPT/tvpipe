@@ -17,7 +17,7 @@
 import { A, EASE, fitText, h, removeLater, short } from "./dom.js";
 import { confetti, dust, floatText, shake, stampAt, strikeThrough } from "./fx.js";
 import { reasonText } from "./jinx.js";
-import { clearOfJoin, grid } from "./layout.js";
+import { clearOfJoin, grid, joinRoom } from "./layout.js";
 import { Dymo, cardEl, chip, dial, envelope, mood, setWord, sign, swingIn } from "./pieces.js";
 import { bed, heartbeat, sfx } from "./sound.js";
 import { t as tr } from "./strings.js";
@@ -67,13 +67,16 @@ export function reveal(ctx, v, prev) {
 
   // the guess area
   const gy = two ? 594 : 540;
-  const area = h("div", { class: "guess", style: `top:${gy}px` });
+  // right of the join badge (the pot's column starts at 1000); a long draft's tape gets smaller
+  const j = joinRoom();
+  const gx = j && gy + 130 > j.top ? Math.max(64, j.right) : 64;
+  const area = h("div", { class: "guess", style: `top:${gy}px;left:${gx}px;width:${980 - gx}px` });
   const lbl = h("div", { class: "lbl" }, tr.guessOf(gname));
   if (!two) area.append(lbl);
   const slot = h("div", { class: "slot", style: `top:${two ? 6 : 40}px` });
   area.append(slot);
   L.append(area);
-  const dymo = new Dymo(two ? 72 : 84);
+  const dymo = new Dymo(two ? 72 : 84, Math.min(840, 980 - gx - 20));
   dymo.el.style.top = `${two ? 6 : 40}px`;
   /** @type {HTMLElement | null} */
   let signEl = null;

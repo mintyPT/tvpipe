@@ -327,8 +327,9 @@ function fitWords(scope = document) {
       const index = !!w.closest(".index");
       // What one line can take: 60 % of the size, condensed to 62 %.
       if (!index && room / full < FIT_SIZE * FIT_SQUEEZE) {
-        // Two lines, balanced ("FEUERWEHR-", "AUTO"), from nearly full size down until both fit.
-        Object.assign(w.style, { whiteSpace: "normal", hyphens: "auto", overflowWrap: "anywhere", lineHeight: "1.08", maxWidth: `${room + pad}px` });
+        // Two lines, balanced ("FEUERWEHR-", "AUTO"), from nearly full size down until both fit;
+        // over the author's chip and the flame, which a small card's first line reaches (nothing of it hidden).
+        Object.assign(w.style, { whiteSpace: "normal", hyphens: "auto", overflowWrap: "anywhere", lineHeight: "1.08", maxWidth: `${room + pad}px`, zIndex: "3" });
         w.style.setProperty("-webkit-hyphens", "auto");
         w.style.setProperty("text-wrap", "balance");
         w.style.setProperty("hyphenate-limit-chars", "8 4 4");
@@ -1087,6 +1088,13 @@ function slot(i, each) {
       sentWord.textContent = sent.text;
       sentCard.classList.toggle("bold", sent.bold);
       sentWord.append(sent.bold ? " 🔥" : "");
+      // The clue whole, never cut: on its own line when it needs it, smaller when even that is too narrow.
+      sentWord.style.fontSize = "";
+      requestAnimationFrame(() => {
+        const room = sentWord.parentElement?.clientWidth ?? 0;
+        const w = sentWord.scrollWidth;
+        if (room > 0 && w > room) sentWord.style.fontSize = `${Math.max(10, (parseFloat(getComputedStyle(sentWord).fontSize) * room) / w - 0.2)}px`;
+      });
     }
   }
   update();

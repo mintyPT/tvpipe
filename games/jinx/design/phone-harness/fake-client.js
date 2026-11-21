@@ -59,6 +59,7 @@ const SCENARIOS = {
   "hotseat-giver": { me: "anna", room: room("hotseat"), task: { task: "hotseat", guesser: false } },
   write: { me: "anna", room: room("write"), task: { task: "write", word: "Volcano", each: 1, sent: [null], deadline: soon(38) } },
   "write-long": { me: "anna", room: room("write"), task: { task: "write", word: "Refrigerator", each: 1, sent: [null], deadline: soon(7) } },
+  "write-sent-long": { me: "anna", room: room("write"), task: { task: "write", word: "Volcano", each: 1, sent: [{ text: "Incomprehensibilities", bold: true }], deadline: soon(21) } },
   "write-sent": { me: "anna", room: room("write"), task: { task: "write", word: "Volcano", each: 1, sent: [{ text: "Beacon", bold: true }], deadline: soon(21) } },
   write3: { me: "anna", room: room("write", { people: people(3), guesser: "chiara", rounds: 6 }), task: { task: "write", word: "Volcano", each: 2, sent: [{ text: "Lava", bold: false }, null], deadline: soon(30) } },
   blind: { me: "hiroko", room: room("write"), task: { task: "blind", givers: 7, done: 4, deadline: soon(24) } },

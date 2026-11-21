@@ -246,6 +246,12 @@ class HostLine {
     const strip = h("div", { class: `strip ${cls}` }, ...rich(first));
     this.el.replaceChildren(strip);
     this.el.hidden = false;
+    // never cut: a long line (a clue of 24 letters in the second hit) gets smaller to fit the tape's 1100 px
+    const fit = () => {
+      strip.style.fontSize = "";
+      if (strip.scrollWidth > strip.clientWidth + 1) strip.style.fontSize = `${Math.max(16, Math.floor((28 * strip.clientWidth) / strip.scrollWidth))}px`;
+    };
+    fit();
     if (anim) {
       A(strip, [{ clipPath: "inset(-12px 100% -12px -12px)" }, { clipPath: "inset(-12px -12px -12px -12px)" }], 300, { easing: EASE.inout });
       sfx.zip();
@@ -254,6 +260,7 @@ class HostLine {
       const s = h("b", { class: "hit" }, second);
       const land = () => {
         strip.append(s);
+        fit();
         if (anim) {
           A(s, [{ transform: "translateY(-30px) scale(2)", opacity: 0 }, { transform: "none", opacity: 1 }], 220, { easing: EASE.in });
           setTimeout(sfx.stamp, 180);
