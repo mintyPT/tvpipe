@@ -177,7 +177,9 @@ enum Protocol {
 /// discovery (bare addresses are Cast on 8009, port 7000 is AirPlay).
 fn parse_target(query: &str) -> (Option<Protocol>, &str) {
     for (prefix, proto) in [("cast:", Protocol::Cast), ("airplay:", Protocol::AirPlay)] {
-        if query.len() > prefix.len() && query[..prefix.len()].eq_ignore_ascii_case(prefix) {
+        // `get`: the prefix's end may fall inside a character ("John’s").
+        let head = query.get(..prefix.len());
+        if query.len() > prefix.len() && head.is_some_and(|h| h.eq_ignore_ascii_case(prefix)) {
             return (Some(proto), &query[prefix.len()..]);
         }
     }
@@ -2543,6 +2545,10 @@ mod tests {
         assert_eq!(t("Living Room"), None);
         assert_eq!(t("cast:Living Room"), None);
         assert_eq!(parse_target("cast:"), (None, "cast:"));
+        // A multi-byte character where a prefix would end.
+        assert_eq!(parse_target("John’s TV"), (None, "John’s TV"));
+        assert_eq!(parse_target("Airplay’s"), (None, "Airplay’s"));
+        assert_eq!(t("John’s TV"), None);
     }
 
     #[test]
