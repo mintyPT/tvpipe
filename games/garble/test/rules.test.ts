@@ -215,6 +215,7 @@ test("drawings from phones", () => {
 test("guesses are cleaned", () => {
   assert.equal(cleanGuess("  a   cat\u200b on\ta hat "), "a cat on a hat");
   assert.equal(cleanGuess(42), "");
+  assert.equal(cleanGuess("\u{1F3A9}\u{1F408}"), "", "no emoji: pictures are no guess");
   assert.equal(cleanGuess("x".repeat(60)).length, 28);
 });
 

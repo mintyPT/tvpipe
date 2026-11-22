@@ -35,6 +35,8 @@ test("checkClue: one word, at most 24 characters, never a word of the board", ()
   assert.deepEqual(checkClue("   ", ZOO), { ok: false, reason: "empty" });
   assert.deepEqual(checkClue("!!", ZOO), { ok: false, reason: "empty" });
   assert.deepEqual(checkClue(42, ZOO), { ok: false, reason: "empty" });
+  assert.deepEqual(checkClue("\u{1F993}", ZOO), { ok: false, reason: "empty" }, "no emoji: a zebra is no clue");
+  assert.deepEqual(checkClue("stripes\u{1F993}", ZOO), { ok: true, text: "stripes" });
   assert.deepEqual(checkClue("big cat", ZOO), { ok: false, reason: "space" });
   assert.deepEqual(checkClue("a".repeat(25), ZOO), { ok: false, reason: "long" });
   assert.equal(checkClue("a".repeat(24), ZOO).ok, true);

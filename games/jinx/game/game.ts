@@ -25,7 +25,7 @@
  * (`party.deadline`).
  */
 
-import { Emitter, PartyError, type Json, type Party, type Player } from "@tvpipe/party";
+import { Emitter, PartyError, stripEmoji, type Json, type Party, type Player } from "@tvpipe/party";
 
 import { LANGS, matcher, type Lang, type Matcher } from "./lang.ts";
 import type { Clue, MatchOptions, WordEntry } from "./match.ts";
@@ -858,8 +858,8 @@ export class Jinx extends Emitter<JinxEvents> {
     if (typeof text !== "string" || text.length > 200) throw new PartyError("empty", "Type a clue");
     if (typeof slot !== "number" || !Number.isInteger(slot) || slot < 0 || slot >= r.each) throw new PartyError("bad-slot", "No such clue slot");
     const bold = o["bold"] === true;
-    // The clue is shown on the TV and the phones: the party's moderate hook first (a replacement is checked as typed).
-    const said = this.party.moderate(text, "clue", from);
+    // The clue is shown on the TV and the phones: no emoji, the party's moderate hook first (a replacement is checked as typed).
+    const said = this.party.moderate(stripEmoji(text), "clue", from);
     if (said === false) throw new PartyError("refused", "Try another one");
     const own = slots.filter((s, i): s is Slot => s !== null && i !== slot).map((s) => s.clue);
     const { m, opt } = this.#here;
@@ -1065,8 +1065,8 @@ export class Jinx extends Emitter<JinxEvents> {
     const r = this.#revealTurn(from);
     if (r.turns === 0) throw new PartyError("no-card", "Turn a card first");
     const text = obj(d)["text"];
-    // The guess is shown on the TV: the party's moderate hook first.
-    const said = typeof text === "string" && text.trim() !== "" ? this.party.moderate(text.slice(0, 200), "guess", from) : "";
+    // The guess is shown on the TV: no emoji, the party's moderate hook first.
+    const said = typeof text === "string" && text.trim() !== "" ? this.party.moderate(stripEmoji(text.slice(0, 200)), "guess", from) : "";
     if (said === false) throw new PartyError("refused", "Try another one");
     const c = this.#here.m.clean(said);
     if (!c.ok) throw new PartyError(c.error, c.error === "empty" ? "Type a guess" : c.message);
@@ -1087,7 +1087,7 @@ export class Jinx extends Emitter<JinxEvents> {
     const raw = obj(data)["draft"];
     if (typeof raw !== "string") return;
     // eslint-disable-next-line no-control-regex
-    const draft = [...raw.replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff]/g, "")].slice(0, MAX_DRAFT).join("");
+    const draft = [...stripEmoji(raw).replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff]/g, "")].slice(0, MAX_DRAFT).join("");
     if (draft === r.draft) return;
     r.draft = draft;
     if (draft !== "" && !r.typing) {

@@ -318,9 +318,11 @@ shows*. Each client has one **view**: `{ roster, room | screen, me }`.
   (`cf-connecting-ip`, or the socket's) 20 per minute; failed keys are
   logged (a scanner shows up) and slowed down.
 - **Content.** Everything a player sends is untrusted: the library
-  normalises names (NFC, control and bidi-override characters removed,
-  whitespace collapsed, 1–16 graphemes, unique case-insensitively); games
-  validate their actions (drawbluff: point counts, coordinate ranges,
+  normalises names (NFC, emoji, control and bidi-override characters
+  removed, whitespace collapsed, 1–16 graphemes, unique
+  case-insensitively); games take no emoji anywhere (`cleanText` and
+  `stripEmoji` on the host, `blockEmoji` on the phones: no picture of
+  the word as a guess or a clue); games validate their actions (drawbluff: point counts, coordinate ranges,
   text lengths). The client helpers and both screens render text with
   `textContent`/canvas `fillText`, never as HTML; the CSP forbids inline
   scripts.

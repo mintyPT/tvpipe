@@ -32,7 +32,7 @@
  * @typedef {{ main: (Node | null)[], dock?: (Node | null)[], refresh?: (me: PlayerState, room: RoomView) => void, tone?: string }} Screen
  */
 
-import { PartyClient } from "/_tvpipe/lib/client.js";
+import { blockEmoji, PartyClient } from "/_tvpipe/lib/client.js";
 import { COLORS, FLAME, faceSvg, PRESETS } from "./faces.js";
 import { browserLang, pickLang } from "./i18n.js";
 import { Pad } from "./pad.js";
@@ -153,6 +153,8 @@ document.addEventListener("focusin", (e) => {
 });
 
 const client = PartyClient.fromLocation();
+// No emoji in names, answers or clues (the host drops them too).
+blockEmoji();
 
 // ---------------------------------------------------------------------------
 // The language: the phone's own choice, else the room's, else the browser's.

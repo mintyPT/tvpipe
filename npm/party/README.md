@@ -277,5 +277,8 @@ this library checks the rest: the join key from the QR code's link (in
 the fragment, so it is in no request line or log), screens' own keys,
 `hello` within 5 s, failed joins per address, 20 messages/s per socket,
 16 KiB for messages other than actions; names are normalised (NFC,
-invisible and control characters removed, 16 characters) and unique.
+emoji, invisible and control characters removed, 16 characters) and
+unique. `cleanText` removes emoji from any text, `stripEmoji` on its
+own; on phones, `blockEmoji()` (from the client) removes them from text
+fields as they are typed.
 Render everything players send as text.

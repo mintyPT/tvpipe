@@ -8,7 +8,7 @@
  * party's view (`{ roster, room, me }`); everything it does is an action.
  */
 
-import { PartyClient } from "/_tvpipe/lib/client.js";
+import { blockEmoji, PartyClient } from "/_tvpipe/lib/client.js";
 import { watchFit } from "./fit.js";
 import { browserLang, format, pickLang } from "./i18n.js";
 import { drawInk, drawLayers, fit, GRID, INK, Live, MAX_POINTS, MAX_STROKES, OLD_INK, WIDTHS } from "./ink.js";
@@ -41,6 +41,8 @@ window.addEventListener("resize", appHeight);
 appHeight();
 
 const client = PartyClient.fromLocation();
+// No emoji in names, answers or clues (the host drops them too).
+blockEmoji();
 const app = /** @type {HTMLElement} */ (document.getElementById("app"));
 const banner = /** @type {HTMLElement} */ (document.getElementById("banner"));
 const who = /** @type {HTMLElement} */ (document.getElementById("who"));

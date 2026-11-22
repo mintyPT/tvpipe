@@ -26,6 +26,7 @@ macro_rules! web {
 /// Every embedded file (a test compares the list with the directory).
 pub static FILES: &[Asset] = web![
     "lib/client.js",
+    "lib/emoji.js",
     "lib/emitter.js",
     "lib/flashsync.js",
     "lib/host.js",

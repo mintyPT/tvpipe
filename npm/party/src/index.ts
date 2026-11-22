@@ -83,6 +83,7 @@ export {
 } from "./host.ts";
 export { StateBox, diff, applyDiff, toJson, type Diff, type Json, type JsonObject } from "./sync.ts";
 export { cleanText, graphemes, nameKey } from "./names.ts";
+export { blockEmoji, hasEmoji, stripEmoji } from "./emoji.ts";
 export { TokenBucket, WindowCounter } from "./limits.ts";
 export {
   PartyClient,

@@ -92,25 +92,30 @@ input = "Stra\u00dfe"
 clean = "Stra\u00dfe"
 key = "stra\u00dfe"
 
-name = emoji
+name = emoji are dropped
 input = "Ann \ud83c\udf55"
-clean = "Ann \ud83c\udf55"
-key = "ann\ud83c\udf55"
+clean = "Ann"
+key = "ann"
 
-name = emoji ZWJ family counts as one
+name = only emoji (refused)
+input = "\ud83c\udf55\ud83d\ude00"
+clean = ""
+key = ""
+
+name = emoji ZWJ family dropped
 input = "\ud83d\udc69\u200d\ud83d\udc69\u200d\ud83d\udc67\u200d\ud83d\udc66abcdefghijklmnopq"
-clean = "\ud83d\udc69\u200d\ud83d\udc69\u200d\ud83d\udc67\u200d\ud83d\udc66abcdefghijklmno"
-key = "\ud83d\udc69\u200d\ud83d\udc69\u200d\ud83d\udc67\u200d\ud83d\udc66abcdefghijklmno"
+clean = "abcdefghijklmnop"
+key = "abcdefghijklmnop"
 
-name = emoji skin tone counts as one
+name = emoji skin tone dropped
 input = "\ud83d\udc4d\ud83c\udffdabcdefghijklmnopq"
-clean = "\ud83d\udc4d\ud83c\udffdabcdefghijklmno"
-key = "\ud83d\udc4d\ud83c\udffdabcdefghijklmno"
+clean = "abcdefghijklmnop"
+key = "abcdefghijklmnop"
 
-name = flags count as one each
+name = flags dropped
 input = "\ud83c\udde6\ud83c\uddf9\ud83c\udde9\ud83c\uddeaabcdefghijklmnopq"
-clean = "\ud83c\udde6\ud83c\uddf9\ud83c\udde9\ud83c\uddeaabcdefghijklmn"
-key = "\ud83c\udde6\ud83c\uddf9\ud83c\udde9\ud83c\uddeaabcdefghijklmn"
+clean = "abcdefghijklmnop"
+key = "abcdefghijklmnop"
 
 name = combining marks count with their base
 input = "e\u0301e\u0301e\u0301abcdefghijklmnopq"

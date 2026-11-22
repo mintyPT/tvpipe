@@ -15,7 +15,7 @@
  * (`{ roster, room, me }`); everything it does is an action.
  */
 
-import { PartyClient } from "/_tvpipe/lib/client.js";
+import { blockEmoji, PartyClient } from "/_tvpipe/lib/client.js";
 import { armiesFor, winChance } from "../game/odds.js";
 import { CASH_ARMIES, checkPlan, losses, MAX_ORDERS, STARS_TO_CASH } from "../game/rules.js";
 import { FAST_PACE, PACE, timeline } from "../game/timeline.js";
@@ -41,6 +41,8 @@ document.addEventListener("selectstart", (e) => {
 });
 
 const client = PartyClient.fromLocation();
+// No emoji in names, answers or clues (the host drops them too).
+blockEmoji();
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const app = $("app");
 const bar = $("bar");

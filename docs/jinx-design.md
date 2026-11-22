@@ -217,8 +217,10 @@ not matter (ice cream = ice-cream = icecream), runs of 3+ letters shortened
 (hmmmm = hmm), a leading a/an/the/to off when there are two words, number
 words to digits (seven = 7; 007 stays 007). A clue is one word; two
 words are allowed and joined (ice cream, New York), three are rejected.
-At most 24 characters. Emoji in a word clue are decoration; a clue of
-only an emoji matches only the same emoji.
+At most 24 characters. No emoji: phones cannot type them and the host
+removes them before the matcher sees a clue or a guess (a picture of the
+word would be cheating), so a clue of only emoji is empty. The matcher
+itself still treats emoji as decoration (`design/matching/SPEC.md`).
 
 | # | Rule | TV | Same | Not the same |
 |---|---|---|---|---|

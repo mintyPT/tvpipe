@@ -15,6 +15,7 @@ export { RejoinBadge } from "./rejoin.js";
 export { HostPage, SettingsForm, hostStrings, languageField, lateJoinField, preferredLang, textIn, } from "./host.js";
 export { StateBox, diff, applyDiff, toJson } from "./sync.js";
 export { cleanText, graphemes, nameKey } from "./names.js";
+export { blockEmoji, hasEmoji, stripEmoji } from "./emoji.js";
 export { TokenBucket, WindowCounter } from "./limits.js";
 export { PartyClient, PartyActionError, memoryStorage, CARRY_LIMIT, qrSvg, drawQr, joinText, } from "./client.js";
 export { memoryRelay, MemoryRelay, dropOuts } from "./testing.js";

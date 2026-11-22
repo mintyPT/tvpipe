@@ -147,6 +147,8 @@ test("checkClue: one word, a number, nothing too close to a face-down card", () 
   assert.equal((no("ice cream cone") as { code: string }).code, "too-many-words");
   assert.ok(no("ice cream").ok, "two words are joined");
   assert.equal((no("") as { code: string }).code, "empty");
+  assert.equal((no("\u{1F525}") as { code: string }).code, "empty", "no emoji: a picture of fire is no clue");
+  assert.deepEqual((no("ocean \u{1F30A}") as { clue: { display: string } }).clue.display, "ocean");
   for (const n of [0, 10, 1.5, "2", null]) assert.equal((checkClue("ocean", n, board, all, m, opt) as { code: string }).code, "bad-number", String(n));
 });
 

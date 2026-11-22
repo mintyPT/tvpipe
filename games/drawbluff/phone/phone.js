@@ -7,7 +7,7 @@
  * the switch in the header (kept on this phone).
  */
 
-import { PartyClient } from "/_tvpipe/lib/client.js";
+import { blockEmoji, PartyClient } from "/_tvpipe/lib/client.js";
 import { watchFit } from "./fit.js";
 import { browserLang, pickLang } from "./i18n.js";
 import { Sfx } from "./sfx.js";
@@ -43,6 +43,8 @@ document.addEventListener("selectstart", (e) => {
 });
 
 const client = PartyClient.fromLocation();
+// No emoji in names, answers or clues (the host drops them too).
+blockEmoji();
 const app = /** @type {HTMLElement} */ (document.getElementById("app"));
 const banner = /** @type {HTMLElement} */ (document.getElementById("banner"));
 const timer = /** @type {HTMLElement} */ (document.getElementById("timer"));

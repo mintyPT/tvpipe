@@ -8,7 +8,7 @@
  * (test/rules.test.ts).
  */
 
-import { cleanText } from "@tvpipe/party";
+import { cleanText, stripEmoji } from "@tvpipe/party";
 
 import { LANGS, matcher, pickLang, type Lang, type Matcher } from "./lang.ts";
 import type { Clue, MatchOptions, Reason, WordEntry } from "./match.ts";
@@ -256,7 +256,7 @@ export type ClueCheck =
  * first such card, in board order, is the one named.
  */
 export function checkClue(raw: unknown, number: unknown, board: readonly Card[], hidden: readonly boolean[], m: Matcher, opt: MatchOptions = {}): ClueCheck {
-  const c = m.clean(typeof raw === "string" ? raw : "");
+  const c = m.clean(typeof raw === "string" ? stripEmoji(raw) : "");
   if (!c.ok) return { ok: false, code: c.error, message: c.message };
   if (typeof number !== "number" || !Number.isInteger(number) || number < MIN_NUMBER || number > MAX_NUMBER) {
     return { ok: false, code: "bad-number", message: `A number from ${MIN_NUMBER} to ${MAX_NUMBER}` };

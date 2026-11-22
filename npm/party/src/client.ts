@@ -13,6 +13,8 @@
 
 import { RejoinBadge, type Corner, type RejoinBadgeOptions } from "./rejoin.ts";
 
+export { blockEmoji, hasEmoji, stripEmoji } from "./emoji.ts";
+
 export type { Corner, RejoinBadgeOptions } from "./rejoin.ts";
 
 export const PROTOCOL = 1;

@@ -72,7 +72,8 @@ test("text cleaning", () => {
   assert.equal(cleanText("  a\tb\n\nc  ", 16), "a b c");
   assert.equal(cleanText("x\u202ey\u200bz\u0007", 16), "xyz");
   assert.equal(cleanText("e\u0301", 16), "é");
-  assert.equal(cleanText("👩‍👩‍👧‍👦👍🏽abc", 3), "👩‍👩‍👧‍👦👍🏽a");
+  assert.equal(cleanText("éééabc", 3), "ééé");
+  assert.equal(cleanText("👩‍👩‍👧‍👦👍🏽abc", 3), "abc");
   assert.equal(graphemes("👩‍👩‍👧‍👦"), 1);
   assert.equal(cleanText(42, 5), "");
   assert.equal(nameKey("Zoë M"), nameKey("zoe m"));

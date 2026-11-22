@@ -85,6 +85,8 @@ test("languages and folding", () => {
   assert.deepEqual(tokens("die Ente", "en"), ["die", "ente"], "German articles only in German");
   assert.equal(cleanGuess("  a   cat \u0007 "), "a cat");
   assert.equal(cleanGuess(5), "");
+  assert.equal(cleanGuess("\u{1F431}"), "", "no emoji: a cat emoji is no guess");
+  assert.equal(cleanGuess("\u{1F431} cat"), "cat");
 });
 
 test("stems: one plural or inflection ending", () => {

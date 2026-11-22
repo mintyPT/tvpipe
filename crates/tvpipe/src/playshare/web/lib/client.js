@@ -11,6 +11,7 @@
  *   party.input({ x: 0.3, y: -1 });          // continuous input, latest wins
  */
 import { RejoinBadge } from "./rejoin.js";
+export { blockEmoji, hasEmoji, stripEmoji } from "./emoji.js";
 export const PROTOCOL = 1;
 /** `bye` reasons after which the client does not reconnect. */
 const FINAL = new Set([

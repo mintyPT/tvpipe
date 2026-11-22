@@ -8,7 +8,7 @@
  * docs/shifty-design.md.
  */
 
-import { cleanText } from "@tvpipe/party";
+import { cleanText, stripEmoji } from "@tvpipe/party";
 
 // ---------------------------------------------------------------------------
 // Languages
@@ -225,7 +225,8 @@ export type ClueCheck = { ok: true; text: string } | { ok: false; reason: "empty
  * word of it).
  */
 export function checkClue(text: unknown, board: readonly Word[], lang: Lang = "en", all: readonly Word[] = []): ClueCheck {
-  const raw = typeof text === "string" ? text.normalize("NFC").trim() : "";
+  // No emoji: a picture of the word is no clue.
+  const raw = typeof text === "string" ? stripEmoji(text.normalize("NFC")).trim() : "";
   if (!raw || !fold(raw)) return { ok: false, reason: "empty" };
   if (/\s/u.test(raw)) return { ok: false, reason: "space" };
   const clean = cleanText(raw, MAX_CLUE + 1);

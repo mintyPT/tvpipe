@@ -191,14 +191,14 @@ key = "한국어제목"
 
 test = title
 input = "🍕 pizza 🍕"
-clean = "🍕 pizza 🍕"
-display = "🍕 pizza 🍕"
+clean = "pizza"
+display = "pizza"
 key = "pizza"
 
 test = title
 input = "👩‍👩‍👧 family"
-clean = "👩‍👩‍👧 family"
-display = "👩‍👩‍👧 family"
+clean = "family"
+display = "family"
 key = "family"
 
 test = title

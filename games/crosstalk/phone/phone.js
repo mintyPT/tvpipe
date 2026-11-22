@@ -16,7 +16,7 @@
  * does is an action.
  */
 
-import { PartyClient } from "/_tvpipe/lib/client.js";
+import { blockEmoji, PartyClient } from "/_tvpipe/lib/client.js";
 import { watchFit } from "./fit.js";
 import { browserLang, pickLang } from "./i18n.js";
 import { strings } from "./strings.js";
@@ -62,6 +62,8 @@ window.addEventListener("resize", appHeight);
 appHeight();
 
 const client = PartyClient.fromLocation();
+// No emoji in names, answers or clues (the host drops them too).
+blockEmoji();
 const app = /** @type {HTMLElement} */ (document.getElementById("app"));
 const banner = /** @type {HTMLElement} */ (document.getElementById("banner"));
 const who = /** @type {HTMLElement} */ (document.getElementById("who"));

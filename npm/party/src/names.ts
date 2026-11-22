@@ -1,10 +1,12 @@
-/** Player names and other short texts from phones: normalised, bounded. */
+/** Player names and other short texts from phones: normalised, bounded, no emoji. */
+
+import { stripEmoji } from "./emoji.ts";
 
 const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
 
 /**
  * Control characters (C0, C1), bidi overrides and isolates, zero-width
- * characters other than ZWJ (emoji sequences need it), the BOM, line and
+ * characters other than ZWJ (some scripts need it), the BOM, line and
  * paragraph separators, and private-use characters.
  */
 const STRIP = /[\u0000-\u001f\u007f-\u009f\u200b\u200c\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff\u2028\u2029\ue000-\uf8ff]/gu;
@@ -28,14 +30,14 @@ export function truncateGraphemes(s: string, max: number): string {
 }
 
 /**
- * Untrusted text cleaned up for display: NFC, invisible and control
- * characters removed, whitespace runs collapsed to one space, trimmed,
+ * Untrusted text cleaned up for display: NFC, emoji ({@link stripEmoji}),
+ * invisible and control characters removed, whitespace runs collapsed to one space, trimmed,
  * at most `max` characters (graphemes). Not an HTML escape: render it as
  * text.
  */
 export function cleanText(input: unknown, max: number): string {
   if (typeof input !== "string") return "";
-  const s = input.normalize("NFC").replace(/\s+/gu, " ").replace(STRIP, "").replace(/ {2,}/g, " ").trim();
+  const s = stripEmoji(input.normalize("NFC")).replace(/\s+/gu, " ").replace(STRIP, "").replace(/ {2,}/g, " ").trim();
   return truncateGraphemes(s, max).trim();
 }
 
