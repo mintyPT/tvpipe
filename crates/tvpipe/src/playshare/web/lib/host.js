@@ -674,7 +674,8 @@ export class HostPage {
         new ResizeObserver(fit).observe(frame.parentElement);
         fit();
         party.on("screen-view", () => this.update());
-        this.tvpipe.on("cast", (s) => {
+        // tvpipe's TVs and the app's local screen (`local:this`, `local:cable`) together.
+        party.onCastChange((s) => {
             this.#cast = s;
             this.#renderCast();
         });

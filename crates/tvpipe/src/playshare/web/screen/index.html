@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>tvpipe.party · TV</title>
+<!-- The TV page's window (docs/browser-party-design.md, "The launcher": the cable,
+     a second window): the page from ?u= in a frame, and a Full screen button. -->
+<link rel="icon" href="/static/logo.svg" type="image/svg+xml">
+<style>
+[hidden] { display: none !important; }
+:root { color-scheme: dark; background: #000; }
+html, body { margin: 0; height: 100%; overflow: hidden; }
+body { font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; color: #E8ECF2; }
+iframe { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; display: block; background: #000; }
+.bar { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 2; display: flex; align-items: center; gap: 16px;
+  padding: 12px 14px 12px 20px; border-radius: 6px; background: rgba(13,24,40,.92); box-shadow: 0 10px 30px rgba(0,0,0,.4);
+  transition: opacity .4s; white-space: nowrap; }
+.bar.idle { opacity: 0; pointer-events: none; }
+.bar p { margin: 0; color: rgba(232,236,242,.8); font-size: 15px; }
+button { font: inherit; font-size: 15px; padding: 9px 18px; border: 0; border-radius: 3px; background: #E8743B; color: #0D1828; cursor: pointer; }
+.bad { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; }
+@media (max-width: 560px) { .bar { white-space: normal; flex-direction: column; } }
+</style>
+<script type="module" src="screen.js"></script>
+</head>
+<body>
+<iframe id="tv" title="The game" allow="autoplay; fullscreen; screen-wake-lock"></iframe>
+<div class="bar" id="bar" hidden>
+  <p id="hint">Drag this window onto the TV, then:</p>
+  <button type="button" id="full">Full screen</button>
+</div>
+<p class="bad" id="bad" hidden>This window shows a game's TV picture; it opens from the game.</p>
+</body>
+</html>

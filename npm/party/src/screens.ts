@@ -23,6 +23,17 @@ import { webDeps, type BroadcastLike } from "./rtc.ts";
 
 export type ScreenKind = "this" | "cable" | "window" | "none";
 
+/**
+ * The app's names for these screens beside its TVs (`local:this`,
+ * `local:cable`): `HostedParty.cast` shows them here, tvpipe casts the rest.
+ */
+export const LOCAL_PREFIX = "local:";
+
+/** The local screen of an app device name (`local:this` → `this`), if it is one. */
+export function localScreen(device: string): "this" | "cable" | undefined {
+  return device === `${LOCAL_PREFIX}this` ? "this" : device === `${LOCAL_PREFIX}cable` ? "cable" : undefined;
+}
+
 /** The name of the TV page's window (cable, second window). */
 export const SCREEN_WINDOW = "tvpipe-screen";
 /** The channel between host pages and that window. */
@@ -155,6 +166,12 @@ export class ScreenCaster {
   #poll: ReturnType<typeof setInterval> | undefined;
   #channel: BroadcastLike | undefined;
   #status: CastStatus = { state: "stopped" };
+  /** Before the kind in receivers' names and `to` (the app's `local:`, {@link LOCAL_PREFIX}). */
+  readonly #prefix: string;
+
+  constructor(o: { prefix?: string } = {}) {
+    this.#prefix = o.prefix ?? "";
+  }
 
   get status(): CastStatus {
     return this.#status;
@@ -167,7 +184,7 @@ export class ScreenCaster {
   }
 
   #receiver(kind: ScreenKind, state: string, extra: { error?: string; code?: string } = {}): CastStatus["receivers"] {
-    return [{ name: kind, title: screenTitle(kind, lang()), protocol: "browser", state, delayMs: 0, ...extra }];
+    return [{ name: this.#prefix + kind, title: screenTitle(kind, lang()), protocol: "browser", state, delayMs: 0, ...extra }];
   }
 
   /** Shows `page` (the TV page with its screen key) on `kind`. */
@@ -175,22 +192,22 @@ export class ScreenCaster {
     // Another kind: the table goes; the window too, unless the picture stays in a window (second window ↔ cable).
     if (this.#kind !== kind) this.stop(!(kind === "window" || kind === "cable"));
     this.#kind = kind;
-    this.#emit({ state: "starting", to: [kind] });
+    this.#emit({ state: "starting", to: [this.#prefix + kind] });
     if (kind === "none") return this.#emit({ state: "stopped", to: [] });
     if (kind === "this") {
       if (!g.document?.body) return this.#emit({ state: "failed", error: "no page", receivers: this.#receiver(kind, "failed", { error: "no page" }) });
       if (this.#table) this.#table.navigate(page);
       else this.#table = new TableScreen(page);
-      return this.#emit({ state: "streaming", to: [kind], receivers: this.#receiver(kind, "connected") });
+      return this.#emit({ state: "streaming", to: [this.#prefix + kind], receivers: this.#receiver(kind, "connected") });
     }
     // A window of the TV page: ours, one already open (a game ago), else a new one.
     if (this.#win && !this.#win.closed) {
       try {
         this.#win.location.assign(screenWindowUrl(page));
-        return this.#emit({ state: "streaming", to: [kind], receivers: this.#receiver(kind, "connected") });
+        return this.#emit({ state: "streaming", to: [this.#prefix + kind], receivers: this.#receiver(kind, "connected") });
       } catch {}
     }
-    if (await this.#reuse(page)) return this.#emit({ state: "streaming", to: [kind], receivers: this.#receiver(kind, "connected") });
+    if (await this.#reuse(page)) return this.#emit({ state: "streaming", to: [this.#prefix + kind], receivers: this.#receiver(kind, "connected") });
     let features = "popup,width=1280,height=720";
     if (kind === "cable") {
       try {
@@ -204,11 +221,11 @@ export class ScreenCaster {
     const win: Window | null = g.open?.(screenWindowUrl(page), SCREEN_WINDOW, features) ?? null;
     if (!win) {
       const error = lang() === "de" ? "Der Browser hat das Fenster blockiert: Nochmal versuchen" : "The browser blocked the window: Try again";
-      return this.#emit({ state: "failed", to: [kind], error, receivers: this.#receiver(kind, "failed", { error, code: "popup-blocked" }) });
+      return this.#emit({ state: "failed", to: [this.#prefix + kind], error, receivers: this.#receiver(kind, "failed", { error, code: "popup-blocked" }) });
     }
     this.#win = win;
     this.#watchWindow();
-    return this.#emit({ state: "streaming", to: [kind], receivers: this.#receiver(kind, "connected") });
+    return this.#emit({ state: "streaming", to: [this.#prefix + kind], receivers: this.#receiver(kind, "connected") });
   }
 
   /** Asks an open window of the TV page to show `page`; true once it did. */
@@ -257,7 +274,7 @@ export class ScreenCaster {
     clearInterval(this.#poll);
     this.#win = null;
     const kind = this.#kind ?? "window";
-    this.#emit({ state: "stopped", to: [kind], receivers: this.#receiver(kind, "ended") });
+    this.#emit({ state: "stopped", to: [this.#prefix + kind], receivers: this.#receiver(kind, "ended") });
   }
 
   /** Table mode: the host page instead of the game (⋯). */

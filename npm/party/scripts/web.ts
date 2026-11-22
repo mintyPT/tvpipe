@@ -41,6 +41,9 @@ export function webFiles(): Map<string, string> {
   // The phones' page before a game (docs/game-switching.md): no imports.
   out.set("wait/wait.js", strip(readFileSync(join(dist, "wait", "wait.js"), "utf8")));
   out.set("wait/index.html", readFileSync(join(src, "wait", "index.html"), "utf8"));
+  // The TV page's window (the app's `local:cable`, docs/browser-party-design.md).
+  out.set("screen/screen.js", page("screen", "screen.js"));
+  out.set("screen/index.html", readFileSync(join(src, "screen", "index.html"), "utf8"));
   return out;
 }
 
@@ -58,7 +61,7 @@ if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith
       writeFileSync(p, text);
     }
   }
-  for (const dir of ["lib", "launcher", "tvsync", "picker", "wait"]) {
+  for (const dir of ["lib", "launcher", "tvsync", "picker", "wait", "screen"]) {
     if (!existsSync(join(WEB, dir))) continue;
     for (const f of readdirSync(join(WEB, dir))) {
       if (!files.has(`${dir}/${f}`)) stale.push(`${dir}/${f} (not built: remove it)`);

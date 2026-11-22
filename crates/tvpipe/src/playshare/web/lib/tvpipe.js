@@ -18,6 +18,7 @@ import { showRejoinDialog } from "./rejoin-dialog.js";
 import { isWeb } from "./mode.js";
 import { TvpipeRelay } from "./relay.js";
 import { WebHub } from "./webhub.js";
+import { LOCAL_PREFIX, localScreen, ScreenCaster } from "./screens.js";
 import { captureAudio, SurfaceEncoder } from "./surface.js";
 /**
  * What a TV adds to its receiver's playout delay, ms: its own picture
@@ -476,6 +477,35 @@ export class Tvpipe extends Emitter {
 }
 /** The error code of a receiver that needs pairing first (AirPlay with a PIN). */
 export const PAIRING_REQUIRED = "pairing-required";
+/**
+ * One status of two casts (the app's TVs and its local screen,
+ * `local:this` / `local:cable`): their receivers together; streaming
+ * when either streams. An idle one (stopped, nothing in it) leaves the
+ * other as it is.
+ */
+export function mergeCast(a, b) {
+    const idle = (s) => s.state === "stopped" && !s.error && !s.receivers?.length;
+    if (idle(b))
+        return a;
+    if (idle(a))
+        return b;
+    const states = [a.state, b.state];
+    const state = states.includes("streaming") ? "streaming" : states.includes("starting") ? "starting" : states.includes("failed") ? "failed" : "stopped";
+    const out = { state, receivers: [...(a.receivers ?? []), ...(b.receivers ?? [])] };
+    const to = [...(a.to ?? []), ...(b.to ?? [])];
+    if (to.length)
+        out.to = to;
+    const error = a.error ?? b.error;
+    if (error)
+        out.error = error;
+    const player = a.player ?? b.player;
+    if (player)
+        out.player = player;
+    const resolution = a.resolution ?? b.resolution;
+    if (resolution)
+        out.resolution = resolution;
+    return out;
+}
 /** The receivers of a cast status that failed because they need pairing. */
 export function needsPairing(status) {
     return (status.receivers ?? []).filter((r) => r.state === "failed" && r.code === PAIRING_REQUIRED).map((r) => r.name);
@@ -498,6 +528,17 @@ export class HostedParty extends Party {
     /** The TVs paired (or offered pairing) since the last `cast()`: once each. */
     #offered = new Set();
     #pairing = false;
+    /**
+     * The app's screens beside its TVs (`local:this`: the TV page over the
+     * host page; `local:cable`: in a window on the other screen), shown
+     * here by screens.ts; the TV page goes through tvpipe's relay as on a TV.
+     */
+    #local = new ScreenCaster({ prefix: LOCAL_PREFIX });
+    #localPage;
+    /** The last statuses of tvpipe's cast and of the local screen. */
+    #remote = { state: "stopped" };
+    #localStatus = { state: "stopped" };
+    #castListeners = new Set();
     constructor(tvpipe, info, relay, options) {
         const { pair, ...rest } = options;
         super({ maxPlayers: info.players.max, code: info.room?.code, joinKey: info.room?.key, ...rest });
@@ -524,9 +565,15 @@ export class HostedParty extends Party {
             if (s.state === "starting" && s.to !== undefined)
                 this.#mine = this.#starting;
             this.#picture("cast", s);
+            this.#remote = s;
+            this.#castChanged();
             if (this.#mine)
                 void this.#pairFailed(s);
         });
+        this.#local.onstatus = (s) => {
+            this.#localStatus = s;
+            this.#castChanged();
+        };
         tvpipe.on("surface", (s) => this.#picture(`surface:${s.id}`, s));
     }
     /**
@@ -610,18 +657,70 @@ export class HostedParty extends Party {
         this.#offered.clear();
         return this.#cast({ to, resolution: opts.resolution });
     }
+    /**
+     * What the TV picture is on: tvpipe's cast and the local screen
+     * together ({@link mergeCast}).
+     */
+    get castStatus() {
+        return mergeCast(this.#remote, this.#localStatus);
+    }
+    /** Calls `fn` with {@link castStatus} whenever it changes; returns the unsubscribe. */
+    onCastChange(fn) {
+        this.#castListeners.add(fn);
+        return () => this.#castListeners.delete(fn);
+    }
+    #castChanged() {
+        const s = this.castStatus;
+        for (const fn of [...this.#castListeners])
+            fn(s);
+    }
     async #cast(args) {
         this.#castArgs = args;
+        // The app's local screens (`local:this`, `local:cable`) are this page's to show.
+        let to = args.to;
+        let all = to;
+        if (!all) {
+            try {
+                const chosen = await this.tvpipe.chosen();
+                if (Array.isArray(chosen?.devices))
+                    all = chosen.devices;
+            }
+            catch { }
+        }
+        const locals = (all ?? []).map(localScreen).filter((x) => x !== undefined);
+        const local = locals.includes("cable") ? "cable" : locals[0];
+        if (local)
+            to = all.filter((d) => !localScreen(d));
+        await this.#showLocal(local);
+        if (local && to.length === 0) {
+            // Only here: a cast of earlier TVs stops.
+            if (this.#remote.state === "starting" || this.#remote.state === "streaming")
+                await this.tvpipe.stopCast().catch(() => { });
+            return this.castStatus;
+        }
         this.#starting = true;
         try {
-            const status = await this.tvpipe.cast({ page: this.links.tv, to: args.to, resolution: args.resolution });
+            const status = await this.tvpipe.cast({ page: this.links.tv, to, resolution: args.resolution });
             if (this.#mine)
                 void this.#pairFailed(status);
-            return status;
+            return local ? mergeCast(status, this.#localStatus) : status;
         }
         finally {
             this.#starting = false;
         }
+    }
+    /** The TV page on the local screen (`undefined`: none); a running one stays. */
+    async #showLocal(kind) {
+        if (!kind) {
+            this.#local.stop();
+            this.#localPage = undefined;
+            return;
+        }
+        const s = this.#localStatus;
+        if (s.state === "streaming" && s.to?.[0] === `${LOCAL_PREFIX}${kind}` && this.#localPage === this.links.tv)
+            return;
+        this.#localPage = this.links.tv;
+        await this.#local.start(kind, this.links.tv);
     }
     /** Pairs the TVs of this party's cast that failed for want of it, once each, then casts again. */
     async #pairFailed(status) {
@@ -668,6 +767,8 @@ export class HostedParty extends Party {
     }
     stopCast() {
         this.#castArgs = null;
+        this.#local.stop();
+        this.#localPage = undefined;
         return this.tvpipe.stopCast();
     }
 }

@@ -7,6 +7,7 @@
  * passes what it found out about the device (`detectDevice`).
  */
 
+import { LOCAL_PREFIX } from "./screens.ts";
 import type { Device } from "./tvpipe.ts";
 
 /** What the launcher needs to know about the device it runs on. */
@@ -137,4 +138,24 @@ export function screenOptions(devices: readonly Device[], d: DeviceInfo): Screen
   else [here, window, mirror].forEach(add);
   add(none);
   return out;
+}
+
+/**
+ * The app's screens beside its TVs (docs/browser-party-design.md, "The
+ * setups": a laptop with a cable): `local:this` (the TV picture over the
+ * host page in its window) always, `local:cable` (a window full screen on
+ * the other screen) when the computer has one (`screen.isExtended`).
+ * `HostedParty.cast` shows them in the page; tvpipe casts to the rest.
+ */
+export function appScreens(extended: boolean): Device[] {
+  const out: Device[] = [{ name: `${LOCAL_PREFIX}this`, kind: "browser", title: "This screen" }];
+  if (extended) out.push({ name: `${LOCAL_PREFIX}cable`, kind: "browser", title: "The TV on the cable" });
+  return out;
+}
+
+/** What the app's launcher says under a local screen. */
+export function appScreenNote(name: string): string {
+  return name === `${LOCAL_PREFIX}cable`
+    ? "The game full screen on the other screen (a TV or projector on a cable); this window keeps the room's controls"
+    : "The game fills the host's window (full screen with ⛶); the room's controls are behind ⋯";
 }

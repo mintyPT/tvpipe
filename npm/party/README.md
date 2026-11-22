@@ -261,6 +261,12 @@ tvpipe.party's copy of the library has `mode.js` saying `WEB = true`
 - The tab's state is `sessionStorage["tvpipe-web"]` (`readWebSession`,
   `writeWebSession`).
 
+In the app, the launcher also offers this computer's own screens beside
+the TVs: `local:this` (the TV page over the host page) and `local:cable`
+(a window on the second screen); `HostedParty.cast` shows those in the
+page and casts the rest through tvpipe; `party.castStatus` and
+`party.onCastChange` give both together.
+
 ## Tests
 
 ```js

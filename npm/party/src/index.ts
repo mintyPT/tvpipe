@@ -39,6 +39,7 @@ export {
   TvpipeError,
   HostedParty,
   needsPairing,
+  mergeCast,
   PAIRING_REQUIRED,
   PICKER_MESSAGE,
   GAME_PICKER,
@@ -115,7 +116,7 @@ export { WebRtcRelay, type HostSignaling, type ScreenRequest, type WebRtcRelayOp
 export { DataChannelSocket, dataChannelSocket, joinUrl, requestScreen } from "./rtc-socket.ts";
 export { HostSignal, joinSignal, SignalError, type HostState, type Offer, type RoomGame } from "./signaling.ts";
 export { LocalHost, LocalSocket, localSocketFor, localUrl, LOCAL_CHANNEL } from "./local.ts";
-export { ScreenCaster, screenWindowUrl, screenTitle, keepAwake, SCREEN_WINDOW, SCREEN_CHANNEL, SCREEN_PAGE, type ScreenKind } from "./screens.ts";
+export { ScreenCaster, LOCAL_PREFIX, localScreen, screenWindowUrl, screenTitle, keepAwake, SCREEN_WINDOW, SCREEN_CHANNEL, SCREEN_PAGE, type ScreenKind } from "./screens.ts";
 export { iceServers, setWebDeps, webDeps, PUBLIC_STUN, type WebDeps } from "./rtc.ts";
 export { memoryRelay, MemoryRelay, dropOuts, type DropKind, type DropOutOptions, type DropOuts } from "./testing.ts";
 export {

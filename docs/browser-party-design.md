@@ -113,6 +113,22 @@ Where the TV page runs in the host's tab or in a window of it, it is a
 `role=screen` client over the **local transport** (`BroadcastChannel`),
 not WebRTC.
 
+### The app's local screens
+
+The app's launcher lists two screens of the computer beside the TVs it
+finds (`kind: "browser"`): `local:this` "This screen" always, and
+`local:cable` "The TV on the cable" when `screen.isExtended`; one of
+them at a time, with any TVs. tvpipe keeps them in its selection like
+any name (`select` takes unknown names). `HostedParty.cast` splits them
+off: screens.ts shows the TV page over the host page (as `this`) or in
+the window `/_tvpipe/screen/` on the other screen (as `cable`; tvpipe
+serves that page on its local listener, and the launcher opens the
+window on the Start click), and tvpipe casts only to the rest (no TVs
+left: its running cast stops). The TV page connects through tvpipe's
+relay with its screen key, as on a TV; `tvDelay` follows the TVs only.
+The host page shows both in one list (`party.castStatus`,
+`party.onCastChange`, `mergeCast`).
+
 ## Rooms and codes
 
 The code registry is short-links.md's D1 table, shared: a code is

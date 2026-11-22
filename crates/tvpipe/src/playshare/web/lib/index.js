@@ -8,7 +8,7 @@
  * @module
  */
 export { Party, PartyError, Player, PROTOCOL, BYE, HELLO_TIMEOUT, token, MAX_TV_DELAY, LATE_JOIN, } from "./party.js";
-export { Tvpipe, TvpipeError, HostedParty, needsPairing, PAIRING_REQUIRED, PICKER_MESSAGE, GAME_PICKER, GAME_PICKER_MESSAGE, TV_DISPLAY_MS, TV_RENDER_MS, tvDelayOf, } from "./tvpipe.js";
+export { Tvpipe, TvpipeError, HostedParty, needsPairing, mergeCast, PAIRING_REQUIRED, PICKER_MESSAGE, GAME_PICKER, GAME_PICKER_MESSAGE, TV_DISPLAY_MS, TV_RENDER_MS, tvDelayOf, } from "./tvpipe.js";
 export { TvpipeRelay, frame, OP_TEXT, OP_BINARY } from "./relay.js";
 export { Emitter } from "./emitter.js";
 export { RejoinBadge } from "./rejoin.js";
@@ -28,7 +28,7 @@ export { WebRtcRelay } from "./rtc-relay.js";
 export { DataChannelSocket, dataChannelSocket, joinUrl, requestScreen } from "./rtc-socket.js";
 export { HostSignal, joinSignal, SignalError } from "./signaling.js";
 export { LocalHost, LocalSocket, localSocketFor, localUrl, LOCAL_CHANNEL } from "./local.js";
-export { ScreenCaster, screenWindowUrl, screenTitle, keepAwake, SCREEN_WINDOW, SCREEN_CHANNEL, SCREEN_PAGE } from "./screens.js";
+export { ScreenCaster, LOCAL_PREFIX, localScreen, screenWindowUrl, screenTitle, keepAwake, SCREEN_WINDOW, SCREEN_CHANNEL, SCREEN_PAGE } from "./screens.js";
 export { iceServers, setWebDeps, webDeps, PUBLIC_STUN } from "./rtc.js";
 export { memoryRelay, MemoryRelay, dropOuts } from "./testing.js";
 export { SurfaceEncoder, captureAudio, slrwRecord, wallMicros, } from "./surface.js";

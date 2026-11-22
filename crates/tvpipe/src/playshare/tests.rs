@@ -594,6 +594,7 @@ fn local_listener_rules() {
     assert!(r.contains("Cache-Control: no-cache"), "{r}");
     assert!(get(s.local(), "/_tvpipe/lib/client.js", &host, "").starts_with("HTTP/1.1 200"));
     assert!(get(s.local(), "/_tvpipe/launcher/", &host, "").starts_with("HTTP/1.1 200"));
+    assert!(get(s.local(), "/_tvpipe/screen/", &host, "").starts_with("HTTP/1.1 200"));
     let r = get(s.local(), "/_tvpipe/tvsync/", &host, "");
     assert!(
         r.starts_with("HTTP/1.1 200") && r.contains("tvsync.js"),
@@ -701,6 +702,7 @@ fn public_listener_rules() {
     // Local-only things are not there.
     assert!(get(s.public(), "/_tvpipe/launcher/", &host, "").starts_with("HTTP/1.1 404"));
     assert!(get(s.public(), "/_tvpipe/tvsync/", &host, "").starts_with("HTTP/1.1 404"));
+    assert!(get(s.public(), "/_tvpipe/screen/", &host, "").starts_with("HTTP/1.1 404"));
     assert!(get(
         s.public(),
         &format!("/_tvpipe/start?t={}", s.hub.token),

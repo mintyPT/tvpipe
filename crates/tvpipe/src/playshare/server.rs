@@ -349,13 +349,15 @@ impl Hub {
             }) else {
                 return httpd::error_response(404, "Not Found");
             };
-            // The launcher, the games list and the TV sync page (cast
-            // from the local origin) only on this computer.
+            // The launcher, the games list, the TV sync page (cast
+            // from the local origin) and the TV page's window (a screen on
+            // the cable) only on this computer.
             let allowed = rel.starts_with("lib/")
                 || rel.starts_with("wait/")
                 || (l == Listener::Local
                     && (rel.starts_with("launcher/")
                         || rel.starts_with("tvsync/")
+                        || rel.starts_with("screen/")
                         || rel.starts_with(&picker::PAGE["/_tvpipe/".len()..])));
             if !allowed {
                 return httpd::error_response(404, "Not Found");

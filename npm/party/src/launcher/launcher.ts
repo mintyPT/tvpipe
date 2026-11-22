@@ -8,9 +8,9 @@
  */
 
 import { displayLag, Flasher, MAX_LAG_MS } from "../flashsync.ts";
-import { detectDevice, screenOptions, type ScreenOption } from "../launcher-options.ts";
+import { appScreenNote, appScreens, detectDevice, screenOptions, type ScreenOption } from "../launcher-options.ts";
 import { isWeb } from "../mode.ts";
-import { SCREEN_WINDOW } from "../screens.ts";
+import { LOCAL_PREFIX, SCREEN_WINDOW } from "../screens.ts";
 import { writeWebSession } from "../session.ts";
 import {
   GAME_PICKER,
@@ -115,9 +115,10 @@ function render(): void {
       box.setAttribute("aria-label", d.name);
       const text = el("div", "grow");
       const browser = d.kind === "browser";
+      const local = d.name.startsWith(LOCAL_PREFIX);
       // One line under the name: the model and the sync (rows stay low for many TVs).
       const synced = typeof d.displayMs === "number" ? `Synced with phones: ${d.displayMs} ms of its own` : "";
-      const meta = browser ? "Try the game without a TV: the TV picture plays in a tab" : [d.model, synced].filter(Boolean).join(" · ");
+      const meta = local ? appScreenNote(d.name) : browser ? "Try the game without a TV: the TV picture plays in a tab" : [d.model, synced].filter(Boolean).join(" · ");
       text.append(el("div", "name", browser ? (d.title ?? "A browser tab on this computer") : d.name), el("div", "meta", meta));
       const p = pairing.get(d.name);
       if (p) {
@@ -146,7 +147,11 @@ function render(): void {
       li.append(box, text, end);
       li.onclick = () => {
         if (selected.has(d.name)) selected.delete(d.name);
-        else selected.add(d.name);
+        else {
+          // One local screen at a time: this window or the one on the cable.
+          if (local) for (const n of selected) if (n.startsWith(LOCAL_PREFIX)) selected.delete(n);
+          selected.add(d.name);
+        }
         render();
       };
       return li;
@@ -266,7 +271,7 @@ async function start(devicesToUse: string[]): Promise<void> {
     }
     return;
   }
-  starting = devicesToUse.some((d) => d !== "browser") ? "Casting…" : "Starting…";
+  starting = devicesToUse.some((d) => d !== "browser" && !d.startsWith(LOCAL_PREFIX)) ? "Casting…" : "Starting…";
   render();
   try {
     await tvpipe.select(devicesToUse, { resolution: resolution ?? undefined });
@@ -668,8 +673,16 @@ async function main(): Promise<void> {
   for (const name of chosen.devices) selected.add(name);
   resolution = chosen.resolution;
   renderResolution();
+  // The app's own screens beside the TVs: this window, the TV on the cable.
+  let found: Device[] = [];
+  const withLocal = (list: Device[]) => [...list, ...appScreens((screen as { isExtended?: boolean }).isExtended === true)];
   tvpipe.on("devices", (list) => {
-    devices = list;
+    found = list;
+    devices = withLocal(list);
+    render();
+  });
+  (screen as unknown as EventTarget).addEventListener?.("change", () => {
+    devices = withLocal(found);
     render();
   });
   tvpipe.on("pair", (p) => {
@@ -688,11 +701,16 @@ async function main(): Promise<void> {
     stopped = "Ending";
     showError("tvpipe is ending.");
   });
-  devices = await tvpipe.watchDevices(true);
+  found = await tvpipe.watchDevices(true);
+  devices = withLocal(found);
   render();
   setupSync();
 
-  $("start").onclick = () => void start([...selected]);
+  $("start").onclick = () => {
+    // The cable's window opens on this click (a page may open windows only then).
+    if (selected.has(`${LOCAL_PREFIX}cable`)) openScreenWindow(true);
+    void start([...selected]);
+  };
   // The games list (a tvpipe that has one gives the room).
   $("other-game").hidden = changing || !info.room;
   $("other-game").onclick = () => location.assign(GAME_PICKER);

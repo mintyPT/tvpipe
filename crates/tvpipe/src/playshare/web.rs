@@ -1,9 +1,10 @@
 //! Files tvpipe serves itself under `/_tvpipe/`: the game library
 //! (`lib/`, built from `npm/party` by `npm run build`), the standard
 //! launcher (`launcher/`), the TV sync page it casts (`tvsync/`), the
-//! game picker (`picker/`) and the phones' page before a game (`wait/`). Embedded in the binary; with
-//! `TVPIPE_PLAYSHARE_WEB=DIR` they are read from `DIR` instead (working
-//! on the library without rebuilding tvpipe).
+//! game picker (`picker/`), the phones' page before a game (`wait/`) and
+//! the TV page's window for a screen on the cable (`screen/`). Embedded
+//! in the binary; with `TVPIPE_PLAYSHARE_WEB=DIR` they are read from
+//! `DIR` instead (working on the library without rebuilding tvpipe).
 
 use std::borrow::Cow;
 use std::path::Path;
@@ -64,6 +65,8 @@ pub static FILES: &[Asset] = web![
     "picker/picker.js",
     "wait/index.html",
     "wait/wait.js",
+    "screen/index.html",
+    "screen/screen.js",
 ];
 
 /// The source directory (for the test and dev mode).
