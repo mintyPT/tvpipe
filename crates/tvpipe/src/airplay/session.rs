@@ -984,7 +984,10 @@ impl<S: ControlStream> Session<S> {
                     let left = deadline
                         .saturating_duration_since(Instant::now())
                         .max(Duration::from_millis(100));
-                    match c.request("TEARDOWN", &uri, &[], None, left) {
+                    // An empty dict, not no body: an LG restarts its
+                    // AirPlay service on a body-less one (§4.14).
+                    let body = Some((BPLIST, Plist::dict().to_bytes()));
+                    match c.request("TEARDOWN", &uri, &[], body, left) {
                         Ok(r) if r.is_success() => {
                             debug!("airplay: session torn down");
                             Ok(())

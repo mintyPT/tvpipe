@@ -59,6 +59,8 @@ pub struct Recorded {
     pub strays: usize,
     pub event_replies: usize,
     pub teardown: bool,
+    /// The last TEARDOWN's `Content-Type` and body.
+    pub teardown_body: Option<(Option<String>, Vec<u8>)>,
 }
 
 /// How the fake behaves.
@@ -304,7 +306,11 @@ fn serve(stream: TcpStream, ctx: &Arc<Ctx>) -> crate::error::Result<()> {
             return Ok(());
         }
         if req.method == "TEARDOWN" {
-            ctx.rec.lock().unwrap().teardown = true;
+            let mut rec = ctx.rec.lock().unwrap();
+            rec.teardown = true;
+            let ct = req.headers.get("content-type").map(str::to_owned);
+            rec.teardown_body = Some((ct, req.body.clone()));
+            drop(rec);
             ctx.close_data.store(true, Ordering::Release);
             if ctx.behaviour.teardown_eof {
                 return Ok(());

@@ -1613,6 +1613,11 @@ mod tests {
             &format!("TEARDOWN rtsp://{}/{}", fake.addr, sink.session.audio_id)
         );
         assert!(r.teardown);
+        // The body is a bplist of an empty dict (§4.14).
+        let (ct, body) = r.teardown_body.clone().unwrap();
+        assert_eq!(ct.as_deref(), Some("application/x-apple-binary-plist"));
+        assert_eq!(Plist::from_bytes(&body).unwrap(), Plist::dict());
+        assert_eq!(body.len(), 42);
         assert_eq!(r.event_replies, 1);
         assert!(r.setup_bodies[0].get("timingPeerInfo").is_some());
 
