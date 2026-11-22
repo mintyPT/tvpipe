@@ -156,8 +156,9 @@ export class ScreenCaster {
     }
     /** Shows `page` (the TV page with its screen key) on `kind`. */
     async start(kind, page) {
+        // Another kind: the table goes; the window too, unless the picture stays in a window (second window ↔ cable).
         if (this.#kind !== kind)
-            this.stop(false);
+            this.stop(!(kind === "window" || kind === "cable"));
         this.#kind = kind;
         this.#emit({ state: "starting", to: [kind] });
         if (kind === "none")
