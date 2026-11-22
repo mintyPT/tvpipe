@@ -86,6 +86,8 @@ By default through a public link: OpenTunnel, which tvpipe sets up once and reus
 
 The QR code holds the link with the room's code and a key, so only people who can see the TV can join. On the Wi-Fi (`--lan`) the page is plain HTTP and the key crosses the network unencrypted: use the public link on networks with strangers. With Cloudflare, Cloudflare can read the game's traffic. With OpenTunnel, nobody else can.
 
+With a public link the TV also shows a short one to type, like `tvpipe.party/BCDF`. It and the QR code open the game inside a page of tvpipe.party, so phones show tvpipe.party instead of the tunnel's changing name (in the address bar, the history and parental controls). `--no-short-link`, or `TVPIPE_PARTY_URL=off`, turns both off: then the QR code is the tunnel's own link.
+
 ## How it works
 
 :::aside The split

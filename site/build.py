@@ -9,9 +9,10 @@ Sources:
                          themselves come from site/static/games.json
   site/manual/NN-*.md    the manual, one section per file, in file order
   site/static/           CSS, JS and the logo, copied as is; install.sh,
-                         install.ps1 and games.json (the games list
-                         `tvpipe game play NAME` reads) are also copied to
-                         the site's root
+                         install.ps1, games.json (the games list
+                         `tvpipe game play NAME` reads) and p.html (the
+                         frame page, /p: docs/short-links.md) are also
+                         copied to the site's root
   site/static/games/     the games' screenshots (games.json's `screenshots`),
                          rendered on /games/ (games/index.html)
   crates/tvpipe/src/browser/fonts/  the fonts (shared with tvpipe's share page)
@@ -64,9 +65,10 @@ import sys
 from pathlib import Path
 
 SITE = Path(__file__).resolve().parent
-# Served at the site's root: the installers' one-liners and the games list
-# (https://tvpipe.party/games.json, which tvpipe fetches).
-ROOT_FILES = ("install.sh", "install.ps1", "games.json")
+# Served at the site's root: the installers' one-liners, the games list
+# (https://tvpipe.party/games.json, which tvpipe fetches) and the frame
+# page (p.html, which Cloudflare serves as /p: docs/short-links.md).
+ROOT_FILES = ("install.sh", "install.ps1", "games.json", "p.html")
 LANGUAGES = {"en": "English", "de": "German", "fr": "French", "es": "Spanish", "it": "Italian",
              "nl": "Dutch", "pt": "Portuguese", "ja": "Japanese"}
 SOURCE = "https://github.com/mitsuhiko/tvpipe"

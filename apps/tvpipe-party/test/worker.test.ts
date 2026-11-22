@@ -8,6 +8,9 @@ const ORIGIN = "https://tvpipe.party";
 const JOIN = "https://some-random-words.trycloudflare.com/?r=BCDF#k=AbCdEfGhIjKlMnOp_-12";
 const JOIN2 = "https://65b3d1e2edd55529.baqlo7vg7agz.opentunnel.xyz/?r=BCDF#k=ZyXwVuTsRqPoNmLk_-34";
 const T0 = 1_700_000_000_000;
+/** Where /BCDF leads: the frame page (docs/short-links.md). */
+const FRAMED = "/p#c=some-random-words&r=BCDF&k=AbCdEfGhIjKlMnOp_-12";
+const FRAMED2 = "/p#o=65b3d1e2edd55529.baqlo7vg7agz&r=BCDF&k=ZyXwVuTsRqPoNmLk_-34";
 
 let env: TestEnv;
 beforeEach(() => {
@@ -180,7 +183,7 @@ test("PUT with a new url replaces it; a bad url is 400", async () => {
   assert.equal(res.status, 200);
   assert.equal(((await res.json()) as Created).url, JOIN2);
   res = await handle(req("GET", "/BCDF"), env, T0 + 2);
-  assert.equal(res.headers.get("Location"), JOIN2);
+  assert.equal(res.headers.get("Location"), FRAMED2);
 
   res = await handle(
     req("PUT", "/api/links/BCDF", { body: JSON.stringify({ url: "https://evil.com/" }), secret: reg.secret }),
@@ -213,13 +216,13 @@ test("DELETE: 204 always, deletes only with the secret", async () => {
   assert.equal((await created({ url: JOIN2, code: "BCDF" })).code, "BCDF");
 });
 
-test("lookups redirect, any case, with the fragment and no-store", async () => {
+test("lookups redirect to the frame page, any case, with the fragment and no-store", async () => {
   await created({ url: JOIN, code: "BCDF" });
   for (const path of ["/BCDF", "/bcdf", "/BcDf", "/bcdf/"]) {
     const res = await handle(req("GET", path), env, T0);
     assert.equal(res.status, 302, path);
-    assert.equal(res.headers.get("Location"), JOIN);
-    assert.ok(res.headers.get("Location")!.includes("#k="));
+    assert.equal(res.headers.get("Location"), FRAMED);
+    assert.ok(res.headers.get("Location")!.includes("&k="));
     assert.equal(res.headers.get("Cache-Control"), "no-store");
     assert.equal(res.headers.get("Referrer-Policy"), "no-referrer");
   }
@@ -255,7 +258,7 @@ test("/join: the form, and ?code= as /CODE", async () => {
 
   res = await handle(req("GET", "/join?code=bcdf"), env, T0);
   assert.equal(res.status, 302);
-  assert.equal(res.headers.get("Location"), JOIN);
+  assert.equal(res.headers.get("Location"), FRAMED);
   res = await handle(req("GET", "/join?code=+bc+df+"), env, T0);
   assert.equal(res.status, 302);
 

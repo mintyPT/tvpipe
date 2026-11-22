@@ -115,7 +115,7 @@ by mistake:
 |---|---|---|
 | Who | the app window, the headless TV page | phones (through the tunnel or the LAN), this computer for tests |
 | `Host` | `127.0.0.1:L`, `localhost:L`, `[::1]:L` (421 otherwise) | the tunnel's name, loopback names with `P`; the LAN listener exactly `IP:P'` |
-| `/` | redirect to the launcher | redirect to the phone page, the query kept (`/?r=CODE` → `/phone/index.html?r=CODE`; browsers keep the `#k=` fragment across the redirect) |
+| `/` | redirect to the launcher | redirect to the phone page, the query kept plus the game's tag (`/?r=CODE` → `/phone/index.html?r=CODE&g=RUN.GEN`; browsers keep the `#k=` fragment across the redirect; `g`: docs/game-switching.md) |
 | bundle files | yes | yes (everything in a bundle is public: it is a web app; secrets do not belong in it) |
 | `/_tvpipe/lib/*.js` | the library | the library (the client side is what phones use) |
 | `/_tvpipe/ui.css`, `/_tvpipe/fonts/*.woff2` | tvpipe's look (the launcher, error pages, host pages that want it; the fonts are the browser player's) | the same |
@@ -129,7 +129,12 @@ by mistake:
 Static files: GET/HEAD, a fixed MIME table, `Content-Length`,
 `nosniff`, `Cache-Control: no-cache` with an ETag, `Referrer-Policy:
 no-referrer`; HTML gets no CSP from tvpipe (the game's pages are the
-game's: a game sets its own with `<meta http-equiv>`). `/_tvpipe/` is
+game's: a game sets its own with `<meta http-equiv>`), except
+`frame-ancestors` on the public and LAN listeners: every answer there
+carries `Content-Security-Policy: frame-ancestors 'self'
+https://tvpipe.party` (the frame page's origin, docs/short-links.md;
+only `'self'` when short links are off), so no other site can frame
+the phones' pages. `/_tvpipe/` is
 reserved: a bundle's own `_tvpipe/` directory is never served.
 
 ## 5. The local API
@@ -157,7 +162,7 @@ ignored, or `unknown-method`.
 
 | Method | Params → value | |
 |---|---|---|
-| `info` | → `{name, title, players, pages, tv, phone: {url, mode, lan}, tunnel, version, launcher, resolutions, dev, room: {code, key}, game}` | `no-game` before a game is picked; `room`: the run's room code and join key, the same for every game (docs/game-switching.md); `game`: the run's games counted; `phone.url`: the base phones use (`https://HOST/`, `http://IP:P'/` or `http://127.0.0.1:P/`), `mode` `tunnel`/`lan`/`local`; `dev`: test mode (`--dev`), the game's test tools (docs/games.md) |
+| `info` | → `{name, title, players, pages, tv, phone: {url, mode, lan, frame}, tunnel, version, launcher, resolutions, dev, room: {code, key}, game}` | `no-game` before a game is picked; `room`: the run's room code and join key, the same for every game (docs/game-switching.md); `game`: the run's games counted; `phone.url`: the base phones use (`https://HOST/`, `http://IP:P'/` or `http://127.0.0.1:P/`), `mode` `tunnel`/`lan`/`local`; `phone.frame`: the frame page phones open the tunnel's join link in (`https://tvpipe.party/p`, docs/short-links.md; absent with `--no-short-link`/`TVPIPE_PARTY_URL=off`); `dev`: test mode (`--dev`), the game's test tools (docs/games.md) |
 | `devices.watch` | `{on: bool}` → the current list | discovery runs while any socket watches; `devices` events with the whole list when it changes |
 | `select` / `selection` | `{devices: [name], resolution?}` → `{devices, resolution}` | the launcher's (or the cast picker's) choice, kept by tvpipe for the host page (a navigation away); `resolution` `auto`, `720p`, `1080p`, `2160p` (§9.1; absent: unchanged, default `auto`; `null` in the answer when `tv.resolution` is fixed) |
 | `pair.start` | `{device}` → `{}` | AirPlay PIN pairing; `pair` events `{device, state: connecting\|pin\|done\|failed, error?}` |
@@ -332,12 +337,14 @@ StateBoxes; `handle`, `collect`, `send`, `broadcast`, `players`, `vip`,
 `away`, `leave`, `vip`, `active`, `screen`, `screen-view`, `input`) with
 the transport replaced: it takes connections from a `Relay` (tvpipe's,
 or `memoryRelay()` in tests) instead of a Node server. `party.links`:
-`join` (public, in the QR code), `tv` (the local TV page with the screen
+`join` (public, in the QR code: with a tunnel the frame page's link,
+`https://tvpipe.party/p#c=…&r=…&k=…`, docs/short-links.md), `tv` (the local TV page with the screen
 key), `watch` (a read-only screen, local: the host page may show it in
 an `<iframe>` as a preview). `party.cast(to?)`, `party.stopCast()`;
 `party.joinInfo` gets the QR rows from tvpipe's `qr` and, with a tunnel,
-the short link from `shortlink` (`joinInfo.short`, docs/short-links.md;
-`joinText()` is what pages show).
+the short link from `shortlink` for the tunnel's own join link
+(`joinInfo.short`, docs/short-links.md; `joinText()` is what pages
+show).
 
 ### 8.2 Client side
 
@@ -350,6 +357,9 @@ ported to TypeScript without the WebRTC upgrade: `fromLocation()`,
 without a `bye` (tvpipe's own closes): 4008, 4011, 1009. The protocol
 (`docs/party-protocol.md`) is unchanged except: §9 (WebRTC) is gone,
 the transport section names the relay, and the hosts table has one host.
+In a page another site frames (the frame page, docs/short-links.md) it
+tells the frame page the page's title and `theme-color`
+(`announceToFrame`).
 
 ### 8.3 `Tvpipe` (the API client)
 
@@ -504,7 +514,9 @@ tunnels (about 29 per address in 90 minutes, each a new hostname):
   origin. The token never reaches the public listener, the TV's page or
   any log at the default level.
 - **DNS rebinding**: `Host` checked on both listeners (421). **CSWSH**:
-  `Origin` checked on every WebSocket (403).
+  `Origin` checked on every WebSocket (403). **Framing**: only the
+  frame page's origin may frame the phones' pages (`frame-ancestors`,
+  §4).
 - **Relay**: tvpipe forwards bytes and enforces limits (§6.3); it never
   parses what clients send. Keys, names and actions are checked by the
   host library as before (party-design §6): 128-bit keys in URL

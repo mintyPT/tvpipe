@@ -63,6 +63,7 @@ export {
 export { TvpipeRelay, frame, OP_TEXT, OP_BINARY, type Relay, type RelayConn, type Via } from "./relay.ts";
 export { Emitter } from "./emitter.ts";
 export { RejoinBadge } from "./rejoin.ts";
+export { frameLink, announceToFrame, FRAME_MESSAGE } from "./frame.ts";
 export {
   HostPage,
   SettingsForm,

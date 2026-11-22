@@ -268,6 +268,11 @@ export class Client {
 
 export interface JoinInfo {
   code: string;
+  /**
+   * What phones open: tvpipe's join link, or with a tunnel the frame
+   * page's link to it (`https://tvpipe.party/p#c=…&r=…&k=…`,
+   * docs/short-links.md). {@link Party.rejoinLink} adds `&p=TOKEN`.
+   */
   url: string;
   /** The QR code of `url`: `size` modules per side, `rows` of "0"/"1". */
   qr: { size: number; rows: string[] } | null;

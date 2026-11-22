@@ -451,6 +451,22 @@ impl Hub {
         format!("http://127.0.0.1:{}", self.ports().local)
     }
 
+    /// The frame page phones open the tunnel's join link in
+    /// (`https://tvpipe.party/p`, docs/short-links.md); none when short
+    /// links are off.
+    pub fn frame_page(&self) -> Option<String> {
+        self.shortlinks.get().and_then(|l| l.frame_page())
+    }
+
+    /// The pages that may frame the phones' pages: their own origin and
+    /// the frame page's (`Content-Security-Policy: frame-ancestors`).
+    pub fn frame_ancestors(&self) -> String {
+        match self.shortlinks.get().and_then(|l| l.origin()) {
+            Some(o) => format!("frame-ancestors 'self' {o}"),
+            None => "frame-ancestors 'self'".to_owned(),
+        }
+    }
+
     /// What phones open: `(base URL, mode)`.
     pub fn phone_base(&self) -> (String, &'static str) {
         let t = self.tunnel.read().unwrap_or_else(|e| e.into_inner());
@@ -1031,7 +1047,8 @@ impl Hub {
                 Value::object()
                     .with("url", phone)
                     .with("mode", mode)
-                    .with_opt("lan", p.lan.map(|l| format!("http://{l}/"))),
+                    .with_opt("lan", p.lan.map(|l| format!("http://{l}/")))
+                    .with_opt("frame", self.frame_page()),
             )
             .with("tunnel", self.tunnel_value())
             .with("local", self.local_origin())

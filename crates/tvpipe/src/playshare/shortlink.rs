@@ -114,6 +114,38 @@ impl ShortLinks {
         self.base.is_some()
     }
 
+    /// The frame page phones open the tunnel's join link in
+    /// (`https://tvpipe.party/p`, docs/short-links.md); `None`: off.
+    pub fn frame_page(&self) -> Option<String> {
+        self.base.as_ref().map(|b| format!("{b}/p"))
+    }
+
+    /// The service's origin (`https://tvpipe.party`): the frame page's,
+    /// which may frame the phones' pages (`frame-ancestors`); `None`: off.
+    pub fn origin(&self) -> Option<String> {
+        let u = Url::parse(self.base.as_deref()?).ok()?;
+        // It goes into a header: only what a host name or address has.
+        if !u
+            .host
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'-' | b':'))
+        {
+            return None;
+        }
+        let scheme = if u.https { "https" } else { "http" };
+        let host = if u.host.contains(':') {
+            format!("[{}]", u.host)
+        } else {
+            u.host.clone()
+        };
+        let default = if u.https { 443 } else { 80 };
+        Some(if u.port == default {
+            format!("{scheme}://{host}")
+        } else {
+            format!("{scheme}://{host}:{}", u.port)
+        })
+    }
+
     fn state(&self) -> MutexGuard<'_, State> {
         self.state.lock().unwrap_or_else(|e| e.into_inner())
     }

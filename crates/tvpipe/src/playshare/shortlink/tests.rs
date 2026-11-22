@@ -227,6 +227,46 @@ fn failures_are_unavailable() {
 }
 
 #[test]
+fn frame_page_and_origin() {
+    let stop = Stop::new();
+    let cases = [
+        (
+            Some("https://tvpipe.party"),
+            Some("https://tvpipe.party/p"),
+            Some("https://tvpipe.party"),
+        ),
+        (
+            Some("https://tvpipe.party/"),
+            Some("https://tvpipe.party/p"),
+            Some("https://tvpipe.party"),
+        ),
+        (
+            Some("http://127.0.0.1:8787"),
+            Some("http://127.0.0.1:8787/p"),
+            Some("http://127.0.0.1:8787"),
+        ),
+        (
+            Some("https://Example.com:443/party"),
+            Some("https://Example.com:443/party/p"),
+            Some("https://example.com"),
+        ),
+        (
+            Some("http://[::1]:8787"),
+            Some("http://[::1]:8787/p"),
+            Some("http://[::1]:8787"),
+        ),
+        (None, None, None),
+        (Some("not a url"), None, None),
+    ];
+    for (base, page, origin) in cases {
+        let l = ShortLinks::new(base, stop.clone());
+        assert_eq!(l.frame_page().as_deref(), page, "{base:?}");
+        assert_eq!(l.origin().as_deref(), origin, "{base:?}");
+    }
+    stop.request();
+}
+
+#[test]
 fn answers_are_checked() {
     let s = TestServer::plain(Arc::new(|_: &Request| {
         json(

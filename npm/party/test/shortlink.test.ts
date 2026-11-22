@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { joinText } from "../src/client.ts";
+import { frameLink } from "../src/frame.ts";
 import { Tvpipe, type Info } from "../src/tvpipe.ts";
 import { until } from "./helpers.ts";
 
@@ -27,6 +28,8 @@ const INFO: Info = {
   local: "http://127.0.0.1:4000",
   version: "0",
 };
+/** What the fake tvpipe answers to `info`. */
+let info: Info = INFO;
 
 /** tvpipe's API socket, faked: answers calls, sends events. */
 class FakeApi {
@@ -57,7 +60,7 @@ class FakeApi {
     };
     switch (msg.method) {
       case "info":
-        return reply({ ok: true, value: structuredClone(INFO) });
+        return reply({ ok: true, value: structuredClone(info) });
       case "relay.attach":
         return reply({ ok: true, value: { public: "http://127.0.0.1:5000", local: "http://127.0.0.1:4000" } });
       case "qr":
@@ -112,4 +115,61 @@ test("without the service the party has no short link", async () => {
   assert.equal(joinText(party.joinInfo), null);
   assert.equal(party.joinInfo.mode, "tunnel");
   party.close();
+});
+
+test("with a frame page phones open the tunnel's link on it", async () => {
+  info = { ...INFO, phone: { ...INFO.phone, frame: "https://tvpipe.party/p" } };
+  try {
+    const tvpipe = await Tvpipe.connect({ url: "ws://x/_tvpipe/api", WebSocket: FakeApi as any });
+    const api = FakeApi.last;
+    const party = await tvpipe.party();
+    // Not on the LAN or this computer: there is no tunnel yet.
+    assert.equal(party.joinInfo.url, `http://127.0.0.1:5000/?r=${party.code}#k=${party.joinKey}`);
+
+    api.event("tunnel", { state: "up", url: "https://words-and-more.trycloudflare.com/", provider: "cloudflare" });
+    await until(() => party.joinInfo.short !== undefined, 2000, "short link");
+    const framed = `https://tvpipe.party/p#c=words-and-more&r=${party.code}&k=${party.joinKey}`;
+    assert.equal(party.joinInfo.url, framed);
+    assert.equal(party.links.join, framed);
+    const qr = api.calls.filter((c) => c.method === "qr").at(-1)!;
+    assert.deepEqual(qr.params, { text: framed });
+    // tvpipe registers its own link: the service leads to the frame page.
+    const asked = api.calls.find((c) => c.method === "shortlink")!;
+    assert.deepEqual(asked.params, {
+      url: `https://words-and-more.trycloudflare.com/?r=${party.code}#k=${party.joinKey}`,
+      code: party.code,
+    });
+    party.close();
+  } finally {
+    info = INFO;
+  }
+});
+
+test("frameLink: known answers", () => {
+  const KEY = "AbCdEfGhIjKlMnOp_-12";
+  const page = "https://tvpipe.party/p";
+  assert.equal(
+    frameLink(page, `https://some-random-words.trycloudflare.com/?r=BCDF#k=${KEY}`),
+    `https://tvpipe.party/p#c=some-random-words&r=BCDF&k=${KEY}`,
+  );
+  assert.equal(
+    frameLink(page, `https://65b3d1e2edd55529.baqlo7vg7agz.opentunnel.xyz/?r=BCDF#k=${KEY}`),
+    `https://tvpipe.party/p#o=65b3d1e2edd55529.baqlo7vg7agz&r=BCDF&k=${KEY}`,
+  );
+  assert.equal(
+    frameLink("http://127.0.0.1:8787/p", `https://x.trycloudflare.com/?r=BCDF#k=${KEY}`),
+    `http://127.0.0.1:8787/p#c=x&r=BCDF&k=${KEY}`,
+  );
+  // No frame page, or a link it cannot take: phones open the link itself.
+  for (const [pg, url] of [
+    [undefined, `https://x.trycloudflare.com/?r=BCDF#k=${KEY}`],
+    ["", `https://x.trycloudflare.com/?r=BCDF#k=${KEY}`],
+    ["javascript:alert(1)//", `https://x.trycloudflare.com/?r=BCDF#k=${KEY}`],
+    [page, `https://abc.opentunnel.xyz/?r=BCDF#k=${KEY}`],
+    [page, `https://a.b.tunnel.example.com/?r=BCDF#k=${KEY}`],
+    [page, `http://192.168.1.2:5000/?r=BCDF#k=${KEY}`],
+    [page, `https://x.trycloudflare.com/?r=BCDF#k=short`],
+  ] as const) {
+    assert.equal(frameLink(pg, url), null, `${pg} ${url}`);
+  }
 });

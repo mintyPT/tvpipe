@@ -160,7 +160,9 @@ the WebSocket's `hello`.
 
 ### Links
 
-- **Join** (in the QR code, on the TV): `https://HOST/?r=BCDF#k=JOINKEY`.
+- **Join** (in the QR code, on the TV): `https://HOST/?r=BCDF#k=JOINKEY`
+  (with tvpipe's tunnels: inside the frame page,
+  `https://tvpipe.party/p#c=LABEL&r=BCDF&k=JOINKEY`, docs/short-links.md).
   `r` is the room code; the key sits in the fragment, so it never shows up
   in request lines, logs or `Referer` (the WebSocket `hello` carries it).
 - **Screen** (local, for `share`): `http://127.0.0.1:PORT/screen/#r=BCDF&k=SCREENKEY`.

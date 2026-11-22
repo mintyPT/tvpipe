@@ -324,7 +324,7 @@ static GAME_PLAY: Cli<PlayshareArg> = Cli::new("play")
             .help("No public link: phones on the Wi-Fi (--lan) or this computer only"),
         Opt::new(PlayshareArg::NoShortLink)
             .long("no-short-link")
-            .help("Do not register a short link at tvpipe.party (the TV shows only the QR code then); also TVPIPE_PARTY_URL=off"),
+            .help("No short link and no frame page at tvpipe.party: the TV shows only the QR code, of the tunnel's own link; also TVPIPE_PARTY_URL=off"),
         Opt::new(PlayshareArg::Lan)
             .long("lan")
             .optional_value("IP")

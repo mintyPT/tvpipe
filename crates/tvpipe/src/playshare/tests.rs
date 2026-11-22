@@ -658,7 +658,24 @@ fn public_listener_rules() {
     let host = format!("127.0.0.1:{}", s.public());
     let r = get(s.public(), "/?r=BCDF", &host, "");
     assert!(r.starts_with("HTTP/1.1 302"), "{r}");
-    assert!(r.contains("Location: /phone/index.html?r=BCDF"), "{r}");
+    // The game's tag in the query too: a page in the frame page gets no
+    // cookie (docs/game-switching.md); an old one gives way.
+    let tag = s.hub.game_tag(&s.hub.game().unwrap());
+    let phone = format!("Location: /phone/index.html?r=BCDF&g={tag}\r\n");
+    assert!(r.contains(&phone), "{r}");
+    let r = get(s.public(), "/?g=old.1&r=BCDF&g", &host, "");
+    assert!(r.contains(&phone), "{r}");
+    // Only the listener itself and the frame page's origin may frame the
+    // phones' pages; the window's own listener says nothing.
+    let csp = s.hub.frame_ancestors();
+    assert!(csp.starts_with("frame-ancestors 'self'"), "{csp}");
+    assert!(
+        r.contains(&format!("Content-Security-Policy: {csp}\r\n")),
+        "{r}"
+    );
+    let local = format!("127.0.0.1:{}", s.local());
+    let r = get(s.local(), "/tv.html", &local, "");
+    assert!(!r.contains("Content-Security-Policy"), "{r}");
     assert!(get(s.public(), "/phone/app.js", &host, "").contains("export const x"));
     // No service workers on the phones' origin (§18); the window may.
     let r = get(
@@ -1832,6 +1849,19 @@ fn shortlink_only_for_the_tunnels_link() {
         Some(&svc.base("")),
         stop.clone(),
     ));
+    // The frame page is the service's; it may frame the phones' pages.
+    let base = svc.base("").trim_end_matches('/').to_owned();
+    let info = hub.info().unwrap();
+    assert_eq!(
+        info.get("phone")
+            .and_then(|p| p.get("frame"))
+            .and_then(Value::as_str),
+        Some(format!("{base}/p").as_str())
+    );
+    assert_eq!(
+        hub.frame_ancestors(),
+        format!("frame-ancestors 'self' {base}")
+    );
     let v = hub.call(0, "shortlink", &p).unwrap();
     assert_eq!(
         v.to_json(),

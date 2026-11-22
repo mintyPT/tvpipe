@@ -12,6 +12,7 @@ export { Tvpipe, TvpipeError, HostedParty, needsPairing, PAIRING_REQUIRED, PICKE
 export { TvpipeRelay, frame, OP_TEXT, OP_BINARY } from "./relay.js";
 export { Emitter } from "./emitter.js";
 export { RejoinBadge } from "./rejoin.js";
+export { frameLink, announceToFrame, FRAME_MESSAGE } from "./frame.js";
 export { HostPage, SettingsForm, hostStrings, languageField, lateJoinField, preferredLang, textIn, } from "./host.js";
 export { StateBox, diff, applyDiff, toJson } from "./sync.js";
 export { cleanText, graphemes, nameKey } from "./names.js";

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0D1828">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; frame-src https://*.trycloudflare.com https://*.opentunnel.xyz; base-uri 'none'; form-action 'none'">
+<title>tvpipe.party</title>
+<!-- The frame page (docs/short-links.md, "The frame page"): the game's
+     phone page from its tunnel, framed; static/frame.js does the work. -->
+<style>
+:root { color-scheme: dark; background: #0D1828; }
+html, body { margin: 0; height: 100%; overflow: hidden; }
+body { font: 17px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; color: #E8ECF2; }
+iframe { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; display: block; background: transparent; }
+.note { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px; padding: 24px; text-align: center; box-sizing: border-box; }
+.mark { font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+.mark span { color: #E8743B; }
+.note p { margin: 0; max-width: 340px; color: rgba(232,236,242,.72); }
+a { color: #F0915F; }
+.bad { display: none; }
+body[data-state="bad"] .bad { display: flex; }
+body[data-state="bad"] iframe, body[data-state="bad"] .wait { display: none; }
+body[data-state="shown"] .wait { display: none; }
+</style>
+<script type="module" src="/static/frame.js"></script>
+</head>
+<body data-state="loading">
+<div class="note wait"><div class="mark">tvpipe<span>.</span>party</div><p>Joining the game…</p></div>
+<div class="note bad" role="alert"><div class="mark">tvpipe<span>.</span>party</div>
+<p>This link does not lead to a game. Scan the QR code on the TV again, or type the code shown there.</p>
+<p><a href="/join">Type a code</a></p></div>
+<iframe id="game" title="The game" allow="autoplay; clipboard-write; fullscreen; screen-wake-lock; web-share" allowfullscreen referrerpolicy="no-referrer"></iframe>
+</body>
+</html>

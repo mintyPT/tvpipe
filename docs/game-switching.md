@@ -102,7 +102,13 @@ A phone asleep during the switch wakes up with the old game's page,
 which would reconnect to the new host with the right code and key. So
 tvpipe sets a cookie `tvpipe-game=RUN.GEN` (not secret, readable by
 scripts) on every bundle file; `PartyClient.fromLocation` reads it when
-the page loads and connects with `?g=RUN.GEN`. A relay connection whose
+the page loads and connects with `?g=RUN.GEN`. A page in the frame page
+(`tvpipe.party/p`, docs/short-links.md) is in another site and gets no
+cookie (browsers keep `SameSite=Lax` cookies out of cross-site frames,
+Safari all of them), so the phones' `/` also puts the tag into the
+page's query (`/phone/index.html?r=BCDF&g=RUN.GEN`, an older `g`
+replaced) and the client takes that when there is no cookie. A page
+reloaded at an old `g` is sent on once more by the 4014 below. A relay connection whose
 `g` is not the current game's is accepted and closed with 4014 at once,
 so the old page goes to the join link too. Connections without `g`
 (tests, bots in Node) are not checked.

@@ -258,7 +258,10 @@ naming its host, TV and phone pages. Design and protocols:
   `tvpipe.party/CODE` for the tunnel's join link (`shortlink` on the API);
   tvpipe registers it with the service (`apps/tvpipe-party`, over
   `net::fetch`), refreshes it every 6 h and deletes it at the end;
-  `--no-short-link`, `TVPIPE_PARTY_URL`. Design:
+  `--no-short-link`, `TVPIPE_PARTY_URL`. The QR code and the short
+  link lead to the frame page `tvpipe.party/p#…` (a static page that
+  frames the tunnel's phone page; `info.phone.frame`, and
+  `frame-ancestors` on the phones' listeners). Design:
   [`docs/short-links.md`](docs/short-links.md).
 - **`tvpipe game pack`, `check`, `new`** (`playshare/check.rs`, `scan.rs`, `smoke.rs`,
   `tool.rs`; [`docs/games.md`](docs/games.md)) checks a game the way

@@ -6,9 +6,14 @@ database, on the free plan. It does two things:
 - **Short join links.** tvpipe registers a game's tunnel join link
   (`https://….trycloudflare.com/?r=BCDF#k=…`) and gets
   `https://tvpipe.party/BCDF`, which the TV shows for people who cannot
-  scan the QR code. `GET /BCDF` redirects to the join link; `/join` is a
+  scan the QR code. `GET /BCDF` redirects to the frame page; `/join` is a
   page to type the code into. The design and the API are in
   [docs/short-links.md](../../docs/short-links.md).
+- **The frame page.** `/p#c=LABEL&r=ROOM&k=KEY` shows the game's phone
+  page from its tunnel in a full-screen frame, so phones stay on
+  tvpipe.party; the QR codes lead there. A static file of the site
+  (`site/static/p.html`, `site/static/frame.js`), so it costs no Worker
+  request.
 - **The website.** The static files of `site/_out` (built by
   `site/build.py`) are the Worker's assets.
 
@@ -22,11 +27,12 @@ asset-first routing; `/manual` → `/manual/` and the like are Cloudflare's
 | Path | |
 |---|---|
 | `POST /api/links`, `PUT`/`DELETE /api/links/CODE` | the API (JSON) |
-| `/CODE` (four letters of `BCDFGHJKLMNPQRSTVWXZ`, any case) | `302` to the join link, or the join page with "No game …" (`404`) |
+| `/CODE` (four letters of `BCDFGHJKLMNPQRSTVWXZ`, any case) | `302` to the frame page (`/p#…`), or the join page with "No game …" (`404`) |
 | `/join`, `/join?code=…` | the join page / as `/CODE` |
+| `/p` | a file (`p.html`): the frame page; the Worker does not run |
 | anything else | `404` page linking `/` and `/join` |
 
-Files: `src/links.ts` (validation, codes, secrets, the SQL),
+Files: `src/links.ts` (validation, the frame page's link, codes, secrets, the SQL),
 `src/pages.ts` (the HTML), `src/app.ts` (the handler), `src/env.ts` (the
 few Cloudflare types it needs, declared by hand),
 `migrations/` (D1's schema). No runtime dependencies.
@@ -90,7 +96,7 @@ location): 20 code lookups a minute (`/CODE`, `/join?code=`; hits count
 too, so a scanner cannot tell live codes from dead ones), 10 registrations,
 60 refreshes/deletes. Request bodies are at most 4 KiB.
 
-Static files do not run the Worker. A game costs about 2 Worker requests
+Static files (the frame page too) do not run the Worker. A game costs about 2 Worker requests
 (register, delete) plus one per 6 hours of refreshes, plus one per person
 who types the code: tens of thousands of games a day fit the free plan's
 100,000 requests. D1: a write per register, refresh and delete, a read

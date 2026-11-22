@@ -19,7 +19,7 @@ const LABEL = "[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?";
  * (a label per run under the machine's tunnel, docs/tunnels.md).
  */
 const JOIN_URL_RE = new RegExp(
-  `^https://(?:${LABEL}\\.trycloudflare\\.com|${LABEL}\\.${LABEL}\\.opentunnel\\.xyz)/\\?r=[A-Z]{4,8}#k=[A-Za-z0-9_-]{16,64}$`,
+  `^https://(?:(${LABEL})\\.trycloudflare\\.com|(${LABEL}\\.${LABEL})\\.opentunnel\\.xyz)/\\?r=([A-Z]{4,8})#k=([A-Za-z0-9_-]{16,64})$`,
 );
 
 /** The code in upper case when `input` is one (any case), else null. */
@@ -37,6 +37,18 @@ export function normalizeCode(input: unknown): string | null {
  */
 export function isJoinUrl(url: unknown): url is string {
   return typeof url === "string" && url.length <= MAX_URL_LENGTH && JOIN_URL_RE.test(url);
+}
+
+/**
+ * The frame page's link of a join link (`/p#c=LABEL&r=ROOM&k=KEY` or
+ * `/p#o=ROUTE.ID&r=ROOM&k=KEY`, docs/short-links.md, "The frame page"):
+ * the game in a page of tvpipe.party. Null when `url` is no join link.
+ */
+export function framePath(url: string): string | null {
+  if (!isJoinUrl(url)) return null;
+  const m = JOIN_URL_RE.exec(url)!;
+  const host = m[1] !== undefined ? `c=${m[1]}` : `o=${m[2]!}`;
+  return `/p#${host}&r=${m[3]!}&k=${m[4]!}`;
 }
 
 /** A uniformly random code. */

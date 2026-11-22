@@ -197,8 +197,14 @@ impl Hub {
                 "Forbidden: no service workers on the phones' link",
             ));
         }
-        let r = self.get(req, l, path, query);
-        Reply::Response(self.for_browser(req, l, r))
+        let mut r = self.for_browser(req, l, self.get(req, l, path, query));
+        // The phones' pages: only tvpipe.party's frame page (and the
+        // listener itself) may frame them (docs/short-links.md).
+        if l != Listener::Local {
+            r.headers
+                .set("Content-Security-Policy", self.frame_ancestors());
+        }
+        Reply::Response(r)
     }
 
     /// An error a browser navigated to becomes a page in tvpipe's look
@@ -247,15 +253,29 @@ impl Hub {
                     }
                 }
                 _ => {
-                    // No game yet: a page that waits for one.
-                    let phone = match self.game() {
-                        Some(g) => format!("/{}", g.bundle.manifest.pages.phone),
-                        None => WAIT.to_owned(),
+                    // No game yet: a page that waits for one. The game's
+                    // page gets its tag as `g` too: in the frame page
+                    // (another site) it gets no cookie
+                    // (docs/game-switching.md).
+                    let (phone, tag) = match self.game() {
+                        Some(g) => (
+                            format!("/{}", g.bundle.manifest.pages.phone),
+                            Some(self.game_tag(&g)),
+                        ),
+                        None => (WAIT.to_owned(), None),
                     };
-                    if query.is_empty() {
+                    let mut parts: Vec<String> = query
+                        .split('&')
+                        .filter(|p| !p.is_empty() && *p != "g" && !p.starts_with("g="))
+                        .map(str::to_owned)
+                        .collect();
+                    if let Some(t) = tag {
+                        parts.push(format!("g={t}"));
+                    }
+                    if parts.is_empty() {
                         redirect(302, &phone)
                     } else {
-                        redirect(302, &format!("{phone}?{query}"))
+                        redirect(302, &format!("{phone}?{}", parts.join("&")))
                     }
                 }
             };

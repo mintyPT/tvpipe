@@ -3,7 +3,7 @@
 // what is not a file: the API, /CODE, /join and the 404 page.
 
 import type { Env, RateLimit } from "./env.ts";
-import { isJoinUrl, lookup, normalizeCode, refresh, register, remove } from "./links.ts";
+import { framePath, isJoinUrl, lookup, normalizeCode, refresh, register, remove } from "./links.ts";
 import { joinPage, notFoundPage } from "./pages.ts";
 
 /** Request bodies over this many bytes: 413. */
@@ -160,7 +160,10 @@ async function deleteLink(request: Request, env: Env, rawCode: string): Promise<
   return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
 }
 
-/** GET /CODE and /join?code=: the redirect, or the join page saying why not. */
+/**
+ * GET /CODE and /join?code=: the redirect to the frame page (`/p#…`, the
+ * game inside a page of tvpipe.party), or the join page saying why not.
+ */
 async function joinCode(request: Request, env: Env, input: string): Promise<Response> {
   const shown = input.toUpperCase();
   const code = normalizeCode(input);
@@ -178,9 +181,12 @@ async function joinCode(request: Request, env: Env, input: string): Promise<Resp
   if (url === null) {
     return html(request, 404, joinPage(`No game with the code ${code}. Check the code on the TV.`, code));
   }
+  // Rows are join links (isJoinUrl), so there is always a frame page;
+  // the join link itself would do too.
+  const location = framePath(url) ?? url;
   return new Response(null, {
     status: 302,
-    headers: { Location: url, "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" },
+    headers: { Location: location, "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" },
   });
 }
 

@@ -14,6 +14,7 @@
 import { Emitter } from "./emitter.ts";
 import { Party, type PartyOptions, type Player } from "./party.ts";
 import { showPairDialog } from "./pair-dialog.ts";
+import { frameLink } from "./frame.ts";
 import { showRejoinDialog } from "./rejoin-dialog.ts";
 import { TvpipeRelay } from "./relay.ts";
 import { captureAudio, SurfaceEncoder, type CanvasSource, type EncoderOptions, type SurfaceInfo } from "./surface.ts";
@@ -58,7 +59,12 @@ export interface Info {
   tv: { width: number; height: number; resolution: "choice" | "fixed" } | null;
   /** The resolutions people may choose (empty: the game's is fixed). */
   resolutions: Resolution[];
-  phone: { url: string; mode: "tunnel" | "lan" | "local"; lan?: string };
+  /**
+   * `frame`: the frame page (`https://tvpipe.party/p`, docs/short-links.md)
+   * phones open the tunnel's join link in; absent when tvpipe's short
+   * links are off (and from an older tvpipe).
+   */
+  phone: { url: string; mode: "tunnel" | "lan" | "local"; lan?: string; frame?: string };
   tunnel: TunnelInfo;
   /** `http://127.0.0.1:PORT`. */
   local: string;
@@ -608,7 +614,10 @@ export class Tvpipe extends Emitter<TvpipeEvents> {
 
 /** A party's links. */
 export interface PartyLinks {
-  /** What phones open (the QR code): public with a tunnel. */
+  /**
+   * What phones open (the QR code): public with a tunnel, then on the
+   * frame page (`https://tvpipe.party/p#…`) when tvpipe has short links.
+   */
   join: string;
   /** The TV page with the screen key: a path on the local origin, for `cast`. */
   tv: string;
@@ -664,7 +673,7 @@ export class HostedParty extends Party {
     this.listen(relay);
     const tv = `${info.pages.tv}#r=${this.code}&k=${this.screenKey}&role=screen`;
     this.links = {
-      join: this.#joinUrl(info.phone.url),
+      join: this.#phoneLinks().join,
       tv,
       watch: `${info.local}${info.pages.tv}#r=${this.code}&k=${this.watchKey}&role=watch`,
     };
@@ -694,20 +703,29 @@ export class HostedParty extends Party {
     this.followTv(Math.max(0, ...this.#pictures.values()));
   }
 
-  #joinUrl(base: string): string {
-    return `${base.endsWith("/") ? base : `${base}/`}?r=${this.code}#k=${this.joinKey}`;
+  /**
+   * The join link on tvpipe's listener (`direct`) and what phones open
+   * (`join`): the frame page's link for a tunnel's (tvpipe.party/p#…,
+   * docs/short-links.md), else the same.
+   */
+  #phoneLinks(): { direct: string; join: string } {
+    const base = this.info.phone.url;
+    const direct = `${base.endsWith("/") ? base : `${base}/`}?r=${this.code}#k=${this.joinKey}`;
+    const framed = this.info.phone.mode === "tunnel" ? frameLink(this.info.phone.frame, direct) : null;
+    return { direct, join: framed ?? direct };
   }
 
   #refreshes = 0;
 
   /**
    * Makes the join link and its QR code (again: after the tunnel came up).
-   * With a tunnel the short link (`joinInfo.short`) follows in the
-   * background: `screen-view` fires when it is there.
+   * With a tunnel the link is the frame page's (`tvpipe.party/p#…`) and
+   * the short link (`joinInfo.short`) follows in the background:
+   * `screen-view` fires when it is there.
    */
   async refreshJoin(): Promise<void> {
     const n = ++this.#refreshes;
-    const join = this.#joinUrl(this.info.phone.url);
+    const { direct, join } = this.#phoneLinks();
     const mode = this.info.phone.mode;
     this.links = { ...this.links, join };
     let qr: { size: number; rows: string[] } | null = null;
@@ -719,7 +737,8 @@ export class HostedParty extends Party {
     const keep = this.joinInfo.url === join ? this.joinInfo.short : undefined;
     this.joinInfo = { code: this.code, url: join, qr, mode, ...(keep ? { short: keep } : {}) };
     if (mode !== "tunnel") return;
-    void this.tvpipe.shortLink(join, this.code).then(
+    // tvpipe registers its own link (the service redirects to the frame page).
+    void this.tvpipe.shortLink(direct, this.code).then(
       (r) => {
         if (n === this.#refreshes && r.url !== this.joinInfo.short) this.joinInfo = { ...this.joinInfo, short: r.url };
       },

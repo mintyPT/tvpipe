@@ -29,6 +29,7 @@ pub static FILES: &[Asset] = web![
     "lib/emoji.js",
     "lib/emitter.js",
     "lib/flashsync.js",
+    "lib/frame.js",
     "lib/host.js",
     "lib/index.js",
     "lib/limits.js",

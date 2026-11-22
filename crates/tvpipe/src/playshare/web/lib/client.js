@@ -10,6 +10,7 @@
  *   await party.act("answer", { text: "…" }); // acked, resent after reconnects
  *   party.input({ x: 0.3, y: -1 });          // continuous input, latest wins
  */
+import { announceToFrame } from "./frame.js";
 import { RejoinBadge } from "./rejoin.js";
 export { blockEmoji, hasEmoji, stripEmoji } from "./emoji.js";
 export const PROTOCOL = 1;
@@ -182,10 +183,13 @@ export class PartyClient {
         const key = opts.key ?? h.get("k") ?? q.get("k") ?? undefined;
         let url = opts.url ?? `${loc.protocol === "https:" ? "wss:" : "ws:"}//${loc.host}${SOCKET_PATH}`;
         // The game this page is of: tvpipe sends a page of an earlier game
-        // on to its join link (docs/game-switching.md).
-        const game = opts.url ? null : cookieValue(GAME_COOKIE);
+        // on to its join link (docs/game-switching.md). The cookie, else the
+        // `g` tvpipe put into the page's query: a page in the frame page
+        // (tvpipe.party/p) is in another site and gets no cookie.
+        const game = opts.url ? null : (cookieValue(GAME_COOKIE) ?? q.get("g"));
         if (game)
             url += `?g=${encodeURIComponent(game)}`;
+        announceToFrame();
         const r = opts.role ?? h.get("role") ?? "player";
         const role = r === "screen" || r === "watch" ? r : "player";
         const client = new PartyClient({ ...opts, url, room, key, role });
