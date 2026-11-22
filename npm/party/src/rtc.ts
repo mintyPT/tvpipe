@@ -45,6 +45,8 @@ export interface PeerLike {
   readonly iceGatheringState: string;
   readonly connectionState?: string;
   onicegatheringstatechange: ((ev: any) => void) | null;
+  /** Candidates as they are gathered (`type`: host, srflx, prflx, relay). */
+  onicecandidate?: ((ev: { candidate: { type?: string | null } | null }) => void) | null;
   ondatachannel: ((ev: { channel: ChannelLike }) => void) | null;
   onconnectionstatechange?: ((ev: any) => void) | null;
   createOffer(): Promise<Description>;
@@ -120,18 +122,33 @@ export async function iceServers(deps: WebDeps = webDeps()): Promise<IceServer[]
   }
 }
 
-/** Resolves when the peer's ICE gathering is complete, or after `ms` (no trickle: one description each way). */
-export function gathered(pc: PeerLike, ms = 3000): Promise<void> {
+/** After the first relay candidate, gathering waits at most this long for more, ms. */
+export const RELAY_SETTLE_MS = 400;
+
+/**
+ * Resolves when the peer's ICE gathering is complete, `settleMs` after
+ * its first relay candidate, or after `ms` (no trickle: one description
+ * each way). A relay candidate reaches the other side from anywhere; a
+ * TURN address that does not answer (one of six, say) would otherwise
+ * hold every join for the whole `ms`.
+ */
+export function gathered(pc: PeerLike, ms = 3000, settleMs = RELAY_SETTLE_MS): Promise<void> {
   if (pc.iceGatheringState === "complete") return Promise.resolve();
   return new Promise((resolve) => {
+    let settle: ReturnType<typeof setTimeout> | undefined;
     const done = () => {
       clearTimeout(timer);
+      clearTimeout(settle);
       pc.onicegatheringstatechange = null;
+      pc.onicecandidate = null;
       resolve();
     };
     const timer = setTimeout(done, ms);
     pc.onicegatheringstatechange = () => {
       if (pc.iceGatheringState === "complete") done();
+    };
+    pc.onicecandidate = (ev) => {
+      if (ev.candidate?.type === "relay") settle ??= setTimeout(done, settleMs);
     };
   });
 }

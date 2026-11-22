@@ -11,7 +11,7 @@ import { memoryStorage, PartyClient } from "../src/client.ts";
 import { LocalHost, localSocketFor, localUrl } from "../src/local.ts";
 import { Party } from "../src/party.ts";
 import type { RelayConn } from "../src/relay.ts";
-import { setWebDeps } from "../src/rtc.ts";
+import { gathered, setWebDeps, type PeerLike } from "../src/rtc.ts";
 import { WebRtcRelay, type WebRtcRelayOptions } from "../src/rtc-relay.ts";
 import { dataChannelSocket, DataChannelSocket, joinUrl, requestScreen } from "../src/rtc-socket.ts";
 import { HostSignal, joinSignal, SignalError, type HostState } from "../src/signaling.ts";
@@ -103,6 +103,37 @@ test("a dropped phone comes back by its token; a network cut is 1006 and reconne
   await until(() => hostSaw === 1, 2000, "away");
   await until(() => ann.status === "open" && party.connectedPlayers.length === 1, 4000, "back again");
   assert.equal(ann.you!["id"], id);
+});
+
+test("gathering: complete, 0.4 s after the first relay candidate, or the cap", async () => {
+  const peer = () => ({ iceGatheringState: "gathering", onicegatheringstatechange: null, onicecandidate: null }) as unknown as PeerLike & { onicecandidate: (ev: { candidate: { type: string } | null }) => void };
+  // Complete.
+  let p = peer();
+  let t = Date.now();
+  let g = gathered(p, 1000, 200);
+  (p as { iceGatheringState: string }).iceGatheringState = "complete";
+  p.onicegatheringstatechange!({});
+  await g;
+  assert.ok(Date.now() - t < 50);
+  assert.equal(p.onicecandidate, null);
+  // A relay candidate, then a TURN address that never answers: on after the settle time.
+  p = peer();
+  t = Date.now();
+  g = gathered(p, 1000, 200);
+  p.onicecandidate({ candidate: { type: "host" } });
+  p.onicecandidate({ candidate: { type: "srflx" } });
+  await tick(50);
+  p.onicecandidate({ candidate: { type: "relay" } });
+  p.onicecandidate({ candidate: { type: "relay" } });
+  await g;
+  assert.ok(Date.now() - t >= 240 && Date.now() - t < 600, `${Date.now() - t} ms`);
+  // No relay at all (no TURN): until the cap.
+  p = peer();
+  t = Date.now();
+  g = gathered(p, 300, 100);
+  p.onicecandidate({ candidate: { type: "srflx" } });
+  await g;
+  assert.ok(Date.now() - t >= 290);
 });
 
 test("a phone that vanishes without a word (its tab closed): away once ICE says so, not after the pings", async () => {

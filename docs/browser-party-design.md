@@ -202,7 +202,9 @@ object's alarm. A room's storage (the game, the connection counter, the
 owner) is dropped 25 hours after its host left, when no socket is open.
 
 **No trickle:** both sides wait for ICE gathering to finish (at most
-3 s) and send one description each: one offer, one answer per join.
+3 s, or 0.4 s after the first relay candidate: one TURN address of six
+that does not answer would otherwise hold every join for the 3 s) and
+send one description each: one offer, one answer per join.
 
 **Cost** (free plan: 100,000 Worker requests and 100,000 Durable
 Object requests a day, 100,000 SQLite row writes): a WebSocket is one
@@ -308,7 +310,7 @@ this room before; then it answers `!{"t":"screen","ok":true,"url":TV}`
 | `/_tvpipe/lib/`, `/_tvpipe/launcher/`, `/_tvpipe/picker/`, `/_tvpipe/tvsync/`, `/_tvpipe/wait/` | the library (web build: `mode.js` says `WEB = true`) and its pages, the files tvpipe embeds (`npm/party/scripts/web.ts`); `/_tvpipe/ui.css` and `/_tvpipe/fonts/` as tvpipe serves them |
 | `/_tvpipe/screen/?u=PATH` | a window of the TV page (cable, second window): `PATH` (a path of this site with its fragment, nothing else) in a frame, a Full screen button that goes once the window is full screen, "Drag this window onto the TV" beside it. The host talks to it on `BroadcastChannel("tvpipe-screen")`: `{t: "show", url}` (answered `{t: "shown", url}`), `{t: "close"}`; the window says `{t: "gone"}` when it goes. The launcher opens the window (blank) on the Start click, and for the cable moves it to the other screen (`getScreenDetails()`); the host page's cast takes it by its name |
 | `/g/NAME/RELEASE/…` | the games of the list (`site/static/games.json`), built from this repository (`RELEASE`: the game's `package.json` version), the manifest's `root` and `tvpipe.json`; `/g/index.json` lists them (below), a page `…/index.html` as its directory `…/` (Cloudflare's `html_handling` answers `index.html` with a `307` to it) |
-| `/r/?r=CODE#k=KEY` | a web room's join link: asks `GET /api/rooms/CODE`, then `location.replace`s to the game's phone page with `?r=CODE#k=KEY` and the link's other fragment pairs (`&p=…`); without a host or a game it waits and asks again (every 4 s, 8 s after two minutes, 20 s after a `429`); `404`: "No game with the code CODE", a link to `/join`. Self-contained (no library), English and German |
+| `/r/?r=CODE#k=KEY` | a web room's join link: asks `GET /api/rooms/CODE`, then `location.replace`s to the game's phone page with `?r=CODE#k=KEY` and the link's other fragment pairs (`&p=…`); without a host or a game it waits and asks again (1.5 s the first three times, then every 4 s, 8 s after two minutes, 20 s after a `429`); `404`: "No game with the code CODE", a link to `/join`. Self-contained (no library), English and German |
 | `/tv/` | an extra screen: the code (or `#r=CODE`), `GET /api/rooms/CODE` (`404`: "No game with the code"; no host: waits), `requestScreen`, the TV page full page in a frame; a Full screen button, Wake Lock; asks again at the frame's `tvpipe:next-game` |
 
 `apps/tvpipe-party/scripts/site.ts` (`npm run build:web` there: `site/build.py`, then it) builds npm/party (`tsc`) and every listed game (`npm ci` where `node_modules` is missing, `npm run build`), writes all of the above into `site/_out`, and checks Cloudflare's limits for assets (20,000 files, 25 MiB each); `npm run dev`, `npm run deploy` and the workflow run it. `node scripts/check-pages.ts` opens the pages in headless Chrome against `wrangler dev`.

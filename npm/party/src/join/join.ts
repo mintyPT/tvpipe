@@ -93,8 +93,9 @@ async function run(): Promise<void> {
     return;
   }
   const started = Date.now();
-  for (;;) {
-    let wait = Date.now() - started < 120_000 ? 4000 : 8000;
+  for (let tries = 1; ; tries++) {
+    // Soon at first (a host page reloading or starting the next game is back in a moment), then every 4 s, 8 s after two minutes.
+    let wait = tries <= 3 ? 1500 : Date.now() - started < 120_000 ? 4000 : 8000;
     try {
       const r = await fetch(`/api/rooms/${link.code}`, { cache: "no-store", headers: { Accept: "application/json" } });
       if (r.status === 404) {

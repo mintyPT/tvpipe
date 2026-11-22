@@ -45,20 +45,35 @@ export async function iceServers(deps = webDeps()) {
         return PUBLIC_STUN;
     }
 }
-/** Resolves when the peer's ICE gathering is complete, or after `ms` (no trickle: one description each way). */
-export function gathered(pc, ms = 3000) {
+/** After the first relay candidate, gathering waits at most this long for more, ms. */
+export const RELAY_SETTLE_MS = 400;
+/**
+ * Resolves when the peer's ICE gathering is complete, `settleMs` after
+ * its first relay candidate, or after `ms` (no trickle: one description
+ * each way). A relay candidate reaches the other side from anywhere; a
+ * TURN address that does not answer (one of six, say) would otherwise
+ * hold every join for the whole `ms`.
+ */
+export function gathered(pc, ms = 3000, settleMs = RELAY_SETTLE_MS) {
     if (pc.iceGatheringState === "complete")
         return Promise.resolve();
     return new Promise((resolve) => {
+        let settle;
         const done = () => {
             clearTimeout(timer);
+            clearTimeout(settle);
             pc.onicegatheringstatechange = null;
+            pc.onicecandidate = null;
             resolve();
         };
         const timer = setTimeout(done, ms);
         pc.onicegatheringstatechange = () => {
             if (pc.iceGatheringState === "complete")
                 done();
+        };
+        pc.onicecandidate = (ev) => {
+            if (ev.candidate?.type === "relay")
+                settle ??= setTimeout(done, settleMs);
         };
     });
 }
