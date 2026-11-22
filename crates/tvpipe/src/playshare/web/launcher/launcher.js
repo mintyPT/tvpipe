@@ -4,8 +4,8 @@
  * the TVs as they are found (AirPlay PIN pairing, TV sync, the
  * resolution); on tvpipe.party (web mode, docs/browser-party-design.md,
  * "The launcher") they are this device's screens, one of them, or the way
- * to the tvpipe app. There `/games/NAME/launcher/` (Play now on /games/;
- * also `?game=NAME`) puts the game in the tab's session first. A game may bring its own launcher with
+ * to the tvpipe app. There it is `/games/NAME/launcher/` (Play now on
+ * /games/), which puts the game in the tab's session first. A game may bring its own launcher with
  * the same API.
  */
 import { displayLag, Flasher, MAX_LAG_MS } from "../lib/flashsync.js";
@@ -657,8 +657,13 @@ async function main() {
     }
     $("where").textContent = `tvpipe game · ${location.host}`;
     const web = isWeb();
-    // Play now on /games/: this game in the tab's session (an unknown one: back to the list).
-    const want = /^\/games\/([a-z0-9-]+)\/launcher\/?$/.exec(location.pathname)?.[1] ?? new URLSearchParams(location.search).get("game");
+    // Play now on /games/: /games/NAME/launcher/ puts this game in the tab's
+    // session (an unknown one, or no game in the path: back to the list).
+    const want = /^\/games\/([a-z0-9-]+)\/launcher\/?$/.exec(location.pathname)?.[1] ?? null;
+    if (web && want === null && !changing) {
+        location.replace(GAMES_PAGE);
+        return;
+    }
     if (web && want !== null && !changing) {
         let list;
         try {

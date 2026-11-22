@@ -69,8 +69,6 @@ const checks: Check[] = [
     view: { width: 1000, height: 760 },
     until: `document.querySelector("#${game.name} .now")?.textContent === "Playing" && !!document.querySelector(".gh.pick button") && getComputedStyle(document.querySelector("header.top")).display === "none"`,
   },
-  { name: "launcher-nogame", path: "/_tvpipe/launcher/", view: DESK, until: `location.pathname === "/games/"` },
-  { name: "launcher-unknown", path: "/_tvpipe/launcher/?game=no-such-game", view: DESK, until: `location.pathname === "/games/"` },
   {
     name: "launcher-desktop",
     path: `/games/${game.name}/launcher/`,
@@ -83,8 +81,8 @@ const checks: Check[] = [
     view: DESK,
     until: `(document.querySelector('#devices .device[data-name="app"]')?.click(), !document.getElementById("app-way").hidden && document.getElementById("start").hidden && document.querySelector("#app-commands").innerText.includes("tvpipe game play ${game.name}") && document.querySelectorAll("#app-commands .cmd").length === 2)`,
   },
-  { name: "launcher-ipad", path: "/_tvpipe/launcher/", view: PAD, ua: IPAD, session: { game }, until: `document.querySelector('#devices .device[data-name="mirror"]') !== null && document.querySelector("#devices .device.selected")?.dataset.name === "this"` },
-  { name: "launcher-ipad-mirror", path: "/_tvpipe/launcher/", view: PAD, ua: IPAD, session: { game }, until: `(document.querySelector('#devices .device[data-name="mirror"]')?.click(), document.querySelector(".steps") !== null)` },
+  { name: "launcher-ipad", path: `/games/${game.name}/launcher/`, view: PAD, ua: IPAD, until: `document.querySelector('#devices .device[data-name="mirror"]') !== null && document.querySelector("#devices .device.selected")?.dataset.name === "this"` },
+  { name: "launcher-ipad-mirror", path: `/games/${game.name}/launcher/`, view: PAD, ua: IPAD, until: `(document.querySelector('#devices .device[data-name="mirror"]')?.click(), document.querySelector(".steps") !== null)` },
   {
     name: "launcher-ipad-app",
     path: `/games/${game.name}/launcher/`,

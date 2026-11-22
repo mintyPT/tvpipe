@@ -4,7 +4,7 @@
  * tvpipe.party"):
  *
  *   /_tvpipe/lib/         the library (npm/party), `mode.js` saying WEB = true
- *   /_tvpipe/launcher/, /_tvpipe/tvsync/, /_tvpipe/wait/
+ *   /_tvpipe/launcher/ (script, style), /_tvpipe/tvsync/, /_tvpipe/wait/
  *                         its pages, as tvpipe serves them (npm/party/scripts/web.ts;
  *                         not the app's games list, /_tvpipe/picker/: on the web
  *                         that is /games/, with its Play now buttons)
@@ -140,7 +140,9 @@ for (const [rel, text] of webFiles()) {
   }
   if (rel === "launcher/index.html") {
     t = withAppHead(t);
+    // Only as /games/NAME/launcher/ (below): its script and style stay here.
     launcherHtml = t;
+    continue;
   }
   write(`_tvpipe/${rel}`, t);
 }
@@ -205,7 +207,8 @@ for (const g of listed) {
       host: page(p.host),
       tv: page(p.tv),
       phone: page(p.phone),
-      ...(p.launcher ? { launcher: page(p.launcher) } : {}),
+      // The launcher (the Change screen dialog too): the game's own, else /games/NAME/launcher/.
+      launcher: p.launcher ? page(p.launcher) : `/games/${g.name}/launcher/`,
     },
     ...(cover ? { cover: `/${cover.src}` } : {}),
   });

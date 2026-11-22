@@ -105,12 +105,11 @@ One launcher in `@tvpipe/party` (`launcher/`), used by the app (with
 tvpipe's API) and by the web (with `WebHub`). Steps: the games list,
 "Where should the game show?", Start. In web mode Play now on the games
 pages opens `/games/NAME/launcher/` (the launcher's page, its files in
-`/_tvpipe/launcher/`; `?game=NAME` there works too): the launcher puts the game
+`/_tvpipe/launcher/`): the launcher puts the game
 of `/g/index.json` by that name into the session (`{name, release}`;
 an unknown name goes back to `/games/`), shows it above the question
 (cover, title, players, "← All games" to `/games/`), then asks. Without a
-game in the address it takes the session's game, and without one goes to
-`/games/`; Other game there goes to `/games/` too. The devices are
+game in the address it goes to `/games/`; Other game there goes to `/games/` too. The devices are
 screens, `kind: "browser"`, with these names:
 
 | Device name | Offered | Cast does |
@@ -350,7 +349,7 @@ this room before; then it answers `!{"t":"screen","ok":true,"url":TV}`
 | Path | |
 |---|---|
 | `/games/`, `/games/NAME/` | the website's games pages (`site/build.py`), the web's games list: every game has **Play now** (`/games/NAME/launcher/`) beside `tvpipe game play NAME`. The web app's start: their head links `/manifest.webmanifest` (`id` and `start_url` `/games/`, standalone, fullscreen where offered), `/apple-touch-icon.png` and `site/static/games.js`, which registers `/sw.js` (network first; pages and tvpipe.party's own files kept as they come by, `/games/` from the start, `/offline.html` for a page never seen; not the API or the games' files) and shows "Add to Home Screen" once on iPadOS and iOS. `/games/?switch&current=NAME`: the dialog of Other game (below); `?bots` passes on to the launcher |
-| `/_tvpipe/lib/`, `/_tvpipe/launcher/`, `/_tvpipe/tvsync/`, `/_tvpipe/wait/` | the library (web build: `mode.js` says `WEB = true`) and its pages, the files tvpipe embeds (`npm/party/scripts/web.ts`; not the app's games list, `/_tvpipe/picker/`); `/_tvpipe/ui.css` and `/_tvpipe/fonts/` as tvpipe serves them |
+| `/_tvpipe/lib/`, `/_tvpipe/launcher/` (script and style only), `/_tvpipe/tvsync/`, `/_tvpipe/wait/` | the library (web build: `mode.js` says `WEB = true`) and its pages, the files tvpipe embeds (`npm/party/scripts/web.ts`; not the app's games list, `/_tvpipe/picker/`); `/_tvpipe/ui.css` and `/_tvpipe/fonts/` as tvpipe serves them |
 | `/_tvpipe/screen/?u=PATH` | a window of the TV page (cable, second window): `PATH` (a path of this site with its fragment, nothing else) in a frame, a Full screen button that goes once the window is full screen, "Drag this window onto the TV" beside it. The host talks to it on `BroadcastChannel("tvpipe-screen")`: `{t: "show", url}` (answered `{t: "shown", url}`), `{t: "close"}`; the window says `{t: "gone"}` when it goes. The launcher opens the window (blank) on the Start click, and for the cable moves it to the other screen (`getScreenDetails()`); the host page's cast takes it by its name |
 | `/g/NAME/RELEASE/…` | the games of the list (`site/static/games.json`), built from this repository (`RELEASE`: the game's `package.json` version), the manifest's `root` and `tvpipe.json`; `/g/index.json` lists them (below), a page `…/index.html` as its directory `…/` (Cloudflare's `html_handling` answers `index.html` with a `307` to it) |
 | `/r/?r=CODE#k=KEY` | a web room's join link: asks `GET /api/rooms/CODE`, then `location.replace`s to the game's phone page with `?r=CODE#k=KEY` and the link's other fragment pairs (`&p=…`); without a host or a game it waits and asks again (1.5 s the first three times, then every 4 s, 8 s after two minutes, 20 s after a `429`); `404`: "No game with the code CODE", a link to `/join`. Self-contained (no library), English and German |

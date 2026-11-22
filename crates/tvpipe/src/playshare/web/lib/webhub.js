@@ -34,7 +34,6 @@ import { clearWebSession, readWebSession, writeWebSession } from "./session.js";
 import { HostSignal } from "./signaling.js";
 import { TvpipeError } from "./tvpipe.js";
 /** The standard launcher and the games list (web: the site's games page). */
-const LAUNCHER = "/_tvpipe/launcher/";
 export const GAMES_PAGE = "/games/";
 /** Registration: codes tried at most. */
 const CODE_TRIES = 8;
@@ -380,7 +379,7 @@ export class WebHub {
         await new Promise((r) => setTimeout(r, 150));
         this.#relay?.closeAll(4014, "next game");
         this.#screens.dispose();
-        const url = readWebSession().screen ? game.pages.host : (game.pages.launcher ?? LAUNCHER);
+        const url = readWebSession().screen ? game.pages.host : (game.pages.launcher ?? `/games/${game.name}/launcher/`);
         this.#emit("game", { name: game.name, title: game.title, url });
     }
     async #quit() {
