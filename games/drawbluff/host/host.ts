@@ -14,11 +14,18 @@
 import { HostPage, languageField, lateJoinField, preferredLang, type Field } from "@tvpipe/party";
 
 import { bots, type Bot } from "../game/bots.ts";
-import { DEFAULT_TIMINGS, Drawbluff, FAST_TIMINGS, MAX_ROUNDS } from "../game/game.ts";
+import { DEFAULT_TIMINGS, Drawbluff, FAST_TIMINGS, MAX_ROUNDS, SLOW_TIMINGS, type Timings } from "../game/game.ts";
 import { LANGS, parsePrompts, type Lang, type Prompt } from "../game/rules.ts";
 import { status } from "./strings.ts";
 
 const robots: Bot[] = [];
+
+/** The choices of the timers setting. */
+const TIMERS = { fast: FAST_TIMINGS, normal: DEFAULT_TIMINGS, slow: SLOW_TIMINGS };
+
+function sameTimings(a: Timings, b: Timings): boolean {
+  return (Object.keys(b) as (keyof Timings)[]).every((k) => a[k] === b[k]);
+}
 
 /** Drawbluff's settings, as the host page shows them (the VIP's phone has most of them too). */
 function settings(game: Drawbluff, prompts: Partial<Record<Lang, Prompt[]>>): Field[] {
@@ -38,11 +45,12 @@ function settings(game: Drawbluff, prompts: Partial<Record<Lang, Prompt[]>>): Fi
       key: "timers",
       label: { en: "Timers", de: "Zeit" },
       choices: [
-        { value: "normal", label: { en: "normal", de: "normal" } },
         { value: "fast", label: { en: "fast", de: "schnell" } },
+        { value: "normal", label: { en: "normal", de: "normal" } },
+        { value: "slow", label: { en: "slow", de: "langsam" } },
       ],
-      get: () => (game.timings.draw === FAST_TIMINGS.draw ? "fast" : "normal"),
-      set: (v: string) => game.configure({ timings: v === "fast" ? FAST_TIMINGS : DEFAULT_TIMINGS }),
+      get: () => (Object.keys(TIMERS) as (keyof typeof TIMERS)[]).find((k) => sameTimings(game.timings, TIMERS[k])) ?? "normal",
+      set: (v: string) => game.configure({ timings: TIMERS[v as keyof typeof TIMERS] ?? DEFAULT_TIMINGS }),
     },
     lateJoinField(game.party, ["wait", "open", "closed"], (mode) => game.party.room.set({ lateJoin: mode })),
     {

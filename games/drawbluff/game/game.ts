@@ -84,7 +84,7 @@ export interface Timings {
 export const DEFAULT_TIMINGS: Timings = {
   draw: 90_000,
   drawAnimated: 135_000,
-  lie: 45_000,
+  lie: 50_000,
   vote: 25_000,
   revealStep: 2600,
   revealEnd: 4500,
@@ -95,12 +95,23 @@ export const DEFAULT_TIMINGS: Timings = {
 export const FAST_TIMINGS: Timings = {
   draw: 25_000,
   drawAnimated: 35_000,
-  lie: 20_000,
+  lie: 25_000,
   vote: 15_000,
   revealStep: 1500,
   revealEnd: 2500,
   scores: 4000,
   gallery: 3000,
+};
+
+export const SLOW_TIMINGS: Timings = {
+  draw: 135_000,
+  drawAnimated: 200_000,
+  lie: 75_000,
+  vote: 40_000,
+  revealStep: 3200,
+  revealEnd: 6000,
+  scores: 12_000,
+  gallery: 7000,
 };
 
 /** Newcomers the TV names ("+ Anna"); more: a count. */

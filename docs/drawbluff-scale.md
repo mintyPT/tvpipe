@@ -403,7 +403,7 @@ the stage, and the luck of the spotlight draw does not decide the game.
 Highlights (per round, from raw counts): best liar = most voters fooled
 in the round; sharpest eye = most truths found (ties: by name).
 
-## 8. Numbers per N (default timings: draw 90 s, lie 45 s, vote 25 s, reveal 2.6 s a line + 4.5 s, gallery 5 s a page, scores 9 s)
+## 8. Numbers per N (default timings: draw 90 s, lie 50 s, vote 25 s, reveal 2.6 s a line + 4.5 s, gallery 5 s a page, scores 9 s)
 
 | | N=3 | N=8 | N=20 | N=50 |
 |---|---|---|---|---|
