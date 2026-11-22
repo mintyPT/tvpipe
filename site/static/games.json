@@ -71,6 +71,21 @@
         { "src": "static/games/shifty/phone-card.png", "alt": "A phone's card turned up: the word is giraffe, the category zoo animals, and the board below", "kind": "phone" },
         { "src": "static/games/shifty/phone-clue.png", "alt": "Phil's turn on his phone: nec typed in the clue field, the time running out, his card face down above the board", "kind": "phone" }
       ]
+    },
+    {
+      "name": "landgrab",
+      "title": "Landgrab",
+      "summary": "Conquer a world of hex tiles: everyone plans their armies' moves on the phone at the same time, then the TV plays out every march and battle with the dice",
+      "players": { "min": 2, "max": 6 },
+      "languages": ["en", "de"],
+      "source": "gh:mitsuhiko/tvpipe/landgrab@landgrab-v*",
+      "home": "https://github.com/mitsuhiko/tvpipe/tree/main/games/landgrab",
+      "screenshots": [
+        { "src": "static/games/landgrab/tv-plan.webp", "alt": "The TV while five generals plan: the world as raised hex tiles in their colours and the parchment of the wild lands, an army count on every territory, the continents' bonuses written in the seas, four of five players ticked ready and 87 seconds left", "kind": "tv" },
+        { "src": "static/games/landgrab/tv-battle.webp", "alt": "A battle on the TV: the camera close on north-east Asia, the rest of the map dimmed, a green arrow carrying 4 armies marching from the coast into the parchment of the wild lands", "kind": "tv" },
+        { "src": "static/games/landgrab/phone-plan.png", "alt": "Planning on a phone: the world small with the orders as arrows, the fronts listed with their foes as chips (Central Europe marked for an attack with 4), plus and minus to place armies, Ready at the bottom", "kind": "phone" },
+        { "src": "static/games/landgrab/phone-attack.png", "alt": "One territory's sheet on a phone: Hudson Bay zoomed in with its neighbours, an attack on Quebec with 1 army and its 42 % chance to win, Attack buttons for the other neighbours", "kind": "phone" }
+      ]
     }
   ]
 }

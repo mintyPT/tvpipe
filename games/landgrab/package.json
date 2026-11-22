@@ -1,0 +1,23 @@
+{
+  "name": "landgrab",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A world conquest game for tvpipe (tvpipe game play): everyone plans their moves on the phone at the same time, then the TV plays out the battles on a hex map of the world",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node scripts/build.ts",
+    "zip": "node scripts/pack.ts",
+    "check": "tsc -p tsconfig.json && tsc -p tsconfig.pages.json && tsc -p tsconfig.build.json --noEmit",
+    "test": "node --test \"test/*.test.ts\"",
+    "world": "node scripts/world.ts"
+  },
+  "devDependencies": {
+    "@tvpipe/party": "file:../../npm/party",
+    "@types/node": "^22.19.0",
+    "typescript": "~5.9.3"
+  }
+}

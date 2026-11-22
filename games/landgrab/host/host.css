@@ -1,0 +1,4 @@
+/* Landgrab's look on tvpipe's standard host page (@tvpipe/party's HostPage draws the rest). */
+@font-face { font-family: "Lilita One"; src: url("../phone/fonts/lilita-one.woff2") format("woff2"); }
+:root { --bg: #0b2230; --card: #12313f; --line: #24505f; --text: #f4ead2; --muted: #9db7bd; --accent: #f3b61f; --accent-text: #1b1405; --error: #ff8a7a; }
+.logo { font-family: "Lilita One", sans-serif; font-size: 30px; letter-spacing: .02em; line-height: 1; color: #f4ead2; background: #1b5e6b; padding: 4px 12px 1px; border-radius: 4px; box-shadow: 3px 3px 0 #e4572e; }

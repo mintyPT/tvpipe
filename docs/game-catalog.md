@@ -8,7 +8,7 @@ depends on the list's shape.
 
 - **The list** (`site/static/games.json`, served at
   `https://tvpipe.party/games.json`) has all of this repository's games
-  (Drawbluff, Jinx, Garble, and since then Krakel and Shifty) and screenshots for
+  (Drawbluff, Jinx, Garble, and since then Krakel, Shifty and Landgrab) and screenshots for
   each.
 - **The site** has a games page, `tvpipe.party/games/`, rendered from the
   list with the screenshots.
