@@ -292,8 +292,16 @@ off).
 ## 10. The phone
 
 Portrait, the whole screen a map centred on the player's figure, about
-14 tiles across (pinch to zoom, 10–24). Seen tiles in full colour; the
-rest as the blueprint, with what one remembers greyed. The public layer
+14 tiles across (pinch to zoom, 10–24). What one sees in full colour,
+drawn as shapes in the manner of Monaco (`game/vision.ts`): the clear
+space round the figure cut by walls at their middle line, doorways and
+cover, and within it one's own circle in the dark and every light (lit
+rooms, lamps' pools, flashlight cones), each cut by walls from its own
+source; the night is a dark wash with the lights cut out. Blockers are
+crosses through their centres as in sight.ts's shadowcasting, so the
+shapes show what the host's tiles let one see, give or take a little at
+shadows' edges. The rest is the blueprint, with what one remembers
+greyed (the union of the shapes one saw, fading with time). The public layer
 (ink, marks, facts) over it, toggled with a button.
 
 - **Top bar**: the clock, one's role, the haul (thief: the items in the
@@ -312,9 +320,20 @@ rest as the blueprint, with what one remembers greyed. The public layer
   and the end.
 
 The phone moves its own figure at once (it runs the same pathfinding
-and movement code as the host) and corrects towards the host's position;
-others are drawn between the host's last two frames. The fog follows the
-figure without a visible lag.
+and movement code as the host, in the same 50 ms steps, drawn between
+the last two steps so it moves every animation frame) and corrects
+towards the host's position; others are drawn between the host's last
+two frames (carried on at their pace for up to 100 ms when a frame is
+late). The fog follows the figure without a visible lag.
+
+**Frame rate.** Per animation frame nothing is computed per pixel: the
+static layers are cached chunks, sight and light are Canvas paths and
+clips, the night a half-resolution wash, the ink's mask is made again
+only when the ink changes; the HUD touches the DOM only when something
+changed (a write every frame relays out the page). A phone that stays
+under ~45 fps steps its map's resolution down (2 → 1 device px per CSS
+px). `test/live/perf.ts` measures frame times and the hottest functions
+with the CPU slowed like a phone's.
 
 ## 11. Views, timing and the generator
 
@@ -408,6 +427,7 @@ German), late joining (wait, closed).
 |---|---|
 | `game/map.ts` | tiles, rooms, doors, windows, cover, lamps, cameras, spots, loot places; the generator (§11) |
 | `game/sight.ts` | shadowcasting, light, what a player sees |
+| `game/vision.ts` | sight as shapes for drawing: blockers' outlines, visibility polygons (the view, lamps, cones) |
 | `game/move.ts` | pathfinding (A* on the grid), movement with sliding |
 | `game/ink.ts` | the ink from public facts |
 | `game/sim.ts` | the heist: state, inputs, a 50 ms step, events; pure, no party |

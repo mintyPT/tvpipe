@@ -34,7 +34,7 @@ the voice of the words: [`design/words.md`](design/words.md).
 | | | |
 |---|---|---|
 | `tvpipe.json` | the manifest | pages, 3–8 players, the TV's size; `root: dist` |
-| `game/` | `map.ts` (the generator), `sight.ts` (sight and light), `move.ts` (paths, movement), `ink.ts` (where the thief could be), `sim.ts` (the heist), `protocol.ts` (what crosses the wire), `views.ts` (the phases' views), `game.ts` (the party: rounds, scores, frames), `bots.ts`, `items.ts` and `words.ts` (the catalogue and every word, en and de) | TypeScript on `@tvpipe/party`, tested in Node; the phone runs `move.ts` and `sight.ts` too, for prediction |
+| `game/` | `map.ts` (the generator), `sight.ts` (sight and light), `vision.ts` (sight as shapes, for drawing), `move.ts` (paths, movement), `ink.ts` (where the thief could be), `sim.ts` (the heist), `protocol.ts` (what crosses the wire), `views.ts` (the phases' views), `game.ts` (the party: rounds, scores, frames), `bots.ts`, `items.ts` and `words.ts` (the catalogue and every word, en and de) | TypeScript on `@tvpipe/party`, tested in Node; the phone runs `move.ts` and `sight.ts` too, for prediction |
 | `host/` | the host page | tvpipe's `HostPage` with Pinch's settings |
 | `screen/` | the TV page | lobby, intertitles, briefing, the heist's blueprint and public layer, outcome, the tape, scores, the end; `sound.js`; `?demo=…` |
 | `phone/` | the phone page | joining, lobby, briefing, the heist (`heist.js`, `world.js`: the map, gestures, prediction), outcome, scores; `draw.js` (all drawing, shared with the TV), `deco.css`; `?demo=thief\|guard` |
@@ -63,6 +63,7 @@ node test/live/play.ts --players 3 --lang de
 node test/live/play.ts --shots ../../site/static/games/pinch   # the games list's pictures
 node test/live/tv-shots.ts      # every TV phase from ?demo, with layout checks
 node test/live/phone-shots.ts   # every phone phase at five sizes from ?demo, with gesture checks
+node test/live/perf.ts          # frame times and hot functions of the heist, CPU slowed 4×
 node scripts/map.ts 5 1 --secrets   # an estate as text
 ```
 

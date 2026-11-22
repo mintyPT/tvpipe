@@ -47,6 +47,9 @@
  * protocol.ts `SeenPlayer`, or one's own state, or a tape sample).
  */
 
+import { opacity } from "../game/sight.js";
+import { sight as sightPolygon, walls as wallOutline } from "../game/vision.js";
+
 /** @typedef {import("../game/map.ts").Blueprint} Blueprint */
 /** @typedef {import("../game/map.ts").Prop} Prop */
 /** @typedef {import("../game/map.ts").Door} Door */
@@ -101,7 +104,13 @@
  * - `figures`: a Frame's `others` plus one's own figure.
  * - `colors`: views.ts `RoomView.colors` (guards wear them); `names`:
  *   player names by id (labels under figures, when given).
+ * - `eye`: where one looks from (one's figure) and one's circle in the
+ *   dark ({@link EYE_RADIUS}): what one sees is drawn as shapes from
+ *   there; without it, the `seen` tiles.
+ * - `rooms`: per room id, its light is on (PublicLayer `rooms`); default:
+ *   from `light`'s room bits.
  * @typedef {{ seen?: ArrayLike<number> | null, light?: ArrayLike<number> | null, memory?: Memory | null,
+ *   eye?: { x: number, y: number, radius?: number } | null, rooms?: ArrayLike<number | boolean> | null,
  *   now?: number, doors?: ArrayLike<number> | null, lamps?: ArrayLike<number | boolean> | null,
  *   items?: readonly SeenItem[], empty?: readonly SeenEmpty[], catalogue?: Catalogue,
  *   figures?: readonly Figure[], colors?: Readonly<Record<string, string>>, names?: Readonly<Record<string, string>> }} Scene
@@ -442,6 +451,8 @@ export function useTiles(c, v) {
  *   hatch: HTMLCanvasElement | null, noise: HTMLCanvasElement | null,
  *   sightings: Map<number, { x: number, y: number, facing: number, t: number, since: number }>, spotAt: Uint8Array | null,
  *   nameBoxes: { x: number, y: number, w: number, h: number, size: number }[] | null,
+ *   vision: { key: string, opaque: Uint8Array, walls: import("../game/vision.ts").Walls, pools: Map<number, number[]> } | null,
+ *   roomRuns: number[][],
  *   invalidate: () => void, setNames: (names?: readonly string[] | null, areaNames?: readonly string[] | null) => void
  * }} Art
  */
@@ -494,7 +505,10 @@ export function createArt(map, o = {}) {
     sightings: new Map(),
     spotAt: null,
     nameBoxes: null,
+    vision: null,
+    roomRuns: [],
     invalidate() {
+      WIDTHS.clear();
       art.nameBoxes = null;
       art.chunks.clear();
       art.pixels = 0;
@@ -601,16 +615,29 @@ function chunk(art, layer, q, cx, cy, b) {
 }
 
 /**
- * Draws a static layer's chunks for the view, at device px (identity transform).
+ * Draws a static layer's chunks for the view (those touching `within`,
+ * tiles, when given), at device px (identity transform).
  * @param {CanvasRenderingContext2D} c @param {Art} art @param {View} v @param {"paper" | "colour" | "grey"} layer @param {{ budget: number }} b
+ * @param {Rect | null} [within]
  */
-function blitLayer(c, art, v, layer, b) {
+function blitLayer(c, art, v, layer, b, within) {
   const k = v.scale * v.dpr;
   const q = quant(k);
-  const x0 = Math.max(0, Math.floor(v.left / CHUNK));
-  const y0 = Math.max(0, Math.floor(v.top / CHUNK));
-  const x1 = Math.min(Math.ceil(art.map.w / CHUNK) - 1, Math.floor((v.left + v.width / v.scale) / CHUNK));
-  const y1 = Math.min(Math.ceil(art.map.h / CHUNK) - 1, Math.floor((v.top + v.height / v.scale) / CHUNK));
+  let left = v.left;
+  let top = v.top;
+  let right = v.left + v.width / v.scale;
+  let bottom = v.top + v.height / v.scale;
+  if (within) {
+    left = Math.max(left, within.x);
+    top = Math.max(top, within.y);
+    right = Math.min(right, within.x + within.w);
+    bottom = Math.min(bottom, within.y + within.h);
+    if (right <= left || bottom <= top) return;
+  }
+  const x0 = Math.max(0, Math.floor(left / CHUNK));
+  const y0 = Math.max(0, Math.floor(top / CHUNK));
+  const x1 = Math.min(Math.ceil(art.map.w / CHUNK) - 1, Math.floor(right / CHUNK));
+  const y1 = Math.min(Math.ceil(art.map.h / CHUNK) - 1, Math.floor(bottom / CHUNK));
   c.setTransform(1, 0, 0, 1, 0, 0);
   c.imageSmoothingEnabled = true;
   for (let cy = y0; cy <= y1; cy++) {
@@ -731,7 +758,7 @@ function blitMask(c, m, v) {
   const k = v.scale * v.dpr;
   c.setTransform(1, 0, 0, 1, 0, 0);
   c.imageSmoothingEnabled = true;
-  c.imageSmoothingQuality = "high";
+  c.imageSmoothingQuality = "low";
   // Pixel centres are tile centres: the mask fades across the tile edges.
   c.drawImage(m.cv, (m.x - v.left) * k, (m.y - v.top) * k, m.w * k, m.h * k);
 }
@@ -1096,6 +1123,8 @@ function fitLabel(c, s, q, o) {
 }
 
 const NAME_SPACING = 0.12;
+/** Measured name widths (per weight and text, at 1 tile), until a font arrives. @type {Map<string, number>} */
+const WIDTHS = new Map();
 
 /**
  * How a name fits a rectangle: one or two lines, the size (tiles) and
@@ -1107,10 +1136,15 @@ function nameLayout(c, s, q, o) {
   if (!s) return null;
   const sp = NAME_SPACING;
   const wide = (/** @type {string} */ t) => {
-    c.save();
-    c.font = `${o.weight} 100px ${FONTS.sans}`;
-    const w = c.measureText(t).width / 100 + sp * t.length;
-    c.restore();
+    const key = `${o.weight}|${t}`;
+    let w = WIDTHS.get(key);
+    if (w === undefined) {
+      c.save();
+      c.font = `${o.weight} 100px ${FONTS.sans}`;
+      w = c.measureText(t).width / 100 + sp * t.length;
+      c.restore();
+      WIDTHS.set(key, w);
+    }
     return w;
   };
   const room = q.w - 0.6;
@@ -2442,6 +2476,16 @@ export function drawBlueprint(c, art, v, o = {}) {
 /**
  * Draws what a viewer sees: the blueprint, what one remembers (greyed),
  * what one sees now (colour, light and dark), doors, loot and figures.
+ *
+ * What one sees is drawn as shapes (game/vision.ts), as in Monaco: the
+ * clear space round `scene.eye` cut by walls at their middle, doorways
+ * and cover, and within it one's own small circle in the dark and every
+ * light: lit rooms, lamps' pools and flashlights' cones, each cut by
+ * walls from its own source. Without an eye (or with the eye in a
+ * blocker) the seen tiles are the shape instead; `seen: null` (the tape)
+ * shows everything, lit and dark. Memory is the union of what one saw,
+ * painted into a small canvas per heist and greyed by age.
+ *
  * `o.budget`: how many cached chunks may be drawn this frame (default 6;
  * missing ones are borrowed from another zoom until then).
  * @param {CanvasRenderingContext2D} c @param {Art | null} art @param {View} v @param {Scene} [scene]
@@ -2456,7 +2500,6 @@ export function drawWorld(c, art, v, scene = {}, o = {}) {
   const now = fin(scene.now) ? /** @type {number} */ (scene.now) : 0;
   const seen = scene.seen && scene.seen.length >= n ? scene.seen : null;
   const all = !scene.seen;
-  const reg = region(art, v);
   const mem = scene.memory && scene.memory.seenAt?.length === n ? scene.memory : null;
   const memory = mem ? mem.seenAt : null;
   const light = scene.light && scene.light.length >= n ? scene.light : null;
@@ -2485,57 +2528,42 @@ export function drawWorld(c, art, v, scene = {}, o = {}) {
       drawNames(c, art, v, seen);
     }
 
-    // Memory: the greyed copy where one has been, fading with age.
-    if (memory && !all) {
-      const s = scratch(art, 0, v);
-      blitLayer(s, art, v, "grey", b);
-      useTiles(s, v);
-      drawDoors(s, art, doors, (i) => memory[i] >= 0 && !(seen && seen[i]));
-      drawLoot(s, art, lootOld, true, now);
-      const mk = mask(art, "memory", 4, reg, (i) => {
-        const t = memory[i] ?? -1;
-        if (t < 0 || (seen && seen[i])) return 0;
-        const a = clamp(0.62 - ((now - t) / 90) * 0.32, 0.3, 0.62);
-        return 0xffffff00 | Math.round(a * 255);
-      }, null, undefined, 1);
-      s.setTransform(1, 0, 0, 1, 0, 0);
-      s.globalCompositeOperation = "destination-in";
-      blitMask(s, mk, v);
-      c.setTransform(1, 0, 0, 1, 0, 0);
-      c.drawImage(s.canvas, 0, 0);
-    }
+    const shapes = sightShapes(art, v, scene, doors, light, seen, all);
 
-    // What one sees now.
-    if (all || seen) {
-      const s = scratch(art, 1, v);
-      blitLayer(s, art, v, "colour", b);
-      useTiles(s, v);
-      drawDoors(s, art, doors, (i) => all || !!seen?.[i]);
-      drawLamps(s, art, scene.lamps);
-      drawLoot(s, art, lootNow, false, now);
-      // Light and dark.
-      const tint = light ? lightTint(art, reg, light, scene.lamps, scene.figures ?? []) : null;
-      if (tint) {
-        s.setTransform(1, 0, 0, 1, 0, 0);
-        s.globalCompositeOperation = "source-over";
-        blitMask(s, tint.dark, v);
-        s.globalCompositeOperation = "screen";
-        blitMask(s, tint.glow, v);
-        s.globalCompositeOperation = "source-over";
-      }
-      drawBeams(s, art, v, reg, scene.figures ?? [], light, now);
-      if (!all && seen) {
-        // A feathered edge, and a soft shadow round the seen area lifting it off the paper.
-        const mk = mask(art, "seen", 4, reg, (i) => (seen[i] ? 0xffffffff : 0), null, undefined, 1);
+    // Memory: the greyed copy where one has been, fading with age.
+    if (mem && !all) {
+      const mv = memoryCanvas(art, mem, now);
+      if (shapes.clip) paintMemory(mv, shapes);
+      if (mv.any) {
+        const s = scratch(art, 0, v);
+        blitLayer(s, art, v, "grey", b);
+        useTiles(s, v);
+        drawDoors(s, art, doors, (i) => /** @type {Float32Array} */ (memory)[i] >= 0 && !(seen && seen[i]));
+        drawLoot(s, art, lootOld, true, now);
+        const k = v.scale * v.dpr;
         s.setTransform(1, 0, 0, 1, 0, 0);
         s.globalCompositeOperation = "destination-in";
-        blitMask(s, mk, v);
-        const sh = mask(art, "seenShadow", 4, reg, (i) => (seen[i] ? 0x03060fa0 : 0), null, undefined, 3);
+        s.imageSmoothingEnabled = true;
+        s.globalAlpha = 0.62;
+        s.drawImage(mv.mix, -v.left * k, -v.top * k, map.w * k, map.h * k);
+        s.globalAlpha = 1;
         c.setTransform(1, 0, 0, 1, 0, 0);
-        blitMask(c, sh, v);
+        c.drawImage(s.canvas, 0, 0);
       }
-      c.setTransform(1, 0, 0, 1, 0, 0);
-      c.drawImage(s.canvas, 0, 0);
+    }
+
+    // What one sees now: clipped to the shapes, lit and dark.
+    if (all || shapes.clip) {
+      c.save();
+      useTiles(c, v);
+      if (shapes.clip) shapes.clip(c);
+      blitLayer(c, art, v, "colour", b, shapes.bounds);
+      useTiles(c, v);
+      drawDoors(c, art, doors, (i) => all || !!seen?.[i]);
+      drawLamps(c, art, scene.lamps);
+      drawLoot(c, art, lootNow, false, now);
+      if (light) drawLight(c, art, v, shapes);
+      c.restore();
     }
 
     // The flashlights' aim, a thin outline over everything (the cone may be cut by walls).
@@ -2551,145 +2579,406 @@ export function drawWorld(c, art, v, scene = {}, o = {}) {
         drawFigure(c, colour === f.colour && name === f.name ? f : { ...f, colour, name }, now);
       }
     }
-  } catch {
+  } catch (e) {
     // odd data: draw what we could
+    if (DEBUG) console.warn("pinch: drawWorld", e);
   }
   c.restore();
 }
 
-const DARK = 0x0c1532a0;
+const DEBUG = false;
+
+// ---------------------------------------------------------------- sight as shapes
+
+/** Flashlight cone: half its angle (degrees) and its drawn reach (tiles; sight.ts lights tile centres within 7). */
+const CONE_HALF = 30;
+const CONE_REACH = 7.5;
+/** A lamp's drawn pool (tiles; sight.ts lights tile centres within LAMP_RADIUS of the lamp's). */
+const POOL = LAMP_RADIUS + 0.5;
+/** One's own circle in the dark (tiles from the figure): sight.ts's radius (tile centre to centre) and half a tile. */
+export const EYE_RADIUS = { guard: 1.5 + 0.5, thief: 2.5 + 0.5 };
 
 /**
- * The light over the seen world, at 4 pixels a tile: `dark`, a deep
- * blue-black laid over unlit tiles (thinning towards lamps and along
- * flashlight cones), and `glow`, screened on: amber pools round lamps,
- * pale yellow cones, a faint warmth in lit rooms.
- * @param {Art} art @param {Rect} reg @param {ArrayLike<number>} light @param {ArrayLike<number | boolean> | null | undefined} lamps @param {readonly Figure[]} figures
+ * The outline of what blocks sight for these door states, and the
+ * lamps' pools (both kept until a door changes).
+ * @param {Art} art @param {ArrayLike<number> | null} doors
  */
-function lightTint(art, reg, light, lamps, figures) {
+function visionOf(art, doors) {
   const map = art.map;
-  const torches = figures.filter((f) => f && f.role === "guard" && f.light && fin(f.x) && fin(f.y));
-  const on = map.lamps.map((l) => (l ? (lamps ? !!lamps[l.id] : true) : false));
-  /** Torch light at a point, 0–1. @param {number} x @param {number} y */
-  const beam = (x, y) => {
-    let a = 0;
-    for (const f of torches) {
-      const dx = x - f.x;
-      const dy = y - f.y;
-      const d = Math.hypot(dx, dy);
-      if (d > 7.6) continue;
-      const diff = Math.abs((((Math.atan2(dy, dx) / RAD - (f.facing ?? 0)) % 360) + 540) % 360 - 180);
-      const cone = d < 0.8 ? 1 : clamp((31 - diff) / 3, 0, 1);
-      a = Math.max(a, cone * clamp((7.5 - d) / (f.holding ? 1.6 : 3.2), 0, 1));
-    }
-    return clamp(a, 0, 1);
-  };
-  /** A known flashlight could reach here (else the light is an unseen guard's: lit evenly). @param {number} x @param {number} y */
-  const near = (x, y) => torches.some((f) => Math.hypot(x - f.x, y - f.y) < 8.2);
-  /** Lamp light at a point, 0–1. @param {number} x @param {number} y */
-  const pool = (x, y) => {
-    let g = 0;
-    for (let k = 0; k < map.lamps.length; k++) {
-      const lp = map.lamps[k];
-      if (!lp || !on[k]) continue;
-      const d = Math.hypot(x - lp.x - 0.5, y - lp.y - 0.5);
-      if (d < LAMP_RADIUS + 0.2) g = Math.max(g, Math.pow(clamp((LAMP_RADIUS + 0.2 - d) / 2.6, 0, 1), 0.8));
-    }
-    return g;
-  };
-  const special = (/** @type {number} */ i) => ((light[i] ?? 0) & LIGHT_ROOM ? -2 : (light[i] ?? 0) & (LIGHT_TORCH | LIGHT_LAMP) ? -1 : 0);
-  const dark = mask(
-    art,
-    "dark",
-    4,
-    reg,
-    (i) => (special(i) === -2 ? 0 : special(i) === -1 ? -1 : DARK),
-    (i, x, y) => {
-      const l = light[i] ?? 0;
-      const a = l & LIGHT_TORCH ? (near(x, y) ? beam(x, y) : 0.6) : 0;
-      const g = l & LIGHT_LAMP ? pool(x, y) : 0;
-      const lit = Math.max(a, g);
-      return (DARK & 0xffffff00) | Math.round((DARK & 255) * (1 - lit) * (1 - lit));
-    },
-    undefined,
-    1,
-  );
-  const glow = mask(
-    art,
-    "glow",
-    4,
-    reg,
-    (i) => (special(i) === -2 ? 0xffc8701c : special(i) === -1 ? -1 : 0),
-    (i, x, y) => {
-      const l = light[i] ?? 0;
-      const a = l & LIGHT_TORCH ? (near(x, y) ? beam(x, y) : 0.6) : 0;
-      const g = l & LIGHT_LAMP ? pool(x, y) : 0;
-      if (a >= g) return (0xfff2b000 | Math.round(a * 0.3 * 255)) >>> 0;
-      return (0xffa03000 | Math.round(g * 0.6 * 255)) >>> 0;
-    },
-    undefined,
-    1,
-  );
-  return { dark, glow };
+  let key = "";
+  for (let k = 0; k < map.doors.length; k++) key += doors ? (doors[k] === 1 ? "1" : "0") : map.doors[k]?.locked ? "0" : "0";
+  if (art.vision && art.vision.key === key) return art.vision;
+  const states = new Uint8Array(map.doors.length);
+  for (let k = 0; k < states.length; k++) states[k] = key.charCodeAt(k) === 49 ? 1 : 0;
+  const opaque = opacity(map, states);
+  art.vision = { key, opaque, walls: wallOutline(map, opaque), pools: new Map() };
+  return art.vision;
 }
 
 /**
- * Flashlight cones: a warm wedge, brightest at the guard, feathered at
- * its sides, with a thin bright rim; a warming flashlight flickers. Cut
- * at walls by the light mask's torch bits; screened onto the seen layer.
- * @param {CanvasRenderingContext2D} s @param {Art} art @param {View} v @param {Rect} reg @param {readonly Figure[]} figures
- * @param {ArrayLike<number> | null} light @param {number} now
+ * The room's tiles as rectangles (rows' runs): its floor and the walls,
+ * doors and windows round it (what a lit room lights, sight.ts).
+ * @param {Art} art @param {number} k @returns {number[]} x, y, w per run
  */
-function drawBeams(s, art, v, reg, figures, light, now) {
-  const beams = figures.filter((f) => f && f.role === "guard" && (f.light || f.warming) && fin(f.x) && fin(f.y));
-  if (beams.length === 0) return;
-  const sc = scratch(art, 3, v);
-  useTiles(sc, v);
-  const R = 7.5;
-  const half = 30 * RAD;
-  for (const f of beams) {
-    const a = (fin(f.facing) ? /** @type {number} */ (f.facing) : 0) * RAD;
-    const flick = f.light ? 1 : hash(Math.floor(now * 14), f.x | 0) > 0.45 ? 0.55 : 0.12;
-    const k = (f.holding ? 1.25 : 1) * flick;
-    // Feathered sides: a few wedges, each a little wider and fainter.
-    for (const [spread, alpha] of [[1.12, 0.22], [1.05, 0.3], [1, 0.55]]) {
-      const g = sc.createRadialGradient(f.x, f.y, 0.15, f.x, f.y, R);
-      g.addColorStop(0, `rgba(255,238,170,${(alpha * k).toFixed(3)})`);
-      g.addColorStop(0.45, `rgba(255,226,140,${(alpha * 0.55 * k).toFixed(3)})`);
-      g.addColorStop(1, "rgba(255,214,120,0)");
-      sc.beginPath();
-      sc.moveTo(f.x, f.y);
-      sc.arc(f.x, f.y, R, a - half * /** @type {number} */ (spread), a + half * /** @type {number} */ (spread));
-      sc.closePath();
-      sc.fillStyle = g;
-      sc.fill();
-    }
-    // The rim.
-    for (const side of [-1, 1]) {
-      const ex = f.x + Math.cos(a + side * half) * R * 0.95;
-      const ey = f.y + Math.sin(a + side * half) * R * 0.95;
-      const lg = sc.createLinearGradient(f.x, f.y, ex, ey);
-      lg.addColorStop(0, `rgba(255,246,200,${(0.9 * k).toFixed(3)})`);
-      lg.addColorStop(1, "rgba(255,240,180,0)");
-      sc.beginPath();
-      sc.moveTo(f.x + Math.cos(a + side * half) * 0.35, f.y + Math.sin(a + side * half) * 0.35);
-      sc.lineTo(ex, ey);
-      sc.strokeStyle = lg;
-      sc.lineWidth = Math.max(0.04, px(1.6));
-      sc.stroke();
+function roomRuns(art, k) {
+  const have = art.roomRuns[k];
+  if (have) return have;
+  const map = art.map;
+  const room = map.rooms[k];
+  /** @type {number[]} */
+  const runs = [];
+  if (room?.rect) {
+    const { x, y, w, h } = room.rect;
+    const lit = (/** @type {number} */ tx, /** @type {number} */ ty) => {
+      if (tx < 0 || ty < 0 || tx >= map.w || ty >= map.h) return false;
+      const i = ty * map.w + tx;
+      if (tx >= x && ty >= y && tx < x + w && ty < y + h) return map.roomAt[i] === room.id;
+      const t = map.tiles[i];
+      if (!(t === T.WALL || t === T.DOOR || t === T.WINDOW)) return false;
+      // A wall tile next to the room (8 ways).
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (map.roomAt[(ty + dy) * map.w + tx + dx] === room.id && tx + dx >= 0 && tx + dx < map.w) return true;
+      return false;
+    };
+    for (let ty = y - 1; ty <= y + h; ty++) {
+      let start = -1;
+      for (let tx = x - 1; tx <= x + w + 1; tx++) {
+        const on = tx <= x + w && lit(tx, ty);
+        if (on && start < 0) start = tx;
+        if (!on && start >= 0) {
+          runs.push(start, ty, tx - start);
+          start = -1;
+        }
+      }
     }
   }
-  if (light) {
-    const tm = mask(art, "torch", 4, reg, (i) => ((light[i] ?? 0) & LIGHT_TORCH ? 0xffffffff : 0), null, undefined, 1);
-    sc.setTransform(1, 0, 0, 1, 0, 0);
-    sc.globalCompositeOperation = "destination-in";
-    blitMask(sc, tm, v);
+  art.roomRuns[k] = runs;
+  return runs;
+}
+
+/** @param {CanvasRenderingContext2D} c @param {readonly number[]} p */
+function polyPath(c, p) {
+  if (p.length < 6) return;
+  c.moveTo(/** @type {number} */ (p[0]), /** @type {number} */ (p[1]));
+  for (let k = 2; k < p.length; k += 2) c.lineTo(/** @type {number} */ (p[k]), /** @type {number} */ (p[k + 1]));
+  c.closePath();
+}
+
+/**
+ * The shapes of a frame: the lights in view (rooms, pools, cones, and
+ * tiles the host says are lit by a flashlight one does not know of),
+ * one's own sight and circle, the clip they make and its bounds.
+ * @typedef {{ rooms: number[], pools: { x: number, y: number, p: number[] }[],
+ *   cones: { f: Figure, p: number[], k: number }[], loose: number[],
+ *   eye: { x: number, y: number, r: number } | null, los: number[] | null, tiles: number[] | null,
+ *   clip: ((c: CanvasRenderingContext2D) => void) | null, bounds: Rect | null }} Shapes
+ */
+
+/**
+ * @param {Art} art @param {View} v @param {Scene} scene @param {ArrayLike<number> | null} doors
+ * @param {ArrayLike<number> | null} light @param {ArrayLike<number> | null} seen @param {boolean} all
+ * @returns {Shapes}
+ */
+function sightShapes(art, v, scene, doors, light, seen, all) {
+  const map = art.map;
+  const vis = visionOf(art, doors);
+  const reg = region(art, v);
+  const box = { x0: reg.x, y0: reg.y, x1: reg.x + reg.w, y1: reg.y + reg.h };
+  const whole = { x0: 0, y0: 0, x1: map.w, y1: map.h };
+  const near = (/** @type {number} */ x, /** @type {number} */ y, /** @type {number} */ r) => x + r > box.x0 && x - r < box.x1 && y + r > box.y0 && y - r < box.y1;
+  /** @type {Shapes} */
+  const sh = { rooms: [], pools: [], cones: [], loose: [], eye: null, los: null, tiles: null, clip: null, bounds: null };
+
+  // Lit rooms.
+  map.rooms.forEach((room, k) => {
+    const q = room?.rect;
+    if (!q || !near(q.x + q.w / 2, q.y + q.h / 2, Math.max(q.w, q.h) / 2 + 1)) return;
+    let lit = false;
+    if (scene.rooms && scene.rooms.length > k) lit = !!scene.rooms[k];
+    else if (!light) lit = true;
+    else for (let y = q.y; y < q.y + q.h && !lit; y++) for (let x = q.x; x < q.x + q.w && !lit; x++) lit = !!((light[y * map.w + x] ?? 0) & LIGHT_ROOM);
+    if (lit) for (const r of roomRuns(art, k)) sh.rooms.push(r);
+  });
+  // Lamps that are on.
+  for (const l of map.lamps) {
+    if (!l || !(scene.lamps ? scene.lamps[l.id] : true)) continue;
+    const x = l.x + 0.5;
+    const y = l.y + 0.5;
+    if (!near(x, y, POOL)) continue;
+    let p = vis.pools.get(l.id);
+    if (!p) {
+      p = vis.opaque[l.y * map.w + l.x] ? [] : sightPolygon(vis.walls, x, y, whole, { radius: POOL });
+      vis.pools.set(l.id, p);
+    }
+    if (p.length >= 6) sh.pools.push({ x, y, p });
   }
-  s.save();
-  s.setTransform(1, 0, 0, 1, 0, 0);
-  s.globalCompositeOperation = "screen";
-  s.drawImage(sc.canvas, 0, 0);
-  s.restore();
+  // Flashlights (a warming one flickers).
+  const torches = (scene.figures ?? []).filter((f) => f && f.role === "guard" && (f.light || f.warming) && fin(f.x) && fin(f.y));
+  for (const f of torches) {
+    if (!near(f.x, f.y, CONE_REACH)) continue;
+    const tile = Math.floor(f.y) * map.w + Math.floor(f.x);
+    if (vis.opaque[tile]) continue;
+    const p = sightPolygon(vis.walls, f.x, f.y, whole, { radius: CONE_REACH, facing: fin(f.facing) ? f.facing : 0, fov: 2 * CONE_HALF });
+    const k = (f.light ? 1 : hash(Math.floor((scene.now ?? 0) * 14), f.x | 0) > 0.45 ? 0.55 : 0.12) * (f.holding ? 1.15 : 1);
+    if (p.length >= 6) sh.cones.push({ f, p, k });
+  }
+  // Tiles lit by a flashlight one cannot see (the host's light bits), as tiles.
+  if (light && seen) {
+    for (let y = reg.y; y < reg.y + reg.h; y++) {
+      for (let x = reg.x; x < reg.x + reg.w; x++) {
+        const i = y * map.w + x;
+        if (!seen[i] || !((light[i] ?? 0) & LIGHT_TORCH)) continue;
+        if (torches.some((f) => Math.hypot(x + 0.5 - f.x, y + 0.5 - f.y) < CONE_REACH + 1)) continue;
+        sh.loose.push(x, y);
+      }
+    }
+  }
+  if (all) return sh;
+
+  // One's own sight.
+  const eye = scene.eye;
+  if (eye && fin(eye.x) && fin(eye.y) && !vis.opaque[Math.floor(eye.y) * map.w + Math.floor(eye.x)]) {
+    const los = sightPolygon(vis.walls, eye.x, eye.y, box);
+    if (los.length >= 6) {
+      sh.los = los;
+      sh.eye = { x: eye.x, y: eye.y, r: fin(eye.radius) && /** @type {number} */ (eye.radius) > 0 ? /** @type {number} */ (eye.radius) : EYE_RADIUS.guard };
+      let x0 = Infinity;
+      let y0 = Infinity;
+      let x1 = -Infinity;
+      let y1 = -Infinity;
+      for (let k = 0; k < los.length; k += 2) {
+        x0 = Math.min(x0, /** @type {number} */ (los[k]));
+        x1 = Math.max(x1, /** @type {number} */ (los[k]));
+        y0 = Math.min(y0, /** @type {number} */ (los[k + 1]));
+        y1 = Math.max(y1, /** @type {number} */ (los[k + 1]));
+      }
+      sh.bounds = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+      const e = sh.eye;
+      // Cover one sees (sight.ts's tiles) shows whole: a tree, not the quarter in front of its middle.
+      /** @type {number[]} */
+      const cover = [];
+      if (seen) {
+        for (let y = reg.y; y < reg.y + reg.h; y++) {
+          for (let x = reg.x; x < reg.x + reg.w; x++) {
+            const i = y * map.w + x;
+            if (seen[i] && COVER_TILES[map.tiles[i] ?? 0]) cover.push(x, y);
+          }
+        }
+      }
+      const coverPath = (/** @type {CanvasRenderingContext2D} */ c) => {
+        for (let k = 0; k < cover.length; k += 2) c.rect(/** @type {number} */ (cover[k]), /** @type {number} */ (cover[k + 1]), 1, 1);
+      };
+      sh.clip = (c) => {
+        c.beginPath();
+        polyPath(c, los);
+        coverPath(c);
+        c.clip();
+        c.beginPath();
+        c.arc(e.x, e.y, e.r, 0, Math.PI * 2);
+        c.closePath();
+        litPath(c, sh);
+        coverPath(c);
+        c.clip();
+      };
+      return sh;
+    }
+  }
+  // No eye: the seen tiles.
+  if (seen) {
+    /** @type {number[]} */
+    const tiles = [];
+    for (let y = reg.y; y < reg.y + reg.h; y++) {
+      let start = -1;
+      for (let x = reg.x; x <= reg.x + reg.w; x++) {
+        const on = x < reg.x + reg.w && !!seen[y * map.w + x];
+        if (on && start < 0) start = x;
+        if (!on && start >= 0) {
+          tiles.push(start, y, x - start);
+          start = -1;
+        }
+      }
+    }
+    sh.tiles = tiles;
+    sh.clip = (c) => {
+      c.beginPath();
+      for (let k = 0; k < tiles.length; k += 3) c.rect(/** @type {number} */ (tiles[k]), /** @type {number} */ (tiles[k + 1]), /** @type {number} */ (tiles[k + 2]), 1);
+      c.clip();
+    };
+  }
+  return sh;
+}
+
+/** Adds the lights' shapes to the current path (all clockwise: their union). @param {CanvasRenderingContext2D} c @param {Shapes} sh */
+function litPath(c, sh) {
+  for (let k = 0; k < sh.rooms.length; k += 3) c.rect(/** @type {number} */ (sh.rooms[k]), /** @type {number} */ (sh.rooms[k + 1]), /** @type {number} */ (sh.rooms[k + 2]), 1);
+  for (const p of sh.pools) polyPath(c, p.p);
+  for (const q of sh.cones) {
+    polyPath(c, q.p);
+    // The holder stands in his own light.
+    c.moveTo(q.f.x + 0.75, q.f.y);
+    c.arc(q.f.x, q.f.y, 0.75, 0, Math.PI * 2);
+    c.closePath();
+  }
+  for (let k = 0; k < sh.loose.length; k += 2) c.rect(/** @type {number} */ (sh.loose[k]), /** @type {number} */ (sh.loose[k + 1]), 1, 1);
+}
+
+/**
+ * The night over what one sees: a dark wash with the lights cut out of
+ * it (drawn at half resolution, so lights inside the dark have soft
+ * edges; the clip keeps the outer ones sharp), then their warm glow.
+ * @param {CanvasRenderingContext2D} c @param {Art} art @param {View} v @param {Shapes} sh
+ */
+function drawLight(c, art, v, sh) {
+  const W = Math.max(1, Math.ceil((v.width * v.dpr) / 2));
+  const H = Math.max(1, Math.ceil((v.height * v.dpr) / 2));
+  let cv = art.scratch[4];
+  if (!cv) art.scratch[4] = cv = canvas(W, H);
+  if (cv.width !== W || cv.height !== H) {
+    cv.width = W;
+    cv.height = H;
+  }
+  const l = ctx2d(cv);
+  const k = (v.scale * v.dpr) / 2;
+  l.setTransform(1, 0, 0, 1, 0, 0);
+  l.globalCompositeOperation = "copy";
+  l.fillStyle = NIGHT;
+  l.fillRect(0, 0, W, H);
+  l.globalCompositeOperation = "destination-out";
+  l.setTransform(k, 0, 0, k, -v.left * k, -v.top * k);
+  if (sh.eye) {
+    const e = sh.eye;
+    const g = l.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.r);
+    g.addColorStop(0, "rgba(0,0,0,0.42)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    l.fillStyle = g;
+    l.fillRect(e.x - e.r, e.y - e.r, 2 * e.r, 2 * e.r);
+  }
+  l.fillStyle = "#000";
+  l.beginPath();
+  for (let q = 0; q < sh.rooms.length; q += 3) l.rect(/** @type {number} */ (sh.rooms[q]), /** @type {number} */ (sh.rooms[q + 1]), /** @type {number} */ (sh.rooms[q + 2]), 1);
+  l.fill();
+  for (const p of sh.pools) {
+    const g = l.createRadialGradient(p.x, p.y, 0, p.x, p.y, POOL);
+    g.addColorStop(0, "rgba(0,0,0,1)");
+    g.addColorStop(0.55, "rgba(0,0,0,0.9)");
+    g.addColorStop(1, "rgba(0,0,0,0.25)");
+    l.fillStyle = g;
+    l.beginPath();
+    polyPath(l, p.p);
+    l.fill();
+  }
+  for (const q of sh.cones) {
+    const g = l.createRadialGradient(q.f.x, q.f.y, 0, q.f.x, q.f.y, CONE_REACH);
+    g.addColorStop(0, `rgba(0,0,0,${Math.min(1, q.k)})`);
+    g.addColorStop(0.7, `rgba(0,0,0,${Math.min(1, 0.85 * q.k)})`);
+    g.addColorStop(1, `rgba(0,0,0,${0.3 * q.k})`);
+    l.fillStyle = g;
+    l.beginPath();
+    polyPath(l, q.p);
+    l.moveTo(q.f.x + 0.75, q.f.y);
+    l.arc(q.f.x, q.f.y, 0.75, 0, Math.PI * 2);
+    l.fill();
+  }
+  if (sh.loose.length) {
+    l.fillStyle = "rgba(0,0,0,0.6)";
+    l.beginPath();
+    for (let q = 0; q < sh.loose.length; q += 2) l.rect(/** @type {number} */ (sh.loose[q]), /** @type {number} */ (sh.loose[q + 1]), 1, 1);
+    l.fill();
+  }
+  l.globalCompositeOperation = "source-over";
+  c.save();
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.imageSmoothingEnabled = true;
+  c.drawImage(cv, 0, 0, W, H, 0, 0, W * 2, H * 2);
+  c.restore();
+
+  // The glow: warm pools, pale cones, a faint warmth in lit rooms.
+  useTiles(c, v);
+  c.globalCompositeOperation = "screen";
+  if (sh.rooms.length) {
+    c.fillStyle = "rgba(200,112,28,0.1)";
+    c.beginPath();
+    for (let q = 0; q < sh.rooms.length; q += 3) c.rect(/** @type {number} */ (sh.rooms[q]), /** @type {number} */ (sh.rooms[q + 1]), /** @type {number} */ (sh.rooms[q + 2]), 1);
+    c.fill();
+  }
+  for (const p of sh.pools) {
+    const g = c.createRadialGradient(p.x, p.y, 0.2, p.x, p.y, POOL);
+    g.addColorStop(0, "rgba(255,170,70,0.42)");
+    g.addColorStop(0.6, "rgba(255,150,50,0.16)");
+    g.addColorStop(1, "rgba(255,140,40,0)");
+    c.fillStyle = g;
+    c.beginPath();
+    polyPath(c, p.p);
+    c.fill();
+  }
+  for (const q of sh.cones) {
+    const g = c.createRadialGradient(q.f.x, q.f.y, 0.15, q.f.x, q.f.y, CONE_REACH);
+    g.addColorStop(0, `rgba(255,238,170,${(0.5 * q.k).toFixed(3)})`);
+    g.addColorStop(0.45, `rgba(255,226,140,${(0.24 * q.k).toFixed(3)})`);
+    g.addColorStop(1, "rgba(255,214,120,0)");
+    c.fillStyle = g;
+    c.beginPath();
+    polyPath(c, q.p);
+    c.fill();
+  }
+  c.globalCompositeOperation = "source-over";
+}
+
+const NIGHT = "rgba(12,21,50,0.63)";
+/** Tile kinds that are cover (map.ts COVER). */
+const COVER_TILES = [false, false, false, false, false, false, true, true, true, true, true, false];
+
+/**
+ * A memory's picture: per heist, a small canvas over the whole map of
+ * what one saw (`ever`), one fading with time (`fresh`), and their mix
+ * (0.48 of ever, fresh over it) that greys the copy.
+ * @typedef {{ ever: HTMLCanvasElement, fresh: HTMLCanvasElement, mix: HTMLCanvasElement, k: number, faded: number, any: boolean }} MemoryCanvas
+ */
+
+/** @param {Art} art @param {Memory} mem @param {number} now @returns {MemoryCanvas} */
+function memoryCanvas(art, mem, now) {
+  const map = art.map;
+  let mv = /** @type {MemoryCanvas | undefined} */ (mem.picture);
+  if (!mv) {
+    const k = map.w * map.h > 20000 ? 4 : 6;
+    mv = { ever: canvas(map.w * k, map.h * k), fresh: canvas(map.w * k, map.h * k), mix: canvas(map.w * k, map.h * k), k, faded: now, any: false };
+    mem.picture = mv;
+  }
+  if (now < mv.faded) mv.faded = now;
+  if (now - mv.faded >= 1 && mv.any) {
+    // Fresh fades (to e^-1 in 45 s); the mix is made again.
+    const f = ctx2d(mv.fresh);
+    f.setTransform(1, 0, 0, 1, 0, 0);
+    f.globalCompositeOperation = "destination-out";
+    f.fillStyle = `rgba(0,0,0,${(1 - Math.exp(-(now - mv.faded) / 45)).toFixed(4)})`;
+    f.fillRect(0, 0, mv.fresh.width, mv.fresh.height);
+    f.globalCompositeOperation = "source-over";
+    const m = ctx2d(mv.mix);
+    m.setTransform(1, 0, 0, 1, 0, 0);
+    m.clearRect(0, 0, mv.mix.width, mv.mix.height);
+    m.globalAlpha = 0.48;
+    m.drawImage(mv.ever, 0, 0);
+    m.globalAlpha = 1;
+    m.drawImage(mv.fresh, 0, 0);
+    mv.faded = now;
+  }
+  return mv;
+}
+
+/** Paints what one sees now into the memory's picture. @param {MemoryCanvas} mv @param {Shapes} sh */
+function paintMemory(mv, sh) {
+  if (!sh.clip) return;
+  const b = sh.bounds;
+  for (const cv of [mv.ever, mv.fresh, mv.mix]) {
+    const m = ctx2d(cv);
+    m.save();
+    m.setTransform(mv.k, 0, 0, mv.k, 0, 0);
+    sh.clip(m);
+    m.fillStyle = "#fff";
+    if (b) m.fillRect(b.x - 1, b.y - 1, b.w + 2, b.h + 2);
+    else m.fillRect(0, 0, cv.width / mv.k, cv.height / mv.k);
+    m.restore();
+  }
+  mv.any = true;
 }
 
 /**
@@ -2783,7 +3072,7 @@ function drawLamps(c, art, lamps) {
  * (-1 never), the doors' last seen states (move.ts), the items and empty
  * places last seen (by tile), with when.
  * @typedef {{ w: number, h: number, seenAt: Float32Array, doors: Uint8Array,
- *   items: Map<number, SeenItem & { t: number }>, empty: Map<number, SeenEmpty & { t: number }> }} Memory
+ *   items: Map<number, SeenItem & { t: number }>, empty: Map<number, SeenEmpty & { t: number }>, picture?: unknown }} Memory
  */
 
 /** An empty memory for a map (once per heist). @param {Blueprint} map @returns {Memory} */
@@ -3488,12 +3777,21 @@ export function drawPublic(c, art, v, pub = {}, o = {}) {
       s.fillRect(0, 0, s.canvas.width, s.canvas.height);
       const inside = map.roomAt;
       const spotAt = spotTiles(art);
-      const mk = mask(art, "ink", 2, region(art, v), (i) => {
+      const reg = region(art, v);
+      // The mask is made again only when the ink or the seen tiles under it change (10 Hz at most).
+      let sum = quiet ? 7 : 3;
+      for (let y = reg.y; y < reg.y + reg.h; y++) {
+        for (let x = reg.x; x < reg.x + reg.w; x++) {
+          const i = y * map.w + x;
+          sum = (Math.imul(sum, 31) + Math.round((ink[i] ?? 0) * 255) * 2 + (seenMask && seenMask[i] ? 1 : 0)) | 0;
+        }
+      }
+      const mk = mask(art, "ink", 2, reg, (i) => {
         const val = ink[i] ?? 0;
         if (!(val > 0) || (seenMask && seenMask[i])) return 0;
         const k = spotAt[i] ? 0.35 : inside && (inside[i] ?? -1) >= 0 ? 1 : 0.62;
         return 0xffffff00 | Math.round(clamp(val, 0.25, 1) * k * (quiet ? 0.6 : 1) * 255);
-      }, null, undefined, 1);
+      }, null, String(sum), 1);
       s.globalCompositeOperation = "destination-in";
       blitMask(s, mk, v);
       c.setTransform(1, 0, 0, 1, 0, 0);

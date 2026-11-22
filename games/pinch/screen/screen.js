@@ -112,6 +112,19 @@ const list = (/** @type {unknown} */ a) => (Array.isArray(a) ? a : []);
 /** The screen view's screen part (never null). @returns {Partial<ScreenView> & Record<string, any>} */
 const screenOf = (/** @type {any} */ v) => (v && typeof v.screen === "object" && v.screen) || {};
 
+/** Text set only when it changed: the frame loops write every frame, the DOM need not relayout. @param {HTMLElement} el @param {string} text */
+function setText(el, text) {
+  if (el.textContent !== text) el.textContent = text;
+}
+/** @param {Element} el @param {string} cls @param {boolean} on */
+function setClass(el, cls, on) {
+  if (el.classList.contains(cls) !== on) el.classList.toggle(cls, on);
+}
+/** @param {HTMLElement} el @param {boolean} hidden */
+function setHidden(el, hidden) {
+  if (el.hidden !== hidden) el.hidden = hidden;
+}
+
 /** A seeded rng for the words: the same line for the same thing, whoever draws it. @param {...(string | number)} parts */
 function rngOf(...parts) {
   const r = new Rng(hashSeed(...parts));
@@ -855,25 +868,25 @@ function boardScene() {
       let secs = 0;
       if (phase === "briefing") secs = Math.max(0, (num(sc.deadline) - client.now()) / 1000);
       else secs = heistLeft();
-      clockEl.textContent = mmss(secs);
+      setText(clockEl, mmss(secs));
       const live = phase === "heist" && !!pub && !pub.end;
       const whole = Math.ceil(secs);
-      clockEl.classList.toggle("low", live && secs <= 60);
+      setClass(clockEl, "low", live && secs <= 60);
       if (live && whole !== lastSec && whole <= 10 && whole > 0) sfx.tick(whole % 2 === 0);
       lastSec = whole;
       // The chip: a hold (with its time), else the alarm.
       const hold = list(pub?.holds)[0];
       const tnow = heistNow();
       if (hold && live) {
-        chip.hidden = false;
-        chip.className = "chip held";
-        chip.textContent = `${W.ui.held} ${mmss(num(hold.until) - tnow)}`;
+        setHidden(chip, false);
+        if (chip.className !== "chip held") chip.className = "chip held";
+        setText(chip, `${W.ui.held} ${mmss(num(hold.until) - tnow)}`);
       } else if (pub?.alarm) {
-        chip.hidden = false;
-        chip.className = "chip alarm";
-        chip.textContent = `${t.map.alarm} · ${t.police}`;
-      } else chip.hidden = true;
-      clockEl.classList.toggle("alarm", !!pub?.alarm);
+        setHidden(chip, false);
+        if (chip.className !== "chip alarm") chip.className = "chip alarm";
+        setText(chip, `${t.map.alarm} · ${t.police}`);
+      } else setHidden(chip, true);
+      setClass(clockEl, "alarm", !!pub?.alarm);
       if (catList.clientHeight !== catH) fitCatalogue();
       if (now - drawn < 1000 / 30) return;
       drawn = now;
@@ -1079,6 +1092,7 @@ function tapeScene() {
   /** @type {{ doors: Uint8Array, rooms: Uint8Array, lamps: Uint8Array }} */
   let st = { doors: new Uint8Array(0), rooms: new Uint8Array(0), lamps: new Uint8Array(0) };
   let joinKey = "";
+  let joinAt = -1e9;
   let lastShown = 0;
   /** The rect the picture takes (clear of the join badge). */
   let rect = { x: 0, y: 0, w: 1280, h: 720 };
@@ -1159,19 +1173,24 @@ function tapeScene() {
       load();
     },
     frame(now) {
-      const jk = getComputedStyle(document.documentElement).getPropertyValue("--tvpipe-join-w") + getComputedStyle(document.documentElement).getPropertyValue("--tvpipe-join-h");
-      if (jk !== joinKey) {
-        joinKey = jk;
-        layout();
+      // The join badge's size (a style read: twice a second is enough).
+      if (now - joinAt > 500) {
+        joinAt = now;
+        const cs = getComputedStyle(document.documentElement);
+        const jk = cs.getPropertyValue("--tvpipe-join-w") + cs.getPropertyValue("--tvpipe-join-h");
+        if (jk !== joinKey) {
+          joinKey = jk;
+          layout();
+        }
       }
       if (!R) load();
       if (!R || !M?.art) {
-        blue.hidden = !(performance.now() > cardsUntil + 1500);
-        play.textContent = `${t.tracking}…`;
-        code.textContent = "";
+        setHidden(blue, !(performance.now() > cardsUntil + 1500));
+        setText(play, `${t.tracking}…`);
+        setText(code, "");
         return;
       }
-      blue.hidden = true;
+      setHidden(blue, true);
       const map = M.map;
       // Playback time → tape time.
       const p = Math.max(0, ((now - start) / 1000) * scale);
@@ -1189,9 +1208,9 @@ function tapeScene() {
       const ended = p >= R.total;
       const sp = seg > 0 ? 1 / R.hz / seg : 6;
       const shown = Math.round(sp * scale);
-      if (now < start) play.textContent = `${W.ui.play} ▶`;
-      else play.textContent = ended ? `${t.stop} ■` : shown <= 1 ? `${W.ui.play} ▶` : `${W.ui.play} ▶ ×${shown}`;
-      play.classList.toggle("slow", !ended && shown <= 2 && now >= start);
+      if (now < start) setText(play, `${W.ui.play} ▶`);
+      else setText(play, ended ? `${t.stop} ■` : shown <= 1 ? `${W.ui.play} ▶` : `${W.ui.play} ▶ ×${shown}`);
+      setClass(play, "slow", !ended && shown <= 2 && now >= start);
       if (shown !== lastShown && now >= start && !reduced.matches) {
         // A tracking glitch when the speed changes.
         el.classList.remove("glitch");
@@ -1200,7 +1219,7 @@ function tapeScene() {
       }
       lastShown = shown;
       const secs = Math.floor(s);
-      code.textContent = `SP 0:${String(Math.floor(secs / 60)).padStart(2, "0")}:${String(secs % 60).padStart(2, "0")}`;
+      setText(code, `SP 0:${String(Math.floor(secs / 60)).padStart(2, "0")}:${String(secs % 60).padStart(2, "0")}`);
       // The light: rooms, lamps, doors from the events; flashlights from the samples.
       const changed = advance(s);
       const at = (/** @type {Sample[]} */ tr, /** @type {number} */ k) => tr[Math.min(tr.length - 1, Math.max(0, k))];

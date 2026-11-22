@@ -19,7 +19,7 @@
  */
 
 import {
-  createArt, drawLootIcon, drawPublic, drawWorld, fitCanvas, followView, FONTS, PALETTE, toScreen, toTile, useTiles,
+  createArt, drawLootIcon, drawPublic, drawWorld, EYE_RADIUS, fitCanvas, followView, FONTS, PALETTE, toScreen, toTile, useTiles,
 } from "./draw.js";
 import { Heist } from "./world.js";
 import { TIMES, wordsArea } from "../game/protocol.js";
@@ -585,7 +585,7 @@ export function heistScreen(ctx, artKey) {
       return;
     }
     const q = toScreen(view, m.x, m.y);
-    pop.style.transform = `translate(${Math.round(clamp(q.x, 60, size.w - 60))}px, ${Math.round(clamp(q.y, size.top + 70, size.h - size.bottom - 10))}px)`;
+    setStyle(pop, "transform", `translate(${Math.round(clamp(q.x, 60, size.w - 60))}px, ${Math.round(clamp(q.y, size.top + 70, size.h - size.bottom - 10))}px)`);
   }
   const R = 78;
   /** @param {number} sx @param {number} sy @param {boolean} down */
@@ -654,8 +654,8 @@ export function heistScreen(ctx, artKey) {
   function hud(now) {
     const me = model.me;
     const left = model.left(now);
-    clockEl.textContent = clock(left);
-    clockEl.classList.toggle("low", left <= 30 || !!model.pub?.alarm);
+    setText(clockEl, clock(left));
+    setClass(clockEl, "low", left <= 30 || !!model.pub?.alarm);
     if (!me) return;
 
     // The sack, or the marks left.
@@ -686,13 +686,14 @@ export function heistScreen(ctx, artKey) {
 
     // The tool.
     if (me.role === "guard") {
-      tool.classList.toggle("on", me.light === "on");
-      tool.classList.toggle("warming", me.light === "warming");
+      setClass(tool, "on", me.light === "on");
+      setClass(tool, "warming", me.light === "warming");
       setText(toolLabel, me.light === "off" ? w.buttons.flashlightOn : w.buttons.flashlightOff);
       setText(toolCount, "");
     } else {
-      tool.classList.toggle("on", armed);
-      tool.disabled = me.firecrackers <= 0 && !armed;
+      setClass(tool, "on", armed);
+      const off = me.firecrackers <= 0 && !armed;
+      if (tool.disabled !== off) tool.disabled = off;
       setText(toolLabel, armed ? w.buttons.throw : w.buttons.firecracker);
       setText(toolCount, String(Math.max(0, me.firecrackers | 0)));
       if (armed && me.firecrackers <= 0) {
@@ -713,45 +714,45 @@ export function heistScreen(ctx, artKey) {
       const fill = /** @type {HTMLElement} */ (b.querySelector(".fill"));
       if (k === 0 && busy && fin(busy.total) && busy.total > 0) {
         const l = Math.max(0, busy.left - (now - model.frameAt) / 1000);
-        b.hidden = false;
-        b.classList.add("busy");
-        b.disabled = true;
+        setHidden(b, false);
+        setClass(b, "busy", true);
+        if (!b.disabled) b.disabled = true;
         setText(lbl, busyLabel(busy.kind));
         setText(sub, busy.kind === "take" ? itemLabel(busy.target) : "");
-        fill.style.transform = `scaleX(${clamp(1 - l / busy.total, 0, 1).toFixed(3)})`;
+        setStyle(fill, "transform", `scaleX(${clamp(1 - l / busy.total, 0, 1).toFixed(3)})`);
         shownOffers[k] = null;
         return;
       }
       const o = show[k] ?? null;
-      b.classList.remove("busy");
-      b.disabled = false;
-      fill.style.transform = "scaleX(0)";
+      setClass(b, "busy", false);
+      if (b.disabled) b.disabled = false;
+      setStyle(fill, "transform", "scaleX(0)");
       shownOffers[k] = o;
-      b.dataset["a"] = o?.a ?? "";
-      b.hidden = !o;
+      if (b.dataset["a"] !== (o?.a ?? "")) b.dataset["a"] = o?.a ?? "";
+      setHidden(b, !o);
       if (o) setText(lbl, /** @type {Record<string, string>} */ (w.buttons)[o.button] ?? o.button);
       setText(sub, o?.a === "take" ? itemLabel(o.item) : "");
     });
-    acts.classList.toggle("two", !actBtns[1]?.hidden);
+    setClass(acts, "two", !actBtns[1]?.hidden);
 
     // HOLD and WRIGGLE.
     let bigText = "";
     if (me.role === "guard" && !me.hold && (me.canHold || me.offers?.some((o) => o?.a === "hold"))) bigText = w.buttons.hold;
     if (me.role === "thief" && (me.frozen || me.offers?.some((o) => o?.a === "wriggle"))) bigText = w.buttons.wriggle;
-    big.hidden = !bigText;
+    setHidden(big, !bigText);
     if (bigText) setText(bigLbl, bigText);
-    big.classList.toggle("cool", me.role === "guard" && me.cooldown > 0);
-    big.classList.toggle("wriggle", me.role === "thief");
+    setClass(big, "cool", me.role === "guard" && me.cooldown > 0);
+    setClass(big, "wriggle", me.role === "thief");
 
     // A hold going on: everyone's banner.
     const hold = model.pub?.holds?.[0];
     if (hold && fin(hold.until) && fin(hold.total)) {
       const l = Math.max(0, hold.until - model.time(now));
       const txt = hold.thief === ctx.myId ? t.heldBy(ctx.nameOf(hold.guard)) : hold.guard === ctx.myId ? t.holding(ctx.nameOf(hold.thief)) : t.held(ctx.nameOf(hold.thief));
-      banner.hidden = false;
+      setHidden(banner, false);
       setText(/** @type {HTMLElement} */ (banner.querySelector(".txt")), `${w.ui.held} · ${txt} · ${clock(l)}`);
-      /** @type {HTMLElement} */ (banner.querySelector(".bar > i")).style.transform = `scaleX(${clamp(l / Math.max(0.1, hold.total), 0, 1).toFixed(3)})`;
-    } else banner.hidden = true;
+      setStyle(/** @type {HTMLElement} */ (banner.querySelector(".bar > i")), "transform", `scaleX(${clamp(l / Math.max(0.1, hold.total), 0, 1).toFixed(3)})`);
+    } else setHidden(banner, true);
   }
 
   /** A catalogue item's name. @param {number} k */
@@ -816,6 +817,7 @@ export function heistScreen(ctx, artKey) {
     const f = model.frame;
     return {
       seen: model.seen, light: model.light, memory: model.mem, now: model.time(now), lamps: model.pub?.lamps?.length ? model.pub.lamps : null,
+      eye: model.placed ? { x: model.at.x, y: model.at.y, radius: EYE_RADIUS[role] } : null, rooms: model.pub?.rooms?.length ? model.pub.rooms : null,
       items: f?.items ?? [], empty: f?.empty ?? [], catalogue: ctx.catalogue(), figures: figures(now), colors: ctx.colors(), names: ctx.names(),
     };
   }
@@ -1000,22 +1002,44 @@ export function heistScreen(ctx, artKey) {
   };
   const ro = new ResizeObserver(measure);
   ro.observe(el);
+  // The map's resolution: device pixels up to 2 per CSS px, less on a phone that cannot keep up
+  // (frames slower than ~45 fps for a second and a half, after the first two seconds: a step down,
+  // never back up in this heist).
+  let mapDpr = dpr;
+  let slowSince = -1;
+  let slowAvg = 16.7;
+  const started = performance.now();
+  /** @param {number} now @param {number} dt */
+  function adapt(now, dt) {
+    if (now - started < 2000 || document.hidden) return;
+    slowAvg += (Math.min(dt, 100) - slowAvg) * 0.1;
+    if (slowAvg < 22) {
+      slowSince = -1;
+      return;
+    }
+    if (slowSince < 0) slowSince = now;
+    if (now - slowSince < 1500 || mapDpr <= 1) return;
+    mapDpr = Math.max(1, Math.round((mapDpr - 0.5) * 4) / 4);
+    slowSince = -1;
+    slowAvg = 16.7;
+  }
   /** @param {number} now */
   function loop(now) {
     raf = requestAnimationFrame(loop);
     const dt = Math.min(250, now - last);
     last = now;
+    adapt(now, dt);
     try {
       model.tick(now, dt);
       hud(now);
       if (!size.w) measure();
       if (!art || !size.w || !size.h || !model.placed) return;
-      const c = fitCanvas(canvas, size.w, size.h, dpr);
+      const c = fitCanvas(canvas, size.w, size.h, mapDpr);
       // The figure in the middle of what the bars leave free.
       const mid = (size.top + size.h - size.bottom) / 2;
       const scale = size.w / across;
       const at = model.at;
-      view = followView(at.x, at.y - (mid - size.h / 2) / scale, across, size.w, size.h, dpr);
+      view = followView(at.x, at.y - (mid - size.h / 2) / scale, across, size.w, size.h, mapDpr);
       model.view = view;
       drawWorld(c, art, view, scene(now), { budget: 4 });
       drawPublic(c, art, view, publicLayer(), { lights: false, quiet: true, seen: model.seen, colors: ctx.colors(), names: ctx.names(), words: mapWords, now: model.time(now) });
@@ -1065,4 +1089,16 @@ function offerRank(o) {
 /** Sets text only when it changed (no layout work at 60 fps otherwise). @param {HTMLElement} el @param {string} text */
 function setText(el, text) {
   if (el.textContent !== text) el.textContent = text;
+}
+/** A class on or off, touching the DOM only when it changes. @param {Element} el @param {string} cls @param {boolean} on */
+function setClass(el, cls, on) {
+  if (el.classList.contains(cls) !== on) el.classList.toggle(cls, on);
+}
+/** @param {HTMLElement} el @param {boolean} hidden */
+function setHidden(el, hidden) {
+  if (el.hidden !== hidden) el.hidden = hidden;
+}
+/** An inline style property, set only when it changes. @param {HTMLElement} el @param {"transform"} prop @param {string} value */
+function setStyle(el, prop, value) {
+  if (el.style[prop] !== value) el.style[prop] = value;
 }

@@ -67,6 +67,8 @@ const FADE = 14;
 const LEAD = { min: 0, max: 1, first: 0.2 };
 /** Others are drawn this far in the past (s), between the frames around that moment. */
 export const RENDER_DELAY = 0.12;
+/** How far past the newest frame (s) a walking figure is carried on when the next frame is late. */
+const EXTRAPOLATE = 0.1;
 /** Frames further apart than this (s) are not interpolated across (one appears, a gap). */
 const GAP = 0.4;
 
@@ -110,6 +112,8 @@ export class Heist {
 
     // One's own figure: the simulated body, and the offset the drawn one still carries.
     /** @type {{ x: number, y: number, angle: number }} */ this.body = { x: 0, y: 0, angle: 90 };
+    /** Where the body was before its last step (drawn between: {@link Heist.at}), null when standing. @type {{ x: number, y: number } | null} */
+    this.stepFrom = null;
     this.offset = { x: 0, y: 0 };
     this.placed = false;
     /** @type {Path | null} */ this.path = null;
@@ -149,7 +153,29 @@ export class Heist {
 
   /** Where one's figure is drawn: the prediction plus the fading offset. */
   get at() {
-    return { x: this.body.x + this.offset.x, y: this.body.y + this.offset.y, angle: this.body.angle };
+    const p = this.#between();
+    return { x: p.x + this.offset.x, y: p.y + this.offset.y, angle: this.body.angle };
+  }
+
+  /**
+   * The body as drawn, without the offset: the walk goes in fixed steps
+   * of {@link DT} (as on the host), 20 a second; the figure is drawn
+   * between the last two by the time since, so it (and the map that
+   * follows it) moves every animation frame, not every third.
+   */
+  #between() {
+    const s = this.stepFrom;
+    if (!s) return { x: this.body.x, y: this.body.y };
+    const u = clamp(this.acc / DT, 0, 1);
+    return { x: s.x + (this.body.x - s.x) * u, y: s.y + (this.body.y - s.y) * u };
+  }
+
+  /** Stops drawing between steps: what was left of the last one goes into the offset (it fades). */
+  #settle() {
+    if (!this.stepFrom) return;
+    const p = this.#between();
+    this.stepFrom = null;
+    this.offset = { x: this.offset.x + p.x - this.body.x, y: this.offset.y + p.y - this.body.y };
   }
 
   /** The host's clock now (s), estimated from the frames' `t` and when they came. @param {number} now performance.now() */
@@ -311,6 +337,7 @@ export class Heist {
     const host = { x: me.x, y: me.y };
     if (!this.placed) {
       this.body = { x: me.x, y: me.y, angle: fin(me.facing) ? me.facing : 90 };
+      this.stepFrom = null;
       this.placed = true;
       return;
     }
@@ -377,6 +404,7 @@ export class Heist {
     this.fixes[kind] = (this.fixes[kind] ?? 0) + 1;
     // The simulated body moves; the drawn figure stays where it was and glides after it (the offset).
     const was = this.at;
+    this.stepFrom = null;
     this.fixLog.push({ kind, t: this.frame?.t ?? 0, why: this.why, off: Math.round(dist(was, host) * 100) / 100 });
     if (this.fixLog.length > 30) this.fixLog.shift();
     this.body.x = host.x;
@@ -444,6 +472,7 @@ export class Heist {
       this.acc += dt;
       while (this.acc >= DT && this.path) {
         this.acc -= DT;
+        this.stepFrom = { x: this.body.x, y: this.body.y };
         const ev = step(this.body, this.path, DT, this.world);
         // Arrived (the goal stays: the host may still be on its way there) or stuck.
         if (ev?.kind === "arrived" || ev?.kind === "stuck") this.path = null;
@@ -464,6 +493,8 @@ export class Heist {
         } else this.waitDoor = -1;
       }
     } else this.acc = 0;
+    // Arrived, stopped, waiting at a door: the rest of the step glides out with the offset.
+    if (!this.path || this.acc === 0 || me?.frozen) this.#settle();
     const moved = Math.hypot(this.body.x - x0, this.body.y - y0);
     this.moving = !!this.path && moved > 0.0005;
     this.walked += moved;
@@ -527,7 +558,15 @@ export class Heist {
       const last = list[list.length - 1];
       if (!first || !last) continue;
       if (list.length === 1 || rt >= last.t) {
-        out.push({ ...last.p, walk: last.walk });
+        // A frame late (uneven pacing, jitter): one who walks walks on a little, at the last frames' pace, rather than stop and jump.
+        const prev = list[list.length - 2];
+        const late = Math.min(rt - last.t, EXTRAPOLATE);
+        if (prev && last.p.moving && late > 0 && last.t > prev.t) {
+          const k = late / (last.t - prev.t);
+          const ex = (last.x - prev.x) * k;
+          const ey = (last.y - prev.y) * k;
+          out.push({ ...last.p, x: last.x + ex, y: last.y + ey, walk: last.walk + Math.hypot(ex, ey) });
+        } else out.push({ ...last.p, walk: last.walk });
         continue;
       }
       if (rt <= first.t) {
