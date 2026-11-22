@@ -234,6 +234,33 @@ use, is the host's clock on phones and on a TV page the time its picture
 is on the TV (`hostNow() + tvDelay`), so the TV's countdown and the
 phones' end together. Games need nothing else on the client.
 
+## Web mode: tvpipe.party without tvpipe
+
+The same modules run the games of tvpipe.party's list in a browser with
+no tvpipe ([`docs/browser-party-design.md`](../../docs/browser-party-design.md)).
+tvpipe.party's copy of the library has `mode.js` saying `WEB = true`
+(`isWeb()`; `setWebMode()` for tests); games change nothing:
+
+- `Tvpipe.connect()` returns a `Tvpipe` answered in the page by
+  `WebHub`: `info` from `/g/index.json` (the page's
+  `/g/NAME/RELEASE/` path, else the session's game), the room registered
+  at tvpipe.party (`POST /api/links`, the join link
+  `https://tvpipe.party/r/?r=CODE#k=KEY`), the screens of this browser
+  as devices (`this`, `cable`, `window`, `none`; `ScreenCaster` in
+  `screens.ts` plays the TV page full screen in the tab or in a window),
+  QR codes (`encodeQr`, tvpipe's encoder ported), Other game and Quit.
+  `tvpipe.web` says which.
+- `relay()` is a `WebRtcRelay`: phones and extra screens over WebRTC data
+  channels (offers through the room's signaling, `HostSignal`), the
+  host's own screens and bots over a `BroadcastChannel` (`LocalHost`),
+  with tvpipe's relay limits.
+- `PartyClient.fromLocation()` connects with a `DataChannelSocket`
+  (`role=screen` and `local=1` links: a `LocalSocket`); at the next game
+  players go to `/r/?r=CODE#k=KEY`. `requestScreen(code, {token})` is an
+  extra screen's request.
+- The tab's state is `sessionStorage["tvpipe-web"]` (`readWebSession`,
+  `writeWebSession`).
+
 ## Tests
 
 ```js

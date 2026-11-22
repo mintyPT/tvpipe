@@ -361,6 +361,17 @@ In a page another site frames (the frame page, docs/short-links.md) it
 tells the frame page the page's title and `theme-color`
 (`announceToFrame`).
 
+### 8.2a Web mode
+
+The same library runs without tvpipe on tvpipe.party
+([browser-party-design.md](browser-party-design.md)): its copy's
+`mode.js` says `WEB = true`, `Tvpipe` then talks to `WebHub` in the page
+instead of the API socket (`TvpipeTransport`: tvpipe's socket or the
+hub), `relay()` is a `WebRtcRelay` (WebRTC data channels and a local
+`BroadcastChannel`, the limits of §6.3 at 64 KiB), and `PartyClient`
+connects with a `DataChannelSocket`. QR codes are made in the page
+(`qr.ts`, the same symbols as `util::qr`).
+
 ### 8.3 `Tvpipe` (the API client)
 
 `Tvpipe.connect({url?, token?})`, `info()`, `devices(on)` + the

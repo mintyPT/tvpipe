@@ -276,8 +276,8 @@ export interface JoinInfo {
   url: string;
   /** The QR code of `url`: `size` modules per side, `rows` of "0"/"1". */
   qr: { size: number; rows: string[] } | null;
-  /** How phones reach the party: a tunnel, the LAN (Rust hosts), this computer. */
-  mode?: "tunnel" | "lan" | "local";
+  /** How phones reach the party: a tunnel, the LAN (Rust hosts), this computer, tvpipe.party's rooms (`web`). */
+  mode?: "tunnel" | "lan" | "local" | "web";
   /**
    * A short link to `url` for people to type (`https://tvpipe.party/BCDF`,
    * docs/short-links.md): only with a tunnel, when tvpipe registered one.

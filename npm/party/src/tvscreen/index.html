@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0D1828">
+<title>tvpipe.party · a screen of the game</title>
+<link rel="icon" href="/static/logo.svg" type="image/svg+xml">
+<!-- An extra screen of a room (docs/browser-party-design.md, "Extra screens"):
+     tvpipe.party/tv, the room's code, the host's yes, then the TV page in a frame. -->
+<style>
+[hidden] { display: none !important; }
+:root { color-scheme: dark; background: #0D1828; }
+html, body { margin: 0; height: 100%; }
+body { font: 18px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; color: #E8ECF2; }
+.note { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  padding: 24px; box-sizing: border-box; text-align: center; }
+.mark { font-size: 16px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+.mark span { color: #E8743B; }
+h1 { margin: 0; font-size: 26px; font-weight: 600; }
+p { margin: 0; max-width: 460px; color: rgba(232,236,242,.72); }
+form { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+input { width: 7.5em; padding: 10px 14px; font: 600 28px/1.2 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .3em; text-align: center;
+  text-transform: uppercase; color: #E8ECF2; background: #13223A; border: 1px solid rgba(232,236,242,.2); border-radius: 4px; }
+input:focus { outline: none; border-color: #E8743B; }
+button { font: inherit; font-size: 16px; padding: 12px 22px; border: 0; border-radius: 3px; background: #E8743B; color: #0D1828; cursor: pointer; }
+button.quiet { background: #13223A; color: #E8ECF2; }
+.bad { color: #FF7A6B; }
+.dot { display: inline-block; width: 10px; height: 10px; margin-right: 10px; border-radius: 50%; background: #E8743B; vertical-align: 2px;
+  animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .3; } }
+iframe { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; display: block; background: #000; }
+#full { position: fixed; right: 16px; bottom: 16px; z-index: 2; font-size: 14px; padding: 10px 16px; opacity: .85; transition: opacity .4s; }
+#full.idle { opacity: 0; pointer-events: none; }
+body:not([data-state="shown"]) #full { display: none; }
+[data-state] .view { display: none; }
+[data-state="code"] #code-view, [data-state="ask"] #ask-view, [data-state="bad"] #bad-view { display: flex; }
+[data-state="shown"] #frame-view { display: block; }
+</style>
+<script type="module" src="tvscreen.js"></script>
+</head>
+<body data-state="code">
+<div class="note view" id="code-view">
+  <div class="mark">tvpipe<span>.</span>party</div>
+  <h1>Show a game on this screen</h1>
+  <p>Type the code the game shows (under its QR code).</p>
+  <form id="form">
+    <input id="code" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="8" placeholder="BCDF" aria-label="The game's code">
+    <button type="submit">Show</button>
+  </form>
+  <p class="bad" id="code-error" hidden></p>
+</div>
+<div class="note view" id="ask-view">
+  <div class="mark">tvpipe<span>.</span>party</div>
+  <h1><span class="dot"></span><span id="ask-title">Asking the game</span></h1>
+  <p id="ask-text">The person running the game says yes on their screen.</p>
+  <button type="button" class="quiet" id="ask-cancel">Another code</button>
+</div>
+<div class="note view" id="bad-view">
+  <div class="mark">tvpipe<span>.</span>party</div>
+  <h1 id="bad-title">Not shown</h1>
+  <p id="bad-text"></p>
+  <div><button type="button" id="bad-again">Ask again</button> <button type="button" class="quiet" id="bad-code">Another code</button></div>
+</div>
+<div class="view" id="frame-view">
+  <iframe id="tv" title="The game" allow="autoplay; fullscreen; screen-wake-lock" referrerpolicy="no-referrer"></iframe>
+</div>
+<button type="button" id="full">Full screen</button>
+</body>
+</html>

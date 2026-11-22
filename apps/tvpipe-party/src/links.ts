@@ -22,6 +22,35 @@ const JOIN_URL_RE = new RegExp(
   `^https://(?:(${LABEL})\\.trycloudflare\\.com|(${LABEL}\\.${LABEL})\\.opentunnel\\.xyz)/\\?r=([A-Z]{4,8})#k=([A-Za-z0-9_-]{16,64})$`,
 );
 
+const WEB_TAIL_RE = new RegExp(`^([${ALPHABET}]{${CODE_LENGTH}})#k=([A-Za-z0-9_-]{16,64})$`);
+
+/** A web room's join link, taken apart. */
+export interface WebLink {
+  code: string;
+  key: string;
+}
+
+/**
+ * The code and key of a web room's join link, `ORIGIN/r/?r=CODE#k=KEY`
+ * (docs/browser-party-design.md, "Rooms and codes"), else null. `origin`
+ * is the service's own (the request's: `https://tvpipe.party`,
+ * `http://localhost:8787`). Checked on the string, like `isJoinUrl`: the
+ * code upper case, path exactly `/r/`, nothing else in the query or
+ * fragment.
+ */
+export function webLink(url: unknown, origin: string): WebLink | null {
+  if (typeof url !== "string" || url.length > MAX_URL_LENGTH) return null;
+  const prefix = `${origin}/r/?r=`;
+  if (!url.startsWith(prefix)) return null;
+  const m = WEB_TAIL_RE.exec(url.slice(prefix.length));
+  return m ? { code: m[1]!, key: m[2]! } : null;
+}
+
+/** The web room's join link of `code` and `key` on `origin`. */
+export function webJoinUrl(origin: string, code: string, key: string): string {
+  return `${origin}/r/?r=${code}#k=${key}`;
+}
+
 /** The code in upper case when `input` is one (any case), else null. */
 export function normalizeCode(input: unknown): string | null {
   if (typeof input !== "string") return null;
@@ -131,6 +160,21 @@ export async function register(
 }
 
 /**
+ * Registers `url` under exactly `code` (a web room's link names its code):
+ * null when the code is taken.
+ */
+export async function registerExactly(
+  db: D1Database,
+  url: string,
+  code: string,
+  now: number,
+): Promise<Registration | null> {
+  const secret = newSecret();
+  const hash = await hashSecret(secret);
+  return (await takeCode(db, code, url, hash, now)) ? { code, url, secret } : null;
+}
+
+/**
  * Refreshes the code's row (and replaces its url when given). The url it
  * now redirects to, or null when the code has no row or the secret does
  * not match.
@@ -160,6 +204,11 @@ export async function remove(db: D1Database, code: string, secret: string): Prom
 
 /** The join link of `code`, regardless of its age. */
 export async function lookup(db: D1Database, code: string): Promise<string | null> {
-  const row = await db.prepare("SELECT url FROM links WHERE code = ?1").bind(code).first<{ url: string }>();
+  const row = await lookupRow(db, code);
   return row ? row.url : null;
+}
+
+/** The join link of `code` and its secret's hash, regardless of age. */
+export async function lookupRow(db: D1Database, code: string): Promise<{ url: string; secret: string } | null> {
+  return db.prepare("SELECT url, secret FROM links WHERE code = ?1").bind(code).first<{ url: string; secret: string }>();
 }

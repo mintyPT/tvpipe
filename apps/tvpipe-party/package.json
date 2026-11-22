@@ -7,8 +7,10 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "python3 ../../site/build.py && wrangler d1 migrations apply tvpipe-party --local && wrangler dev",
-    "deploy": "python3 ../../site/build.py && wrangler d1 migrations apply tvpipe-party --remote --env-file ../../.env && wrangler deploy --env-file ../../.env",
+    "build:web": "python3 ../../site/build.py && node scripts/site.ts",
+    "dev": "npm run build:web && wrangler d1 migrations apply tvpipe-party --local && wrangler dev --local-upstream localhost:8787",
+    "live": "node test/live-signaling.ts",
+    "deploy": "npm run build:web && wrangler d1 migrations apply tvpipe-party --remote --env-file ../../.env && wrangler deploy --env-file ../../.env",
     "check": "tsc --noEmit",
     "test": "node --test \"test/*.test.ts\""
   },

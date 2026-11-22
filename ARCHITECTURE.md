@@ -24,7 +24,9 @@ detail lives in `docs/`:
   the first design (a Node host), for its reasoning and measurements;
   [`games.md`](docs/games.md): building, checking, packing and running
   a game (`tvpipe game`); [`game-switching.md`](docs/game-switching.md):
-  one run, several games (the room stays, phones follow).
+  one run, several games (the room stays, phones follow);
+  [`browser-party-design.md`](docs/browser-party-design.md): party
+  games without tvpipe, on tvpipe.party in the browser (designed).
 - [`screen.md`](docs/screen.md): sharing a screen or a window with
   sound (`tvpipe screen`): Chrome's capture per OS, the ffmpeg fallback,
   native APIs assessed.

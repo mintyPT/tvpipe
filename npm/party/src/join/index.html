@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0D1828">
+<title>tvpipe.party</title>
+<!-- A web room's join link, tvpipe.party/r/?r=CODE#k=KEY (docs/browser-party-design.md,
+     "Pages on tvpipe.party"): finds the room's game and opens its phone page. -->
+<link rel="icon" href="/static/logo.svg" type="image/svg+xml">
+<style>
+[hidden] { display: none !important; }
+:root { color-scheme: dark; background: #0D1828; }
+html, body { margin: 0; min-height: 100%; }
+body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+  padding: 24px; box-sizing: border-box; text-align: center; font: 17px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; color: #E8ECF2; }
+.mark { font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+.mark span { color: #E8743B; }
+h1 { margin: 0; font-size: 22px; font-weight: 600; }
+p { margin: 0; max-width: 340px; color: rgba(232,236,242,.72); }
+a { color: #F0915F; }
+.dot { display: inline-block; width: 9px; height: 9px; margin-right: 8px; border-radius: 50%; background: #E8743B; vertical-align: 1px; }
+[data-state="wait"] .dot, [data-state="look"] .dot { animation: pulse 1.6s ease-in-out infinite; }
+[data-state="bad"] .dot { background: #FF7A6B; }
+@keyframes pulse { 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .dot { animation: none !important; } }
+button { font: inherit; font-size: 15px; padding: 10px 20px; border: 0; border-radius: 3px; background: #E8743B; color: #0D1828; cursor: pointer; }
+</style>
+<script type="module" src="join.js"></script>
+</head>
+<body data-state="look">
+<div class="mark">tvpipe<span>.</span>party</div>
+<h1 id="title"><span class="dot"></span><span id="title-text">Joining the game…</span></h1>
+<p id="text"></p>
+<p id="more" hidden><a href="/join" id="type">Type a code</a></p>
+<button type="button" id="again" hidden>Try again</button>
+<noscript><p>This page needs JavaScript.</p></noscript>
+</body>
+</html>

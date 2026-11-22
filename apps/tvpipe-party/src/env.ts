@@ -33,6 +33,47 @@ export interface Fetcher {
   fetch(request: Request): Promise<Response>;
 }
 
+/** A WebSocket of the runtime (the server side of a `WebSocketPair`). */
+export interface WorkerWebSocket {
+  readonly readyState: number;
+  send(message: string): void;
+  close(code?: number, reason?: string): void;
+  /** Kept across hibernation; at most 2,048 bytes serialized. */
+  serializeAttachment(value: unknown): void;
+  deserializeAttachment(): unknown;
+}
+
+export interface DurableObjectStorage {
+  get<T = unknown>(key: string): Promise<T | undefined>;
+  put(key: string, value: unknown): Promise<void>;
+  delete(key: string): Promise<boolean>;
+  deleteAll(): Promise<void>;
+  getAlarm(): Promise<number | null>;
+  setAlarm(scheduledTime: number): Promise<void>;
+  deleteAlarm(): Promise<void>;
+}
+
+/** The `ctx` of a Durable Object, with the hibernation WebSocket API. */
+export interface DurableObjectState {
+  readonly storage: DurableObjectStorage;
+  acceptWebSocket(ws: WorkerWebSocket, tags?: string[]): void;
+  getWebSockets(tag?: string): WorkerWebSocket[];
+  setWebSocketAutoResponse(pair?: unknown): void;
+}
+
+export interface DurableObjectId {
+  toString(): string;
+}
+
+export interface DurableObjectStub {
+  fetch(request: Request): Promise<Response>;
+}
+
+export interface DurableObjectNamespace {
+  idFromName(name: string): DurableObjectId;
+  get(id: DurableObjectId): DurableObjectStub;
+}
+
 export interface Env {
   DB: D1Database;
   ASSETS: Fetcher;
@@ -42,4 +83,13 @@ export interface Env {
   CREATES: RateLimit;
   /** PUT/DELETE /api/links/CODE: 60 a minute per client. */
   UPDATES: RateLimit;
+  /** GET /api/rooms/CODE: 120 a minute per client (a party behind one IP loads /r/ in bursts). */
+  ROOM_LOOKUPS: RateLimit;
+  /** GET /api/turn: 60 a minute per client. */
+  TURNS: RateLimit;
+  /** The `Room` Durable Objects (room.ts), one per web room's code. */
+  ROOMS: DurableObjectNamespace;
+  /** Cloudflare Realtime TURN key (a secret; without it /api/turn is STUN only). */
+  TURN_KEY_ID?: string;
+  TURN_KEY_API_TOKEN?: string;
 }

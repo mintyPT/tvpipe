@@ -1,9 +1,11 @@
 name: tvpipe.party
 
 # Tests and deploys apps/tvpipe-party: the Cloudflare Worker behind
-# tvpipe.party (short join links, docs/short-links.md) together with the
-# website it serves (site/_out). Needs the repository secrets
-# CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
+# tvpipe.party (short join links, docs/short-links.md; web rooms,
+# docs/browser-party-design.md) together with the website it serves
+# (site/_out): the manual, and the games in the browser, built from
+# npm/party and games/* (apps/tvpipe-party/scripts/site.ts). Needs the
+# repository secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
 
 on:
   push:
@@ -11,6 +13,8 @@ on:
     paths:
       - "apps/tvpipe-party/**"
       - "site/**"
+      - "npm/party/**"
+      - "games/**"
       - "crates/tvpipe/src/browser/fonts/**"
       - ".github/workflows/tvpipe-party.yml"
   workflow_dispatch:
@@ -37,8 +41,13 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm test
-      - name: Build the website
-        run: python3 ../../site/build.py
+      - name: Install the library
+        run: npm ci
+        working-directory: npm/party
+      # The games' own `npm ci` runs in scripts/site.ts (each listed game
+      # without node_modules), after the library is built.
+      - name: Build the website and the games
+        run: npm run build:web
       - name: Deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

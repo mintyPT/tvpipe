@@ -1,9 +1,16 @@
 /**
- * tvpipe's standard launcher (docs/playshare-design.md §7): the TVs as
- * they are found, AirPlay PIN pairing, then the game's host page. A game
- * may bring its own launcher with the same API.
+ * tvpipe's standard launcher (docs/playshare-design.md §7): "Where should
+ * the game show?", then the game's host page. With tvpipe the answers are
+ * the TVs as they are found (AirPlay PIN pairing, TV sync, the
+ * resolution); on tvpipe.party (web mode, docs/browser-party-design.md,
+ * "The launcher") they are this device's screens, one of them. A game may
+ * bring its own launcher with the same API.
  */
 import { displayLag, Flasher, MAX_LAG_MS } from "../lib/flashsync.js";
+import { detectDevice, screenOptions } from "../lib/launcher-options.js";
+import { isWeb } from "../lib/mode.js";
+import { SCREEN_WINDOW } from "../lib/screens.js";
+import { writeWebSession } from "../lib/session.js";
 import { GAME_PICKER, PICKER_MESSAGE, Tvpipe, TV_DISPLAY_MS, TV_RENDER_MS, TVSYNC_PAGE, } from "../lib/tvpipe.js";
 const $ = (id) => document.getElementById(id);
 const KIND = {
@@ -404,6 +411,173 @@ async function cancelPicker() {
         answer(null);
     }
 }
+// ---------------------------------------------------------------------------
+// Web mode: this device's screens, one of them (docs/browser-party-design.md)
+/** The web launcher's answers for this device, the best first. */
+let options = [];
+/** The answer picked (`ScreenOption.id`). */
+let webChoice = null;
+const here = detectDevice(navigator, matchMedia("(pointer: coarse)").matches);
+function radio(name, checked, disabled = false) {
+    const r = document.createElement("input");
+    r.type = "radio";
+    r.name = "where";
+    r.checked = checked;
+    r.disabled = disabled;
+    r.setAttribute("aria-label", name);
+    return r;
+}
+function renderWeb() {
+    options = screenOptions(devices, here);
+    if (!options.some((o) => o.id === webChoice))
+        webChoice = options[0]?.id ?? null;
+    const rows = options.map((o) => {
+        const on = o.id === webChoice;
+        const li = el("li", `device radio${on ? " selected" : ""}`);
+        li.dataset["name"] = o.id;
+        const text = el("div", "grow");
+        text.append(el("div", "name", o.label), el("div", "meta", o.note));
+        if (on && o.steps) {
+            const ol = el("ol", "steps");
+            ol.append(...o.steps.map((s) => el("li", "", s)));
+            text.append(ol);
+        }
+        const end = el("div", "end");
+        end.append(el("span", "tag", o.tag));
+        li.append(radio(o.label, on), text, end);
+        li.onclick = () => {
+            if (starting)
+                return;
+            webChoice = o.id;
+            renderWeb();
+        };
+        return li;
+    });
+    // What only the app does: shown, greyed, with the way to it.
+    const off = el("li", "device radio off");
+    off.setAttribute("aria-disabled", "true");
+    const text = el("div", "grow");
+    text.append(el("div", "name", "Apple TV, Chromecast"), el("div", "meta", "Casting straight to a TV needs the tvpipe app on a computer."));
+    const end = el("div", "end");
+    const get = el("a", "tag link", "Needs the tvpipe app");
+    get.href = "/manual/install/";
+    get.target = "_top";
+    end.append(get);
+    off.append(radio("Apple TV, Chromecast", false, true), text, end);
+    $("devices").replaceChildren(...rows, off);
+    $("start").disabled = webChoice === null || starting !== null;
+    const st = $("state");
+    const [t, cls] = stopped ? [stopped, "bad"] : starting ? [starting, "on"] : !$("error").hidden ? ["Something failed", "bad"] : ["Pick one", "ok"];
+    st.textContent = t;
+    st.className = `state ${cls}`;
+}
+/**
+ * The picture's window (cable, second window), opened on the Start click:
+ * a page may open windows only then. The host page's cast takes it by its
+ * name; an open one stays as it is (`""` does not navigate it). For the
+ * cable, it moves to the other screen (the Window Management prompt
+ * comes on this click too).
+ */
+function openScreenWindow(cable) {
+    const w = window.open("", SCREEN_WINDOW, "popup,width=960,height=540");
+    if (!w)
+        return null;
+    try {
+        if (w.location.href === "about:blank") {
+            // Until the host page shows the TV page in it (`/_tvpipe/screen/`).
+            w.document.title = "tvpipe.party";
+            w.document.documentElement.style.cssText = "background:#000;color:#E8ECF2;font:18px system-ui,sans-serif;height:100%";
+            w.document.body.style.cssText = "margin:0;height:100%;display:grid;place-items:center";
+            w.document.body.textContent = "Starting the game…";
+        }
+    }
+    catch {
+        // Already the TV page of another origin: nothing to set.
+    }
+    const details = window.getScreenDetails;
+    if (cable && details) {
+        details.call(window).then((d) => {
+            const other = d.screens.find((s) => s !== d.currentScreen && !s.isPrimary) ?? d.screens.find((s) => s !== d.currentScreen);
+            if (!other)
+                return;
+            w.moveTo(other.availLeft, other.availTop);
+            w.resizeTo(other.availWidth, other.availHeight);
+        }, () => {
+            // Refused: the window stays here, to be dragged over.
+        });
+    }
+    return w;
+}
+function webStart() {
+    const o = options.find((x) => x.id === webChoice);
+    if (!o || starting)
+        return;
+    showError(null);
+    const win = o.device === "cable" || o.device === "window" ? openScreenWindow(o.device === "cable") : null;
+    starting = changing ? "Applying…" : "Starting…";
+    renderWeb();
+    tvpipe.select([o.device]).then(async (sel) => {
+        writeWebSession({ screen: o.device });
+        if (changing) {
+            starting = null;
+            answer(sel);
+            renderWeb();
+            return;
+        }
+        await tvpipe.watchDevices(false).catch(() => []);
+        // `?bots` (test players) came from the games list: on to the host page.
+        const host = new URL(info.pages.host, location.href);
+        if (new URLSearchParams(location.search).has("bots"))
+            host.searchParams.set("bots", "");
+        location.assign(host.href);
+    }, (err) => {
+        starting = null;
+        if (win && !changing)
+            win.close();
+        showError(err.message);
+        renderWeb();
+    });
+}
+async function webMain() {
+    $("searching").hidden = true;
+    $("more").hidden = false;
+    $("cast-tab").hidden = !here.chromium;
+    $("no-tv").hidden = !changing;
+    $("where").textContent = "tvpipe.party";
+    if (changing) {
+        $("title").textContent = "Where should the game show?";
+        $("message").textContent = "The game moves to the screen you pick; the phones stay in.";
+    }
+    else {
+        $("message").textContent = `Everyone plays ${info.title} on their own phone; pick the screen everyone looks at.`;
+        // The games list's app: offline page, Home Screen (/sw.js).
+        navigator.serviceWorker?.register("/sw.js").catch(() => { });
+    }
+    const chosen = await tvpipe.chosen().catch(() => ({ devices: [] }));
+    devices = await tvpipe.watchDevices(true);
+    const was = chosen.devices[0];
+    if (was)
+        webChoice = screenOptions(devices, here).find((o) => o.device === was)?.id ?? null;
+    tvpipe.on("devices", (list) => {
+        devices = list;
+        renderWeb();
+    });
+    tvpipe.on("close", () => {
+        stopped = "Stopped";
+        renderWeb();
+    });
+    renderWeb();
+    $("start").onclick = webStart;
+    $("other-game").hidden = changing;
+    $("other-game").onclick = () => location.assign("/play/");
+    if (changing) {
+        $("no-tv").onclick = () => answer(null);
+        addEventListener("keydown", (ev) => {
+            if (ev.key === "Escape")
+                answer(null);
+        });
+    }
+}
 /** The light/dark/system switch, shared with tvpipe's other pages. */
 function themes() {
     const buttons = document.querySelectorAll(".theme button");
@@ -430,6 +604,7 @@ async function main() {
         $("no-tv").textContent = "Cancel";
     }
     $("where").textContent = `tvpipe game · ${location.host}`;
+    const web = isWeb();
     try {
         tvpipe = await Tvpipe.connect();
     }
@@ -440,12 +615,26 @@ async function main() {
         showError(`${err.message}.`);
         return;
     }
-    info = await tvpipe.info();
-    document.title = `${info.title} · tvpipe`;
+    try {
+        info = await tvpipe.info();
+    }
+    catch (err) {
+        // tvpipe.party without a game in this tab: the games list first.
+        if (web && err.code === "no-game" && !changing) {
+            location.replace("/play/");
+            return;
+        }
+        stopped = "Not connected";
+        showError(`${err.message}.`);
+        return;
+    }
+    document.title = `${info.title} · ${web ? "tvpipe.party" : "tvpipe"}`;
     $("game").textContent = info.title;
     $("game").title = info.title;
     const { min, max } = info.players;
     $("players").textContent = min === max ? `${min}` : `${min}–${max}`;
+    if (web)
+        return webMain();
     if (!changing)
         $("message").textContent = `${info.title} shows on the TVs you pick. Everyone plays on their own phone.`;
     const chosen = await tvpipe.chosen();

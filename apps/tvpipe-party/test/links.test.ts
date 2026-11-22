@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { ALPHABET, hashSecret, isJoinUrl, newSecret, normalizeCode, randomCode } from "../src/links.ts";
+import {
+  ALPHABET,
+  hashSecret,
+  isJoinUrl,
+  newSecret,
+  normalizeCode,
+  randomCode,
+  webJoinUrl,
+  webLink,
+} from "../src/links.ts";
 
 const KEY = "AbCdEfGhIjKlMnOp_-12";
 
@@ -89,4 +98,41 @@ test("secrets", async () => {
   assert.notEqual(newSecret(), s);
   // Known answer: SHA-256("abc").
   assert.equal(await hashSecret("abc"), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+});
+
+test("web rooms' join links, on the service's own origin", () => {
+  const O = "https://tvpipe.party";
+  assert.deepEqual(webLink(`${O}/r/?r=BCDF#k=${KEY}`, O), { code: "BCDF", key: KEY });
+  assert.deepEqual(webLink(`http://localhost:8787/r/?r=ZZZZ#k=${"x".repeat(64)}`, "http://localhost:8787"), {
+    code: "ZZZZ",
+    key: "x".repeat(64),
+  });
+  assert.equal(webJoinUrl(O, "BCDF", KEY), `${O}/r/?r=BCDF#k=${KEY}`);
+  for (const url of [
+    `https://evil.com/r/?r=BCDF#k=${KEY}`,
+    `https://tvpipe.party.evil.com/r/?r=BCDF#k=${KEY}`,
+    `https://tvpipe.party:443/r/?r=BCDF#k=${KEY}`,
+    `http://tvpipe.party/r/?r=BCDF#k=${KEY}`,
+    `https://user@tvpipe.party/r/?r=BCDF#k=${KEY}`,
+    `https://tvpipe.party/r?r=BCDF#k=${KEY}`,
+    `https://tvpipe.party/?r=BCDF#k=${KEY}`,
+    `https://tvpipe.party/r//?r=BCDF#k=${KEY}`,
+    `https://tvpipe.party/r/?r=bcdf#k=${KEY}`,
+    `https://tvpipe.party/r/?r=ABCD#k=${KEY}`,
+    `https://tvpipe.party/r/?r=BCDFG#k=${KEY}`,
+    `https://tvpipe.party/r/?r=BCD#k=${KEY}`,
+    `https://tvpipe.party/r/?r=BCDF&x=1#k=${KEY}`,
+    `https://tvpipe.party/r/?r=BCDF#k=short`,
+    `https://tvpipe.party/r/?r=BCDF#k=${"x".repeat(65)}`,
+    `https://tvpipe.party/r/?r=BCDF#k=${KEY}&p=1`,
+    `https://tvpipe.party/r/?r=BCDF#k=${KEY}\n`,
+    `https://tvpipe.party/r/?r=BCDF`,
+    "",
+  ]) {
+    assert.equal(webLink(url, O), null, url);
+  }
+  assert.equal(webLink(42, O), null);
+  // A web link is no tunnel link and the other way round.
+  assert.equal(isJoinUrl(`${O}/r/?r=BCDF#k=${KEY}`), false);
+  assert.equal(webLink(`https://x.trycloudflare.com/?r=BCDF#k=${KEY}`, "https://x.trycloudflare.com"), null);
 });

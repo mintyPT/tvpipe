@@ -98,6 +98,9 @@ const STRINGS = {
         late: { wait: "join at the next round", open: "join anytime", closed: "not during a game" },
         on: "on",
         off: "off",
+        webOnTv: "Screen",
+        webChangeTv: "Change screen…",
+        webNoTv: "Other screens join at tvpipe.party/tv with the code.",
     },
     de: {
         onTv: "Am Fernseher",
@@ -150,6 +153,9 @@ const STRINGS = {
         late: { wait: "ab der nächsten Runde", open: "jederzeit", closed: "nicht während eines Spiels" },
         on: "an",
         off: "aus",
+        webOnTv: "Bildschirm",
+        webChangeTv: "Bildschirm wechseln…",
+        webNoTv: "Weitere Bildschirme kommen über tvpipe.party/tv und den Code dazu.",
     },
 };
 /** The page's own texts in `lang` (English for a language it does not speak). */
@@ -728,8 +734,10 @@ export class HostPage {
             if (e)
                 e.textContent = text;
         };
-        set("on-tv", t.onTv);
-        set("change-tv", t.changeTv);
+        // Web mode (tvpipe.party in the browser): screens, not TVs.
+        const web = this.tvpipe?.web === true;
+        set("on-tv", web ? t.webOnTv : t.onTv);
+        set("change-tv", web ? t.webChangeTv : t.changeTv);
         set("cast-again", t.tryAgain);
         set("player", t.openTv);
         set("players-title", t.players);
@@ -763,7 +771,7 @@ export class HostPage {
         url.textContent = link.replace(/^https?:\/\//, "");
         url.title = link;
         document.getElementById("link-note").textContent =
-            j.mode === "tunnel" ? t.scanQr : j.mode === "lan" ? t.lanOnly : party.info.tunnel.state === "starting" ? t.opening : t.localOnly;
+            j.mode === "tunnel" || j.mode === "web" ? t.scanQr : j.mode === "lan" ? t.lanOnly : party.info.tunnel.state === "starting" ? t.opening : t.localOnly;
     }
     async #copyLink() {
         const j = this.#run.party.joinInfo;
@@ -859,10 +867,10 @@ export class HostPage {
                 class: `tvh-tag ${ok ? "ok" : r.state === "failed" || r.state === "gave-up" ? "bad" : ""}`,
                 textContent: ok ? (s.state === "streaming" ? t.showing : t.connected) : r.error ? `${r.state}: ${r.error}` : r.state,
             });
-            return el("li", {}, el("span", { class: "tvh-who", textContent: r.name === "browser" ? t.browserTab : r.name }), tag);
+            return el("li", {}, el("span", { class: "tvh-who", textContent: r.title ?? (r.name === "browser" ? t.browserTab : r.name) }), tag);
         });
         if (rows.length === 0) {
-            rows.push(el("li", { class: "tvh-empty", textContent: none ? t.noTv : s.state === "starting" ? t.starting(s.to) : s.error ? t.tvFailed(s.error) : t.tvState(s.state) }));
+            rows.push(el("li", { class: "tvh-empty", textContent: none ? (this.tvpipe?.web ? t.webNoTv : t.noTv) : s.state === "starting" ? t.starting(s.to) : s.error ? t.tvFailed(s.error) : t.tvState(s.state) }));
         }
         document.getElementById("tvs").replaceChildren(...rows);
         document.getElementById("cast-again").hidden = none || !(s.state === "failed" || s.state === "stopped");

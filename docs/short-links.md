@@ -2,7 +2,9 @@
 
 Status: being built. The service is `apps/tvpipe-party/` (a Cloudflare
 Worker on the free plan, the domain `tvpipe.party`); tvpipe registers
-links from `crates/tvpipe/src/playshare/shortlink.rs`; the party library
+links from `crates/tvpipe/src/playshare/shortlink.rs`; the games in the
+browser register their web rooms' links in the same table
+(docs/browser-party-design.md, "Rooms and codes"); the party library
 puts the short link into `JoinInfo.short` and the frame page's link
 into `JoinInfo.url`. The frame page is `site/static/p.html` and
 `site/static/frame.js`.
@@ -70,6 +72,18 @@ https://ROUTE.ID.opentunnel.xyz/?r=ROOM#k=KEY
   `A-Za-z0-9_-`.
 - At most 300 characters.
 
+And a web room's join link (docs/browser-party-design.md):
+
+```
+ORIGIN/r/?r=CODE#k=KEY
+```
+
+- `ORIGIN`: the service's own, the request's (`https://tvpipe.party`;
+  `http://localhost:8787` under `wrangler dev`), exactly.
+- `CODE`: a code (four letters of the alphabet below, upper case); `KEY`
+  as above. Nothing else in the query or fragment; at most 300
+  characters.
+
 Anything else: `400 bad-url`.
 
 ### API (JSON; tvpipe calls it, browsers do not: no CORS)
@@ -78,8 +92,8 @@ Errors are `{"error": {"code": "…", "message": "…"}}`.
 
 | Request | Answer |
 |---|---|
-| `POST /api/links` `{"url": JOIN, "code": "BCDF"?}` | `201 {"code", "short", "url", "secret"}`. The proposed `code` (the party's room code) if it is valid and free, else a random free code. `400 bad-url`, `400 bad-request` (not JSON, no url), `429 rate-limited`, `503 no-code` (no free code after 32 tries). |
-| `PUT /api/links/CODE` `Authorization: Bearer SECRET`, body `{"url": JOIN}` or `{}` | `200 {"code", "short", "url"}`: `updated` is now, the url replaced when given. `404 not-found` when the code has no row or the secret does not match (it was given to someone else, or deleted): the caller registers again. `400 bad-url`. |
+| `POST /api/links` `{"url": JOIN, "code": "BCDF"?}` | `201 {"code", "short", "url", "secret"}`. The proposed `code` (the party's room code) if it is valid and free, else a random free code. A web room's link gets exactly its own code or `409 code-taken` (a `code` other than the link's: `400 bad-request`). `400 bad-url`, `400 bad-request` (not JSON, no url), `429 rate-limited`, `503 no-code` (no free code after 32 tries). |
+| `PUT /api/links/CODE` `Authorization: Bearer SECRET`, body `{"url": JOIN}` or `{}` | `200 {"code", "short", "url"}`: `updated` is now, the url replaced when given (a web room's link only under its own code). `404 not-found` when the code has no row or the secret does not match (it was given to someone else, or deleted): the caller registers again. `400 bad-url`. |
 | `DELETE /api/links/CODE` `Authorization: Bearer SECRET` | `204`, also when there was nothing to delete; a wrong secret deletes nothing (still `204`). |
 
 `short` is `https://tvpipe.party/CODE` (the request's origin). `secret`
@@ -90,7 +104,7 @@ Request bodies over 4 KiB: `413`.
 
 | Request | Answer |
 |---|---|
-| `GET /CODE` (4 letters, any case) | `302 Location: /p#…`, the frame page's link of the registered join link (below; the fragment included, browsers keep it), `Cache-Control: no-store`, `Referrer-Policy: no-referrer`. Unknown code: `404`, the join page with "No game with the code BCDF. Check the code on the TV.". |
+| `GET /CODE` (4 letters, any case) | `302 Location: /p#…`, the frame page's link of the registered join link (below; the fragment included, browsers keep it), or `/r/?r=CODE#k=KEY` for a web room, `Cache-Control: no-store`, `Referrer-Policy: no-referrer`. Unknown code: `404`, the join page with "No game with the code BCDF. Check the code on the TV.". |
 | `GET /join` | the join page: one field for the code, a button; a `GET` form to `/join` (no JavaScript needed). |
 | `GET /join?code=bcdf` | as `GET /BCDF`. Empty or malformed code: the join page with a message. |
 | `GET /p` | the frame page (a static file, `p.html`; the Worker does not run). |
@@ -157,7 +171,9 @@ binding (counted per location, which is enough):
   a minute (counting only misses would let a scanner tell live codes
   from the 302s once the misses are used up);
 - `POST /api/links`: 10 a minute;
-- `PUT`/`DELETE`: 60 a minute.
+- `PUT`/`DELETE`: 60 a minute;
+- web rooms (docs/browser-party-design.md): `GET /api/rooms/CODE` 120
+  a minute, `GET /api/turn` 60 a minute.
 
 ### Storage (D1)
 
@@ -189,7 +205,8 @@ Static files, the frame page among them, do not run the Worker. A game costs abo
 (`POST`, `DELETE`) plus one per 6 hours, plus one per person who types
 the code: tens of thousands of games a day within the free plan's
 100,000 requests. D1: a write per register, refresh and delete, a read
-per lookup.
+per lookup. Web rooms cost more (their signaling, the room's lookups:
+docs/browser-party-design.md, "Signaling").
 
 ## tvpipe
 

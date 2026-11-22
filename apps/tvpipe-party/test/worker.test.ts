@@ -348,3 +348,76 @@ test("everything else: static files, else the 404 page", async () => {
   assert.equal(res.status, 404);
   assert.equal(await res.text(), "");
 });
+
+const WEB = "https://tvpipe.party/r/?r=BCDF#k=AbCdEfGhIjKlMnOp_-12";
+const WEB_OTHER = "https://tvpipe.party/r/?r=GHJK#k=AbCdEfGhIjKlMnOp_-12";
+
+test("web rooms: POST takes exactly the link's code or 409", async () => {
+  const reg = await created({ url: WEB, code: "BCDF" });
+  assert.deepEqual({ code: reg.code, short: reg.short, url: reg.url }, { code: "BCDF", short: `${ORIGIN}/BCDF`, url: WEB });
+  // Taken (by a web room or a tunnel's link): 409, no random code.
+  let res = await create({ url: WEB });
+  assert.equal(res.status, 409);
+  assert.equal(await errorCode(res), "code-taken");
+  await created({ url: JOIN, code: "GHJK" });
+  res = await create({ url: WEB_OTHER, code: "ghjk" });
+  assert.equal(res.status, 409);
+  // The tunnel's link asking for a web room's code gets a random one.
+  assert.notEqual((await created({ url: JOIN, code: "BCDF" })).code, "BCDF");
+  // Stale: free again, as for tunnels' links.
+  const again = await created({ url: WEB }, T0 + STALE_MS + 1);
+  assert.equal(again.code, "BCDF");
+  assert.notEqual(again.secret, reg.secret);
+});
+
+test("web rooms: the code must be the link's; other origins are bad urls", async () => {
+  let res = await create({ url: WEB, code: "GHJK" });
+  assert.equal(res.status, 400);
+  assert.equal(await errorCode(res), "bad-request");
+  res = await create({ url: WEB, code: 7 });
+  assert.equal(res.status, 400);
+  res = await create({ url: "https://evil.com/r/?r=BCDF#k=AbCdEfGhIjKlMnOp_-12" });
+  assert.equal(await errorCode(res), "bad-url");
+  // Another origin's web link: bad here...
+  res = await create({ url: "http://localhost:8787/r/?r=BCDF#k=AbCdEfGhIjKlMnOp_-12" });
+  assert.equal(await errorCode(res), "bad-url");
+  // ...and good there.
+  res = await handle(
+    new Request("http://localhost:8787/api/links", {
+      method: "POST",
+      body: JSON.stringify({ url: "http://localhost:8787/r/?r=BCDF#k=AbCdEfGhIjKlMnOp_-12", code: "BCDF" }),
+    }),
+    env,
+    T0,
+  );
+  assert.equal(res.status, 201);
+  assert.equal(((await res.json()) as Created).short, "http://localhost:8787/BCDF");
+});
+
+test("web rooms: /CODE and /join?code= lead to /r/", async () => {
+  await created({ url: WEB });
+  for (const path of ["/BCDF", "/bcdf/", "/join?code=bcdf"]) {
+    const res = await handle(req("GET", path), env, T0);
+    assert.equal(res.status, 302, path);
+    assert.equal(res.headers.get("Location"), "/r/?r=BCDF#k=AbCdEfGhIjKlMnOp_-12");
+    assert.equal(res.headers.get("Cache-Control"), "no-store");
+  }
+});
+
+test("web rooms: PUT refreshes, DELETE frees; a url only under its own code", async () => {
+  const reg = await created({ url: WEB });
+  let res = await handle(req("PUT", "/api/links/BCDF", { body: "{}", secret: reg.secret }), env, T0 + 1);
+  assert.equal(res.status, 200);
+  assert.deepEqual(await res.json(), { code: "BCDF", short: `${ORIGIN}/BCDF`, url: WEB });
+  const WEB2 = "https://tvpipe.party/r/?r=BCDF#k=ZyXwVuTsRqPoNmLk_-34";
+  res = await handle(req("PUT", "/api/links/BCDF", { body: JSON.stringify({ url: WEB2 }), secret: reg.secret }), env, T0 + 2);
+  assert.equal(res.status, 200);
+  res = await handle(req("PUT", "/api/links/BCDF", { body: JSON.stringify({ url: WEB_OTHER }), secret: reg.secret }), env, T0 + 3);
+  assert.equal(res.status, 400);
+  assert.equal(await errorCode(res), "bad-url");
+  assert.equal((await handle(req("GET", "/BCDF"), env, T0)).headers.get("Location"), "/r/?r=BCDF#k=ZyXwVuTsRqPoNmLk_-34");
+  res = await handle(req("DELETE", "/api/links/BCDF", { secret: reg.secret }), env, T0 + 4);
+  assert.equal(res.status, 204);
+  assert.equal((await handle(req("GET", "/BCDF"), env, T0 + 5)).status, 404);
+  assert.equal((await created({ url: WEB })).code, "BCDF");
+});

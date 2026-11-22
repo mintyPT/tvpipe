@@ -12,7 +12,10 @@
  */
 
 import { announceToFrame } from "./frame.ts";
+import { localSocketFor, localUrl } from "./local.ts";
+import { isWeb } from "./mode.ts";
 import { RejoinBadge, type Corner, type RejoinBadgeOptions } from "./rejoin.ts";
+import { DataChannelSocket, joinUrl } from "./rtc-socket.ts";
 
 export { blockEmoji, hasEmoji, stripEmoji } from "./emoji.ts";
 
@@ -282,6 +285,7 @@ export class PartyClient {
     const h = new URLSearchParams(loc.hash.replace(/^#/, ""));
     const room = opts.room ?? h.get("r") ?? q.get("r") ?? "";
     const key = opts.key ?? h.get("k") ?? q.get("k") ?? undefined;
+    if (isWeb() && !opts.url) return PartyClient.#fromWebLocation(opts, loc, h, room, key);
     let url = opts.url ?? `${loc.protocol === "https:" ? "wss:" : "ws:"}//${loc.host}${SOCKET_PATH}`;
     // The game this page is of: tvpipe sends a page of an earlier game
     // on to its join link (docs/game-switching.md). The cookie, else the
@@ -295,6 +299,34 @@ export class PartyClient {
     const client = new PartyClient({ ...opts, url, room, key, role });
     // A rejoin link (`#…&p=TOKEN`, Party.rejoinLink): this phone is that
     // player now. The token goes to storage and out of the address bar.
+    const resume = h.get("p");
+    if (role === "player" && resume) {
+      client.#save({ resume });
+      h.delete("p");
+      try {
+        const rest = h.toString();
+        globalThis.history?.replaceState(globalThis.history.state, "", `${loc.pathname}${loc.search}${rest ? `#${rest}` : ""}`);
+      } catch {}
+    }
+    return client;
+  }
+
+  /**
+   * Web mode (docs/browser-party-design.md): a data channel through the
+   * room's signaling, or for the host's own screens (`role=screen`, or
+   * `local=1` in the fragment: the host page's preview) the local
+   * transport. Pages of a game (`/g/NAME/RELEASE/…`) say which game they
+   * are (`g=NAME/RELEASE`): the host sends an earlier game's page on.
+   */
+  static #fromWebLocation(opts: Partial<PartyClientOptions>, loc: Location, h: URLSearchParams, room: string, key: string | undefined): PartyClient {
+    const r = opts.role ?? h.get("role") ?? "player";
+    const role: Role = r === "screen" || r === "watch" ? r : "player";
+    const local = role === "screen" || h.get("local") === "1";
+    const game = /^\/g\/([^/]+\/[^/]+)\//.exec(loc.pathname)?.[1];
+    const url = local ? localUrl(loc.origin, room) : joinUrl(loc.origin, room, game ? `g=${game}` : "");
+    const WebSocket = opts.WebSocket ?? (local ? localSocketFor(room) : DataChannelSocket);
+    announceToFrame();
+    const client = new PartyClient({ ...opts, url, room, key, role, WebSocket });
     const resume = h.get("p");
     if (role === "player" && resume) {
       client.#save({ resume });
@@ -377,7 +409,7 @@ export class PartyClient {
     this.storage = opts.storage !== undefined ? opts.storage : safeStorage();
     this.session = opts.session !== undefined ? opts.session : safeStorage("sessionStorage");
     this.followGames = opts.followGames ?? true;
-    this.#WS = opts.WebSocket ?? (globalThis.WebSocket as unknown as WebSocketFactory);
+    this.#WS = opts.WebSocket ?? (isWeb() ? webSocketFor(this.url, this.room) : undefined) ?? (globalThis.WebSocket as unknown as WebSocketFactory);
     const doc = (globalThis as any).document as Document | undefined;
     if (this.role !== "player" && opts.rejoinBadge !== false && doc?.createElement) {
       const badge = new RejoinBadge(doc, { qrSvg, joinText }, opts.rejoinBadge || {});
@@ -470,7 +502,7 @@ export class PartyClient {
 
   /** The room goes on with another game: what goes along, and to the join link. */
   #nextGame(): void {
-    if (this.role !== "player") return;
+    if (this.role !== "player") return this.#nextGameScreen();
     const carried: Carried = {};
     const name = this.saved?.name ?? this.you?.["name"] ?? this.#name;
     if (typeof name === "string") carried.name = name;
@@ -491,7 +523,25 @@ export class PartyClient {
     const loc = (globalThis as any).location;
     if (!this.followGames || !loc || typeof loc.replace !== "function") return;
     const key = this.key ? `#k=${encodeURIComponent(this.key)}` : "";
-    loc.replace(`/?r=${encodeURIComponent(this.room)}${key}`);
+    // Web mode: the room's join link (`/r/`), which finds the next game.
+    loc.replace(`${isWeb() ? "/r/" : "/"}?r=${encodeURIComponent(this.room)}${key}`);
+  }
+
+  /**
+   * Web mode, a screen at the next game: in a frame (`/tv/`, the window
+   * page) the page around it is told (`{type: "tvpipe:next-game"}`) and
+   * asks again; a watcher on its own goes to `/tv/#r=CODE`.
+   */
+  #nextGameScreen(): void {
+    const g = globalThis as any;
+    if (!isWeb() || !this.followGames || !g.location) return;
+    if (g.window && g.window.parent !== g.window) {
+      try {
+        g.window.parent.postMessage({ type: NEXT_GAME_MESSAGE, room: this.room }, g.location.origin);
+      } catch {}
+      return;
+    }
+    if (this.role === "watch" && typeof g.location.replace === "function") g.location.replace(`/tv/#r=${encodeURIComponent(this.room)}`);
   }
 
   /** Events: `view`, `welcome`, `msg`, `status`, `bye`, `ack`, `tv` (the {@link tvDelay}). */
@@ -913,6 +963,20 @@ export class PartyClient {
       this.#ws?.close(4999, "dropped");
     } catch {}
   }
+}
+
+/** What a screen in a frame tells its parent at the next game (web mode). */
+export const NEXT_GAME_MESSAGE = "tvpipe:next-game";
+
+/**
+ * Web mode's socket for a client made with a URL but no `WebSocket`: a
+ * join URL (`…/api/rooms/CODE/join`) gets a data channel, anything else
+ * (bots in the host's tab, made with `/_tvpipe/ws`) the local transport.
+ */
+function webSocketFor(url: string, room: string): WebSocketFactory | undefined {
+  if (!(globalThis as any).BroadcastChannel && !(globalThis as any).RTCPeerConnection) return undefined;
+  if (/\/api\/rooms\/[^/]+\/join/.test(url)) return DataChannelSocket;
+  return localSocketFor(room);
 }
 
 /** A cookie of this page's origin, if any. */

@@ -30,13 +30,13 @@ export function webFiles(): Map<string, string> {
   // The launcher and the TV sync page sit beside lib/ when served:
   // `../x.js` is `../lib/x.js`.
   const page = (dir: string, js: string) =>
-    strip(readFileSync(join(dist, dir, js), "utf8")).replace(/from "\.\.\/([a-z]+\.js)"/g, 'from "../lib/$1"');
+    strip(readFileSync(join(dist, dir, js), "utf8")).replace(/from "\.\.\/([a-z-]+\.js)"/g, 'from "../lib/$1"');
   out.set("launcher/launcher.js", page("launcher", "launcher.js"));
   for (const f of ["index.html", "launcher.css"]) out.set(`launcher/${f}`, readFileSync(join(src, "launcher", f), "utf8"));
   out.set("tvsync/tvsync.js", page("tvsync", "tvsync.js"));
   out.set("tvsync/index.html", readFileSync(join(src, "tvsync", "index.html"), "utf8"));
-  // The game picker (docs/game-catalog.md): no imports.
-  out.set("picker/picker.js", strip(readFileSync(join(dist, "picker", "picker.js"), "utf8")));
+  // The game picker (docs/game-catalog.md): imports from lib/ (web mode).
+  out.set("picker/picker.js", page("picker", "picker.js"));
   for (const f of ["index.html", "picker.css"]) out.set(`picker/${f}`, readFileSync(join(src, "picker", f), "utf8"));
   // The phones' page before a game (docs/game-switching.md): no imports.
   out.set("wait/wait.js", strip(readFileSync(join(dist, "wait", "wait.js"), "utf8")));

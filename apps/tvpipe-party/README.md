@@ -1,7 +1,7 @@
 # tvpipe.party
 
 The service behind `tvpipe.party`: a Cloudflare Worker with a D1
-database, on the free plan. It does two things:
+database and Durable Objects, on the free plan. It does these things:
 
 - **Short join links.** tvpipe registers a game's tunnel join link
   (`https://….trycloudflare.com/?r=BCDF#k=…`) and gets
@@ -14,6 +14,15 @@ database, on the free plan. It does two things:
   tvpipe.party; the QR codes lead there. A static file of the site
   (`site/static/p.html`, `site/static/frame.js`), so it costs no Worker
   request.
+- **Web rooms.** The games in the browser
+  ([docs/browser-party-design.md](../../docs/browser-party-design.md))
+  register their join link `https://tvpipe.party/r/?r=CODE#k=KEY` in the
+  same table (exactly that code, or `409`), and their phones reach the
+  host page over WebRTC. The Worker does the signaling: a `Room` Durable
+  Object per code (`src/room.ts`, hibernating WebSockets) passes each
+  phone's offer to the host page and its answer back, and
+  `GET /api/turn` hands out STUN and Cloudflare TURN servers. No game
+  traffic passes through it.
 - **The website.** The static files of `site/_out` (built by
   `site/build.py`) are the Worker's assets.
 
@@ -27,26 +36,54 @@ asset-first routing; `/manual` → `/manual/` and the like are Cloudflare's
 | Path | |
 |---|---|
 | `POST /api/links`, `PUT`/`DELETE /api/links/CODE` | the API (JSON) |
-| `/CODE` (four letters of `BCDFGHJKLMNPQRSTVWXZ`, any case) | `302` to the frame page (`/p#…`), or the join page with "No game …" (`404`) |
+| `GET /api/rooms/CODE` | a web room: `{code, host, game}` (its object, `404 no-room`) |
+| `GET /api/rooms/CODE/host`, `/api/rooms/CODE/join?…` | WebSockets to the room's object: the host page, a phone or screen |
+| `GET /api/turn` | `{iceServers, ttl}` for WebRTC |
+| `/CODE` (four letters of `BCDFGHJKLMNPQRSTVWXZ`, any case) | `302` to the frame page (`/p#…`) or a web room's `/r/?r=CODE#k=KEY`, or the join page with "No game …" (`404`) |
 | `/join`, `/join?code=…` | the join page / as `/CODE` |
 | `/p` | a file (`p.html`): the frame page; the Worker does not run |
 | anything else | `404` page linking `/` and `/join` |
 
-Files: `src/links.ts` (validation, the frame page's link, codes, secrets, the SQL),
-`src/pages.ts` (the HTML), `src/app.ts` (the handler), `src/env.ts` (the
-few Cloudflare types it needs, declared by hand),
-`migrations/` (D1's schema). No runtime dependencies.
+Files: `src/links.ts` (validation, the frame page's link, web rooms'
+links, codes, secrets, the SQL), `src/pages.ts` (the HTML), `src/app.ts`
+(the handler), `src/room.ts` (the `Room` Durable Object: signaling),
+`src/turn.ts` (`/api/turn`), `src/worker.ts` (the entry point, exports
+`Room`), `src/env.ts` (the few Cloudflare types it needs, declared by
+hand), `migrations/` (D1's schema). No runtime dependencies.
 
 ## Local development
 
 ```sh
 npm install
-npm test          # node --test, D1 on node:sqlite (Node 22+)
+npm test          # node --test, D1 on node:sqlite, a fake Durable Object runtime (Node 22+)
 npm run check     # tsc
-npm run dev       # builds the site, migrates the local D1, wrangler dev
+npm run build:web # the site and the games in the browser into site/_out
+npm run dev       # build:web, migrates the local D1, wrangler dev
+npm run live      # (with dev running) a web room's signaling over real WebSockets
+node scripts/check-pages.ts   # (with dev running) the web pages in headless Chrome
 ```
 
-`wrangler dev` keeps its local D1 and rate limiters in `.wrangler/`. Try it:
+`build:web` is `python3 ../../site/build.py`, then `scripts/site.ts`:
+it builds `npm/party` (tsc) and every game of `site/static/games.json`
+(`npm ci` where `node_modules` is missing, `npm run build`) and adds
+the web pages to `site/_out`: the library at `/_tvpipe/lib/` (`WEB =
+true`) with the launcher and games list, `/play/`, `/r/`, `/tv/`,
+`/_tvpipe/screen/`, the games at `/g/NAME/RELEASE/` with
+`/g/index.json`, and the web app's files from `web/` (manifest, service
+worker, icons, offline page). `--no-build` reuses the last builds.
+`check-pages.ts` (BASE, default `http://localhost:8787`) opens each page
+and reports errors, screenshots in `/tmp/tvpipe-pages/`
+(docs/browser-party-design.md, "Pages on tvpipe.party").
+
+`wrangler dev` keeps its local D1, Durable Objects and rate limiters in
+`.wrangler/`. It runs with `--local-upstream localhost:8787`: otherwise
+the Worker would see `http://tvpipe.party` (the custom domain) as its
+origin, and web rooms' links, which must be on the Worker's own origin,
+would not register. Open pages at `http://localhost:8787` (not
+`127.0.0.1`). `node test/live-signaling.ts BASE --slow` also waits for
+the 15 s answer timeout. Without TURN secrets `/api/turn` is STUN only;
+to try them locally put `TURN_KEY_ID=…` and `TURN_KEY_API_TOKEN=…` into
+`.dev.vars` (git-ignored). Try it:
 
 ```sh
 curl -X POST localhost:8787/api/links \
@@ -76,17 +113,22 @@ tvpipe talks to another instance with `TVPIPE_PARTY_URL=http://127.0.0.1:8787`.
    is in EEUR).
 3. The zone `tvpipe.party` must be on the same account; `wrangler deploy`
    attaches the Worker to it as a custom domain.
-4. In GitHub, the repository secrets `CLOUDFLARE_API_TOKEN` and
+4. Optional, for TURN (phones that cannot reach the host page directly):
+   a TURN key in the Cloudflare dashboard (Realtime → TURN), then
+   `npx wrangler secret put TURN_KEY_ID --env-file ../../.env` and the same
+   for `TURN_KEY_API_TOKEN`. Without them `/api/turn` gives public STUN
+   only.
+5. In GitHub, the repository secrets `CLOUDFLARE_API_TOKEN` and
    `CLOUDFLARE_ACCOUNT_ID` for `.github/workflows/tvpipe-party.yml`.
 
 ## Deploying
 
-Pushes to `main` that touch `apps/tvpipe-party/`, `site/` or the fonts
-deploy through `.github/workflows/tvpipe-party.yml` (tests, the site's
-build, D1 migrations, `wrangler deploy`). By hand:
+Pushes to `main` that touch `apps/tvpipe-party/`, `site/`, `npm/party/`,
+`games/` or the fonts deploy through `.github/workflows/tvpipe-party.yml`
+(tests, `npm run build:web`, D1 migrations, `wrangler deploy`). By hand:
 
 ```sh
-npm run deploy    # site build, d1 migrations apply --remote, wrangler deploy
+npm run deploy    # build:web, d1 migrations apply --remote, wrangler deploy
 ```
 
 ## Limits and cost
@@ -94,7 +136,11 @@ npm run deploy    # site build, d1 migrations apply --remote, wrangler deploy
 Per client IP, with Cloudflare's `ratelimit` binding (counted per
 location): 20 code lookups a minute (`/CODE`, `/join?code=`; hits count
 too, so a scanner cannot tell live codes from dead ones), 10 registrations,
-60 refreshes/deletes. Request bodies are at most 4 KiB.
+60 refreshes/deletes, 120 web room lookups (`GET /api/rooms/CODE`: a
+party behind one address loads `/r/` in bursts), 60 `/api/turn`. Request
+bodies are at most 4 KiB. The `Room` object limits offers (30 a minute
+per address, 5 a second per room with a burst of 30), messages (16 KiB)
+and open joins (144 per room).
 
 Static files (the frame page too) do not run the Worker. A game costs about 2 Worker requests
 (register, delete) plus one per 6 hours of refreshes, plus one per person
@@ -102,3 +148,16 @@ who types the code: tens of thousands of games a day fit the free plan's
 100,000 requests. D1: a write per register, refresh and delete, a read
 per lookup; rows of crashed runs stay until their code is reused (at most
 160,000 rows, 20⁴).
+
+Web rooms: a game in the browser costs about 4 Worker requests (register,
+a refresh per 6 hours, delete, `/api/turn`), the host's socket (a Worker
+and an object request, reconnects after a reload or a game switch), and
+per phone joining: `/r/`'s `GET /api/rooms/CODE` (a Worker request, a D1
+read, an object request), `/api/turn` and the join socket (a Worker
+request, an object request, about one alarm and a row write or two). A
+party of 8 for an evening with a few game switches: some 100 requests
+of each kind, so on the order of a thousand parties a day fit the free
+plan (100,000 Worker and 100,000 Durable Object requests). Idle rooms
+hibernate: pings are answered without waking them. TURN is billed by
+Cloudflare by traffic (1,000 GB a month free) and used only by phones
+that cannot connect directly.

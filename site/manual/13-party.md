@@ -19,6 +19,8 @@ $ tvpipe game play my-game.zip         # or a zip of one
 $ tvpipe game play my-games            # a folder of games: pick one in the window
 ```
 
+The games of the list also run without tvpipe, in a browser on a laptop or an iPad: [Playing in the browser](in-the-browser.md).
+
 Without a game, the window opens on the [list of games](game-list.md), with pictures of each. Click one: tvpipe downloads it, asks in the window before it runs a game the first time, and moves on to picking the TVs. A field below the list takes a game from elsewhere (`https://…` or `gh:OWNER/REPO`).
 
 A folder of games (folders with `tvpipe.json`, or zips), or several paths, come first in the list, under "On this computer"; the online list follows.

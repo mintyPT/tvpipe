@@ -1,10 +1,24 @@
 // The tvpipe.party request handler (docs/short-links.md). Static files of
 // the website are served by Cloudflare before the Worker runs; it sees only
-// what is not a file: the API, /CODE, /join and the 404 page.
+// what is not a file: the API, /CODE, /join and the 404 page. Web rooms'
+// signaling is in room.ts (docs/browser-party-design.md).
 
 import type { Env, RateLimit } from "./env.ts";
-import { framePath, isJoinUrl, lookup, normalizeCode, refresh, register, remove } from "./links.ts";
+import {
+  framePath,
+  isJoinUrl,
+  lookup,
+  lookupRow,
+  normalizeCode,
+  refresh,
+  register,
+  registerExactly,
+  remove,
+  webLink,
+} from "./links.ts";
 import { joinPage, notFoundPage } from "./pages.ts";
+import { MAX_QUERY, OWNER_HEADER, type RoomState } from "./room.ts";
+import { iceConfig } from "./turn.ts";
 
 /** Request bodies over this many bytes: 413. */
 export const MAX_BODY = 4096;
@@ -12,6 +26,7 @@ export const MAX_BODY = 4096;
 // Only letters of the code alphabet: /join, /nope and the like are not codes.
 const CODE_PATH = /^\/([BCDFGHJKLMNPQRSTVWXZ]{4})\/?$/i;
 const API_CODE_PATH = /^\/api\/links\/([^/]*)$/;
+const API_ROOM_PATH = /^\/api\/rooms\/([^/]*)(?:\/(host|join))?$/;
 
 class HttpError extends Error {
   status: number;
@@ -122,10 +137,22 @@ async function createLink(request: Request, env: Env, now: number): Promise<Resp
   }
   const body = await readJsonObject(request, false);
   if (body.url === undefined) throw new HttpError(400, "bad-request", "The body has no url.");
-  if (!isJoinUrl(body.url)) throw BAD_URL;
-  const reg = await register(env.DB, body.url, body.code, now);
-  if (!reg) return apiError(503, "no-code", "No free code was found; try again.");
   const origin = new URL(request.url).origin;
+  const web = webLink(body.url, origin);
+  let reg;
+  if (web !== null) {
+    // A web room's link names its code: exactly that one, or the page
+    // tries another code.
+    if (body.code !== undefined && normalizeCode(body.code) !== web.code) {
+      throw new HttpError(400, "bad-request", "The code must be the link's.");
+    }
+    reg = await registerExactly(env.DB, body.url as string, web.code, now);
+    if (!reg) return apiError(409, "code-taken", "The code is taken; try another.");
+  } else {
+    if (!isJoinUrl(body.url)) throw BAD_URL;
+    reg = await register(env.DB, body.url, body.code, now);
+    if (!reg) return apiError(503, "no-code", "No free code was found; try again.");
+  }
   return json(201, { code: reg.code, short: `${origin}/${reg.code}`, url: reg.url, secret: reg.secret });
 }
 
@@ -135,17 +162,19 @@ async function updateLink(request: Request, env: Env, rawCode: string, now: numb
   }
   const notFound = new HttpError(404, "not-found", "No such link (or a different secret); register again.");
   const body = await readJsonObject(request, true);
+  const code = normalizeCode(rawCode);
+  const origin = new URL(request.url).origin;
   let url: string | null = null;
   if (body.url !== undefined) {
-    if (!isJoinUrl(body.url)) throw BAD_URL;
-    url = body.url;
+    // A web room's link only under its own code.
+    const web = webLink(body.url, origin);
+    if (web !== null ? web.code !== code : !isJoinUrl(body.url)) throw BAD_URL;
+    url = body.url as string;
   }
-  const code = normalizeCode(rawCode);
   const secret = bearer(request);
   if (code === null || secret === null) throw notFound;
   const current = await refresh(env.DB, code, secret, url, now);
   if (current === null) throw notFound;
-  const origin = new URL(request.url).origin;
   return json(200, { code, short: `${origin}/${code}`, url: current });
 }
 
@@ -162,7 +191,8 @@ async function deleteLink(request: Request, env: Env, rawCode: string): Promise<
 
 /**
  * GET /CODE and /join?code=: the redirect to the frame page (`/p#…`, the
- * game inside a page of tvpipe.party), or the join page saying why not.
+ * game inside a page of tvpipe.party) or, for a web room, to its join
+ * link (`/r/?r=CODE#k=KEY`); else the join page saying why not.
  */
 async function joinCode(request: Request, env: Env, input: string): Promise<Response> {
   const shown = input.toUpperCase();
@@ -181,9 +211,10 @@ async function joinCode(request: Request, env: Env, input: string): Promise<Resp
   if (url === null) {
     return html(request, 404, joinPage(`No game with the code ${code}. Check the code on the TV.`, code));
   }
-  // Rows are join links (isJoinUrl), so there is always a frame page;
-  // the join link itself would do too.
-  const location = framePath(url) ?? url;
+  // Rows are tunnel join links (isJoinUrl), with a frame page, or web
+  // rooms' links; the link itself would do too.
+  const web = webLink(url, new URL(request.url).origin);
+  const location = web !== null ? `/r/?r=${web.code}#k=${web.key}` : (framePath(url) ?? url);
   return new Response(null, {
     status: 302,
     headers: { Location: location, "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" },
@@ -199,6 +230,50 @@ async function joinForm(request: Request, env: Env, url: URL): Promise<Response>
     return html(request, 400, joinPage("A code is four letters, like BCDF. Check the code on the TV.", input.slice(0, 8)));
   }
   return joinCode(request, env, input);
+}
+
+const NO_ROOM = new HttpError(404, "no-room", "No room with this code.");
+
+/** GET /api/rooms/CODE: `{code, host, game}` of a web room. */
+async function roomState(request: Request, env: Env, rawCode: string): Promise<Response> {
+  const code = normalizeCode(rawCode);
+  if (code === null) throw NO_ROOM;
+  // Hits count too (as for /CODE): a scanner learns nothing from 429s.
+  if (!(await allowed(env.ROOM_LOOKUPS, request))) {
+    return apiError(429, "rate-limited", "Too many requests; wait a minute.", { "Retry-After": "60" });
+  }
+  const row = await lookupRow(env.DB, code);
+  const origin = new URL(request.url).origin;
+  if (row === null || webLink(row.url, origin)?.code !== code) throw NO_ROOM;
+  const stub = env.ROOMS.get(env.ROOMS.idFromName(code));
+  const res = await stub.fetch(
+    new Request(`${origin}/api/rooms/${code}`, { headers: { [OWNER_HEADER]: row.secret } }),
+  );
+  if (!res.ok) throw new HttpError(503, "unavailable", "The room did not answer; try again.");
+  const state = (await res.json()) as RoomState;
+  return json(200, { code, host: state.host, game: state.game });
+}
+
+/** The host's and joins' WebSockets: to the room's object. */
+async function roomSocket(request: Request, env: Env, rawCode: string, url: URL): Promise<Response> {
+  const code = normalizeCode(rawCode);
+  if (code === null) throw NO_ROOM;
+  if ((request.headers.get("Upgrade") ?? "").toLowerCase() !== "websocket") {
+    return apiError(426, "upgrade-required", "This is a WebSocket.", { Upgrade: "websocket" });
+  }
+  if (url.search.length > MAX_QUERY + 1) throw new HttpError(414, "too-long", "The query is too long.");
+  // The object reads the code from the path: upper case.
+  const forward = new URL(url);
+  forward.pathname = forward.pathname.replace(/\/api\/rooms\/[^/]*/, `/api/rooms/${code}`);
+  const stub = env.ROOMS.get(env.ROOMS.idFromName(code));
+  return stub.fetch(new Request(forward.toString(), request));
+}
+
+async function turn(request: Request, env: Env, now: number): Promise<Response> {
+  if (!(await allowed(env.TURNS, request))) {
+    return apiError(429, "rate-limited", "Too many requests; wait a minute.", { "Retry-After": "60" });
+  }
+  return json(200, await iceConfig(env, now));
 }
 
 async function fallback(request: Request, env: Env): Promise<Response> {
@@ -227,6 +302,17 @@ export async function handle(request: Request, env: Env, now: number = Date.now(
       if (method === "PUT") return await updateLink(request, env, decodeURIComponent(api[1]!), now);
       if (method === "DELETE") return await deleteLink(request, env, decodeURIComponent(api[1]!));
       return methodNotAllowed("PUT, DELETE", true);
+    }
+    const room = API_ROOM_PATH.exec(path);
+    if (room) {
+      if (method !== "GET") return methodNotAllowed("GET", true);
+      const rawCode = decodeURIComponent(room[1]!);
+      if (room[2] === undefined) return await roomState(request, env, rawCode);
+      return await roomSocket(request, env, rawCode, url);
+    }
+    if (path === "/api/turn") {
+      if (method !== "GET") return methodNotAllowed("GET", true);
+      return await turn(request, env, now);
     }
     if (path.startsWith("/api/")) return apiError(404, "not-found", "No such API.");
     if (path === "/join" || path === "/join/") {

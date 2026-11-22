@@ -15,7 +15,9 @@ import { Party } from "./party.js";
 import { showPairDialog } from "./pair-dialog.js";
 import { frameLink } from "./frame.js";
 import { showRejoinDialog } from "./rejoin-dialog.js";
+import { isWeb } from "./mode.js";
 import { TvpipeRelay } from "./relay.js";
+import { WebHub } from "./webhub.js";
 import { captureAudio, SurfaceEncoder } from "./surface.js";
 /**
  * What a TV adds to its receiver's playout delay, ms: its own picture
@@ -65,36 +67,16 @@ export const PICKER_MESSAGE = "tvpipe:cast-picker";
 export const GAME_PICKER = "/_tvpipe/picker/";
 /** The message the games list in a dialog sends its parent page (`{type, done}`). */
 export const GAME_PICKER_MESSAGE = "tvpipe:game-picker";
-export class Tvpipe extends Emitter {
-    /** Connects to tvpipe's API. */
-    static connect(opts = {}) {
-        let url = opts.url;
-        if (!url) {
-            const loc = globalThis.location;
-            url = `${loc.protocol === "https:" ? "wss:" : "ws:"}//${loc.host}/_tvpipe/api`;
-        }
-        if (opts.token)
-            url += `${url.includes("?") ? "&" : "?"}t=${encodeURIComponent(opts.token)}`;
-        const WS = opts.WebSocket ?? globalThis.WebSocket;
-        const ws = new WS(url);
-        ws.binaryType = "arraybuffer";
-        return new Promise((resolve, reject) => {
-            ws.onopen = () => resolve(new Tvpipe(ws));
-            ws.onerror = () => reject(new TvpipeError("connect", `cannot reach tvpipe at ${url.replace(/t=[^&]*/, "t=…")}`));
-        });
-    }
+/** tvpipe's API socket (docs/playshare-design.md §5). */
+class SocketTransport {
     #ws;
     #n = 0;
     #calls = new Map();
     #relay;
-    #closed = false;
-    /**
-     * Whether a top-level page goes to the next game's page by itself when
-     * another game is picked (the `game` event). Default `true`.
-     */
-    followGames = true;
+    closed = false;
+    onevent;
+    onclose;
     constructor(ws) {
-        super();
         this.#ws = ws;
         ws.onerror = null;
         ws.onmessage = (ev) => {
@@ -104,17 +86,14 @@ export class Tvpipe extends Emitter {
                 this.#relay?.handleBinary(new Uint8Array(ev.data));
         };
         ws.onclose = () => {
-            this.#closed = true;
+            this.closed = true;
             const err = new TvpipeError("closed", "the connection to tvpipe closed");
             for (const w of this.#calls.values())
                 w.reject(err);
             this.#calls.clear();
             this.#relay?.handleDetach();
-            this.emit("close");
+            this.onclose?.();
         };
-    }
-    get closed() {
-        return this.#closed;
     }
     #onText(text) {
         let msg;
@@ -138,37 +117,103 @@ export class Tvpipe extends Emitter {
             return;
         }
         if (msg["t"] === "event") {
-            const data = msg["data"];
-            switch (msg["type"]) {
-                case "devices":
-                    this.emit("devices", Array.isArray(data) ? data : []);
-                    return;
-                case "pair":
-                    this.emit("pair", data);
-                    return;
-                case "cast":
-                    this.emit("cast", data);
-                    return;
-                case "tunnel":
-                    this.emit("tunnel", data);
-                    return;
-                case "closing":
-                    this.#relay?.onclosing?.();
-                    this.emit("closing");
-                    return;
-                case "detached":
-                    this.emit("detached");
-                    return;
-                case "surface":
-                    this.emit("surface", data);
-                    return;
-                case "game":
-                    this.#nextGame(data);
-                    return;
-            }
+            if (msg["type"] === "closing")
+                this.#relay?.onclosing?.();
+            this.onevent?.(String(msg["type"]), msg["data"]);
             return;
         }
         this.#relay?.handleControl(msg);
+    }
+    call(method, params) {
+        if (this.closed)
+            return Promise.reject(new TvpipeError("closed", "the connection to tvpipe closed"));
+        const n = ++this.#n;
+        return new Promise((resolve, reject) => {
+            this.#calls.set(n, { resolve, reject });
+            this.#ws.send(JSON.stringify({ t: "call", n, method, params }));
+        });
+    }
+    async relay() {
+        const r = await this.call("relay.attach", {});
+        const ws = this.#ws;
+        this.#relay = new TvpipeRelay({
+            sendText: (t) => ws.send(t),
+            sendBinary: (d) => ws.send(d),
+        }, r.public);
+        return this.#relay;
+    }
+    close() {
+        this.#ws.close();
+    }
+}
+export class Tvpipe extends Emitter {
+    /** Connects to tvpipe's API. */
+    static connect(opts = {}) {
+        // tvpipe.party's build: answered in the page (docs/browser-party-design.md).
+        if (isWeb() && !opts.url)
+            return Promise.resolve(new Tvpipe(new WebHub()));
+        let url = opts.url;
+        if (!url) {
+            const loc = globalThis.location;
+            url = `${loc.protocol === "https:" ? "wss:" : "ws:"}//${loc.host}/_tvpipe/api`;
+        }
+        if (opts.token)
+            url += `${url.includes("?") ? "&" : "?"}t=${encodeURIComponent(opts.token)}`;
+        const WS = opts.WebSocket ?? globalThis.WebSocket;
+        const ws = new WS(url);
+        ws.binaryType = "arraybuffer";
+        return new Promise((resolve, reject) => {
+            ws.onopen = () => resolve(new Tvpipe(new SocketTransport(ws)));
+            ws.onerror = () => reject(new TvpipeError("connect", `cannot reach tvpipe at ${url.replace(/t=[^&]*/, "t=…")}`));
+        });
+    }
+    #transport;
+    /**
+     * Whether a top-level page goes to the next game's page by itself when
+     * another game is picked (the `game` event). Default `true`.
+     */
+    followGames = true;
+    /** A `Tvpipe` on another transport (`connect()` makes the usual ones). */
+    constructor(transport) {
+        super();
+        this.#transport = transport;
+        transport.onevent = (type, data) => this.#event(type, data);
+        transport.onclose = () => this.emit("close");
+    }
+    /** Whether this is web mode's (answered in the page, docs/browser-party-design.md). */
+    get web() {
+        return this.#transport instanceof WebHub;
+    }
+    get closed() {
+        return this.#transport.closed;
+    }
+    #event(type, data) {
+        switch (type) {
+            case "devices":
+                this.emit("devices", Array.isArray(data) ? data : []);
+                return;
+            case "pair":
+                this.emit("pair", data);
+                return;
+            case "cast":
+                this.emit("cast", data);
+                return;
+            case "tunnel":
+                this.emit("tunnel", data);
+                return;
+            case "closing":
+                this.emit("closing");
+                return;
+            case "detached":
+                this.emit("detached");
+                return;
+            case "surface":
+                this.emit("surface", data);
+                return;
+            case "game":
+                this.#nextGame(data);
+                return;
+        }
     }
     #nextGame(next) {
         this.emit("game", next);
@@ -182,13 +227,7 @@ export class Tvpipe extends Emitter {
     }
     /** Calls an API method (docs/playshare-design.md §5). */
     call(method, params = {}) {
-        if (this.#closed)
-            return Promise.reject(new TvpipeError("closed", "the connection to tvpipe closed"));
-        const n = ++this.#n;
-        return new Promise((resolve, reject) => {
-            this.#calls.set(n, { resolve, reject });
-            this.#ws.send(JSON.stringify({ t: "call", n, method, params }));
-        });
+        return this.#transport.call(method, params);
     }
     info() {
         return this.call("info");
@@ -342,6 +381,12 @@ export class Tvpipe extends Emitter {
                 const d = ev.data;
                 if (d?.type !== GAME_PICKER_MESSAGE)
                     return;
+                // Web mode: the list names the game and this page switches (no tvpipe to do it).
+                const game = d.game;
+                const switchGame = this.#transport.switchGame;
+                if (d.picked === true && switchGame && typeof game?.name === "string" && typeof game.release === "string") {
+                    void switchGame.call(this.#transport, { name: game.name, release: game.release }).catch((err) => console.error(err));
+                }
                 done(d.picked === true);
             };
             addEventListener("message", onMessage);
@@ -411,27 +456,22 @@ export class Tvpipe extends Emitter {
     async quit() {
         await this.call("quit").catch(() => { });
     }
-    /** Becomes the relay's host: phones' connections come here. */
-    async relay() {
-        const r = await this.call("relay.attach");
-        const ws = this.#ws;
-        this.#relay = new TvpipeRelay({
-            sendText: (t) => ws.send(t),
-            sendBinary: (d) => ws.send(d),
-        }, r.public);
-        return this.#relay;
+    /** Becomes the relay's host: phones' connections come here (tvpipe's relay, or web mode's `WebRtcRelay`). */
+    relay() {
+        return this.#transport.relay();
     }
     /** The host: a party on the relay, its links and QR code, casting. */
     async party(options = {}) {
         const info = await this.info();
         const relay = await this.relay();
         const party = new HostedParty(this, info, relay, options);
+        this.#transport.hosted?.(party);
         await party.refreshJoin();
         return party;
     }
     /** Closes the API socket (tvpipe ends after a while without a page). */
     close() {
-        this.#ws.close();
+        this.#transport.close();
     }
 }
 /** The error code of a receiver that needs pairing first (AirPlay with a PIN). */
@@ -470,7 +510,8 @@ export class HostedParty extends Party {
         this.links = {
             join: this.#phoneLinks().join,
             tv,
-            watch: `${info.local}${info.pages.tv}#r=${this.code}&k=${this.watchKey}&role=watch`,
+            // Web mode: the host page's preview over the local transport (`local=1`).
+            watch: `${info.local}${info.pages.tv}#r=${this.code}&k=${this.watchKey}&role=watch${info.phone.mode === "web" ? "&local=1" : ""}`,
         };
         tvpipe.on("tunnel", (t) => {
             if (t.state === "up" && t.url) {
@@ -533,9 +574,10 @@ export class HostedParty extends Party {
         // The short link of the same link stays while it is asked for again.
         const keep = this.joinInfo.url === join ? this.joinInfo.short : undefined;
         this.joinInfo = { code: this.code, url: join, qr, mode, ...(keep ? { short: keep } : {}) };
-        if (mode !== "tunnel")
+        if (mode !== "tunnel" && mode !== "web")
             return;
-        // tvpipe registers its own link (the service redirects to the frame page).
+        // tvpipe registers its own link (the service redirects to the frame page);
+        // web mode's room has its registered one.
         void this.tvpipe.shortLink(direct, this.code).then((r) => {
             if (n === this.#refreshes && r.url !== this.joinInfo.short)
                 this.joinInfo = { ...this.joinInfo, short: r.url };

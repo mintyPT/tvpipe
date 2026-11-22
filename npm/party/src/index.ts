@@ -59,6 +59,7 @@ export {
   type Selection,
   type TunnelInfo,
   type TvpipeEvents,
+  type TvpipeTransport,
 } from "./tvpipe.ts";
 export { TvpipeRelay, frame, OP_TEXT, OP_BINARY, type Relay, type RelayConn, type Via } from "./relay.ts";
 export { Emitter } from "./emitter.ts";
@@ -89,6 +90,7 @@ export { TokenBucket, WindowCounter } from "./limits.ts";
 export {
   PartyClient,
   PartyActionError,
+  NEXT_GAME_MESSAGE,
   memoryStorage,
   CARRY_LIMIT,
   qrSvg,
@@ -104,6 +106,17 @@ export {
   type WebSocketFactory,
   type WebSocketLike,
 } from "./client.ts";
+// Web mode: tvpipe.party in the browser (docs/browser-party-design.md).
+export { WEB, isWeb, setWebMode } from "./mode.ts";
+export { readWebSession, writeWebSession, clearWebSession, SESSION_KEY, type WebSession } from "./session.ts";
+export { encodeQr, type QrSymbol } from "./qr.ts";
+export { WebHub, loadWebGames, webDevices, browserName, type WebGame, type WebGames, type WebHubOptions } from "./webhub.ts";
+export { WebRtcRelay, type HostSignaling, type ScreenRequest, type WebRtcRelayOptions } from "./rtc-relay.ts";
+export { DataChannelSocket, dataChannelSocket, joinUrl, requestScreen } from "./rtc-socket.ts";
+export { HostSignal, joinSignal, SignalError, type HostState, type Offer, type RoomGame } from "./signaling.ts";
+export { LocalHost, LocalSocket, localSocketFor, localUrl, LOCAL_CHANNEL } from "./local.ts";
+export { ScreenCaster, screenWindowUrl, screenTitle, keepAwake, SCREEN_WINDOW, SCREEN_CHANNEL, SCREEN_PAGE, type ScreenKind } from "./screens.ts";
+export { iceServers, setWebDeps, webDeps, PUBLIC_STUN, type WebDeps } from "./rtc.ts";
 export { memoryRelay, MemoryRelay, dropOuts, type DropKind, type DropOutOptions, type DropOuts } from "./testing.ts";
 export {
   SurfaceEncoder,
