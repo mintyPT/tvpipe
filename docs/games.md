@@ -579,7 +579,7 @@ tvpipe cannot run, and takes the newest.
 
 **The games list** (`site/static/games.json`, served at
 `https://tvpipe.party/games.json`, rendered with its pictures on
-`https://tvpipe.party/games/` and in `tvpipe game play`'s window without a
+`https://tvpipe.party/games/` (and `/games/NAME/` per game) and in `tvpipe game play`'s window without a
 game) maps names to sources: `{"v": 1, "games": [{"name", "title",
 "summary", "players": {"min", "max"}, "languages", "source", "home",
 "screenshots"}]}`. `screenshots` is a list of `{"src", "alt", "kind"}`, at

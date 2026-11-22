@@ -11,7 +11,7 @@ python3 -m http.server -d site/_out    # look at it
 | Path | |
 |---|---|
 | `index.md` | the landing page |
-| `games.md` | the games page's heading and intro (`games/index.html`); the games come from `static/games.json` |
+| `games.md` | the games page's heading and intro (`games/index.html`); the games come from `static/games.json`, and each also gets a page of its own (`games/NAME/index.html`) |
 | `manual/NN-slug.md` | one manual section per file, numbered by its prefix, built to `manual/slug/index.html` |
 | `templates/layout.html` | the page shell: header, logo symbol, scripts |
 | `static/` | `style.css`, `site.js` (theme switch, navigation without reloads, CRT figure), the logo |

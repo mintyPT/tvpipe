@@ -8,16 +8,17 @@ depends on the list's shape.
 
 - **The list** (`site/static/games.json`, served at
   `https://tvpipe.party/games.json`) has all of this repository's games
-  (Drawbluff, Jinx, Garble, and since then Krakel, Shifty and Landgrab) and screenshots for
-  each.
+  (Drawbluff, Jinx, Garble, and since then Krakel, Shifty, Landgrab,
+  Crosstalk, Snug and Busted) and screenshots for each.
 - **The site** has a games page, `tvpipe.party/games/`, rendered from the
-  list with the screenshots.
+  list with the screenshots, and a page per game, `tvpipe.party/games/NAME/`.
 - **`tvpipe game play` without a game** opens the window on the list:
   pick a game (downloaded on the spot) or paste a source, then pick the
   TVs as before.
 
 Names stay names: `tvpipe game play drawbluff` looks the name up in the
-list, as §18 says. A game has no URL of its own at tvpipe.party.
+list, as §18 says. Its page on the site, `tvpipe.party/games/NAME/`, is
+for people; tvpipe only reads the list.
 
 ## The list
 
@@ -55,8 +56,13 @@ list, as §18 says. A game has no URL of its own at tvpipe.party.
 
 `/games/` lists the games, a block per game: the cover, the title, the
 summary, players and languages, the phone shots beside it, the command
-`tvpipe game play NAME`, and a link to `home`. The manual's "Games to
-play" page and the landing page link to it.
+`tvpipe game play NAME`, and a link to `home`.
+
+`/games/NAME/` is one game's page: the same block alone, with a link back
+to `/games/` above it and the previous and next game of the list below.
+The titles on `/games/`, the landing page's covers and the manual's "Games
+to play" list link to the games' pages; the old anchors (`/games/#NAME`)
+still work.
 
 ## Picking in the window
 

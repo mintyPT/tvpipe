@@ -364,6 +364,18 @@ main.landing figcaption .lbl { display: block; margin-bottom: 8px; }
 .gm .play { display: flex; align-items: center; gap: 28px; margin-top: 22px; }
 .gm .play pre { flex: 0 1 auto; margin: 0; padding: 16px 22px; }
 .gm .home { font-size: 14px; white-space: nowrap; }
+.gm h2 a { color: inherit; text-decoration: none; }
+.gm h2 a:hover { color: var(--link); }
+/* a game's own page (/games/NAME/): the way back, the game, the neighbours */
+.gamespage .back { display: inline-block; margin: 0 0 28px; font-size: 14px; color: var(--ink-2); text-decoration: none; }
+.gamespage .back:hover { color: var(--link); }
+.gm.solo { padding-top: 0; border-top: 0; }
+.gm.solo h1 { grid-column: 1; margin: 0 0 12px; }
+.gpn { display: flex; justify-content: space-between; gap: 32px; margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--rule); }
+.gpn a { color: var(--ink); text-decoration: none; font-size: 15px; }
+.gpn a span { display: block; color: var(--ink-3); font-size: 11px; }
+.gpn .next { margin-left: auto; text-align: right; }
+.gpn a:hover { color: var(--link); }
 .covers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin: 0 0 72px; }
 .covers a { color: var(--ink); text-decoration: none; }
 .covers img { display: block; width: 100%; height: auto; border-radius: 5px; box-shadow: 0 0 0 1px var(--rule); background: var(--panel); }

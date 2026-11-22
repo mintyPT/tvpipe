@@ -14,7 +14,8 @@ Sources:
                          frame page, /p: docs/short-links.md) are also
                          copied to the site's root
   site/static/games/     the games' screenshots (games.json's `screenshots`),
-                         rendered on /games/ (games/index.html)
+                         rendered on /games/ (games/index.html) and on
+                         each game's own page, /games/NAME/
   crates/tvpipe/src/browser/fonts/  the fonts (shared with tvpipe's share page)
   site/shots/            screenshots (site/screenshots.mjs makes them)
 Output: site/_out/ (static files, serve the directory). Every page is a
@@ -48,8 +49,9 @@ Containers:
   :::figure CAPTION ... :::  raw HTML (an inline SVG) as a numbered figure
   :::index :::               the list of manual sections
   :::games :::               the games list (site/static/games.json), short,
-                             linking to the games page (/games/)
-  :::covers :::              the games' covers in a row, linking to /games/
+                             linking to the games' pages (/games/NAME/)
+  :::covers :::              the games' covers in a row, linking to the
+                             games' pages
 
 Inline: `code`, **bold**, *italic*, [links](receivers.md) (a manual page by its
 slug, without the number, so renumbering does not break links; /games/ from
@@ -276,24 +278,22 @@ def languages(g):
 
 def games_html(ctx):
     """The short list (the manual's "Games to play"): a row per game, its
-    pictures on the games page."""
-    page = ctx.to("games/")
+    pictures on the game's page."""
     out = []
     for g in games_list():
         facts = [players(g["players"])] + ([languages(g)] if g.get("languages") else [])
-        out.append(f'<div class="game"><h3><a href="{page}#{g["name"]}">{html.escape(g["title"])}</a></h3>'
+        out.append(f'<div class="game"><h3><a href="{ctx.to(game_dir(g))}">{html.escape(g["title"])}</a></h3>'
                    f'<p>{html.escape(g["summary"])}</p><p class="facts">{" · ".join(facts)}</p>'
                    + code_block("sh", [f'$ tvpipe game play {g["name"]}']) + "</div>")
     return "".join(out)
 
 
 def covers_html(ctx):
-    """The games' covers in a row (the landing page), each a link to its block on /games/."""
-    page = ctx.to("games/")
+    """The games' covers in a row (the landing page), each a link to the game's page."""
     out = []
     for g in games_list():
         c = cover(g)
-        out.append(f'<a class="cover" href="{page}#{g["name"]}"><img src="{ctx.root}{html.escape(c["src"])}" '
+        out.append(f'<a class="cover" href="{ctx.to(game_dir(g))}"><img src="{ctx.root}{html.escape(c["src"])}" '
                    f'alt="{html.escape(c["alt"])}" width="1280" height="720" loading="lazy">'
                    f'<span><b>{html.escape(g["title"])}</b>{html.escape(players(g["players"]))}</span></a>')
     return '<div class="covers">' + "".join(out) + "</div>"
@@ -305,29 +305,55 @@ def shot_img(s, ctx, cls):
             f'width="{w}" height="{h}" loading="lazy">')
 
 
+def game_dir(g):
+    """The game's own page: games/NAME/."""
+    return f'games/{g["name"]}/'
+
+
+def game_block(g, ctx, solo):
+    """A game: its title, summary and facts, the cover large with the phones
+    beside it, the other TV pictures under them, how to play it. On /games/
+    (solo false) the title links to the game's page, which has it alone."""
+    c = cover(g)
+    phones = [s for s in g["screenshots"] if s["kind"] == "phone"]
+    more = [s for s in g["screenshots"] if s["kind"] == "tv" and s is not c]
+    # Columns in proportion to the pictures' widths at one height:
+    # 16:9 for the TV, 390:844 for each phone.
+    cols = " ".join(["minmax(0, 16fr)"] + ["minmax(0, 4.15fr)"] * len(phones))
+    pics = (f'<div class="pics" style="grid-template-columns: {cols}">' + shot_img(c, ctx, "tv")
+            + "".join(shot_img(s, ctx, "phone") for s in phones) + "</div>")
+    if more:
+        pics += '<div class="more">' + "".join(shot_img(s, ctx, "tv") for s in more) + "</div>"
+    facts = f'<dt>Players</dt><dd>{html.escape(players(g["players"]).replace(" players", ""))}</dd>'
+    if g.get("languages"):
+        facts += f"<dt>Languages</dt><dd>{html.escape(languages(g))}</dd>"
+    home = f'<a class="home" href="{html.escape(g["home"])}">Source and rules</a>' if g.get("home") else ""
+    play = code_block("sh", [f'$ tvpipe game play {g["name"]}'])
+    title = html.escape(g["title"])
+    if solo:
+        head, cls = f"<h1>{title}</h1>", "gm solo"
+    else:
+        head, cls = f'<h2><a href="{ctx.to(game_dir(g))}">{title}</a></h2>', "gm"
+    return (f'<article class="{cls}" id="{g["name"]}"><header>{head}'
+            f'<p>{html.escape(g["summary"])}</p><dl>{facts}</dl></header>{pics}'
+            f'<div class="play">{play}{home}</div></article>')
+
+
 def games_page(ctx):
-    """/games/: a block per game, the cover large with the phones beside it."""
-    out = []
-    for g in games_list():
-        c = cover(g)
-        phones = [s for s in g["screenshots"] if s["kind"] == "phone"]
-        more = [s for s in g["screenshots"] if s["kind"] == "tv" and s is not c]
-        # Columns in proportion to the pictures' widths at one height:
-        # 16:9 for the TV, 390:844 for each phone.
-        cols = " ".join(["minmax(0, 16fr)"] + ["minmax(0, 4.15fr)"] * len(phones))
-        pics = (f'<div class="pics" style="grid-template-columns: {cols}">' + shot_img(c, ctx, "tv")
-                + "".join(shot_img(s, ctx, "phone") for s in phones) + "</div>")
-        if more:
-            pics += '<div class="more">' + "".join(shot_img(s, ctx, "tv") for s in more) + "</div>"
-        facts = f'<dt>Players</dt><dd>{html.escape(players(g["players"]).replace(" players", ""))}</dd>'
-        if g.get("languages"):
-            facts += f"<dt>Languages</dt><dd>{html.escape(languages(g))}</dd>"
-        home = f'<a class="home" href="{html.escape(g["home"])}">Source and rules</a>' if g.get("home") else ""
-        play = code_block("sh", [f'$ tvpipe game play {g["name"]}'])
-        out.append(f'<article class="gm" id="{g["name"]}"><header><h2>{html.escape(g["title"])}</h2>'
-                   f'<p>{html.escape(g["summary"])}</p><dl>{facts}</dl></header>{pics}'
-                   f'<div class="play">{play}{home}</div></article>')
-    return "\n".join(out)
+    """/games/: a block per game."""
+    return "\n".join(game_block(g, ctx, False) for g in games_list())
+
+
+def game_page(games, i, ctx):
+    """/games/NAME/: the game alone, a link back to /games/ above it and the
+    previous and next games under it."""
+    g = games[i]
+    back = f'<a class="back" href="{ctx.to("games/")}">← All games</a>'
+    pn = "".join(f'<a class="{cls}" href="{ctx.to(game_dir(o))}"><span>{lbl}</span>{html.escape(o["title"])}</a>'
+                 for cls, lbl, o in (("prev", "Previous game", games[i - 1] if i else None),
+                                     ("next", "Next game", games[i + 1] if i + 1 < len(games) else None)) if o)
+    return f'{back}{game_block(g, ctx, True)}<nav class="gpn" aria-label="More games">{pn}</nav>'
+
 
 
 # ---------------------------------------------------------------- blocks
@@ -724,7 +750,16 @@ def build(out):
             f'{render(lines, ctx)}</header>{games_page(ctx)}</main>'
             f'<footer class="lf"><div>{FOOTER_NOTE}</div><div class="r">{THEME}</div></footer>')
     write(out, "games/", layout(meta.get("title", "Games"), "", body, ctx.root, "landing"))
-    print(f"built {len(pages) + 2} pages into {out}")
+
+    # A page per game: /games/NAME/.
+    games = games_list()
+    for i, g in enumerate(games):
+        ctx = Ctx(game_dir(g), None, pages)
+        body = (f'<main class="landing gamespage">{game_page(games, i, ctx)}</main>'
+                f'<footer class="lf"><div>{FOOTER_NOTE}</div><div class="r">{THEME}</div></footer>')
+        title = f'{g["title"]} · {meta.get("title", "Games")}'
+        write(out, game_dir(g), layout(title, "", body, ctx.root, "landing"))
+    print(f"built {len(pages) + 2 + len(games)} pages into {out}")
 
 
 if __name__ == "__main__":
