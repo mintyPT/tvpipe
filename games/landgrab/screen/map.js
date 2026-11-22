@@ -524,10 +524,23 @@ export class WorldMap {
     const from = { ...this.view };
     const to = free ? this.#loose(x, y, z) : this.#clamp(x, y, z);
     this.#flight?.();
+    this.#flight = undefined;
+    const dz = to.z - from.z;
+    // How far it goes, in widths of the view (at most half of one counts).
+    const travel = Math.min(0.5, (Math.hypot(to.x - from.x, to.y - from.y) * from.z) / this.W);
+    // Already there (home when at home): the map stays still.
+    if (travel < 0.002 && Math.abs(dz) < 0.002) {
+      this.view = to;
+      this.#applyCam();
+      return;
+    }
+    // A little up and out on a long way: the camera breathes (not on a
+    // short one). With the eased progress, so a zoom ends without
+    // overshooting and bouncing back.
+    const breath = 0.08 * travel;
     this.#flight = tween(ms, (k) => {
       const e = ease(k);
-      // A little up and out on the way: the camera breathes.
-      const lift = Math.sin(Math.PI * k) * 0.08 * Math.abs(to.z - from.z || 0.5);
+      const lift = Math.sin(Math.PI * e) * breath;
       this.view = { x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e, z: from.z + (to.z - from.z) * e - lift };
       this.#applyCam();
     });

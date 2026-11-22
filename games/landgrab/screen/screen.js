@@ -344,15 +344,16 @@ function lobby() {
   const seen = new Set();
   /** @type {Map<string, HTMLElement>} */
   const seatEls = new Map();
-  // The map drifts slowly behind the lobby, Europe and Africa in the middle.
-  const t0 = performance.now();
+  // The map stands still behind the lobby, Europe and Africa in the middle
+  // (a slow drift crawls and shimmers on a TV).
+  let placed = false;
   map?.paint();
   return {
     el,
     frame() {
-      if (!map) return;
-      const k = (performance.now() - t0) / 1000;
-      map.look(map.W * (0.5 + Math.sin(k / 14) * 0.1), map.H * (0.45 + Math.cos(k / 17) * 0.06), 1.25 + Math.sin(k / 11) * 0.05);
+      if (!map || placed) return;
+      placed = true;
+      map.look(map.W * 0.5, map.H * 0.45, 1.25);
     },
     /** @param {any} v */
     update(v) {
@@ -785,7 +786,7 @@ function fightScene(ev, a, at, card, news, cardAt) {
           m.float(front, `−${la}`, "#ff6a55", "loss");
         }
         m.burst(mid, ld && !la ? c : la && !ld ? cd : "#fff", slow);
-        if (slow) (m.shake(la + ld >= 2 ? "big" : "small"), sfx.hit(ld > 0));
+        if (slow) (la + ld >= 2 && m.shake(), sfx.hit(ld > 0));
         else sfx.tap();
         if (att <= 0) tok?.end("shatter");
       });
@@ -875,7 +876,7 @@ function clashScene(ev, at, card, news) {
         if (la) (drop(parts.A.n, na), tokA.set(na), tokA.hit(), m.float(tokA.pos, `−${la}`, "#ff6a55", "loss"));
         if (lb) (drop(parts.D.n, nb), tokB.set(nb), tokB.hit(), m.float(tokB.pos, `−${lb}`, "#ff6a55", "loss"));
         m.burst(mid, "#fff", slow);
-        if (slow) (m.shake(), sfx.hit(true));
+        if (slow) sfx.hit(true);
         else sfx.tap();
         if (na <= 0) tokA.end("shatter");
         if (nb <= 0) tokB.end("shatter");

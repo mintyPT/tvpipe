@@ -128,8 +128,10 @@ bottom, tvpipe's join badge bottom left.
   ready; contested borders pulse; uprisings fly the camera to the rebel.
 - **Battle:** the camera flies to the border and the rest dims; an arrow
   grows and a token with the army count marches along it; the dice
-  tumble on the fight card and land in pairs, each throw with sparks, a
-  shake and the counts falling; a conquest stamps "Conquered!" and the
+  tumble on the fight card and land in pairs, each throw with sparks and
+  the counts falling (the map shakes only when a throw costs two armies
+  and when a clash starts; otherwise it holds still: no drift in the
+  lobby, no camera move when it is already there); a conquest stamps "Conquered!" and the
   colour floods the territory from the front, a failed attack breaks off.
   Clashes meet in the middle. Continents and wipe-outs get a headline and
   a fanfare. The standings change when an event ends, never before.
