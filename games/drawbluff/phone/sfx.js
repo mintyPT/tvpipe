@@ -8,6 +8,10 @@
  *
  * Browsers start audio only after a gesture (phones) or with autoplay
  * allowed (tvpipe's own browser): {@link Sfx.unlock} on the first tap.
+ *
+ * iOS gives Web Audio the "ambient" session, which the silent switch
+ * mutes; the sounds have their own toggle, so they ask for "playback"
+ * (Safari 16.4+) and play with the phone on silent.
  */
 
 /**
@@ -34,6 +38,12 @@ export class Sfx {
     if (this.ctx) return this.ctx;
     const AC = globalThis.AudioContext ?? /** @type {any} */ (globalThis).webkitAudioContext;
     if (!AC && !this.given) return null;
+    if (!this.given) {
+      try {
+        const session = /** @type {any} */ (globalThis.navigator)?.audioSession;
+        if (session && session.type !== "playback") session.type = "playback";
+      } catch {}
+    }
     try {
       const ctx = /** @type {BaseAudioContext} */ (this.given ?? new AC());
       const comp = ctx.createDynamicsCompressor();
