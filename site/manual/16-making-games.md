@@ -30,7 +30,7 @@ The starter is a buzzer in plain JavaScript: the host counts rounds and points, 
 {
   "name": "my-game",
   "title": "My game",
-  "tvpipe": "0.3",
+  "tvpipe": "0.4",
   "pages": { "host": "host/index.html", "tv": "tv/index.html", "phone": "phone/index.html" },
   "players": { "min": 2, "max": 12 },
   "tv": { "width": 1280, "height": 720 }
@@ -172,7 +172,7 @@ $ tvpipe game play gh:you/my-game@v1.2.0      # that release
 
 A GitHub release is the easiest place: attach `my-game.zip` (the release's only zip, or one named like the repository) to a release. Links to the repository or the release on github.com work too.
 
-Several games in one repository, or a repository with releases of its own, give every game its own tags, `my-game-v1.2.0`, and players name the stream: `gh:you/games/my-game@my-game-v*` takes the newest of them that fits their tvpipe. A line `<!-- tvpipe: 0.3 -->` in the release notes says which tvpipe version the release is for, so a player with an older tvpipe gets the newest release that still runs on it.
+Several games in one repository, or a repository with releases of its own, give every game its own tags, `my-game-v1.2.0`, and players name the stream: `gh:you/games/my-game@my-game-v*` takes the newest of them that fits their tvpipe. A line `<!-- tvpipe: 0.4 -->` in the release notes says which tvpipe version the release is for, so a player with an older tvpipe gets the newest release that still runs on it.
 
 To have a game played by name, add it to the [list of games](game-list.md).
 

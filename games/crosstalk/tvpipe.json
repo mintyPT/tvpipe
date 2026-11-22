@@ -1,7 +1,7 @@
 {
   "name": "crosstalk",
   "title": "Crosstalk",
-  "tvpipe": "0.3",
+  "tvpipe": "0.4",
   "root": "dist",
   "pages": {
     "host": "host/index.html",

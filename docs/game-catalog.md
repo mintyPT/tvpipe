@@ -108,18 +108,25 @@ Re-run when a game's look changes; each `play.ts` names the command.
 
 ## Releasing
 
-**tvpipe 0.3.0:**
+A new tvpipe series (0.3.0, 0.4.0) goes like this:
 
-1. Bump to 0.3.0: `Cargo.toml` (the workspace, the internal dependency
+1. Bump the version: `Cargo.toml` (the workspace, the internal dependency
    versions), `Cargo.lock`, `npm/party` and `npm/tvpipe` (`package.json`,
-   lockfiles), `npm run build` in `npm/party`.
-2. The games and docs to the 0.3 series: `"tvpipe": "0.3"` in every
-   `games/*/tvpipe.json` (`games.yml` refuses a mismatch), the `"0.2"`
-   examples in the docs.
+   lockfiles, and the `@tvpipe/party` entry in every game's lockfile),
+   `npm run build` in `npm/party`.
+2. The games and docs to the new series: `"tvpipe": "X.Y"` in every
+   `games/*/tvpipe.json` (`games.yml` refuses a mismatch), the examples in
+   the docs. A game that was already released at its `package.json`
+   version gets a patch bump: its zip changes with the manifest.
 3. The checks of AGENTS.md, `tvpipe game check --smoke` for each game,
    `release.yml` and `games.yml` (each game) by hand as dry runs.
-4. Tag `v0.3.0`, push: the GitHub release, npm, crates.io.
+4. Tag `vX.Y.0`, push: the GitHub release, npm, crates.io.
 
-**The games**, on the same commit, after `v0.3.0`: tag `drawbluff-v0.3.0`, `jinx-v0.1.0`,
-`garble-v0.1.0` (each game's `package.json` version) and push; `games.yml`
-publishes each, and `tvpipe game play NAME` finds it.
+**The games**, on the same commit, after `vX.Y.0`: tag every game
+`NAME-vA.B.C` (its `package.json` version) and push; `games.yml`
+publishes each, and `tvpipe game play NAME` finds it. tvpipe of the old
+series keeps finding the games' older releases by their notes' marker.
+
+0.4.0 (2026-11-22) released all ten games for the 0.4 series: drawbluff
+0.4.0, garble 0.3.0, jinx 0.3.1, krakel 0.2.0, pinch 0.1.2, and busted,
+crosstalk, landgrab, shifty and snug 0.1.0 (their first releases).

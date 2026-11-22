@@ -37,7 +37,7 @@ between phones and the host:
 ```json
 {
   "name": "quiz",
-  "tvpipe": "0.3",
+  "tvpipe": "0.4",
   "pages": { "host": "host.html", "tv": "tv.html", "phone": "phone.html" },
   "players": { "min": 2, "max": 12 }
 }

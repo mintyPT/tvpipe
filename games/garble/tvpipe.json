@@ -1,7 +1,7 @@
 {
   "name": "garble",
   "title": "Garble",
-  "tvpipe": "0.3",
+  "tvpipe": "0.4",
   "root": "dist",
   "pages": {
     "host": "host/index.html",

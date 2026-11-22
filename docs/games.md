@@ -82,7 +82,7 @@ drawbluff/
 {
   "name": "my-game",
   "title": "My game",
-  "tvpipe": "0.3",
+  "tvpipe": "0.4",
   "root": "dist",
   "pages": {
     "host": "host/index.html",
@@ -100,7 +100,7 @@ drawbluff/
 |---|---|---|
 | `name` | required | 1–40 of `a-z`, `0-9`, `-`: logs, the zip's folder and file name |
 | `title` | optional | the launcher's heading (default: `name`), at most 80 characters |
-| `tvpipe` | recommended | the tvpipe (and so `@tvpipe/party`) the game is made for, `"0.3"`; see [Versions](#versions) |
+| `tvpipe` | recommended | the tvpipe (and so `@tvpipe/party`) the game is made for, `"0.4"`; see [Versions](#versions) |
 | `root` | optional | the served folder, relative to `tvpipe.json` (default: its own folder) |
 | `pages.host` | required | the host page, relative to `root` |
 | `pages.tv` | required | the TV page |
@@ -532,7 +532,7 @@ page is then opened without its link); a game whose join link is not
 
 ## Versions
 
-`"tvpipe": "0.3"` says which tvpipe the game is made for, and so which
+`"tvpipe": "0.4"` says which tvpipe the game is made for, and so which
 `@tvpipe/party` it uses: tvpipe serves its own copy at `/_tvpipe/lib/`,
 and the host page talks to tvpipe's API with it. `tvpipe game play`
 refuses a game made for a newer tvpipe ("update tvpipe"), and, while
@@ -548,7 +548,7 @@ library on both sides is always tvpipe's, so it matches by itself.
 Version your game however you like (a `version` field in `tvpipe.json`
 is ignored by tvpipe); the zip's bytes change only when its files do, so
 a hash of the zip identifies a release. A release's notes can say which
-series it is for (`<!-- tvpipe: 0.3 -->`, [Publishing](#publishing)), so
+series it is for (`<!-- tvpipe: 0.4 -->`, [Publishing](#publishing)), so
 an older tvpipe picks the newest release that still runs on it.
 
 ## Publishing
@@ -560,7 +560,7 @@ home, and needs no API calls when players name the asset and tag:
 1. `tvpipe game pack my-game --strict` (and `--smoke` once); note the
    `sha256` it prints.
 2. Make a release and attach `my-game.zip`. With
-   `gh release create v1.0.0 my-game.zip --notes "<!-- tvpipe: 0.3 -->"`
+   `gh release create v1.0.0 my-game.zip --notes "<!-- tvpipe: 0.4 -->"`
    the marker says the series (optional: without it the zip's own
    `tvpipe.json` decides after the download).
 3. Players run `tvpipe game play gh:you/my-game` (the latest release's
