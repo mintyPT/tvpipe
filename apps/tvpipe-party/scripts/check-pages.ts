@@ -59,7 +59,7 @@ const checks: Check[] = [
     name: "games-desktop",
     path: "/games/",
     view: DESK,
-    until: `document.querySelectorAll("article.gm").length === ${index.games.length} && [...document.querySelectorAll("article.gm")].every((g) => new URL(g.querySelector("a[data-play]").href).pathname === "/_tvpipe/launcher/" && new URL(g.querySelector("a[data-play]").href).searchParams.get("game") === g.id)`,
+    until: `document.querySelectorAll("article.gm").length === ${index.games.length} && [...document.querySelectorAll("article.gm")].every((g) => new URL(g.querySelector("a[data-play]").href).pathname === "/games/" + g.id + "/launcher/")`,
   },
   { name: "games-jinx", path: "/games/jinx/", view: DESK, until: `document.querySelector('a[data-play="jinx"]')?.textContent === "Play now"` },
   { name: "games-ipad", path: "/games/", view: PAD, ua: IPAD, until: `!!document.querySelector(".home-hint")` },
@@ -73,13 +73,13 @@ const checks: Check[] = [
   { name: "launcher-unknown", path: "/_tvpipe/launcher/?game=no-such-game", view: DESK, until: `location.pathname === "/games/"` },
   {
     name: "launcher-desktop",
-    path: `/_tvpipe/launcher/?game=${game.name}`,
+    path: `/games/${game.name}/launcher/`,
     view: DESK,
     until: `document.querySelectorAll("#devices .device").length > 1 && !document.getElementById("web-game").hidden && document.getElementById("web-title").textContent !== "" && !document.getElementById("web-cover").hidden && JSON.parse(sessionStorage.getItem("tvpipe-web")).game.name === ${JSON.stringify(game.name)}`,
   },
   {
     name: "launcher-desktop-app",
-    path: `/_tvpipe/launcher/?game=${game.name}`,
+    path: `/games/${game.name}/launcher/`,
     view: DESK,
     until: `(document.querySelector('#devices .device[data-name="app"]')?.click(), !document.getElementById("app-way").hidden && document.getElementById("start").hidden && document.querySelector("#app-commands").innerText.includes("tvpipe game play ${game.name}") && document.querySelectorAll("#app-commands .cmd").length === 2)`,
   },
@@ -87,7 +87,7 @@ const checks: Check[] = [
   { name: "launcher-ipad-mirror", path: "/_tvpipe/launcher/", view: PAD, ua: IPAD, session: { game }, until: `(document.querySelector('#devices .device[data-name="mirror"]')?.click(), document.querySelector(".steps") !== null)` },
   {
     name: "launcher-ipad-app",
-    path: `/_tvpipe/launcher/?game=${game.name}`,
+    path: `/games/${game.name}/launcher/`,
     view: PAD,
     ua: IPAD,
     until: `(document.querySelector('#devices .device[data-name="app"]')?.click(), !document.getElementById("app-way").hidden && document.getElementById("app-intro").textContent.startsWith("On a Mac, Windows or Linux") && document.querySelectorAll("#app-commands .cmd").length === 3)`,

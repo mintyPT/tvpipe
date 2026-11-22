@@ -455,7 +455,7 @@ async function startHost(ctx: Ctx, game: WebGame, screen: "this" | "window" | "n
   await page.go(`${BASE}/games/${o.bots ? "?bots" : ""}`);
   await page.until(`!!document.querySelector('a[data-play="${game.name}"]')`);
   await page.eval(`document.querySelector('a[data-play="${game.name}"]').click(); true`);
-  await page.until(`location.pathname === "/_tvpipe/launcher/" && document.querySelectorAll("#devices .device").length > 1 && document.getElementById("web-title").textContent === ${JSON.stringify(game.title)}`);
+  await page.until(`(location.pathname.startsWith("/games/") && location.pathname.endsWith("/launcher/")) && document.querySelectorAll("#devices .device").length > 1 && document.getElementById("web-title").textContent === ${JSON.stringify(game.title)}`);
   const offered = await page.eval<string[]>(`[...document.querySelectorAll("#devices .device")].map((d) => d.dataset.name ?? "off")`);
   log(`${ctx.name}: launcher offers ${offered.join(", ")}`);
   await page.eval(`document.querySelector('#devices .device[data-name="${screen}"]').click(); true`);
@@ -1014,7 +1014,7 @@ async function scenarioLooks(): Promise<void> {
     await page.until(`!!document.querySelector('a[data-play="${game.name}"]')`);
     check(await page.eval<boolean>(`document.documentElement.scrollWidth <= innerWidth + 1`), `/games/ on ${name}: no sideways scroll (${await page.shot(`games-${name}`)})`);
     await page.eval(`document.querySelector('a[data-play="${game.name}"]').click(); true`);
-    await page.until(`location.pathname === "/_tvpipe/launcher/" && document.querySelectorAll("#devices .device").length > 1`);
+    await page.until(`(location.pathname.startsWith("/games/") && location.pathname.endsWith("/launcher/")) && document.querySelectorAll("#devices .device").length > 1`);
     await sleep(500);
     const offered = await page.eval<string[]>(`[...document.querySelectorAll("#devices .device")].map((d) => d.dataset.name + ":" + d.querySelector(".name").textContent)`);
     const wide = await page.eval<boolean>(`document.documentElement.scrollWidth <= innerWidth + 1`);

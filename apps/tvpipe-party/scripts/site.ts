@@ -20,7 +20,7 @@
  *   node scripts/site.ts --no-build   # uses what npm/party and the games built last
  *
  * Every game of the list must build: /games/ links each one's launcher
- * (`/_tvpipe/launcher/?game=NAME`). Checks Cloudflare's limits for assets:
+ * (`/games/NAME/launcher/`). Checks Cloudflare's limits for assets:
  * at most 20,000 files, 25 MiB each.
  */
 
@@ -128,6 +128,8 @@ if (build) {
 const { webFiles } = (await import(pathToFileURL(join(party, "scripts", "web.ts")).href)) as { webFiles(): Map<string, string> };
 rmSync(join(out, "_tvpipe"), { recursive: true, force: true });
 let webMode = false;
+/** The launcher's page, also served as each game's `/games/NAME/launcher/`. */
+let launcherHtml = "";
 for (const [rel, text] of webFiles()) {
   // The app's games list talks to tvpipe only.
   if (rel.startsWith("picker/")) continue;
@@ -136,9 +138,13 @@ for (const [rel, text] of webFiles()) {
     t = text.replace(/^export const WEB = false;$/m, "export const WEB = true;");
     webMode = t !== text;
   }
-  if (rel === "launcher/index.html") t = withAppHead(t);
+  if (rel === "launcher/index.html") {
+    t = withAppHead(t);
+    launcherHtml = t;
+  }
   write(`_tvpipe/${rel}`, t);
 }
+if (!launcherHtml) throw new Error("npm/party has no launcher/index.html");
 if (!webMode) throw new Error("npm/party's lib/mode.js has no line `export const WEB = false;` to turn on");
 const browser = join(repo, "crates", "tvpipe", "src", "browser");
 cpSync(join(browser, "ui.css"), join(out, "_tvpipe", "ui.css"));
@@ -169,6 +175,11 @@ for (const g of listed) {
     install(dir);
     run(dir, "npm", ["run", "build"]);
   }
+  // Play now: /games/NAME/launcher/ is the launcher (its files stay in /_tvpipe/launcher/).
+  write(
+    `games/${g.name}/launcher/index.html`,
+    launcherHtml.replace('href="launcher.css"', 'href="/_tvpipe/launcher/launcher.css"').replace('src="launcher.js"', 'src="/_tvpipe/launcher/launcher.js"'),
+  );
   const release = (JSON.parse(readFileSync(join(dir, "package.json"), "utf8")) as { version: string }).version;
   if (!/^[0-9A-Za-z.+-]{1,40}$/.test(release)) throw new Error(`games/${g.name}: version ${release} is no path`);
   const manifest = JSON.parse(readFileSync(join(dir, "tvpipe.json"), "utf8")) as Manifest;

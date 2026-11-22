@@ -73,7 +73,7 @@ for each) and adds the web pages to `site/_out`: the library at
 `/_tvpipe/screen/`, the games at `/g/NAME/RELEASE/` with
 `/g/index.json`, and the web app's files from `web/` (manifest, service
 worker, icons, offline page). The web's games list is the site's
-`/games/` (Play now: `/_tvpipe/launcher/?game=NAME`; `site/static/games.js`
+`/games/` (Play now: `/games/NAME/launcher/`; `site/static/games.js`
 registers the service worker and is Other game's dialog,
 `/games/?switch`). `--no-build` reuses the last builds.
 `check-pages.ts` (BASE, default `http://localhost:8787`) opens each page

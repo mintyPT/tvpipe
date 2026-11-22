@@ -343,7 +343,7 @@ def game_block(g, ctx, solo):
     home = f'<a class="home" href="{html.escape(g["home"])}">Source and rules</a>' if g.get("home") else ""
     play = code_block("sh", [f'$ tvpipe game play {g["name"]}'])
     # In the browser: the launcher for this game (static/games.js passes ?bots on).
-    play += (f'<a class="btn primary" href="{ctx.root}_tvpipe/launcher/?game={g["name"]}" '
+    play += (f'<a class="btn primary" href="{ctx.to(game_dir(g) + "launcher/")}" '
              f'data-play="{g["name"]}" data-noboost>Play now</a>')
     title = html.escape(g["title"])
     if solo:
