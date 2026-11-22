@@ -1,0 +1,399 @@
+# Der Busted-Bote: eingebaute deutsche Fragen.
+#
+# Eine Frage pro Zeile, Felder durch Tabs getrennt:
+#   vote <TAB> level <TAB> Frage <TAB> Titel
+#   answer <TAB> level <TAB> Frage
+# level ist "family" (ab etwa 8 Jahren, mit Großeltern und Kollegium am
+# Tisch) oder "party" (frecher, für Teens und Erwachsene unter Freunden).
+# Titel stehen auf der Titelseite hinter dem Namen: "ANNA — Siebenschläfer
+# des Jahres". Sie müssen zu jeder Person passen (keine nur männlichen oder
+# nur weiblichen Formen) und in Deutschland, Österreich und der Schweiz
+# gleich verständlich sein. Nie über Körper, Aussehen, Geld, Krankheit,
+# Religion, Politik, Drogen oder Alkohol; nie gemein.
+# Siehe design/questions.md ("German deck").
+# Prüfen: node scripts/check-questions.mjs data/questions.de.txt
+
+# vote · family
+
+vote	family	Wer würde am ehesten einen ganzen Tag verschlafen?	Siebenschläfer des Jahres
+vote	family	Wer würde am ehesten mit Zimmerpflanzen reden wie mit alten Freunden?	Grüner Daumen, große Klappe
+vote	family	Wer würde sich am ehesten verlaufen, obwohl das Handy den Weg ansagt?	Kompass mit Eigenleben
+vote	family	Wer würde am ehesten den Nachtisch vor dem Hauptgang essen?	Naschkatze mit Weitblick
+vote	family	Wer würde am ehesten zur eigenen Geburtstagsparty zu spät kommen?	Ehrengast mit Verspätung
+vote	family	Wer würde am ehesten über den eigenen Witz lachen, bevor die Pointe kommt?	Zu früh gelacht
+vote	family	Wer würde ein Wettstarren gegen eine Katze gewinnen?	Starrsinn mit Stil
+vote	family	Wer würde am ehesten unter der Dusche ein ganzes Konzert geben?	Duschkonzert, ausverkauft
+vote	family	Wer würde am ehesten in ein Zimmer gehen und sofort vergessen, warum?	Prof. Dr. Vergesslich
+vote	family	Wer würde am ehesten das letzte Stück Pizza essen, ohne zu fragen?	Phantom des letzten Stücks
+vote	family	Wer würde versteckte Süßigkeiten überall im Haus aufspüren?	Spürnase für Süßes
+vote	family	Wer würde an der Bushaltestelle fremden Leuten die ganze Lebensgeschichte erzählen?	Plaudertasche vom Dienst
+vote	family	Wer würde am ehesten über absolut nichts stolpern?	Hat die Schwerkraft im Abo
+vote	family	Wer würde am längsten auf einer einsamen Insel überleben?	Kokosnuss-Diplom
+vote	family	Wer würde am ehesten aus Versehen im Internet berühmt werden?	Viral wider Willen
+vote	family	Wer würde am ehesten jedem Gerät im Haushalt einen Namen geben?	Standesamt für Elektrogeräte
+vote	family	Wer redet am ehesten während eines Films mit dem Fernseher?	Zwischenrufe vom Sofa
+vote	family	Wer würde etwas im eigenen Zimmer verlieren und eine Woche lang suchen?	Chaos mit System
+vote	family	Wer würde am ehesten zurückwinken, obwohl jemand anderes gemeint war?	Ins Leere gewinkt
+vote	family	Wer bekommt am ehesten im unpassendsten Moment einen Kicheranfall?	Kichererbse vom Dienst
+vote	family	Wer würde am ehesten ein ganzes Gespräch mit einem Hund führen?	Spricht fließend Hund
+vote	family	Wer würde am ehesten durch die Gänge im Supermarkt tanzen?	Tanzwunder am Kühlregal
+vote	family	Wer erfindet am ehesten etwas, das irgendwann die ganze Welt benutzt?	Genie des Jahrhunderts
+vote	family	Wer würde eine Zombie-Apokalypse am längsten überleben?	Schreck der Zombies
+vote	family	Wer würde sich am ehesten selbst aus der Wohnung aussperren?	Schlüsselkind ohne Schlüssel
+vote	family	Wer würde schon nach fünf Minuten Fahrt fragen, ob wir bald da sind?	Ewige Frage von der Rückbank
+vote	family	Wer würde am ehesten das Spielbrett umwerfen, wenn es nicht gut läuft?	Höhere Gewalt am Spieltisch
+vote	family	Wer würde Möbel aufbauen, ohne einen Blick in die Anleitung zu werfen?	Eine Schraube bleibt übrig
+vote	family	Wer würde am ehesten etwas richtig Seltsames sammeln?	Museum für Merkwürdiges
+vote	family	Wer würde am ehesten um Mitternacht frühstücken?	Geisterstunden-Frühstück
+vote	family	Wer würde das Essen so lange fotografieren, bis es kalt ist?	Kalt, aber fotogen
+vote	family	Wer würde am ehesten beim Telefonieren das Handy suchen?	Tomaten auf den Augen
+vote	family	Wer arbeitet am ehesten heimlich für einen Geheimdienst?	Lizenz zum Schweigen
+vote	family	Wer würde alle mit einem versteckten Talent überraschen?	Stille Wasser sind tief
+vote	family	Wer würde einen Wortwitz machen und ihn dann erklären?	Witz mit Gebrauchsanweisung
+vote	family	Wer würde einen Tagesausflug auf die Minute genau planen?	Generalstabsmäßig entspannt
+vote	family	Wer würde für ein Wochenende packen wie für einen Monat?	Bundesamt für alle Fälle
+vote	family	Wer würde am ehesten das eigene Gemüse heimlich auf fremde Teller schmuggeln?	Brokkoli-Schmuggelring
+vote	family	Wer würde einen eigenen Feiertag erfinden und ihn ganz allein feiern?	Feiertag im Alleingang
+vote	family	Wer würde am ehesten klatschen, wenn das Flugzeug landet?	Ovationen im Sinkflug
+vote	family	Wer sagt am ehesten um zwei Uhr nachts: „Nur noch eine Folge“?	Marathon im Liegen
+vote	family	Wer würde zu einer Party ein Buch mitbringen?	Leseratte im Partymodus
+vote	family	Wer würde am ehesten die ganze Wäsche rosa färben?	Wäsche durch die rosa Brille
+vote	family	Wer würde beim Toasten den Rauchmelder auslösen?	Prüfstelle für Rauchmelder
+vote	family	Wer würde mitten im Spiel eine neue Regel erfinden?	Regelwerk nach Tageslaune
+vote	family	Wer würde eine Sprachnachricht schicken, die länger ist als ein Hörspiel?	Fortsetzung folgt
+vote	family	Wer würde eine Frage mit einer Gegenfrage beantworten?	Ping-Pong mit Fragezeichen
+vote	family	Wer würde schon vor dem Hallo nach dem WLAN-Passwort fragen?	WLAN-Wünschelrute
+vote	family	Wer würde erst eine Woche später auf eine Nachricht antworten?	Schneckenpost des Jahres
+vote	family	Wer würde zehn Emojis in eine einzige Nachricht packen?	Hieroglyphen der Neuzeit
+vote	family	Wer würde am ehesten von einer Gans gejagt werden?	Gänsehaut garantiert
+vote	family	Wer würde auf der falschen Party landen und einfach bleiben?	Ungeladen, aber unvergessen
+vote	family	Wer würde stundenlang eine Maschine bauen, nur um fünf Minuten zu sparen?	Genial faul
+vote	family	Wer erfährt den neuesten Klatsch immer als Erstes?	Chefredaktion Gerüchteküche
+vote	family	Wer würde ein Geheimnis für immer für sich behalten?	Schweigt wie ein Tresor
+vote	family	Wer würde die Überraschung schon vor der Party ausplaudern?	Hat sich verplappert
+vote	family	Wer errät die Auflösung eines Krimis schon nach zehn Minuten?	Spürsinn mit Fernbedienung
+vote	family	Wer würde beim Versteckspiel im Versteck einschlafen?	Versteckt und verschlafen
+vote	family	Wer würde in jedem Geschäft der Stadt mit Namen begrüßt werden?	Inoffizielles Stadtoberhaupt
+vote	family	Wer würde jedes Mal genau dasselbe bestellen?	Einmal das Übliche
+vote	family	Wer würde Ananas auf der Pizza bis zum Schluss verteidigen?	Pizza-Hawaii-Lobby
+vote	family	Wer würde den ganzen Tag das T-Shirt verkehrt herum tragen, ohne es zu merken?	Innen ist das neue Außen
+vote	family	Wer würde Socken in Sandalen tragen und sich dabei großartig fühlen?	Stilikone mit Socken
+vote	family	Wer würde einer völlig fremden Person ein High Five geben?	Abklatschen ohne Grenzen
+vote	family	Wer bringt in weniger als einer Minute den ganzen Raum zum Tanzen?	Stimmungskanone
+vote	family	Wer würde sicherheitshalber eine Stunde zu früh kommen?	Frühester Vogel der Welt
+vote	family	Wer würde sich für ein Dankeschön mit einem Dankeschön bedanken?	Höflichkeit in Dauerschleife
+vote	family	Wer würde sich sofort für die erste Reise zum Mars melden?	Fernweh bis zum Mars
+vote	family	Wer fängt jeden zweiten Satz mit „Wusstest du schon …“ an?	Wandelndes Lexikon
+vote	family	Wer würde eine Spinne anschreien und sich danach bei ihr entschuldigen?	Spinnendiplomatie
+vote	family	Wer würde eine Geschichte anfangen und mittendrin den Faden verlieren?	Vom Hölzchen aufs Stöckchen
+vote	family	Wer würde für jede Gelegenheit eine eigene Playlist machen?	Musik für alle Lebenslagen
+vote	family	Wer würde am ehesten einen aufwendigen Streich aushecken?	Schlitzohr mit Masterplan
+vote	family	Wer würde einen Stein als Haustier adoptieren?	Herz für Steine
+vote	family	Wer würde im Museum jedes einzelne Schild lesen?	Liest das Kleingedruckte
+vote	family	Wer würde alle hier bei Videospielen schlagen?	Endgegner-Niveau
+vote	family	Wer würde am ehesten aus Versehen die ganze Firma leiten?	Nach oben gestolpert
+vote	family	Wer würde eine Pro-und-Kontra-Liste schreiben, nur um eine Zahnbürste auszusuchen?	Qual der Wahl in Person
+vote	family	Wer würde etwas Seltsames kochen und es ein Meisterwerk nennen?	Kochkunst auf eigene Gefahr
+vote	family	Wer würde am ehesten mit dem Zirkus durchbrennen?	Zirkusreif
+vote	family	Wer würde aus Versehen bei einem Marathon mitlaufen?	Versehentlich im Ziel
+vote	family	Wer würde sich in den VIP-Bereich hineinreden?	Mit allen Wassern gewaschen
+vote	family	Wer würde am freien Tag trotzdem zur Schule oder zur Arbeit gehen?	Anwesenheit: 110 Prozent
+vote	family	Wer würde zu jedem Abenteuer Ja sagen, ohne eine einzige Frage zu stellen?	Für jeden Quatsch zu haben
+vote	family	Wer würde zehnmal am Tag den Wetterbericht checken?	Wetterfrosch vom Dienst
+vote	family	Wer würde sich ganz ohne Absicht an Leute anschleichen?	Auf leisen Sohlen
+vote	family	Wer würde sich für eine Kostümparty am meisten ins Zeug legen?	Verkleidet bis in die Socken
+vote	family	Wer würde mit der Jacke einer anderen Person von einer Party heimgehen?	Jackentausch im Blindflug
+vote	family	Wer würde zum Spaß in einen eiskalten See springen?	Wasserratte bei null Grad
+vote	family	Wer würde so lange „Aber warum?“ fragen, bis alle aufgeben?	Fragt Löcher in den Bauch
+vote	family	Wer würde sich am ehesten von einer Katze herumkommandieren lassen?	Dosenöffner auf Lebenszeit
+vote	family	Wer würde eine Kissenschlacht gegen alle hier gewinnen?	Daunen-Dynamit
+vote	family	Wer verteilt die allerbesten Umarmungen?	Ministerium für Umarmungen
+vote	family	Wer würde sich an alle Geburtstage erinnern?	Kalender mit Herz
+vote	family	Wer würde hinterher sagen: „Hab ich doch gleich gesagt“?	Orakel im Nachhinein
+vote	family	Wer würde den Alltag kommentieren wie eine Tierdoku?	Stimme aus dem Off
+vote	family	Wer würde voll angezogen in einen Pool fallen?	Baden in voller Montur
+vote	family	Wer würde ein Wort jahrelang falsch aussprechen, ohne es zu merken?	Aussprache nach Gefühl
+vote	family	Wer würde Liedtexte völlig falsch, aber voller Überzeugung mitsingen?	Textsicher, aber falsch
+vote	family	Wer würde die Gewürze alphabetisch sortieren?	Ordnung ist das halbe Leben
+vote	family	Wer würde am Strand eine preisgekrönte Sandburg bauen?	Luftschlösser aus Sand
+vote	family	Wer würde einen Zaubertrick vorführen, der völlig schiefgeht?	Abrakadabra mit Pannen
+vote	family	Wer würde ein gefühlvolles Lied über das eigene Frühstück schreiben?	Ballade vom Butterbrot
+vote	family	Wer würde jede Woche mit einem neuen Hobby anfangen?	Hobby der Woche
+vote	family	Wer würde die Fernbedienung niemals aus der Hand geben?	Fernbedienungs-Monarchie
+vote	family	Wer würde einen sehr albernen Weltrekord aufstellen wollen?	Rekordverdächtig albern
+vote	family	Wer würde bei einem Buch zuerst die letzte Seite lesen?	Spoiler auf eigene Faust
+vote	family	Wer würde sich als Erstes für die wildeste Achterbahn anstellen?	Hasenfuß? Fehlanzeige
+vote	family	Wer würde in einer Videokonferenz fünf Minuten lang ohne Ton reden?	Stummfilm mit Leidenschaft
+vote	family	Wer hat am ehesten hundert Tabs im Browser offen?	Sammelt Tabs wie Briefmarken
+vote	family	Wer würde eine Rede halten, um die niemand gebeten hat?	Festrede ohne Anlass
+vote	family	Wer würde mit Freude in ein Spukhaus einziehen?	WG mit Gespenst
+vote	family	Wer würde sich bei jeder Pusteblume etwas wünschen?	Wunschzettel im Wind
+vote	family	Wer ist morgens vor dem Frühstück nicht ansprechbar?	Morgenmuffel deluxe
+vote	family	Wer würde nachts um drei hellwach neue Pläne schmieden?	Nachteule mit Visionen
+vote	family	Wer würde beim Kartenspielen am besten bluffen?	Pokerface aus Granit
+vote	family	Wer verbreitet auch bei Regenwetter gute Laune?	Frohnatur bei jedem Wetter
+vote	family	Wer würde bei jedem Streit vermitteln?	Friedenstaube im Wohnzimmer
+vote	family	Wer bleibt in jedem Chaos ganz ruhig?	Fels in der Brandung
+vote	family	Wer würde das letzte Stück Kuchen ohne Zögern abgeben?	Goldstück
+vote	family	Wer könnte aus Resten das beste Essen zaubern?	Resteküche mit Stern
+vote	family	Wer hätte beim Wandern Proviant für alle dabei?	Wandelnde Speisekammer
+vote	family	Wer würde ein Puzzle mit 5000 Teilen ganz allein fertig machen?	Geduldsfaden aus Stahl
+vote	family	Wer würde jedes Baby zum Lachen bringen?	Lachgarantie ab null Jahren
+vote	family	Wer würde aus Langeweile zehnmal den Kühlschrank öffnen?	Kühlschrank-Patrouille
+
+# vote · party
+
+vote	party	Wer würde um zwei Uhr nachts einer alten Liebe schreiben?	Alte Liebe rostet nicht
+vote	party	Wer würde im Lesekreis mitreden, ohne das Buch gelesen zu haben?	Klappentext-Profi
+vote	party	Wer würde am ehesten bei einem Werbespot weinen?	Nah am Werbewasser gebaut
+vote	party	Wer sucht am ehesten jede Woche im Internet nach dem eigenen Namen?	Vorsitz im eigenen Fanclub
+vote	party	Wer würde einen Anruf vortäuschen, um einem Gespräch zu entkommen?	Oscarreif am Telefon
+vote	party	Wer würde beim Stöbern in einem Profil aus Versehen ein zehn Jahre altes Foto liken?	Archäologie mit Folgen
+vote	party	Wer würde über einen Witz mitlachen, ohne ihn zu verstehen?	Lacht aus Solidarität
+vote	party	Wer gewinnt unter der Dusche Streitgespräche, die vor Stunden geendet haben?	Schlagfertig mit Verspätung
+vote	party	Wer schreibt „Bin gleich da“ und liegt noch im Bett?	Märchenstunde im Bett
+vote	party	Wer würde einen Screenshot ausgerechnet an die Person schicken, um die es geht?	Eigentor des Jahres
+vote	party	Wer freut sich heimlich, wenn Pläne ins Wasser fallen?	Lieblingswort: abgesagt
+vote	party	Wer würde ein Geschenk weiterverschenken, ausgerechnet an die Person, von der es kam?	Bumerang-Bescherung
+vote	party	Wer würde das Karaoke-Mikro an sich reißen und nicht mehr hergeben?	Rampensau des Abends
+vote	party	Wer würde bei der Arbeit beschäftigt aussehen und heimlich Katzenvideos schauen?	Fleißig getarnt
+vote	party	Wer würde im Museum von der Aufsicht ermahnt werden?	Museumsverbot auf Bewährung
+vote	party	Wer würde ein Arbeitstelefonat mit „Hab dich lieb, tschüss“ beenden?	Liebesgrüße an die Chefetage
+vote	party	Wer würde jemanden jahrelang falsch anreden, statt nach dem Namen zu fragen?	Mut zur Namenslücke
+vote	party	Wer würde eine lange Nachricht tippen, alles löschen und nur „ok“ schicken?	Drama in drei Punkten
+vote	party	Wer würde an der roten Ampel beim dramatischen Mitsingen erwischt werden?	Ampelkonzert mit Publikum
+vote	party	Wer würde einen traurigen Songtext posten, damit alle nachfragen?	Rauchzeichen im Status
+vote	party	Wer kann nach einem einzigen Erklärvideo angeblich alles?	Fernstudium in zehn Minuten
+vote	party	Wer würde auf einer Party heimlich in fremde Schubladen schauen?	Schubladendenken, wörtlich
+vote	party	Wer würde bei einer Mail an die ganze Firma auf „Allen antworten“ klicken?	Antwort an alle, leider
+vote	party	Wer würde dramatisch abrauschen und dann wegen des Schlüssels zurückkommen?	Abgang mit Zugabe
+vote	party	Wer würde bei einer Serie, die ihr zusammen schaut, heimlich vorausschauen?	Hochverrat auf dem Sofa
+vote	party	Wer würde eine Party verlassen, ohne sich von irgendwem zu verabschieden?	Abgang auf Französisch
+vote	party	Wer würde einen Wasserrohrbruch erfinden, um ein Meeting zu schwänzen?	Dr. h. c. der Ausreden
+vote	party	Wer würde im Café fremde Leute belauschen und innerlich Partei ergreifen?	Lange Ohren, klare Meinung
+vote	party	Wer würde Trash-TV schauen und es „Recherche“ nennen?	Feldforschung auf dem Sofa
+vote	party	Wer würde bei einem Partyspiel schummeln und es nie zugeben?	Unschuldslamm, angeblich
+vote	party	Wer würde Touristen selbstbewusst den falschen Weg erklären?	Stadtführung ins Blaue
+vote	party	Wer würde in einer Kommentarspalte einen hitzigen Streit anzetteln?	Kommentarspalten-Krawall
+vote	party	Wer würde einen Gruppenchat dramatisch verlassen und am nächsten Tag zurückkommen?	Abschied auf Zeit
+vote	party	Wer ist wegen eines Brettspiels von vor zehn Jahren immer noch beleidigt?	Elefantengedächtnis
+vote	party	Wer hat eine geheime Playlist, die niemand je sehen darf?	Ohrwürmer unter Verschluss
+vote	party	Wer würde auf „Wie geht's?“ mit einem zwanzigminütigen Monolog antworten?	Frag lieber nicht
+vote	party	Wer würde über jemanden lästern, während die Person direkt dahinter steht?	Auf frischem Tratsch ertappt
+vote	party	Wer würde einen passiv-aggressiven Zettel an den Kühlschrank im Büro kleben?	Kühlschrankpoesie mit Spitze
+vote	party	Wer würde das Drama im Gruppenchat stumm mitlesen und sich prächtig amüsieren?	Logenplatz mit Popcorn
+vote	party	Wer würde aus einem kurzen Einkauf eine epische Heldensaga machen?	Seemannsgarn vom Feinsten
+vote	party	Wer würde sich im Supermarkt hinter einem Regal verstecken, um Bekannten auszuweichen?	Tarnung im Tiefkühlregal
+vote	party	Wer kommt nach einer Woche im Ausland mit einem neuen Akzent zurück?	Akzent als Souvenir
+vote	party	Wer würde ein Hobby erfinden, nur um interessanter zu wirken?	Hobby-Hochstapelei
+vote	party	Wer würde das Drama anderer Leute kommentieren wie ein Fußballspiel?	Liveticker aus dem Leben
+vote	party	Wer würde behaupten, eine Band schon gekannt zu haben, bevor sie berühmt war?	Kannte die schon vorher
+vote	party	Wer würde auf jeder Party die peinlichsten Geschichten der anderen auspacken?	Archiv der Peinlichkeiten
+vote	party	Wer würde vor dem Spiel große Töne spucken und dann grandios verlieren?	Große Töne, kleine Punkte
+vote	party	Wer würde der Autokorrektur die Schuld für etwas geben, das genau so gemeint war?	Tippfehler mit Absicht
+vote	party	Wer würde im Café zum Spaß einen falschen Namen angeben?	Deckname Cappuccino
+vote	party	Wer würde eine Abwesenheitsnotiz einschalten, nur um keine Mails zu bekommen?	Abwesend in Anwesenheit
+vote	party	Wer würde am DJ-Pult so lange betteln, bis das eigene Lied läuft?	Musikwunsch mit Nachdruck
+vote	party	Wer ist noch auf der Party, wenn die Gastgeber schon schlafen gehen?	Partykanone mit Ausdauer
+vote	party	Wer würde die ganze Wohnung putzen, nur um eine einzige Mail nicht beantworten zu müssen?	Prokrastination mit Glanz
+vote	party	Wer würde jede ernste Frage mit einem Meme beantworten?	Memes statt Meinung
+vote	party	Wer würde sich für alles anmelden, solange es Gratis-Snacks gibt?	Gratis-Snack-Radar
+vote	party	Wer schreibt „Wir müssen reden“ und fragt dann nach Pizza?	Spannungsbogen mit Käse
+vote	party	Wer würde bei einer Einladung zum Essen heimlich alle Gerichte bewerten?	Heimliche Restaurantkritik
+vote	party	Wer könnte alle hier täuschend echt nachmachen?	Ein Mensch, tausend Stimmen
+vote	party	Wer will im Chat immer das letzte Wort haben?	Schlusswort-Abonnement
+vote	party	Wer würde aus Versehen das Ende einer Serie verraten?	Lebender Spoiler-Alarm
+vote	party	Wer würde nicht merken, dass jemand flirtet, selbst mit Leuchtschrift?	Lange Leitung im Flirtmodus
+vote	party	Wer würde Sprachnachrichten nur in doppelter Geschwindigkeit anhören?	Leben im Schnelldurchlauf
+vote	party	Wer würde auf einer Party die ganze Zeit nur mit dem Haustier reden?	Smalltalk mit Fell
+vote	party	Wer würde jede Diskussion mit einer erfundenen Studie gewinnen wollen?	Studienlage frei erfunden
+
+# answer · family
+
+answer	family	Was wäre deine nutzloseste Superkraft?
+answer	family	Wie würdest du einen sehr vornehmen Goldfisch nennen?
+answer	family	Was würdest du als Erstes tun, wenn du einen Tag lang unsichtbar wärst?
+answer	family	Wie hieße deine Autobiografie?
+answer	family	Welche Musik sollte laufen, wenn du einen Raum betrittst?
+answer	family	Was stünde auf der Speisekarte deines Restaurants?
+answer	family	Was würdest du in deinem eigenen Laden verkaufen?
+answer	family	Was kannst du seltsamerweise richtig gut?
+answer	family	Was würde auf einem Warnschild über dich stehen?
+answer	family	Welchen nutzlosen Gegenstand würdest du auf eine einsame Insel mitnehmen?
+answer	family	Welches Tier wäre deine treue Begleitung, und wie hieße es?
+answer	family	Was würdest du erfinden, damit Montage schöner werden?
+answer	family	Welchen Namen hättest du als Superheld oder Superheldin?
+answer	family	In welchem Beruf wärst du herrlich schlecht?
+answer	family	Was wäre dein Schlachtruf?
+answer	family	Was hast du als Kind felsenfest geglaubt, obwohl es gar nicht stimmt?
+answer	family	Was würdest du in eine Zeitkapsel legen, die in 100 Jahren geöffnet wird?
+answer	family	Was gäbe es alles in deinem Traum-Baumhaus?
+answer	family	Was würdest du zu einem echten Dinosaurier sagen?
+answer	family	Wie heißt dein typischer Tanzschritt?
+answer	family	Welches Gesetz würdest du als Erstes erlassen, wenn dir die Welt gehörte?
+answer	family	Was ist deine kreativste Ausrede fürs Zuspätkommen?
+answer	family	Welches Schild würdest du an deine Zimmertür hängen?
+answer	family	Wie sieht dein perfekter fauler Sonntag aus?
+answer	family	Welcher Geruch macht dich sofort glücklich?
+answer	family	Welcher Spruch wäre dein Markenzeichen in einer eigenen Fernsehsendung?
+answer	family	Was ist das Nutzloseste, das du gerade in der Tasche hast?
+answer	family	Was würdest du mit einem kleinen Drachen als Haustier anstellen?
+answer	family	Wie würde deine Band heißen?
+answer	family	Welchen Zauberspruch würdest du jeden Morgen aufsagen?
+answer	family	Was würdest du deinem zukünftigen Ich in fünf Wörtern sagen?
+answer	family	Welche Regel würdest du zu Hause einführen, wenn du das Sagen hättest?
+answer	family	Was würdest du einem schlecht gelaunten Außerirdischen schenken?
+answer	family	Was fänden Außerirdische an deinem Alltag am seltsamsten?
+answer	family	Welche Kleinigkeit nervt dich viel mehr, als sie sollte?
+answer	family	Welches Motto hätte deine Traum-Geburtstagsparty?
+answer	family	Was würdest du mit einer Million Luftballons machen?
+answer	family	Was ist das Beste daran, du zu sein?
+answer	family	Wofür wirst du in zwanzig Jahren berühmt sein?
+answer	family	Wie hieße deine Kochsendung?
+answer	family	Welche seltsame Essenskombination magst du heimlich?
+answer	family	Was würdest du für eine Woche auf dem Mond einpacken?
+answer	family	Vor welcher völlig harmlosen Sache gruselst du dich ein bisschen?
+answer	family	Was würdest du gern an einem einzigen Tag perfekt lernen?
+answer	family	Was hätte dein Traumhaus, das sonst niemand hat?
+answer	family	Was würdest du auf ein riesiges Plakat für die ganze Stadt schreiben?
+answer	family	Wo würdest du als freundliches Gespenst spuken?
+answer	family	Was würdest du unterrichten, wenn du einen Tag lang Lehrer oder Lehrerin wärst?
+answer	family	Wie verbringst du am liebsten einen Regentag?
+answer	family	Womit vertrödelst du Zeit, wenn du eigentlich etwas anderes tun solltest?
+answer	family	Welches Kompliment würde dir die ganze Woche versüßen?
+answer	family	Was würdest du sagen, wenn ein Pinguin bei dir klingelt?
+answer	family	Was würdest du tun, wenn die Schwerkraft eine Stunde lang ausfällt?
+answer	family	Welche zwei Tiere würdest du zum perfekten Haustier kreuzen?
+answer	family	Was kann man mit einem großen Karton alles anstellen?
+answer	family	Welche Kleinigkeit würde deinen Tag gerade besser machen?
+answer	family	Was vergisst du immer, wirklich immer?
+answer	family	Was würdest du mit einer zusätzlichen Stunde pro Tag anfangen?
+answer	family	Was würdest du als Erstes tun, wenn du fliegen könntest?
+answer	family	Welche Meinung übers Essen teilt sonst niemand mit dir?
+answer	family	Was würdest du in einer Schatzkiste verstecken, damit es jemand findet?
+answer	family	Was würdest du sammeln, wenn du unendlich viel Platz hättest?
+answer	family	Was stünde in einem Glückskeks, den du geschrieben hast?
+answer	family	Welche Aufgabe im Haushalt würdest du sofort für immer abgeben?
+answer	family	Was ruft man am besten auf der Achterbahn?
+answer	family	Was machst du, wenn du nicht einschlafen kannst?
+answer	family	Welches Wort findest du einfach so lustig?
+answer	family	Wie würde dein eigenes Land heißen?
+answer	family	Was ist das Beste, was du je auf der Straße gefunden hast?
+answer	family	Wie lautet dein persönliches Lebensmotto?
+answer	family	Was ist gerade das Seltsamste in deinem Kühlschrank?
+answer	family	Wohin würdest du dich beamen, wenn du es nur ein einziges Mal dürftest?
+answer	family	Worauf bist du komischerweise stolz?
+answer	family	Was wolltest du werden, als du klein warst?
+answer	family	Welche Schlagzeile über dich würdest du morgen gern im Busted-Boten lesen?
+answer	family	Was sollte es in jedem Klassenzimmer und jedem Büro geben?
+answer	family	Welche kleine Marotte hast du?
+answer	family	Welchen Film könntest du hundertmal schauen?
+answer	family	Was würdest du mit einer Zeitmaschine machen, die nur zehn Minuten funktioniert?
+answer	family	Worüber musst du immer lachen, egal wie oft?
+answer	family	Was würdest du den ganzen Tag machen, wenn du eine Katze wärst?
+answer	family	Was würdest du tun, wenn das Internet eine Woche lang ausfällt?
+answer	family	Welches Emoji beschreibt dich am besten?
+answer	family	Was würdest du tun, wenn du eine winzige Tür in einem Baum findest?
+answer	family	Was ist deine geheime Taktik, um Brettspiele zu gewinnen?
+answer	family	Was würdest du tun, wenn du nachts im Museum eingeschlossen wärst?
+answer	family	Mit welchen drei Wörtern würdest du deine Morgen beschreiben?
+answer	family	Über welches nutzlose Thema weißt du erstaunlich viel?
+answer	family	Was war dein größtes Missgeschick in der Küche?
+answer	family	Welches Schulfach sollte es unbedingt geben?
+answer	family	Wie würdest du ein vornehmes Restaurant für Hunde nennen?
+answer	family	Welches Wort oder welchen Satz sagst du viel zu oft?
+answer	family	Was wäre der scheußlichste Kuchen, den du dir vorstellen kannst?
+answer	family	Was soll auf deinem nächsten Geburtstagskuchen stehen?
+answer	family	Wie würdest du zur Schule oder zur Arbeit kommen, wenn alles möglich wäre?
+answer	family	Was war der seltsamste Traum, an den du dich erinnerst?
+answer	family	Was ist die wichtigste Regel für eine perfekte Übernachtungsparty?
+answer	family	Worüber könntest du stundenlang reden?
+answer	family	Was würdest du tun, wenn du so klein wie eine Ameise wärst?
+answer	family	Was würdest du aus einem Berg Bauklötze bauen?
+answer	family	Was wäre die Hauptattraktion in deinem Freizeitpark?
+answer	family	Was würde dein Handy über dich erzählen, wenn es reden könnte?
+answer	family	Was war das Seltsamste, das du je mit eigenen Augen gesehen hast?
+answer	family	Welche Aufgabe hättest du in einem Superheldenteam, wenn nicht die Hauptrolle?
+answer	family	Was würdest du tun, wenn es einen Tag lang Spaghetti regnet?
+answer	family	Wie übersteht man am besten eine lange Autofahrt?
+answer	family	Was würdest du tun, wenn du eine Woche lang einen Klon hättest?
+answer	family	Was würdest du tun, wenn du die Zeit für eine Minute anhalten könntest?
+answer	family	Was würdest du einem Eichhörnchen sagen, das dein Pausenbrot geklaut hat?
+answer	family	Womit bringst du andere zum Lächeln?
+answer	family	Was war das Lustigste, das dir auf einer Reise passiert ist?
+answer	family	Was würdest du auf deinem Traumspielplatz bauen?
+answer	family	Was ist der beste Preis, den du je gewonnen hast?
+answer	family	Welches Wort würdest du gern neu erfinden, und was bedeutet es?
+answer	family	Welches schöne Wort benutzt heute kaum noch jemand außer dir?
+answer	family	Welches Geräusch hörst du am allerliebsten?
+answer	family	Was würdest du einem Roboter als Erstes beibringen?
+answer	family	Welcher Gegenstand bei dir zu Hause hätte die spannendste Geschichte zu erzählen?
+answer	family	Was würdest du auf eine Postkarte vom Mars schreiben?
+answer	family	Wie würdest du einen neu entdeckten Planeten nennen?
+
+# answer · party
+
+answer	party	Bei welchem peinlichen Lied kannst du jedes Wort mitsingen?
+answer	party	Mit welcher schlechten Ausrede hast du schon mal abgesagt?
+answer	party	Was wäre der erste Satz in deinem Datingprofil?
+answer	party	Was ist das Kleinlichste, was du je getan hast?
+answer	party	Welche Schwindelei aus deiner Kindheit hast du nie gestanden?
+answer	party	Was ist das Nutzloseste, das du je gekauft hast?
+answer	party	Womit würdest du aus einem Nobelrestaurant fliegen?
+answer	party	Welche Serie findest du heimlich peinlich gut?
+answer	party	Was wäre der beste Witz auf deine Kosten?
+answer	party	Bei welcher Kleinigkeit hast du am meisten übertrieben reagiert?
+answer	party	Was ist dein Karaoke-Lied für alle Fälle?
+answer	party	Welche alberne Meinung würdest du gegen alle verteidigen?
+answer	party	Was ist der schlechteste Rat, den du je befolgt hast?
+answer	party	Welche Nachricht dürfte niemals aus Versehen im Gruppenchat landen?
+answer	party	Wie entkommst du einem langweiligen Gespräch?
+answer	party	Was ist das Kindischste, was du immer noch machst?
+answer	party	Welchen Trend hast du mitgemacht, den du heute bereust?
+answer	party	Bei welchem schrecklichen Geschenk hast du Begeisterung vorgespielt?
+answer	party	Welche Regel brichst du ständig?
+answer	party	Was machst du, wenn du allein zu Hause bist und niemand zuschaut?
+answer	party	Was würde dich im Film auf die dunkle Seite bringen?
+answer	party	Worüber hast du dich schon mal völlig sinnlos gestritten?
+answer	party	Was ist das Schlimmste, was man beim ersten Date sagen kann?
+answer	party	Welche erfundene Tatsache hast du schon voller Überzeugung erzählt?
+answer	party	Was war dein peinlichster Versprecher vor der Klasse oder im Büro?
+answer	party	Auf welche schlechte Angewohnheit bist du heimlich stolz?
+answer	party	In welchem fragwürdigen Job wärst du verdächtig gut?
+answer	party	Wobei bist du viel zu ehrgeizig?
+answer	party	Was war das seltsamste Kompliment, das du je bekommen hast?
+answer	party	Welche nutzlose Fähigkeit würdest du stolz in eine Bewerbung schreiben?
+answer	party	Was würde der Busted-Bote diese Woche über dich schreiben?
+answer	party	Was hast du schon Peinliches getan, um jemanden zu beeindrucken?
+answer	party	Welchen harmlosen Schulstreich kannst du endlich gestehen?
+answer	party	Welche harmlose Macke sollte man kennen, bevor man sich mit dir anfreundet?
+answer	party	Was wäre die schlimmste Nachricht, die du um Mitternacht aus dem Büro bekommen könntest?
+answer	party	Welche alberne Verschwörungstheorie würdest du in die Welt setzen?
+answer	party	Worüber hast du schon mal lächerlicherweise geweint?
+answer	party	Wofür würdest du verhaftet, wenn Nervigsein ein Verbrechen wäre?
+answer	party	Womit würde dein Freundeskreis dich zuerst aufziehen?
+answer	party	Was machst du selbst, obwohl du es bei anderen komisch fändest?
+answer	party	Was hast du völlig unschuldig getan, das total verdächtig aussah?
+answer	party	Wofür geht deine Bildschirmzeit wirklich drauf?
+answer	party	Wofür hast du schon den albernsten Ärger bekommen?
+answer	party	Was wäre die schlimmste Durchsage, die man im Flugzeug hören kann?
+answer	party	Wie würdest du als Wrestling-Star heißen?
+answer	party	Was ist dein absurdester Gedanke unter der Dusche?
+answer	party	An welchem seltsamen Ort bist du schon mal eingeschlafen?
+answer	party	Was magst du heimlich, das alle anderen furchtbar finden?
+answer	party	Was wäre der schlimmste Satz in einer Hochzeitsrede?
+answer	party	Was ist deine harmlose Rache an Leuten, die Serien spoilern?
+answer	party	Was war dein peinlichster Post von früher?
+answer	party	Mit welchem Trick ergatterst du das letzte Stück?
+answer	party	Welchen Podcast würdest du starten, den niemand braucht?
+answer	party	Was hast du kaputt gemacht und nie zugegeben?
+answer	party	Was stünde in einer Ein-Stern-Bewertung deines Zuhauses?
+answer	party	Was würde dein böser Zwilling anders machen?
+answer	party	Welche schlechte Idee findest du immer noch genial?
+answer	party	Wovon tust du so, als hättest du Ahnung, obwohl du keine hast?
+answer	party	Welches Kompliment nervt dich heimlich?
+answer	party	Wofür würdest du Hausverbot in einer Bibliothek bekommen?
+answer	party	Welchen Spitznamen hattest du früher, den hier niemand kennt?
+answer	party	Was ist deine faulste Ausrede, um nicht beim Umzug zu helfen?
+answer	party	Welchen Spruch aus deiner Kindheit sagst du inzwischen selbst?
+answer	party	Aus welchem seltsamen Grund hast du schon mal eine Party verlassen?

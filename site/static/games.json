@@ -116,6 +116,21 @@
         { "src": "static/games/snug/tv-lobby.png", "alt": "The lobby: the puffy snug logo with a bow, how to play in three steps, the join QR code in a candy-striped card, and the players as candies in a jar", "kind": "tv" },
         { "src": "static/games/snug/phone-board.png", "alt": "Phil's phone: the shape with the pieces placed so far and the others' cursors, and below it his own three secret pieces, each with a flip button", "kind": "phone" }
       ]
+    },
+    {
+      "name": "busted",
+      "title": "Busted",
+      "summary": "A gossip paper about the room: rank who would most likely do it and the winner makes the front page with a title; answer a question anonymously and guess who wrote what; suggest your own questions and the room rates them",
+      "players": { "min": 3, "max": 10 },
+      "languages": ["en", "de"],
+      "source": "gh:mitsuhiko/tvpipe/busted@busted-v*",
+      "home": "https://github.com/mitsuhiko/tvpipe/tree/main/games/busted",
+      "screenshots": [
+        { "src": "static/games/busted/tv-title.png", "alt": "The front page of The Daily Busted after a vote: EXCLUSIVE, Lena's hand-drawn press photo taped on, her name huge and her new title in red, Sleepyhead of the Year, with a short article on how many sources gave gold", "kind": "tv" },
+        { "src": "static/games/busted/tv-reveal.png", "alt": "An answer round's reveal: an anonymous typed note, the guessers' faces on the photos they named, the writer's photo clipped onto the note and a stamp: BUSTED! when most guessed right, GOT AWAY when not", "kind": "tv" },
+        { "src": "static/games/busted/phone-rank.png", "alt": "Phil's phone ranking who would most likely sleep through an entire day: the players' press photos with gold, silver and bronze medals and a File it button", "kind": "phone" },
+        { "src": "static/games/busted/phone-match.png", "alt": "Phil's phone matching the anonymous answers to their writers, a face beside each note, a heart on his favourite and his own note greyed out", "kind": "phone" }
+      ]
     }
   ]
 }

@@ -1,0 +1,313 @@
+/*
+ * Busted on the TV: the screen is a gossip paper, The Daily Busted.
+ * Newsprint, black ink, tabloid red for kickers and stamps, flash yellow
+ * only for small stickers. Blackletter for the masthead (UnifrakturMaguntia),
+ * Anton for headlines, Playfair Display for decks and titles, Courier
+ * Prime for the anonymous notes, Libre Franklin for small print.
+ *
+ * The picture is captured and sent as H.264: no fine textures, red only
+ * in solid blocks and big type, nothing thinner than 2px that matters.
+ */
+
+@font-face { font-family: "Unifraktur"; src: url("../phone/fonts/unifraktur-maguntia.woff2") format("woff2"); }
+@font-face { font-family: "Anton"; src: url("../phone/fonts/anton.woff2") format("woff2"); }
+@font-face { font-family: "Playfair"; src: url("../phone/fonts/playfair-display.woff2") format("woff2"); font-weight: 400 900; }
+@font-face { font-family: "Playfair"; src: url("../phone/fonts/playfair-display-italic.woff2") format("woff2"); font-weight: 400 900; font-style: italic; }
+@font-face { font-family: "Courier Prime"; src: url("../phone/fonts/courier-prime.woff2") format("woff2"); }
+@font-face { font-family: "Courier Prime"; src: url("../phone/fonts/courier-prime-bold.woff2") format("woff2"); font-weight: 700; }
+@font-face { font-family: "Franklin"; src: url("../phone/fonts/libre-franklin.woff2") format("woff2"); font-weight: 100 900; }
+
+:root {
+  --paper: #f3eee2;
+  --paper-2: #e9e2d1;
+  --ink: #161513;
+  --ink-2: #4a463e;
+  --ink-3: #8a8374;
+  --red: #c8102e;
+  --red-dark: #8f0a20;
+  --yellow: #ffd23f;
+  --blue: #1d3f8a;
+  --gold: #c9971c;
+  --silver: #8d96a0;
+  --bronze: #a86434;
+  --tvpipe-join-bg: #fbf8f0;
+  --tvpipe-join-fg: #161513;
+  --tvpipe-join-accent: #c8102e;
+  --tvpipe-join-font: "Franklin", sans-serif;
+  --tvpipe-join-border: 2px solid #161513;
+  --tvpipe-join-shadow: 4px 4px 0 rgba(0, 0, 0, .25);
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; width: 1280px; height: 720px; overflow: hidden; background: #c9c0ad; }
+body { font: 500 18px/1.3 "Franklin", system-ui, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+
+/* The page: newsprint with a soft vignette and the fold. */
+#page {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(90deg, transparent 49.6%, rgba(0, 0, 0, .05) 50%, transparent 50.4%),
+    radial-gradient(130% 120% at 50% 40%, var(--paper) 55%, var(--paper-2) 100%);
+}
+
+/* ------------------------------------------------------------------ */
+/* The masthead */
+
+.mast { position: absolute; left: 28px; right: 28px; top: 10px; height: 98px; }
+.mast .row { display: grid; grid-template-columns: 220px 1fr 220px; align-items: center; height: 70px; }
+.mast h1 { margin: 0; text-align: center; font: 400 66px/1 "Unifraktur", serif; letter-spacing: .01em; white-space: nowrap; }
+.ear { border: 2px solid var(--ink); padding: 5px 8px; font: 700 12px/1.25 "Franklin", sans-serif; text-transform: uppercase; letter-spacing: .06em; text-align: center; }
+.ear b { display: block; font: 400 22px/1.05 "Anton", sans-serif; letter-spacing: .02em; }
+.ear.right { justify-self: end; width: 100%; }
+.dateline { display: flex; justify-content: space-between; align-items: center; gap: 16px; border-top: 3px solid var(--ink); border-bottom: 1px solid var(--ink); margin-top: 4px; padding: 3px 2px 2px; font: 700 12.5px/1.2 "Franklin", sans-serif; text-transform: uppercase; letter-spacing: .12em; }
+.dateline .motto { font: italic 500 14px/1 "Playfair", serif; text-transform: none; letter-spacing: 0; }
+
+#main { position: absolute; left: 28px; right: 28px; top: 118px; bottom: 16px; }
+.scene { position: absolute; inset: 0; }
+
+/* ------------------------------------------------------------------ */
+/* Type */
+
+.kicker { display: inline-block; background: var(--red); color: #fff; font: 400 22px/1 "Anton", sans-serif; text-transform: uppercase; letter-spacing: .06em; padding: 7px 12px 6px; }
+.kicker.black { background: var(--ink); }
+.kicker.yellow { background: var(--yellow); color: var(--ink); }
+.hl { font: 400 64px/1.02 "Anton", sans-serif; text-transform: uppercase; margin: 0; letter-spacing: .005em; overflow: hidden; }
+.deck { font: italic 500 24px/1.25 "Playfair", serif; margin: 0; color: var(--ink-2); }
+.section { display: flex; align-items: center; gap: 12px; font: 400 26px/1 "Anton", sans-serif; text-transform: uppercase; letter-spacing: .04em; border-top: 4px solid var(--ink); border-bottom: 1px solid var(--ink); padding: 6px 0 5px; }
+.section small { font: 700 13px/1 "Franklin", sans-serif; letter-spacing: .1em; color: var(--ink-2); margin-left: auto; }
+.byline { font: 700 13px/1.2 "Franklin", sans-serif; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-2); }
+.fitbox { overflow: hidden; }
+
+/* The clock: "Goes to press in 0:23". */
+.clock { display: inline-flex; flex-direction: column; align-items: center; background: var(--ink); color: var(--paper); padding: 6px 14px 4px; min-width: 150px; }
+.clock small { font: 700 11px/1 "Franklin", sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.clock b { font: 400 46px/1.05 "Anton", sans-serif; letter-spacing: .03em; }
+.clock.low { background: var(--red); }
+.clock.low b { animation: throb .5s ease-in-out infinite alternate; }
+@keyframes throb { to { transform: scale(1.08); } }
+
+/* ------------------------------------------------------------------ */
+/* Press photos */
+
+.photo { position: relative; display: inline-flex; flex-direction: column; align-items: stretch; width: var(--s, 120px); background: #fffdf7; padding: calc(var(--s, 120px) * .05); padding-bottom: 0; box-shadow: 2px 3px 0 rgba(0, 0, 0, .18), 0 0 0 1px rgba(0, 0, 0, .12); transform: rotate(var(--r, 0deg)); transition: transform .4s, opacity .4s, filter .4s; }
+.photo .pic { position: relative; aspect-ratio: 1; background: radial-gradient(circle at 50% 45%, #fff 30%, #ece6d6 100%); overflow: hidden; border-bottom: calc(var(--s, 120px) * .04) solid var(--c, #666); }
+.photo .pic::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle, color-mix(in srgb, var(--c, #666) 22%, transparent) 26%, transparent 28%) 0 0 / 14px 14px; opacity: .55; }
+.photo svg { position: absolute; inset: 4%; width: 92%; height: 92%; }
+.photo svg path { fill: none; stroke: var(--ink); stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+.photo .cap { font: 400 calc(var(--s, 120px) * .15)/1.15 "Anton", sans-serif; text-transform: uppercase; text-align: center; padding: calc(var(--s, 120px) * .03) 2px calc(var(--s, 120px) * .04); white-space: nowrap; overflow: hidden; letter-spacing: .02em; }
+.photo.extra .pic { border-bottom-style: dashed; }
+.photo .ribbon { position: absolute; top: 8%; left: -6%; background: var(--yellow); color: var(--ink); font: 800 calc(var(--s, 120px) * .085)/1 "Franklin", sans-serif; text-transform: uppercase; letter-spacing: .06em; padding: 3px 6px; transform: rotate(-8deg); box-shadow: 1px 1px 0 rgba(0, 0, 0, .25); }
+.photo.dim { opacity: .45; filter: grayscale(1); }
+.photo.away { opacity: .55; }
+.photo .tape { position: absolute; top: -12px; left: 50%; width: 46%; height: 22px; transform: translateX(-50%) rotate(-3deg); background: rgba(246, 233, 190, .82); box-shadow: 0 1px 0 rgba(0, 0, 0, .08); }
+.mini { display: inline-block; width: var(--s, 34px); height: var(--s, 34px); border-radius: 50%; background: #fffdf7; border: 3px solid var(--c, #666); position: relative; overflow: hidden; flex: none; }
+.mini svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.mini svg path { fill: none; stroke: var(--ink); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Stamps: FILED, BUSTED!, GOT AWAY, WINNER. */
+.stamp { position: absolute; z-index: 5; font: 400 var(--fs, 28px)/1 "Anton", sans-serif; text-transform: uppercase; letter-spacing: .06em; color: var(--red); border: calc(var(--fs, 28px) * .12) solid var(--red); padding: .12em .3em .08em; transform: rotate(var(--r, -12deg)); background: rgba(255, 250, 240, .55); white-space: nowrap; pointer-events: none; animation: stamp .35s cubic-bezier(.2, 1.6, .5, 1) both; }
+.stamp.blue { color: var(--blue); border-color: var(--blue); }
+.stamp.black { color: var(--ink); border-color: var(--ink); }
+@keyframes stamp { from { transform: rotate(var(--r, -12deg)) scale(2.6); opacity: 0; } 60% { opacity: 1; } to { transform: rotate(var(--r, -12deg)) scale(1); opacity: .95; } }
+
+/* The page spinning in, the flash. */
+.spin { animation: spin .9s cubic-bezier(.2, .8, .3, 1) both; }
+@keyframes spin { from { transform: rotate(-540deg) scale(.04); opacity: 0; } 30% { opacity: 1; } to { transform: none; } }
+.rise { animation: rise .5s ease-out both; animation-delay: var(--d, 0s); }
+@keyframes rise { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
+.drop { animation: drop .45s cubic-bezier(.3, 1.4, .5, 1) both; animation-delay: var(--d, 0s); }
+@keyframes drop { from { transform: translateY(-40px) rotate(var(--r, 0deg)) scale(1.2); opacity: 0; } to { transform: rotate(var(--r, 0deg)); opacity: 1; } }
+#flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 50; }
+#flash.on { animation: flash .7s ease-out; }
+@keyframes flash { from { opacity: .95; } to { opacity: 0; } }
+
+/* ------------------------------------------------------------------ */
+/* Lobby: Reporters wanted */
+
+.lobby .top { display: flex; align-items: flex-end; gap: 26px; }
+.lobby .top > div { flex: none; }
+.lobby .hl { font-size: 92px; line-height: .92; white-space: nowrap; margin-top: 6px; }
+.lobby .deck { flex: 1; padding-bottom: 6px; font-size: 22px; }
+.lobby .cols { position: absolute; top: 160px; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: 300px 1fr 300px; gap: 0; border-top: 4px solid var(--ink); }
+.lobby .cols > * { padding: 16px 18px 0; min-width: 0; }
+.lobby .cols > :first-child { padding-left: 0; }
+.lobby .cols > :last-child { padding-right: 0; padding-bottom: var(--tvpipe-join-h, 0px); }
+.lobby .cols > * + * { border-left: 1px solid var(--ink); }
+.coupon { border: 3px dashed var(--ink); padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; background: #fffdf6; margin: 0 !important; }
+.coupon::before { content: "✂"; position: absolute; top: -17px; left: 18px; font-size: 24px; background: var(--paper); padding: 0 4px; }
+.coupon .qr { width: 220px; height: 220px; }
+.coupon .qr svg { width: 100%; height: 100%; display: block; }
+.coupon .clip { font: 400 24px/1 "Anton", sans-serif; text-transform: uppercase; letter-spacing: .05em; }
+.coupon .link { font: 700 20px/1.1 "Courier Prime", monospace; text-align: center; overflow-wrap: anywhere; }
+.coupon .or { font: 600 12px/1 "Franklin", sans-serif; color: var(--ink-2); text-transform: uppercase; letter-spacing: .1em; }
+.lobby .lobbynote { margin: 12px 0 0; font: italic 600 19px/1.3 "Playfair", serif; text-align: center; }
+.lobby .section { border-top: 0; padding-top: 0; }
+.staff { display: flex; flex-wrap: wrap; gap: 18px 14px; justify-content: center; align-content: flex-start; padding-top: 12px; }
+.staff .empty { font: italic 22px/1.3 "Playfair", serif; color: var(--ink-3); margin-top: 60px; }
+.how ol { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.how li b { display: block; font: 400 21px/1.1 "Anton", sans-serif; text-transform: uppercase; }
+.how li span { font: 500 15px/1.32 "Franklin", sans-serif; }
+.lobby .inbox { margin-top: 12px; display: block; text-align: center; font-size: 19px; }
+
+/* ------------------------------------------------------------------ */
+/* A round's front page */
+
+.front .head { position: absolute; left: 0; right: 0; top: 0; }
+.front .head .row { display: flex; align-items: center; gap: 14px; }
+.front .head .row .byline { margin-left: auto; }
+.front .hl.q { margin-top: 10px; height: 214px; display: flex; align-items: center; }
+.front .hl.q > span { display: block; }
+.front .deck.hint { margin-top: 8px; }
+.front .strip { position: absolute; left: 0; right: var(--tvpipe-join-w, 0px); bottom: 0; }
+.front .strip .faces { display: flex; justify-content: center; gap: 18px; padding-top: 14px; flex-wrap: wrap; }
+
+/* Ranking: the contact sheet. */
+.rank .head, .write .head { padding-right: 190px; }
+.rank .head .hl.q, .write .head .hl.q { height: 112px; margin-top: 6px; }
+.rank .head .deck.hint { margin-top: 2px; font-size: 21px; }
+.rank .clockbox, .write .clockbox, .match .clockbox { position: absolute; right: 0; top: 0; }
+.rank .sheet { position: absolute; left: 0; right: 0; top: 196px; bottom: 0; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 22px 26px; padding-right: var(--tvpipe-join-w, 0px); }
+.rank .sheet .photo { position: relative; }
+
+/* The count. */
+.count .head .hl.q { height: 58px; font-size: 38px; margin-top: 6px; display: block; white-space: nowrap; }
+.count .slip { position: absolute; left: 8px; top: 116px; width: 300px; background: #fffdf6; border: 2px solid var(--ink); box-shadow: 5px 5px 0 rgba(0, 0, 0, .18); padding: 14px 16px; transform: rotate(-2deg); }
+.count .slip.in { animation: slip .45s cubic-bezier(.2, 1.3, .5, 1) both; }
+@keyframes slip { from { transform: translateX(-120px) rotate(-14deg); opacity: 0; } to { transform: rotate(-2deg); opacity: 1; } }
+.slip .no { font: 700 13px/1 "Franklin", sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); }
+.slip .from { display: flex; align-items: center; gap: 10px; margin: 10px 0 8px; font: 400 26px/1 "Anton", sans-serif; text-transform: uppercase; min-height: 44px; }
+.slip .from .secret { font: italic 600 22px/1 "Playfair", serif; text-transform: none; color: var(--ink-2); }
+.slip ol { list-style: none; margin: 0; padding: 8px 0 0; border-top: 1px dashed var(--ink-3); display: flex; flex-direction: column; gap: 8px; }
+.slip li { display: flex; align-items: center; gap: 10px; font: 700 24px/1.1 "Courier Prime", monospace; }
+.slip li small { margin-left: auto; font: 400 20px/1 "Anton", sans-serif; color: var(--ink-3); }
+.medal { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; font: 400 18px/1 "Anton", sans-serif; color: #fff; flex: none; box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .2); }
+.medal.m0 { background: var(--gold); }
+.medal.m1 { background: var(--silver); }
+.medal.m2 { background: var(--bronze); }
+.count .bars { position: absolute; left: 340px; right: 150px; top: 100px; bottom: 0; display: flex; align-items: flex-end; justify-content: center; gap: 10px; }
+.bar { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: var(--bw, 90px); height: 100%; position: relative; }
+.bar .pts { font: 400 28px/1 "Anton", sans-serif; margin-bottom: 4px; transition: transform .3s; }
+.bar .stack { width: 72%; display: flex; flex-direction: column-reverse; }
+.bar .blk { height: calc(var(--u) * var(--n)); border: 2px solid var(--ink); border-bottom-width: 0; background: #fffdf6; position: relative; animation: grow .35s ease-out both; }
+.bar .blk:first-child { border-bottom-width: 2px; }
+.bar .blk::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 6px; background: var(--m); }
+.bar .blk.m0 { --m: var(--gold); }
+.bar .blk.m1 { --m: var(--silver); }
+.bar .blk.m2 { --m: var(--bronze); }
+@keyframes grow { from { transform: scaleY(0); transform-origin: bottom; } to { transform: none; transform-origin: bottom; } }
+.bar .photo { margin-top: 8px; }
+.bar.win .photo { transform: scale(1.08); }
+.bar.win::before { content: ""; position: absolute; left: -10%; right: -10%; bottom: -8px; height: calc(var(--bw, 90px) * 1.5); border: 5px solid var(--red); border-radius: 50%; transform: rotate(-6deg); animation: circle .6s ease-out both; z-index: 3; }
+@keyframes circle { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+.bar.lose { opacity: .6; }
+
+/* The front page with the title. */
+.titlepage .kicker { font-size: 30px; padding: 8px 16px 6px; }
+.titlepage .who { position: absolute; left: 0; top: 60px; width: 380px; height: 470px; display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 22px; }
+.titlepage .story { position: absolute; left: 420px; right: 0; top: 54px; bottom: 0; }
+.titlepage .name { font: 400 150px/1.12 "Anton", sans-serif; text-transform: uppercase; white-space: nowrap; overflow: hidden; }
+.titlepage .title { font: italic 900 66px/1.04 "Playfair", serif; color: var(--red); margin-top: 2px; height: 146px; }
+.titlepage .title::before { content: "— "; color: var(--ink); }
+.titlepage .article { columns: 2; column-gap: 26px; column-rule: 1px solid var(--ink); margin-top: 12px; padding-right: var(--tvpipe-join-w, 0px); font: 500 19px/1.4 "Franklin", sans-serif; }
+.titlepage .article p { margin: 0 0 10px; }
+.titlepage .article p:first-child::first-letter { font: 400 54px/.8 "Anton", sans-serif; float: left; margin: 4px 6px 0 0; }
+.titlepage .medals { display: flex; gap: 10px; align-items: center; font: 400 26px/1 "Anton", sans-serif; break-inside: avoid; }
+.titlepage .silent { font: italic 600 34px/1.3 "Playfair", serif; margin-top: 30px; }
+
+/* Writing: letters to the editor. */
+.write .letters { position: absolute; left: 0; right: 0; top: 190px; bottom: 0; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 26px 30px; padding-right: var(--tvpipe-join-w, 0px); }
+.env { position: relative; width: 190px; height: 124px; }
+.env .body { position: absolute; inset: 0; border: 3px dashed var(--ink-3); background: transparent; }
+.env.in .body { border: 2px solid var(--ink); background: #fbf4e2; box-shadow: 4px 4px 0 rgba(0, 0, 0, .16); }
+.env.in .body::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 62%; background: linear-gradient(to bottom right, transparent 48.8%, var(--ink) 49.6%, var(--ink) 50.4%, transparent 51.2%), linear-gradient(to bottom left, transparent 48.8%, var(--ink) 49.6%, var(--ink) 50.4%, transparent 51.2%); }
+.env .mini { position: absolute; right: 10px; top: 10px; --s: 46px; border-radius: 4px; }
+.env .who { position: absolute; left: 12px; bottom: 10px; font: 400 22px/1 "Anton", sans-serif; text-transform: uppercase; }
+.env:not(.in) .who, .env:not(.in) .mini { opacity: .45; }
+.env.in { animation: drop .45s cubic-bezier(.3, 1.4, .5, 1) both; }
+
+/* The gossip column: anonymous notes. */
+.board .colhead { position: absolute; left: 0; right: 200px; top: 0; }
+.board .colhead .deck { margin-top: 6px; font-size: 26px; font-weight: 700; color: var(--ink); height: 66px; overflow: hidden; }
+.board .side { position: absolute; right: 0; top: 0; width: 180px; display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+.board .side .hint { margin: 0; font: italic 600 17px/1.25 "Playfair", serif; color: var(--ink-2); }
+.board .notes { position: absolute; left: 0; right: 200px; top: 112px; bottom: 0; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 10px 18px; }
+.board .notes.one { grid-template-columns: 1fr; }
+.note { position: relative; background: #fffdf6; border: 2px solid var(--ink); padding: 6px 14px 6px 74px; display: flex; align-items: center; box-shadow: 3px 3px 0 rgba(0, 0, 0, .13); min-height: 0; }
+.note .num { position: absolute; left: 0; top: 0; bottom: 0; width: 60px; display: grid; place-items: center; background: var(--ink); color: var(--paper); font: 400 30px/1 "Anton", sans-serif; }
+.note .txt { font: 700 26px/1.18 "Courier Prime", monospace; width: 100%; max-height: 100%; overflow: hidden; }
+.board .filed { display: flex; flex-direction: column; gap: 6px; border-top: 2px solid var(--ink); padding-top: 6px; }
+.board .filed .faces { display: flex; flex-wrap: wrap; gap: 5px; }
+.board .filed .mini { --s: 40px; transition: opacity .3s; }
+.board .filed .mini.wait { opacity: .3; filter: grayscale(1); }
+.board .filed .mini.ok::after { content: "✓"; position: absolute; inset: 0; display: grid; place-items: center; background: rgba(200, 16, 46, .78); color: #fff; font: 400 22px/1 "Anton", sans-serif; }
+
+/* The reveal: one note at a time. */
+.reveal .big { position: absolute; left: 0; top: 40px; width: 600px; height: 360px; background: #fffdf6; border: 3px solid var(--ink); box-shadow: 8px 8px 0 rgba(0, 0, 0, .16); padding: 26px 34px; display: flex; flex-direction: column; justify-content: center; transform: rotate(-1.2deg); }
+.reveal .big.in { animation: rise .45s ease-out both; }
+.reveal .big .no { position: absolute; left: -3px; top: -34px; background: var(--ink); color: var(--paper); font: 400 22px/1 "Anton", sans-serif; padding: 6px 12px 5px; letter-spacing: .04em; }
+.reveal .big .txt { font: 700 40px/1.2 "Courier Prime", monospace; overflow: hidden; max-height: 100%; }
+.reveal .big .hearts { position: absolute; right: 18px; top: 12px; font: 400 26px/1 "Anton", sans-serif; color: var(--red); }
+.reveal .big .clipped { position: absolute; right: -34px; bottom: -58px; z-index: 6; animation: drop .45s cubic-bezier(.3, 1.4, .5, 1) both; }
+.reveal .big .clipped::after { content: ""; position: absolute; left: 40%; top: -18px; width: 16px; height: 48px; border: 4px solid #8a8f96; border-radius: 10px; }
+.reveal .big .stamp { --fs: 60px; left: 40px; bottom: -36px; }
+.reveal .suspects { position: absolute; left: 640px; right: 0; top: 0; bottom: 0; display: flex; flex-direction: column; padding-right: 0; }
+.reveal .suspects .grid { flex: 1; min-height: 0; display: flex; flex-wrap: wrap; align-content: flex-start; justify-content: center; gap: 18px 16px; padding-top: 16px; padding-bottom: var(--tvpipe-join-h, 0px); }
+.reveal .sus { position: relative; display: flex; flex-direction: column; align-items: center; }
+.reveal .sus .votes { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; min-height: 30px; max-width: 120px; margin-top: 4px; }
+.reveal .sus .votes .mini { --s: 28px; border-width: 2px; animation: drop .35s ease-out both; animation-delay: var(--d, 0s); }
+.reveal .sus.author .photo { transform: scale(1.1) rotate(0deg); z-index: 2; }
+.reveal .sus.author::after { content: ""; position: absolute; left: -12px; right: -12px; top: -12px; height: calc(var(--s, 110px) * 1.32); border: 5px solid var(--red); border-radius: 50%; transform: rotate(-5deg); animation: circle .5s ease-out both; }
+.reveal .sus.other { opacity: .5; }
+.reveal .progress { position: absolute; left: 0; bottom: 0; width: 560px; display: flex; gap: 8px; flex-wrap: wrap; }
+.reveal .progress span { width: 40px; height: 40px; display: grid; place-items: center; border: 2px solid var(--ink); font: 400 20px/1 "Anton", sans-serif; background: #fffdf6; }
+.reveal .progress span.done { background: var(--ink); color: var(--paper); }
+.reveal .progress span.now { background: var(--red); border-color: var(--red); color: #fff; }
+
+/* ------------------------------------------------------------------ */
+/* Standings */
+
+.scores .hl { font-size: 72px; }
+.scores table { position: absolute; left: 0; width: 820px; top: 124px; border-collapse: collapse; }
+.scores td { border-bottom: 1px solid var(--ink); padding: 0 10px; height: calc(min(52px, 460px / var(--rows, 10))); font: 600 18px/1 "Franklin", sans-serif; }
+.scores tr:first-child td { border-top: 3px solid var(--ink); }
+.scores td.rk { font: 400 28px/1 "Anton", sans-serif; width: 50px; text-align: right; }
+.scores td.nm { font: 400 26px/1 "Anton", sans-serif; text-transform: uppercase; white-space: nowrap; }
+.scores td.nm .mini { --s: 38px; vertical-align: middle; margin-right: 12px; }
+.scores td.why { color: var(--ink-2); font-size: 15.5px; }
+.scores td.dl { font: 400 26px/1 "Anton", sans-serif; color: var(--red); text-align: right; width: 70px; }
+.scores td.sc { font: 400 34px/1 "Anton", sans-serif; text-align: right; width: 80px; }
+.scores tr { animation: rise .4s ease-out both; animation-delay: var(--d, 0s); }
+.scores .next { position: absolute; right: 0; top: 124px; width: 340px; border: 3px solid var(--ink); padding: 16px; background: #fffdf6; }
+.scores .next b { display: block; font: 400 30px/1.1 "Anton", sans-serif; text-transform: uppercase; margin-top: 6px; }
+
+/* ------------------------------------------------------------------ */
+/* The special edition */
+
+.final .hl { font-size: 70px; }
+.final .left { position: absolute; left: 0; top: 140px; width: 560px; }
+.final .left table { width: 100%; border-collapse: collapse; }
+.final .left td { border-bottom: 1px solid var(--ink); padding: 4px 8px; height: calc(min(44px, 420px / var(--rows, 10))); font: 400 24px/1 "Anton", sans-serif; text-transform: uppercase; }
+.final .left td.sc { text-align: right; }
+.final .left td .mini { --s: 30px; vertical-align: middle; margin-right: 10px; }
+.final .awards { position: absolute; left: 600px; right: 0; top: 140px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding-right: var(--tvpipe-join-w, 0px); }
+.award { border: 3px solid var(--ink); background: #fffdf6; padding: 12px 14px; display: flex; align-items: center; gap: 12px; animation: drop .5s ease-out both; animation-delay: var(--d, 0s); }
+.award .mini { --s: 56px; }
+.award small { display: block; font: 700 12px/1.1 "Franklin", sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--red); }
+.award b { display: block; font: 400 26px/1.05 "Anton", sans-serif; text-transform: uppercase; }
+.award span { font: italic 600 17px/1.1 "Playfair", serif; }
+
+.stand { position: absolute; inset: 104px 0 0 0; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 16px 18px; padding-right: 150px; }
+.cover { position: relative; width: var(--cw, 170px); height: calc(var(--cw, 170px) * 1.42); background: var(--c, #c8102e); color: #fff; overflow: hidden; box-shadow: 4px 5px 0 rgba(0, 0, 0, .25); transition: transform .5s, box-shadow .5s; display: flex; flex-direction: column; align-items: stretch; padding: calc(var(--cw, 170px) * .04); gap: calc(var(--cw, 170px) * .025); }
+.cover .cm { font: 400 calc(var(--cw, 170px) * .2)/.95 "Anton", sans-serif; letter-spacing: .02em; color: #fff; text-shadow: 2px 2px 0 rgba(0, 0, 0, .25); }
+.cover .face { position: relative; width: 68%; align-self: center; aspect-ratio: 1; background: radial-gradient(circle, #fff 40%, #f0e8d8 100%); border-radius: 50% 50% 8px 8px; overflow: hidden; flex: none; }
+.cover .face svg { position: absolute; inset: 6%; width: 88%; height: 88%; }
+.cover .face svg path { fill: none; stroke: var(--ink); stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+.cover .nm { font: 400 calc(var(--cw, 170px) * .14)/1 "Anton", sans-serif; text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0, 0, 0, .35); white-space: nowrap; overflow: hidden; }
+.cover .lines { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 3px; overflow: hidden; }
+.cover .lines span { font: 800 calc(var(--cw, 170px) * .068)/1.05 "Franklin", sans-serif; text-transform: uppercase; background: var(--ink); align-self: flex-start; padding: 2px 4px; }
+.cover .lines span.first { background: var(--yellow); color: var(--ink); }
+.cover .lines q { font: italic 700 calc(var(--cw, 170px) * .066)/1.12 "Playfair", serif; color: #fff; text-shadow: 1px 1px 0 rgba(0, 0, 0, .5); }
+.cover .lines em { font: italic 600 calc(var(--cw, 170px) * .07)/1.1 "Playfair", serif; opacity: .9; }
+.cover.hot { transform: scale(1.22); z-index: 4; box-shadow: 10px 12px 0 rgba(0, 0, 0, .3); }
+.cover.extra { --c: #555; }

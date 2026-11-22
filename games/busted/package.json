@@ -1,0 +1,23 @@
+{
+  "name": "busted",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A gossip-paper party game for tvpipe (tvpipe game play): rank who would most likely do it, guess who wrote which anonymous answer, and suggest your own questions",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node scripts/build.ts",
+    "zip": "node scripts/pack.ts",
+    "check": "tsc -p tsconfig.json && tsc -p tsconfig.pages.json && tsc -p tsconfig.build.json --noEmit",
+    "test": "node --test \"test/*.test.ts\"",
+    "questions": "node scripts/check-questions.mjs data/questions.txt"
+  },
+  "devDependencies": {
+    "@tvpipe/party": "file:../../npm/party",
+    "@types/node": "^22.19.0",
+    "typescript": "~5.9.3"
+  }
+}

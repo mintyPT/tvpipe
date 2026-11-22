@@ -1,0 +1,379 @@
+# The Daily Busted: built-in English questions.
+#
+# One question per line, fields separated by tabs:
+#   vote <TAB> level <TAB> question <TAB> title
+#   answer <TAB> level <TAB> question
+# level is "family" (fine from about 8, grandparents and coworkers at the
+# table) or "party" (cheekier, teens and adults among friends). Titles go
+# on the front page after the winner's name: "EXCLUSIVE: ANNA — Sleepyhead
+# of the Year". Never about bodies, looks, money, illness, religion,
+# politics, drugs or alcohol; never cruel. See NOTES.md.
+# Check with: node data/check.mjs
+
+# vote · family
+
+vote	family	Who would most likely sleep through an entire day?	Sleepyhead of the Year
+vote	family	Who would most likely talk to their houseplants like old friends?	Senior Plant Whisperer
+vote	family	Who would most likely get lost even while following a map app?	Captain Wrong Turn
+vote	family	Who would most likely eat dessert before dinner?	Dessert Visionary
+vote	family	Who would most likely be late to their own birthday party?	Master of Fashionably Late
+vote	family	Who is most likely to laugh at their own joke before reaching the punchline?	Punchline Spoiler
+vote	family	Who would win a staring contest against a cat?	Unblinking Legend
+vote	family	Who would most likely put on a full concert in the shower?	Shower Concert Headliner
+vote	family	Who would most likely forget why they walked into a room?	Professor Forgetful
+vote	family	Who would most likely eat the last slice without asking?	Last Slice Bandit
+vote	family	Who could sniff out snacks hidden anywhere in the house?	Snack Detective
+vote	family	Who would most likely tell a stranger their life story at the bus stop?	Bus Stop Storyteller
+vote	family	Who would most likely trip over absolutely nothing?	Gravity's Best Customer
+vote	family	Who would build the most spectacular blanket fort?	Blanket Fort Engineer
+vote	family	Who would survive the longest on a desert island?	Desert Island Ace
+vote	family	Who is most likely to become famous on the internet by accident?	Overnight Internet Star
+vote	family	Who would most likely give a name to every gadget they own?	Department of Naming Things
+vote	family	Who would most likely talk back to the TV during a movie?	Screen Heckler Supreme
+vote	family	Who would most likely lose something in their own room for a whole week?	Chaos Coordinator
+vote	family	Who would most likely wave back at someone who was waving at somebody else?	Awkward Wave Survivor
+vote	family	Who would most likely get the giggles at the worst possible moment?	Giggle Grandmaster
+vote	family	Who would most likely have a full conversation with a dog?	Fluent in Dog
+vote	family	Who would most likely dance down the aisles of the supermarket?	Supermarket Dance Sensation
+vote	family	Who is most likely to invent something the whole world ends up using?	Inventor of the Century
+vote	family	Who would survive a zombie apocalypse the longest?	Zombie Survival Expert
+vote	family	Who would most likely lock themselves out of the house?	Locked-Out Legend
+vote	family	Who would most likely ask "are we there yet?" five minutes into a trip?	Are-We-There-Yet Champion
+vote	family	Who would most likely flip the board when losing a board game?	Board Game Volcano
+vote	family	Who would most likely build furniture without reading the instructions?	Instruction Manual Rebel
+vote	family	Who would most likely collect something really strange?	Curator of Odd Things
+vote	family	Who would most likely eat breakfast cereal at midnight?	Cereal Offender
+vote	family	Who would most likely take a hundred photos of their food before eating?	Food Paparazzo
+vote	family	Who would most likely search for their phone while talking on it?	Seeker of the Obvious
+vote	family	Who is most likely to secretly be a spy?	Prime Spy Suspect
+vote	family	Who would most likely surprise everyone with a hidden talent?	Dark Horse Extraordinaire
+vote	family	Who would most likely tell a pun and then explain it?	Punisher of the Year
+vote	family	Who would most likely plan a day trip down to the minute?	Itinerary Overlord
+vote	family	Who would most likely pack for a weekend like it's a month?	Minister of Just in Case
+vote	family	Who would most likely sneak their vegetables onto someone else's plate?	Vegetable Smuggler
+vote	family	Who would most likely invent a holiday and celebrate it alone?	Founder of Made-Up Holidays
+vote	family	Who would most likely clap when the plane lands?	Landing Applause Leader
+vote	family	Who would most likely get into an argument with a vending machine?	Vending Machine Nemesis
+vote	family	Who would most likely say "just one more episode" at 2 a.m.?	Binge-Watching Royalty
+vote	family	Who would most likely bring a book to a party?	Bookworm of the Party
+vote	family	Who would most likely turn all the laundry pink?	Laundry Disaster Artist
+vote	family	Who would most likely set off the smoke alarm making toast?	Smoke Alarm Tester
+vote	family	Who would most likely make up a new rule halfway through a game?	Rulebook Rewriter
+vote	family	Who would most likely send a voice message longer than a podcast?	Voice Message Novelist
+vote	family	Who would most likely answer a question with another question?	Question Ping-Pong Pro
+vote	family	Who would most likely ask for the Wi-Fi password before saying hello?	Wi-Fi Bloodhound
+vote	family	Who would most likely reply to a message a week later?	Slow Reply Specialist
+vote	family	Who would most likely use ten emojis in a single message?	Emoji Poet Laureate
+vote	family	Who would most likely invent a secret handshake for every friend?	Secret Handshake Designer
+vote	family	Who would most likely get chased by a goose?	Goose Enemy Number One
+vote	family	Who would most likely show up at the wrong party and stay anyway?	Professional Gatecrasher
+vote	family	Who would most likely spend hours building a gadget to save five minutes?	Certified Lazy Genius
+vote	family	Who always hears all the gossip first?	Chief Gossip Correspondent
+vote	family	Who would most likely keep a secret forever?	Human Vault
+vote	family	Who would most likely blurt out the surprise before the party?	Surprise Blurter-in-Chief
+vote	family	Who would most likely guess the twist ten minutes into a movie?	Sherlock of the Sofa
+vote	family	Who would most likely fall asleep in their hiding spot during hide-and-seek?	Hide-and-Sleep Champion
+vote	family	Who would most likely be greeted by name in every shop in town?	Unofficial Mayor of Town
+vote	family	Who would most likely order the same thing every single time?	Loyalty Card Platinum Member
+vote	family	Who would defend pineapple on pizza to the very end?	Pineapple Pizza Defender
+vote	family	Who would most likely wear their shirt inside out all day without noticing?	Inside-Out Trendsetter
+vote	family	Who would most likely wear socks with sandals and feel great about it?	Socks-and-Sandals Icon
+vote	family	Who would most likely high-five a total stranger?	High-Five Ambassador
+vote	family	Who could get the whole room dancing in under a minute?	Dance Floor Igniter
+vote	family	Who would most likely arrive an hour early, just to be safe?	Ridiculously Early Bird
+vote	family	Who would most likely send a thank-you note for a thank-you note?	Politeness Black Belt
+vote	family	Who would most likely volunteer for the first trip to Mars?	Mars Mission Volunteer
+vote	family	Who would most likely start every other sentence with "fun fact"?	Fun Fact Dispenser
+vote	family	Who would most likely scream at a spider and then say sorry to it?	Spider Diplomat
+vote	family	Who would most likely start a story and forget what the point was?	Master of Tangents
+vote	family	Who would most likely make a playlist for every occasion?	DJ of Every Occasion
+vote	family	Who is most likely to plan an elaborate prank?	Prank Mastermind
+vote	family	Who would most likely adopt a rock as a pet?	Pet Rock Parent
+vote	family	Who would most likely read every single sign in a museum?	Reader of Every Plaque
+vote	family	Who would beat everyone here at video games?	Final Boss of Gaming
+vote	family	Who would most likely end up running the company by accident?	Boss by Mistake
+vote	family	Who would most likely make a pros and cons list to choose a sandwich?	Overthinker Supreme
+vote	family	Who would most likely cook something strange and call it a masterpiece?	Mad Kitchen Scientist
+vote	family	Who would most likely run away to join the circus?	Future Circus Star
+vote	family	Who would most likely grow a giant prize-winning pumpkin?	Prize Pumpkin Prodigy
+vote	family	Who would most likely join a marathon by accident?	Surprise Marathoner
+vote	family	Who would most likely talk their way into the VIP area?	VIP Area Infiltrator
+vote	family	Who would most likely show up to school or work on a day off?	Perfect Attendance Hero
+vote	family	Who would say yes to any adventure without asking a single question?	Yes-to-Everything Explorer
+vote	family	Who would most likely check the weather forecast ten times a day?	Amateur Meteorologist
+vote	family	Who would most likely sneak up on people without meaning to?	Accidental Ninja
+vote	family	Who would put the most effort into a costume party?	Costume Overachiever
+vote	family	Who would most likely go home from a party wearing someone else's jacket?	Jacket Mix-Up Artist
+vote	family	Who would most likely jump into a freezing lake for fun?	Polar Plunge Pioneer
+vote	family	Who would most likely keep asking "but why?" until everyone gives up?	Relentless Why-Asker
+vote	family	Who would most likely be bossed around by a cat?	Official Cat Servant
+vote	family	Who would win a pillow fight against everyone here?	Pillow Fight Champion
+vote	family	Who gives the best hugs?	Chief Hug Officer
+vote	family	Who would most likely remember everyone's birthday?	Human Calendar
+vote	family	Who would most likely say "I knew it!" after it already happened?	Hindsight Oracle
+vote	family	Who would most likely narrate everyday life like a nature documentary?	Narrator of Everything
+vote	family	Who would most likely fall into a pool fully dressed?	Fully Clothed Swimmer
+vote	family	Who would most likely mispronounce a word for years without noticing?	Pronunciation Freestyler
+vote	family	Who would most likely sing the wrong lyrics with total confidence?	Lyric Improviser
+vote	family	Who would most likely rearrange the furniture every month?	Restless Interior Designer
+vote	family	Who would most likely put their spices in alphabetical order?	Spice Rack Librarian
+vote	family	Who would build an award-winning sandcastle?	Sandcastle Architect
+vote	family	Who would most likely do a magic trick that goes completely wrong?	Magic Mishap Maestro
+vote	family	Who would most likely write a heartfelt song about their breakfast?	Breakfast Ballad Composer
+vote	family	Who would most likely start a new hobby every week?	Hobby Hopper
+vote	family	Who would most likely never let anyone else hold the TV remote?	Keeper of the Remote
+vote	family	Who would most likely try to break a very silly world record?	World Record Hopeful
+vote	family	Who would most likely read the last page of a book first?	Last Page Peeker
+vote	family	Who would be first in line for the scariest roller coaster?	Thrill Ride Daredevil
+vote	family	Who would most likely talk for five minutes while on mute in a video call?	Mute Button Orator
+vote	family	Who would most likely have a hundred browser tabs open?	Browser Tab Hoarder
+vote	family	Who would most likely give a speech nobody asked for?	Unscheduled Keynote Speaker
+vote	family	Who would happily move into a haunted house?	Ghost-Friendly Roommate
+vote	family	Who would most likely make a wish on every dandelion?	Serial Wish Maker
+
+# vote · party
+
+vote	party	Who would most likely text their ex at 2 a.m.?	Ghost of Texts Past
+vote	party	Who would most likely lie about having read the book for book club?	Book Club Impostor
+vote	party	Who would most likely cry at a TV ad?	Softie of the Ad Break
+vote	party	Who is most likely to search their own name online every week?	Own Biggest Fan
+vote	party	Who would most likely fake a phone call to escape a conversation?	Fake Call Virtuoso
+vote	party	Who would most likely like a ten-year-old photo while scrolling someone's profile?	Busted Deep Scroller
+vote	party	Who would most likely laugh along at a joke they didn't get?	Professional Nodder
+vote	party	Who would most likely win arguments in the shower that ended hours ago?	Shower Debate Winner
+vote	party	Who would most likely text "five minutes away" while still in bed?	Certified On-My-Way Fibber
+vote	party	Who would most likely send a screenshot to the very person it's about?	Screenshot Disaster Survivor
+vote	party	Who would be secretly thrilled when plans fall through?	Homebody Supreme
+vote	party	Who would most likely re-gift a present back to the person who gave it?	Boomerang Re-Gifter
+vote	party	Who would most likely slide into a celebrity's DMs?	Celebrity Inbox Invader
+vote	party	Who would grab the karaoke mic and refuse to give it back?	Karaoke Mic Hijacker
+vote	party	Who would most likely look busy at work while watching cat videos?	Undercover Slacker
+vote	party	Who would most likely get scolded by a museum guard?	Please Do Not Touch Rebel
+vote	party	Who would most likely end a work call with "love you, bye"?	Love-You-Bye Legend
+vote	party	Who would call someone the wrong name for years instead of asking?	Wrong Name Loyalist
+vote	party	Who would most likely type a long message, delete it and just send "ok"?	Three Dots Dramatist
+vote	party	Who would most likely get caught singing dramatically at a red light?	Red Light Rockstar
+vote	party	Who would most likely post a mysterious sad song to get attention?	Master of the Vague Post
+vote	party	Who would take a joke dare way too seriously?	Daredevil Laureate
+vote	party	Who would become an expert after watching one video?	One-Video Expert
+vote	party	Who would most likely snoop through the host's cupboards at a party?	Party Snoop Inspector
+vote	party	Who would most likely hit reply-all on an email to the whole company?	Reply-All Hall of Famer
+vote	party	Who would most likely storm out dramatically and come back for their keys?	Grand Exit, Take Two
+vote	party	Who would secretly watch ahead in a show you agreed to watch together?	Watch-Ahead Traitor
+vote	party	Who would most likely leave a party without saying goodbye to anyone?	Vanishing Act of the Year
+vote	party	Who would most likely blame a plumber to get out of a meeting?	Creative Excuse Engineer
+vote	party	Who would most likely eavesdrop on strangers at a café and pick a side?	Self-Appointed Café Judge
+vote	party	Who would watch trashy reality TV and call it "research"?	Reality TV Researcher
+vote	party	Who would most likely cheat at a party game and never admit it?	Innocent Until Proven Busted
+vote	party	Who would most likely give a tourist confident directions to the wrong place?	Confidently Wrong Tour Guide
+vote	party	Who would most likely start a heated argument in a comment section?	Comment Section Gladiator
+vote	party	Who would most likely leave a group chat dramatically and rejoin the next day?	Group Chat Comeback Kid
+vote	party	Who would still hold a grudge over a board game from ten years ago?	Grudge Keeper Emeritus
+vote	party	Who has a secret playlist they would never let anyone see?	Secret Playlist Curator
+vote	party	Who would most likely answer "how are you?" with a twenty-minute rant?	Oversharer of the Month
+vote	party	Who would most likely gossip about someone standing right behind them?	Caught Red-Mouthed
+vote	party	Who would most likely leave a passive-aggressive note on the office fridge?	Passive-Aggressive Poet
+vote	party	Who would silently follow group chat drama with a bowl of popcorn?	Front-Row Drama Spectator
+vote	party	Who would most likely turn a quick errand into an epic saga?	Embellisher Extraordinaire
+vote	party	Who would most likely hide behind a shelf to avoid someone they know?	Aisle Dodgeball Pro
+vote	party	Who would most likely come back from a week abroad with a new accent?	Souvenir Accent Collector
+vote	party	Who would invent a fake hobby just to sound interesting?	Fictional Hobbyist
+vote	party	Who would narrate other people's drama like a sports commentator?	Drama Play-by-Play Announcer
+vote	party	Who would most likely claim they liked a band before it was cool?	Before-It-Was-Cool Pioneer
+vote	party	Who would most likely retell everyone's most embarrassing story at every party?	Embarrassing Story Archivist
+vote	party	Who would most likely trash-talk before a game and then lose spectacularly?	Talks Big, Loses Bigger
+vote	party	Who would most likely blame autocorrect for something they meant to type?	Autocorrect Alibi Specialist
+vote	party	Who would most likely give a fake name at a coffee shop just for fun?	Agent Fake Name
+vote	party	Who would most likely set an out-of-office reply just to avoid emails?	Out-of-Office Escape Artist
+vote	party	Who would most likely pester the DJ until they play their song?	Song Request Menace
+vote	party	Who would still be at the party when the host goes to bed?	Last Guest Standing
+vote	party	Who would clean the whole house just to avoid answering one email?	Productive Procrastinator
+vote	party	Who would most likely answer every serious question with a meme?	Meme Response Unit
+vote	party	Who would sign up for absolutely anything that comes with free snacks?	Free Snack Opportunist
+vote	party	Who would most likely text "we need to talk" and then ask about pizza?	Suspense Text Specialist
+vote	party	Who would secretly rate everyone's cooking at a dinner party?	Undercover Food Critic
+vote	party	Who could do a spot-on impression of everyone in this room?	Impressionist in Residence
+
+# answer · family
+
+answer	family	What would be your most useless superpower?
+answer	family	What would you name a very fancy goldfish?
+answer	family	What's the first thing you'd do if you were invisible for a day?
+answer	family	What would your autobiography be called?
+answer	family	What music should play every time you walk into a room?
+answer	family	What would be on the menu at your restaurant?
+answer	family	If you opened a shop, what would it sell?
+answer	family	What would you do with a free afternoon and no phone?
+answer	family	What's a weird thing you're secretly really good at?
+answer	family	What would your warning label say?
+answer	family	What useless item would you take to a desert island?
+answer	family	What animal would be your sidekick, and what would you call it?
+answer	family	What would you invent to make Mondays better?
+answer	family	What would your superhero name be?
+answer	family	What job would you be hilariously bad at?
+answer	family	What would be your battle cry?
+answer	family	What's the strangest thing you believed as a kid?
+answer	family	What would you put in a time capsule to be opened in 100 years?
+answer	family	What would your dream treehouse have inside?
+answer	family	What would you say if you met a real dinosaur?
+answer	family	What's your signature dance move called?
+answer	family	What would be your first law as ruler of the world?
+answer	family	What's your most creative excuse for being late?
+answer	family	What sign would you hang on your bedroom door?
+answer	family	What does your perfect lazy Sunday look like?
+answer	family	What smell instantly makes you happy?
+answer	family	What should your doorbell play instead of ding-dong?
+answer	family	What would be your catchphrase on TV?
+answer	family	What's the most useless thing in your pockets or bag right now?
+answer	family	What would you do with a pet dragon?
+answer	family	What would your band be called?
+answer	family	What spell would you cast every single morning?
+answer	family	What would you tell your future self in five words?
+answer	family	What rule would you add at home if you were in charge?
+answer	family	What gift would you give a grumpy alien?
+answer	family	What would aliens find weirdest about your daily routine?
+answer	family	What small thing annoys you way more than it should?
+answer	family	What would your birthday party theme be if anything were possible?
+answer	family	What job would you pick if you could do any, no training needed?
+answer	family	What would you do with a million balloons?
+answer	family	What's the best thing about being you?
+answer	family	What will you be famous for in twenty years?
+answer	family	What would your cooking show be called?
+answer	family	What's the weirdest food combination you secretly love?
+answer	family	What would you pack for a week on the moon?
+answer	family	What harmless thing secretly scares you?
+answer	family	What would you love to master in a single day?
+answer	family	What's one ridiculous thing your dream house would have?
+answer	family	What would you write on a giant billboard for the whole town?
+answer	family	Where would you haunt if you were a friendly ghost?
+answer	family	What would you teach if you were the teacher?
+answer	family	What's the best way to spend a rainy day?
+answer	family	How do you waste time when you should be doing something else?
+answer	family	What compliment would make your whole week?
+answer	family	What would you say if a penguin knocked on your door?
+answer	family	What would you do if gravity switched off for an hour?
+answer	family	What two animals would you combine into the perfect pet?
+answer	family	What's the most fun you can have with a cardboard box?
+answer	family	What tiny thing would make your day better right now?
+answer	family	What do you always, always forget?
+answer	family	What would you do with an extra hour every day?
+answer	family	What would you do first if you could fly?
+answer	family	What's your most unpopular food opinion?
+answer	family	What would you hide in a treasure chest for someone to find?
+answer	family	What would you collect if you had unlimited space?
+answer	family	What would a fortune cookie written by you say?
+answer	family	What chore would you happily give away forever?
+answer	family	What's the best thing to shout on a roller coaster?
+answer	family	What do you do when you can't fall asleep?
+answer	family	What word do you find funny for no reason?
+answer	family	What would your country be called if you started one?
+answer	family	What's the best thing you've ever found on the ground?
+answer	family	What hobby would you take up if you had all the time in the world?
+answer	family	What's your personal motto?
+answer	family	What's the strangest thing in your fridge right now?
+answer	family	Where would you go if you could teleport just once?
+answer	family	What's something you're weirdly proud of?
+answer	family	What did you want to be when you were little?
+answer	family	What headline would you love to see about yourself tomorrow?
+answer	family	What would you add to every office or classroom?
+answer	family	What's a weird little habit you have?
+answer	family	What movie could you watch a hundred times?
+answer	family	What would you do with a time machine for ten minutes?
+answer	family	What always makes you laugh, no matter what?
+answer	family	What would you do all day if you were a cat?
+answer	family	What would you do if the internet stopped for a week?
+answer	family	Which emoji sums you up best?
+answer	family	What would you do if you found a tiny door in a tree?
+answer	family	What's your sneaky strategy for winning board games?
+answer	family	What would you do if you got locked in a museum overnight?
+answer	family	What three words describe your mornings?
+answer	family	What's the most useless thing you know a lot about?
+answer	family	What's your worst cooking disaster?
+answer	family	What subject should every school teach?
+answer	family	What would you never share, not even with your best friend?
+answer	family	What would you call a fancy restaurant for dogs?
+answer	family	What word or phrase do you say way too often?
+answer	family	What's the worst ice cream you can imagine?
+answer	family	What would you want written on your next birthday cake?
+answer	family	How would you get to school or work if anything were possible?
+answer	family	What's the strangest dream you remember?
+answer	family	What's the most important rule for a perfect sleepover?
+answer	family	What's something you could talk about for hours?
+answer	family	What would you do if you shrank to the size of an ant?
+answer	family	What would you build with a mountain of building blocks?
+answer	family	What would the main ride at your theme park be?
+answer	family	What would your phone say about you if it could talk?
+answer	family	What's the weirdest thing you've seen in real life?
+answer	family	What would your job be on a superhero team, if not the hero?
+answer	family	What would you do if it rained spaghetti for a day?
+answer	family	What's the best way to survive a long car ride?
+answer	family	What would you do if you had a clone for a week?
+answer	family	What would you do if you could freeze time for one minute?
+answer	family	What would you say to a squirrel that stole your sandwich?
+answer	family	What tiny thing do you do to make people smile?
+answer	family	What's the funniest thing that ever happened to you on a trip?
+answer	family	What would you design for the playground of your dreams?
+answer	family	What's the best prize you've ever won?
+
+# answer · party
+
+answer	party	What's the most embarrassing song you know every word to?
+answer	party	What's the worst excuse you've used to get out of plans?
+answer	party	What would your dating profile tagline be?
+answer	party	What's the pettiest thing you've ever done?
+answer	party	What lie did you tell as a kid that you never confessed?
+answer	party	What's the most useless thing you've ever bought?
+answer	party	What would get you thrown out of a fancy restaurant?
+answer	party	What TV show are you embarrassed to love?
+answer	party	What would be the best joke at your expense?
+answer	party	What tiny thing have you overreacted to the most?
+answer	party	What's your go-to karaoke song?
+answer	party	What's a silly opinion you'd defend to the very end?
+answer	party	What's the worst advice you've ever followed?
+answer	party	What message would you hate to accidentally send to the group chat?
+answer	party	What's your signature move to escape a boring conversation?
+answer	party	What's the most childish thing you still do?
+answer	party	What trend did you follow that you now deeply regret?
+answer	party	What's the worst gift you've ever pretended to love?
+answer	party	What rule do you break all the time?
+answer	party	What's the weirdest thing you do when you're home alone?
+answer	party	What would your villain origin story be?
+answer	party	What's the strangest thing you've ever argued about?
+answer	party	What's the worst thing to say on a first date?
+answer	party	What fake fact have you told with total confidence?
+answer	party	What's the most embarrassing thing you've said to a teacher or boss?
+answer	party	What bad habit are you secretly proud of?
+answer	party	What terrible job would you be suspiciously good at?
+answer	party	What are you way too competitive about?
+answer	party	What's the weirdest compliment you've ever received?
+answer	party	What useless skill would you proudly put on a job application?
+answer	party	What would the gossip pages say about you this week?
+answer	party	What's the most embarrassing thing you've done to impress someone?
+answer	party	What harmless school-days mischief can you finally confess?
+answer	party	What's your most harmless red flag?
+answer	party	What's the worst text to get from your boss at midnight?
+answer	party	What silly conspiracy theory would you start?
+answer	party	What's the most ridiculous thing that's ever made you cry?
+answer	party	If being annoying were a crime, what would you be arrested for?
+answer	party	What would your friends tease you about first?
+answer	party	What do you do that you'd judge anyone else for?
+answer	party	What's the most suspicious thing you've ever done completely innocently?
+answer	party	What eats most of your screen time, honestly?
+answer	party	What's the silliest thing you've ever gotten in trouble for?
+answer	party	What's the worst thing a pilot could say over the speakers?
+answer	party	What would your wrestling name be?
+answer	party	What's your most unhinged shower thought?
+answer	party	Where's the strangest place you've ever fallen asleep?
+answer	party	What do you secretly enjoy that everyone else seems to hate?
+answer	party	What's the worst thing to say during a wedding speech?
+answer	party	What's your perfect harmless revenge on someone who spoils a show?
+answer	party	What's the cringiest thing you posted online years ago?
+answer	party	What's your secret move to get the last piece of food?
+answer	party	What podcast would you start that nobody asked for?
+answer	party	What have you broken and never admitted to?
+answer	party	What would a one-star review of your home say?
+answer	party	What would your evil twin do differently?
+answer	party	What's your worst idea that you still think is brilliant?
+answer	party	What do you pretend to understand but really don't?
+answer	party	What's a compliment that secretly annoys you?
+answer	party	What would get you banned from a library?

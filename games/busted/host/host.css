@@ -1,0 +1,12 @@
+/* Busted's look on tvpipe's standard host page (@tvpipe/party's HostPage draws the rest): a newspaper on the editor's desk. */
+@font-face { font-family: "Unifraktur"; src: url("../phone/fonts/unifraktur-maguntia.woff2") format("woff2"); }
+@font-face { font-family: "Franklin"; src: url("../phone/fonts/libre-franklin.woff2") format("woff2"); font-weight: 100 900; }
+:root { color-scheme: light; --bg: #efe9dc; --card: #fbf8f1; --line: #cfc6b2; --text: #1b1a17; --muted: #6d6658; --accent: #c8102e; --accent-text: #fff; --link: #c8102e; --ok: #2a7d3a; --error: #b3001b; font-family: "Franklin", system-ui, sans-serif; }
+body { background: var(--bg); }
+.logo { font-family: "Unifraktur", serif; font-size: 34px !important; font-weight: 400 !important; line-height: 1; color: var(--text) !important; letter-spacing: .01em; }
+.desk { display: flex; flex-direction: column; gap: 8px; }
+.desk h2 { margin-top: 10px !important; }
+.desk input { font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; min-width: 0; flex: 1; }
+.desk .tips li { align-items: flex-start; }
+.desk .tip { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.desk .tip b { font-weight: 650; }
