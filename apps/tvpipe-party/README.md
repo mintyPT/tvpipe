@@ -61,6 +61,7 @@ npm run build:web # the site and the games in the browser into site/_out
 npm run dev       # build:web, migrates the local D1, wrangler dev
 npm run live      # (with dev running) a web room's signaling over real WebSockets
 node scripts/check-pages.ts   # (with dev running) the web pages in headless Chrome
+node test/live/web-party.ts   # (with dev running) whole parties in browsers: a host, phones, screens over WebRTC
 ```
 
 `build:web` is `python3 ../../site/build.py`, then `scripts/site.ts`:
@@ -74,6 +75,13 @@ worker, icons, offline page). `--no-build` reuses the last builds.
 `check-pages.ts` (BASE, default `http://localhost:8787`) opens each page
 and reports errors, screenshots in `/tmp/tvpipe-pages/`
 (docs/browser-party-design.md, "Pages on tvpipe.party").
+`test/live/web-party.ts` (BASE likewise; `--only table,games,full,switch,reload,phone,window,quit,short,burst,looks`)
+plays whole parties in one headless Chrome, a browser context per person:
+the games list, the launcher, the host page in table mode, phones joining
+over data channels (the game's bot moving on each phone's own client),
+every game's first round, two games to the end, Other game, reloads, a
+locked phone, an extra screen, a second window, End, the short link and 12
+phones at once; screenshots in `/tmp/tvpipe-web-validate/`.
 
 `wrangler dev` keeps its local D1, Durable Objects and rate limiters in
 `.wrangler/`. It runs with `--local-upstream localhost:8787`: otherwise
