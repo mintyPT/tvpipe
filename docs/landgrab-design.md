@@ -23,7 +23,8 @@ phone, and then the TV plays all the orders out as a show.
   as a rebel on the leader's weakest territory: everyone stays in, and the
   leader has a problem.
 - **A game is short.** 6–12 rounds (8 by default, about half an hour),
-  or until someone holds three quarters of the world.
+  or until someone holds three quarters of the world; 24 rounds for a long
+  evening.
 
 ## 2. A round
 

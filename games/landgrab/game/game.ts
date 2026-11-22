@@ -74,7 +74,7 @@ export const DEFAULT_TIMINGS: Timings = { plan: 60_000, firstPlan: 30_000, ready
 export const FAST_TIMINGS: Timings = { plan: 25_000, firstPlan: 5000, ready: 600, banner: 1000, after: 1200, pace: FAST_PACE };
 
 /** What the room can pick. */
-export const ROUNDS = [6, 8, 10, 12] as const;
+export const ROUNDS = [6, 8, 10, 12, 24] as const;
 export const PLAN_TIMES = [45, 60, 90, 120] as const;
 
 /** The players' colours: one each for six players (the wild lands are parchment). */

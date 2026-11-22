@@ -364,7 +364,7 @@ function settings(err) {
     box.append(h("div", { class: "setting" }, h("label", {}, title), h("div", { class: "seg" }, ...buttons)));
     items.push({ key, buttons, values });
   };
-  add("rounds", [6, 8, 10, 12], ["6", "8", "10", "12"], t.roundsLabel);
+  add("rounds", [6, 8, 10, 12, 24], ["6", "8", "10", "12", "24"], t.roundsLabel);
   add("planTime", [45, 60, 90, 120], [45, 60, 90, 120].map(t.seconds), t.planLabel);
   const update = () => {
     const room = client.view?.room ?? {};
