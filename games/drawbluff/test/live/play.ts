@@ -58,6 +58,7 @@ import { actors, NAMES } from "./actors.ts";
 import { Browser, type Tab } from "./browser.ts";
 import { dealt, LAST_TOUCHES, lieFor, promptsFile, scene, SEED } from "./scenario.ts";
 import { keep } from "./shots.ts";
+import { tie } from "./tie.ts";
 
 const { values: args } = parseArgs({
   options: {
@@ -123,7 +124,7 @@ const longest = (() => {
 
 // tvpipe game play, the window left to us (--window none prints its URL).
 const tunnel = args.tunnel ? [`--tunnel=${args.tunnel}`] : ["--no-tunnel"];
-const proc = spawn(binary, ["-v", "game", "play", bundle, "--window", "none", ...tunnel], { stdio: ["ignore", "pipe", "pipe"] });
+const proc = tie(spawn(binary, ["-v", "game", "play", bundle, "--window", "none", ...tunnel], { stdio: ["ignore", "pipe", "pipe"] }));
 const exited = new Promise<number | null>((r) => proc.on("exit", (c) => r(c)));
 const tvpipeLog: string[] = [];
 createInterface({ input: proc.stderr! }).on("line", (l) => {

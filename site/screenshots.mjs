@@ -54,7 +54,9 @@ async function chrome() {
   const proc = spawn(chromePath, [
     "--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${mkdtempSync(join(tmpdir(), "tvpipe-shots-"))}`,
     "--hide-scrollbars", "--autoplay-policy=no-user-gesture-required", "--no-first-run", "about:blank",
-  ], { stdio: "ignore" });
+    // fds 3 and 4, otherwise unused: Chrome quits when this process ends, however it ends.
+    "--remote-debugging-pipe",
+  ], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
   children.push(proc);
   let targets = [];
   for (let i = 0; i < 100 && !targets.length; i++) {

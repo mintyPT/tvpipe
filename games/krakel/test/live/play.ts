@@ -34,6 +34,7 @@ import { parseArgs } from "node:util";
 import { Browser, type Tab } from "./browser.ts";
 import * as scenario from "./scenario.ts";
 import { keep } from "./shots.ts";
+import { tie } from "./tie.ts";
 
 const { values: args } = parseArgs({
   options: {
@@ -64,7 +65,7 @@ const t0 = Date.now();
 const log = (m: string) => console.log(`${((Date.now() - t0) / 1000).toFixed(1).padStart(6)} ${m}`);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const proc = spawn(binary, ["game", "play", fileURLToPath(here), "--window", "none", "--no-tunnel"], { stdio: ["ignore", "pipe", "pipe"] });
+const proc = tie(spawn(binary, ["game", "play", fileURLToPath(here), "--window", "none", "--no-tunnel"], { stdio: ["ignore", "pipe", "pipe"] }));
 const exited = new Promise<number | null>((r) => proc.on("exit", (c) => r(c)));
 const tvpipeLog: string[] = [];
 createInterface({ input: proc.stderr! }).on("line", (l) => {

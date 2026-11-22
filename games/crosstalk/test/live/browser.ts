@@ -10,7 +10,7 @@
  */
 
 import { spawn, type ChildProcess } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, readlinkSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -23,10 +23,17 @@ export class Tab {
   readonly errors: string[] = [];
   readonly #ws: WebSocket;
   #id = 0;
+  #closed = false;
   readonly #pending = new Map<number, { resolve: (v: any) => void; reject: (e: Error) => void }>();
 
   constructor(ws: WebSocket) {
     this.#ws = ws;
+    // Chrome gone (crashed, killed): what waits for it fails instead of hanging.
+    ws.onclose = () => {
+      if (this.#closed) return;
+      for (const p of this.#pending.values()) p.reject(new Error("DevTools connection closed"));
+      this.#pending.clear();
+    };
     ws.onmessage = (e) => {
       const msg = JSON.parse(String(e.data));
       if (msg.method) {
@@ -60,6 +67,7 @@ export class Tab {
   }
 
   send(method: string, params: Record<string, unknown> = {}): Promise<any> {
+    if (this.#ws.readyState !== WebSocket.OPEN) return Promise.reject(new Error(`${method}: DevTools connection closed`));
     const id = ++this.#id;
     this.#ws.send(JSON.stringify({ id, method, params }));
     return new Promise((resolve, reject) => this.#pending.set(id, { resolve, reject }));
@@ -116,27 +124,89 @@ export class Tab {
   }
 
   close(): void {
+    this.#closed = true;
     this.#ws.close();
+  }
+}
+
+/** The profiles' prefix in the temp directory. */
+const PREFIX = "crosstalk-chrome-";
+
+/** The browsers this process started: closed when it exits, whichever way. */
+const live = new Set<Browser>();
+process.on("exit", () => {
+  for (const b of live) b.close();
+});
+
+/**
+ * Deletes the profiles of browsers that are gone (an earlier run that did
+ * not get to close its browser): Chrome's `SingletonLock` names its process.
+ */
+function sweep(): void {
+  const root = tmpdir();
+  for (const name of readdirSync(root)) {
+    if (!name.startsWith(PREFIX)) continue;
+    const dir = join(root, name);
+    try {
+      let pid = 0;
+      try {
+        pid = Number(readlinkSync(join(dir, "SingletonLock")).split("-").pop());
+      } catch {
+        // No lock: a browser still starting, or one that never did.
+        if (Date.now() - statSync(dir).mtimeMs < 60_000) continue;
+      }
+      if (pid > 0 && running(pid)) continue;
+      rmSync(dir, { recursive: true, force: true });
+    } catch {
+      // Gone already, or not ours to delete.
+    }
+  }
+}
+
+function remove(dir: string): void {
+  try {
+    rmSync(dir, { recursive: true, force: true });
+  } catch {
+    // Left for a later run's `sweep`.
+  }
+}
+
+function running(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (e) {
+    return (e as NodeJS.ErrnoException).code === "EPERM";
   }
 }
 
 export class Browser {
   readonly #proc: ChildProcess;
-  readonly #port: number;
+  #port: number;
+  readonly #dir: string;
 
-  private constructor(proc: ChildProcess, port: number) {
+  private constructor(proc: ChildProcess, port: number, dir: string) {
     this.#proc = proc;
     this.#port = port;
+    this.#dir = dir;
   }
 
+  /**
+   * Starts a headless Chrome with a fresh profile. It ends with this
+   * process however that ends: `close()` on exit, and Chrome quits when its
+   * DevTools pipe (fds 3 and 4, otherwise unused) closes, even when this
+   * process is killed.
+   */
   static async launch(): Promise<Browser> {
-    const port = 9300 + Math.floor(Math.random() * 500);
-    const dir = mkdtempSync(join(tmpdir(), "krakel-chrome-"));
+    sweep();
+    const dir = mkdtempSync(join(tmpdir(), PREFIX));
     const proc = spawn(
       CHROME,
       [
         "--headless=new",
-        `--remote-debugging-port=${port}`,
+        // Port 0: Chrome picks a free one and writes it to DevToolsActivePort.
+        "--remote-debugging-port=0",
+        "--remote-debugging-pipe",
         `--user-data-dir=${dir}`,
         "--no-first-run",
         "--no-default-browser-check",
@@ -147,19 +217,28 @@ export class Browser {
         "--disable-backgrounding-occluded-windows",
         "about:blank",
       ],
-      { stdio: "ignore" },
+      { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] },
     );
+    const browser = new Browser(proc, 0, dir);
+    live.add(browser);
     const end = Date.now() + 15000;
     for (;;) {
       try {
-        await fetch(`http://127.0.0.1:${port}/json/version`);
-        break;
+        const port = Number(readFileSync(join(dir, "DevToolsActivePort"), "utf8").split("\n")[0]);
+        if (port > 0) {
+          await fetch(`http://127.0.0.1:${port}/json/version`);
+          browser.#port = port;
+          return browser;
+        }
       } catch {
-        if (Date.now() > end) throw new Error("Chrome did not start");
-        await new Promise((r) => setTimeout(r, 100));
+        // Not up yet.
       }
+      if (Date.now() > end || proc.exitCode !== null || proc.signalCode !== null) {
+        browser.close();
+        throw new Error("Chrome did not start");
+      }
+      await new Promise((r) => setTimeout(r, 100));
     }
-    return new Browser(proc, port);
   }
 
   /** A tab at a viewport; `locale` (`de-DE`) for its language (`navigator.language`, Intl). */
@@ -208,7 +287,15 @@ export class Browser {
     return tab;
   }
 
+  /** Stops Chrome; its profile goes once it has exited (or with a later run's `sweep`). */
   close(): void {
-    this.#proc.kill();
+    if (!live.delete(this)) return;
+    const dir = this.#dir;
+    if (this.#proc.exitCode === null && this.#proc.signalCode === null) {
+      this.#proc.once("exit", () => remove(dir));
+      this.#proc.kill();
+    } else {
+      remove(dir);
+    }
   }
 }

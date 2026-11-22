@@ -8,7 +8,7 @@
 // errors and exceptions are printed. Node built-ins only (global WebSocket).
 
 import { spawn } from "node:child_process";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -23,7 +23,16 @@ mkdirSync(outDir, { recursive: true });
 
 const port = 9300 + Math.floor(Math.random() * 500);
 const profile = mkdtempSync(join(tmpdir(), "jinx-chrome-"));
-const chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "--window-size=1280,720", "--hide-scrollbars", "--autoplay-policy=no-user-gesture-required", "about:blank"], { stdio: "ignore" });
+// --remote-debugging-pipe (fds 3 and 4, otherwise unused): Chrome quits when this process ends, however it ends.
+const chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${port}`, "--remote-debugging-pipe", `--user-data-dir=${profile}`, "--window-size=1280,720", "--hide-scrollbars", "--autoplay-policy=no-user-gesture-required", "about:blank"], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
+process.on("exit", () => {
+  chrome.kill();
+  try {
+    rmSync(profile, { recursive: true, force: true });
+  } catch {
+    // Chrome still writing on its way out: a stray temp dir.
+  }
+});
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 let version;

@@ -55,6 +55,7 @@ import { parseArgs } from "node:util";
 import { Browser, type Tab } from "./browser.ts";
 import * as scenario from "./scenario.ts";
 import { keep } from "./shots.ts";
+import { tie } from "./tie.ts";
 
 const { values: args } = parseArgs({
   options: {
@@ -96,7 +97,7 @@ const CLUES = {
 /** What the phone writes on the pad. */
 const NOTE = lang === "de" ? { text: "die anderen flüsterten was von", edit: " (sicher?)", draft: "halber Gedanke" } : { text: "the others whispered something about", edit: " (sure?)", draft: "half a thought" };
 
-const proc = spawn(binary, ["game", "play", fileURLToPath(here), "--window", "none", "--no-tunnel"], { stdio: ["ignore", "pipe", "pipe"] });
+const proc = tie(spawn(binary, ["game", "play", fileURLToPath(here), "--window", "none", "--no-tunnel"], { stdio: ["ignore", "pipe", "pipe"] }));
 const exited = new Promise<number | null>((r) => proc.on("exit", (c) => r(c)));
 const tvpipeLog: string[] = [];
 createInterface({ input: proc.stderr! }).on("line", (l) => {

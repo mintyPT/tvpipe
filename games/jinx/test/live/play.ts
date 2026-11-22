@@ -52,6 +52,7 @@ import { CATEGORY_DE } from "../../game/bots.ts";
 import { Browser, type Tab } from "./browser.ts";
 import * as scenario from "./scenario.ts";
 import { keep } from "./shots.ts";
+import { tie } from "./tie.ts";
 
 const { values: args } = parseArgs({
   options: {
@@ -91,7 +92,7 @@ const log = (m: string) => console.log(`${((Date.now() - t0) / 1000).toFixed(1).
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // tvpipe game play, the window left to us (--window none prints its URL).
-const proc = spawn(binary, ["-v", "game", "play", bundle, "--window", "none", "--no-tunnel"], { stdio: ["ignore", "pipe", "pipe"] });
+const proc = tie(spawn(binary, ["-v", "game", "play", bundle, "--window", "none", "--no-tunnel"], { stdio: ["ignore", "pipe", "pipe"] }));
 const exited = new Promise<number | null>((r) => proc.on("exit", (c) => r(c)));
 const tvpipeLog: string[] = [];
 const tvpipeProblems: string[] = [];
