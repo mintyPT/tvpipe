@@ -129,11 +129,13 @@ Promise.all([fetch(new URL("../data/world.txt", import.meta.url)).then((r) => r.
 });
 
 let labelLang = "";
-/** The continents' labels in the room's language. */
+/** The continents' labels and the territories' names in the room's language. */
 function labelMap() {
   if (!map || !world || labelLang === lang) return;
   labelLang = lang;
-  map.labels(Object.fromEntries(world.continents.map((c) => [c.id, c.name[lang]])), HUD_KEEP, innerWidth / Math.max(1, innerHeight));
+  const aspect = innerWidth / Math.max(1, innerHeight);
+  map.labels(Object.fromEntries(world.continents.map((c) => [c.id, c.name[lang]])), HUD_KEEP, aspect);
+  map.names(world.territories.map((x) => x.name[lang]), HUD_KEEP, aspect);
 }
 
 let phaseKey = "";

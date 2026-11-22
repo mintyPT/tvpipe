@@ -7,6 +7,7 @@
  * battle) with army badges and the orders as arrows.
  */
 
+import { placeNames } from "../game/names.js";
 import { HEX_ROW, HEX_SIDES, HEX_W, hexCenter, hexCorners, hexNeighbors } from "../game/world.js";
 
 /** @typedef {import("../game/world.js").World} World */
@@ -21,6 +22,9 @@ import { HEX_ROW, HEX_SIDES, HEX_W, hexCenter, hexCorners, hexNeighbors } from "
  * @property {number[]} [frame] territories to frame (a close-up); the canvas keeps its CSS height
  * @property {number} [pad] around the frame, in hexes (1.5)
  * @property {number} [maxScale] the closest a close-up gets, px per hex (20)
+ * @property {View} [view] the camera, as it is (a flight between frames): instead of `frame`; the canvas keeps its CSS height
+ * @property {Map<number, string>} [names] territories' names to write on the land (when close enough: not on the whole world)
+ * @property {Set<number>} [strong] names in bold, chosen first (the selection, an order's two ends)
  * @property {string} [me] the player
  */
 /** @typedef {{ s: number, ox: number, oy: number }} View px per hex radius, and the map's origin on the canvas */
@@ -85,6 +89,47 @@ function anchor(w, t) {
 }
 
 /**
+ * The camera that frames territories on a canvas of `cssW`×`cssH`: as
+ * close as they fit with `pad` hexes around them, at most `maxScale` px
+ * per hex.
+ * @param {World} w @param {number} cssW @param {number} cssH @param {number[]} frame
+ * @param {number} [pad] @param {number} [maxScale]
+ * @returns {View}
+ */
+export function frameView(w, cssW, cssH, frame, pad = 1.5, maxScale = 20) {
+  const g = geometry(w);
+  let [x0, y0, x1, y1] = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const t of frame) {
+    const b = g.boxes[t];
+    if (!b || b[0] === Infinity) continue;
+    // A territory across the map's edge (a wrapping sea route) would stretch the frame: keep to the first's side.
+    if (x0 !== Infinity && (b[0] > x1 + g.W / 2 || b[2] < x0 - g.W / 2)) continue;
+    (x0 = Math.min(x0, b[0])), (y0 = Math.min(y0, b[1])), (x1 = Math.max(x1, b[2])), (y1 = Math.max(y1, b[3]));
+  }
+  if (x0 === Infinity) [x0, y0, x1, y1] = [0, 0, g.W, g.H];
+  (x0 -= pad), (y0 -= pad), (x1 += pad), (y1 += pad);
+  const s = Math.min(cssW / (x1 - x0), cssH / (y1 - y0), maxScale);
+  return { s, ox: cssW / 2 - ((x0 + x1) / 2) * s, oy: cssH / 2 - ((y0 + y1) / 2) * s };
+}
+
+/**
+ * A camera between two, at `k` (0 … 1, eased by the caller): the middle
+ * moves straight, the scale evenly in ratio (a zoom that feels even).
+ * Both are for a canvas of `cssW`×`cssH`.
+ * @param {View} a @param {View} b @param {number} k @param {number} cssW @param {number} cssH
+ * @returns {View}
+ */
+export function between(a, b, k, cssW, cssH) {
+  const mid = (/** @type {View} */ v) => [(cssW / 2 - v.ox) / v.s, (cssH / 2 - v.oy) / v.s];
+  const [ax, ay] = mid(a);
+  const [bx, by] = mid(b);
+  const s = a.s * (b.s / a.s) ** k;
+  const x = ax + (bx - ax) * k;
+  const y = ay + (by - ay) * k;
+  return { s, ox: cssW / 2 - x * s, oy: cssH / 2 - y * s };
+}
+
+/**
  * Draws `board` on `canvas`. The whole world: the canvas's height
  * follows its width. A close-up (`o.frame`): the canvas keeps its CSS
  * height and the framed territories fill it. Returns the view for
@@ -102,20 +147,12 @@ export function drawMap(canvas, w, board, colorOf, o = {}) {
   /** @type {View} */
   let v;
   let cssH;
-  if (o.frame && o.frame.length) {
+  if (o.view) {
     cssH = canvas.clientHeight || 160;
-    let [x0, y0, x1, y1] = [Infinity, Infinity, -Infinity, -Infinity];
-    for (const t of o.frame) {
-      const b = g.boxes[t];
-      if (!b || b[0] === Infinity) continue;
-      // A territory across the map's edge (a wrapping sea route) would stretch the frame: keep to the first's side.
-      if (x0 !== Infinity && (b[0] > x1 + g.W / 2 || b[2] < x0 - g.W / 2)) continue;
-      (x0 = Math.min(x0, b[0])), (y0 = Math.min(y0, b[1])), (x1 = Math.max(x1, b[2])), (y1 = Math.max(y1, b[3]));
-    }
-    const pad = o.pad ?? 1.5;
-    (x0 -= pad), (y0 -= pad), (x1 += pad), (y1 += pad);
-    const s = Math.min(cssW / (x1 - x0), cssH / (y1 - y0), o.maxScale ?? 20);
-    v = { s, ox: cssW / 2 - ((x0 + x1) / 2) * s, oy: cssH / 2 - ((y0 + y1) / 2) * s };
+    v = o.view;
+  } else if (o.frame && o.frame.length) {
+    cssH = canvas.clientHeight || 160;
+    v = frameView(w, cssW, cssH, o.frame, o.pad, o.maxScale);
   } else {
     const s = cssW / g.W;
     cssH = s * g.H;
@@ -289,12 +326,16 @@ export function drawMap(canvas, w, board, colorOf, o = {}) {
     ctx.closePath();
     ctx.stroke();
     ctx.fill();
-    if (a.n && close) badge(ctx, X(mx), Y(my), String(a.n), color, Math.max(11, Math.min(15, s * 1.2)), a.kind === "move" ? "#1b1405" : "#fff", color);
+    if (a.n && s >= 3) badge(ctx, X(mx), Y(my), String(a.n), color, Math.max(11, Math.min(15, s * 1.2)), a.kind === "move" ? "#1b1405" : "#fff", color);
   }
+
+  const font = close ? Math.max(11, Math.min(16, s * 1.15)) : Math.max(9, Math.min(12, s * 2.1));
+  // Names: on the land, by their badges, clear of them and of each other.
+  // Not on the whole world: no room.
+  if (o.names && o.names.size && s >= 2) names(ctx, w, v, cssW, cssH, o.names, o.strong ?? new Set(), new Set(o.labels?.keys() ?? []), font * 0.75 + 2);
 
   // Badges: armies (or placements) on the territories that matter.
   if (o.labels) {
-    const font = close ? Math.max(11, Math.min(16, s * 1.15)) : Math.max(9, Math.min(12, s * 2.1));
     for (const [t, text] of o.labels) {
       const [x, y] = anchor(w, t);
       const own = board.own[t] ?? "";
@@ -303,6 +344,64 @@ export function drawMap(canvas, w, board, colorOf, o = {}) {
     }
   }
   return v;
+}
+
+/** The names' font, at a size. @param {number} px @param {boolean} strong */
+const nameFont = (px, strong) => `${strong ? 800 : 600} ${px}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+
+/**
+ * Territories' names on a close-up (game/names.ts places them), in light
+ * letters with a dark rim; the strong ones bigger, bolder and placed
+ * first. `badge`: the badges' radius in px.
+ * @param {CanvasRenderingContext2D} ctx @param {World} w @param {View} v @param {number} cssW @param {number} cssH
+ * @param {Map<number, string>} names @param {Set<number>} strong @param {Set<number>} badged @param {number} badge
+ */
+function names(ctx, w, v, cssW, cssH, names, strong, badged, badge) {
+  const { s, ox, oy } = v;
+  const px = Math.max(11, Math.min(14, s * 1.1));
+  const big = px + 2;
+  const m = 3 / s;
+  /** @param {number} t */
+  const pxOf = (t) => (strong.has(t) ? big : px);
+  const order = [...names.keys()].sort((a, b) => Number(strong.has(b)) - Number(strong.has(a)) || (w.territories[a]?.hexes.length ?? 0) - (w.territories[b]?.hexes.length ?? 0));
+  // Each name at its own size: placed one at a time, the ones before kept clear.
+  /** @type {import("../game/names.js").Box[]} */
+  const avoid = [];
+  /** @type {import("../game/names.js").Label[]} */
+  const labels = [];
+  for (const t of order) {
+    const p = pxOf(t);
+    ctx.font = nameFont(100, strong.has(t));
+    const [l] = placeNames(w, new Map([[t, names.get(t) ?? ""]]), {
+      size: p / s,
+      measure: (text, size) => (ctx.measureText(text).width / 100) * size,
+      badge: badge / s,
+      badges: badged,
+      avoid,
+      bounds: [-ox / s + m, -oy / s + m, cssW / s - 2 * m, cssH / s - 2 * m],
+      lead: 1,
+    });
+    if (!l) continue;
+    avoid.push([l.x - l.w / 2 - 2 / s, l.y - l.h / 2 - 1 / s, l.w + 4 / s, l.h + 2 / s]);
+    labels.push(l);
+  }
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.lineJoin = "round";
+  for (const l of labels) {
+    const st = strong.has(l.t);
+    const p = l.size * s;
+    ctx.font = nameFont(p, st);
+    ctx.lineWidth = st ? 4 : 3;
+    ctx.strokeStyle = "rgba(4, 14, 20, .88)";
+    ctx.fillStyle = st ? "#fff" : "#f4ead2";
+    l.lines.forEach((line, k) => {
+      const x = ox + l.x * s;
+      const y = oy + (l.y - l.h / 2 + l.size * (k + 0.5)) * s + p * 0.06;
+      ctx.strokeText(line, x, y);
+      ctx.fillText(line, x, y);
+    });
+  }
 }
 
 /**

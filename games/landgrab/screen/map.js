@@ -16,6 +16,7 @@
  * 30 fps).
  */
 
+import { placeNames } from "../game/names.js";
 import { HEX_SIDES, HEX_W, hexCenter, hexCorners, hexNeighbors, mapSize } from "../game/world.js";
 
 /** @typedef {import("../game/world.js").World} World */
@@ -72,6 +73,10 @@ export function tween(ms, fn, done) {
     stopped = true;
   };
 }
+
+/** The territories' names: the font (at 100 units, to measure) and its tracking (em). */
+const NAME_FONT = `600 100px "Barlow Condensed", "Arial Narrow", sans-serif`;
+const NAME_TRACK = 0.05;
 
 /** A small number in a territory's tile colour, by its index: neighbours of one holder differ a little. @param {number} i */
 const jitter = (i) => [0, 0.07, -0.06, 0.035, -0.03][(i * 3) % 5] ?? 0;
@@ -207,8 +212,9 @@ export class WorldMap {
     // Above the land: what dims the rest in a battle, the labels, the effects, the tokens, what flies over them.
     this.dim = s("path", { class: "dim", d: "" });
     this.labelLayer = s("g", { class: "labels" });
+    this.nameLayer = s("g", { class: "tnames" });
     this.fx = s("g", { class: "fx" });
-    this.cam.append(this.labelLayer);
+    this.cam.append(this.labelLayer, this.nameLayer);
     this.cam2.append(this.dim, this.fx);
     /** @type {{ g: SVGGElement, ring: SVGElement, text: SVGTextElement }[]} */
     this.badges = [];
@@ -311,6 +317,7 @@ export class WorldMap {
     const y0 = (this.H - vh) / 2;
     /** @type {[number, number, number, number][]} boxes taken (map units: x, y, w, h) */
     const taken = keep.map(([fx, fy, fw, fh]) => [x0 + fx * vw, y0 + fy * vh, fw * vw, fh * vh]);
+    this.contBoxes = [];
     const overlaps = (/** @type {number[]} */ a, /** @type {number[]} */ b) => (a[0] ?? 0) < (b[0] ?? 0) + (b[2] ?? 0) && (b[0] ?? 0) < (a[0] ?? 0) + (a[2] ?? 0) && (a[1] ?? 0) < (b[1] ?? 0) + (b[3] ?? 0) && (b[1] ?? 0) < (a[1] ?? 0) + (a[3] ?? 0);
     const land = (/** @type {number} */ x, /** @type {number} */ y, /** @type {number} */ bw, /** @type {number} */ bh) => {
       // Any hex nearer than half a hex to the box: land.
@@ -353,6 +360,7 @@ export class WorldMap {
       if (!best) continue;
       const [bx, by] = best;
       taken.push([bx, by, bw, bh]);
+      this.contBoxes.push([bx, by, bw, bh]);
       const g = /** @type {SVGGElement} */ (s("g", { class: "contlabel", transform: `translate(${bx.toFixed(2)} ${by.toFixed(2)})` }));
       const r = bh / 2;
       const text = s("text", { class: "name", x: (2.2 * FS).toFixed(2), y: (r + FS * 0.36).toFixed(2), "font-size": FS, textLength: tw.toFixed(2), lengthAdjust: "spacingAndGlyphs" });
@@ -364,6 +372,49 @@ export class WorldMap {
       g.append(s("path", { class: "rule", d: `M${(2.2 * FS).toFixed(2)} ${(bh - 0.12).toFixed(2)}h${tw.toFixed(2)}` }), roundel, text);
       this.labelLayer.append(g);
       this.contLabels.set(c.id, { g });
+    }
+  }
+
+  /** @type {[number, number, number, number][]} where the continents' labels stand */
+  contBoxes = [];
+
+  /**
+   * The territories' names on the land, each by its badge (game/names.ts),
+   * clear of the continents' labels (call {@link labels} first) and, as
+   * far as they can, of the screen's `keep` rectangles. In the old map's
+   * lettering, capitals, with a dark rim to read on any colour.
+   * @param {string[]} names by territory index
+   * @param {[number, number, number, number][]} keep
+   * @param {number} aspect the screen's width / height
+   */
+  names(names, keep, aspect) {
+    this.nameLayer.replaceChildren();
+    const vw = Math.min(this.W, this.H * aspect);
+    const vh = Math.min(this.H, this.W / aspect);
+    const x0 = (this.W - vw) / 2;
+    const y0 = (this.H - vh) / 2;
+    const ctx = document.createElement("canvas").getContext("2d");
+    if (ctx) ctx.font = NAME_FONT;
+    const measure = (/** @type {string} */ text, /** @type {number} */ size) => ((ctx ? ctx.measureText(text).width / 100 : text.length * 0.6) + NAME_TRACK * text.length) * size;
+    const labels = placeNames(this.world, new Map(names.map((n, i) => [i, n.toUpperCase()])), {
+      size: 1.4,
+      small: 1.15,
+      measure,
+      badge: 1.55,
+      avoid: this.contBoxes,
+      shun: keep.map(([fx, fy, fw, fh]) => [x0 + fx * vw, y0 + fy * vh, fw * vw, fh * vh]),
+      bounds: [x0 + 0.3, y0 + 0.3, vw - 0.6, vh - 0.6],
+      lead: 0.95,
+    });
+    for (const l of labels) {
+      const text = s("text", { class: "tname", "font-size": l.size.toFixed(2), "text-anchor": "middle", "data-id": this.world.territories[l.t]?.id ?? "" });
+      const top = l.y - l.h / 2;
+      l.lines.forEach((line, k) => {
+        const span = s("tspan", { x: l.x.toFixed(2), y: (top + l.size * 0.95 * k + l.size * 0.82).toFixed(2) });
+        span.textContent = line;
+        text.append(span);
+      });
+      this.nameLayer.append(text);
     }
   }
 

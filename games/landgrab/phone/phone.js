@@ -7,8 +7,9 @@
  * left to place; the world with the orders as arrows; the fronts (one's
  * territories next to foes, most pressure first) with − + to place and
  * the foes as chips (a tap: attack it), inland below; a sheet per
- * territory with a close-up of it and its neighbours, the routes, the
- * amount (half, safe, all; the odds); Ready in a dock. The battle: what
+ * territory with a close-up of it and its neighbours (a camera flying in,
+ * their names on the land; choosing an amount, on to the route's ends),
+ * the routes, the amount (half, safe, all; the odds); Ready in a dock. The battle: what
  * the TV plays now, from one's own side (the dice in step with the TV,
  * the result when the TV shows it), the close-up, one's own events and
  * the standings. Everything it shows comes from the party's view
@@ -22,7 +23,7 @@ import { FAST_PACE, PACE, timeline } from "../game/timeline.js";
 import { parseWorld } from "../game/world.js";
 import { watchFit } from "./fit.js";
 import { browserLang, pickLang } from "./i18n.js";
-import { drawMap, pickAt, WILD } from "./minimap.js";
+import { between, drawMap, frameView, pickAt, WILD } from "./minimap.js";
 import { strings } from "./strings.js";
 
 /** @typedef {import("../game/world.js").World} World */
@@ -532,6 +533,71 @@ let holding = false;
 /** The sheet was just opened (scroll the chosen route into view). */
 let fresh = false;
 
+/**
+ * The sheet's close-up is a camera: opened, it flies from the whole world
+ * down to the territory and its neighbours; choosing an amount, on to the
+ * route's two ends (where the armies go, to confirm it); back when done.
+ * `key` names the frame it flies to; `draw` draws the sheet's canvas (it
+ * is rebuilt with the sheet) at a camera.
+ */
+const loc = {
+  key: "",
+  /** @type {MapView} */ from: { s: 1, ox: 0, oy: 0 },
+  /** @type {MapView} */ to: { s: 1, ox: 0, oy: 0 },
+  /** @type {MapView} */ view: { s: 1, ox: 0, oy: 0 },
+  t0: 0,
+  ms: 0,
+  cw: 0,
+  ch: 0,
+  raf: 0,
+  /** @type {((v: MapView) => void) | null} */ draw: null,
+};
+const calm = () => globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+const easeInOut = (/** @type {number} */ x) => (x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2);
+
+/** Draws the close-up where its camera is now; on until it is there. */
+function locFrame() {
+  if (loc.raf) cancelAnimationFrame(loc.raf);
+  loc.raf = 0;
+  if (!loc.draw) return;
+  const k = loc.ms > 0 ? Math.min(1, (performance.now() - loc.t0) / loc.ms) : 1;
+  loc.view = k >= 1 ? loc.to : between(loc.from, loc.to, easeInOut(k), loc.cw, loc.ch);
+  loc.draw(loc.view);
+  if (k < 1) loc.raf = requestAnimationFrame(locFrame);
+}
+
+/**
+ * Points the close-up at `target` (a frame named `key`) on a canvas of
+ * `cw`×`ch`, flying there from where it is (from the whole world when the
+ * sheet has just opened); the same frame again only draws.
+ * @param {string} key @param {MapView} target @param {number} cw @param {number} ch @param {(v: MapView) => void} draw
+ */
+function flyLocator(key, target, cw, ch, draw) {
+  const w = /** @type {World} */ (world);
+  loc.draw = draw;
+  if (key !== loc.key || cw !== loc.cw || ch !== loc.ch) {
+    let from;
+    if (!loc.key) from = frameView(w, cw, ch, allLand(), 0.6, 20);
+    else {
+      // Where it is, on the canvas as it is now (it changes height when an amount is chosen).
+      const v = loc.raf ? between(loc.from, loc.to, easeInOut(Math.min(1, (performance.now() - loc.t0) / Math.max(1, loc.ms))), loc.cw, loc.ch) : loc.view;
+      const mx = (loc.cw / 2 - v.ox) / v.s;
+      const my = (loc.ch / 2 - v.oy) / v.s;
+      from = { s: v.s, ox: cw / 2 - mx * v.s, oy: ch / 2 - my * v.s };
+    }
+    const sameFrame = key === loc.key;
+    loc.ms = calm() ? 0 : sameFrame ? 0 : !loc.key ? 750 : 450;
+    Object.assign(loc, { key, from, to: target, t0: performance.now(), cw, ch });
+  } else loc.to = target;
+  locFrame();
+}
+
+/** The close-up is put away (the sheet closed). */
+function landLocator() {
+  if (loc.raf) cancelAnimationFrame(loc.raf);
+  Object.assign(loc, { key: "", raf: 0, draw: null });
+}
+
 function planBoard() {
   return /** @type {Board} */ (client.view?.room?.board ?? { own: [], arm: [] });
 }
@@ -895,6 +961,7 @@ function openSheet(i, route) {
 }
 
 function closeSheet() {
+  landLocator();
   sel = -1;
   choosing = null;
   holding = false;
@@ -956,11 +1023,9 @@ function fillSheet() {
   // The close-up: the territory, its neighbours, their armies, the orders.
   const around = new Set([sel, ...terr.neighbors.map(tIndex)]);
   const locator = /** @type {HTMLCanvasElement} */ (h("canvas", { class: "locator" }));
-  /** @type {MapView} */
-  let lview = { s: 1, ox: 0, oy: 0 };
   locator.addEventListener("click", (e) => {
     const r = locator.getBoundingClientRect();
-    const ti = pickAt(w, lview, e.clientX - r.left, e.clientY - r.top);
+    const ti = pickAt(w, loc.view, e.clientX - r.left, e.clientY - r.top);
     if (ti < 0 || ti === sel) return;
     const nb = terr.neighbors.includes(tId(ti));
     if (nb && (mine || isMine(ti))) {
@@ -1038,6 +1103,8 @@ function fillSheet() {
     const setN = (/** @type {number} */ n) => {
       ch.n = Math.max(1, Math.min(max, n));
       update();
+      // The close-up's arrow carries the amount.
+      locFrame();
     };
     slider.addEventListener("input", () => setN(Number(slider.value)));
     const hold = () => (holding = true);
@@ -1118,7 +1185,23 @@ function fillSheet() {
   /** @type {Map<number, string>} */
   const labels = new Map();
   for (const i of around) labels.set(i, String(board.own[i] === me() ? have(tId(i)) : (board.arm[i] ?? 0)));
-  lview = drawMap(locator, w, board, colorOf, { sel, hi: around, labels, frame: [...around], arrows: orderArrows(around), me: me() });
+  // Choosing an amount, the camera goes to the route's two ends and draws the order as it would be.
+  const pick = choosing;
+  const ends = pick ? [tIndex(pick.from), tIndex(pick.to)] : [];
+  const frame = pick ? ends : [...around];
+  /** @type {Map<number, string>} */
+  const names = new Map((pick ? ends : [...around]).map((i) => [i, tName(i)]));
+  const strong = new Set(pick ? ends : [sel]);
+  const cw = locator.clientWidth || 320;
+  const lh = locator.clientHeight || 120;
+  const target = frameView(w, cw, lh, frame, pick ? 1.6 : 1.5, pick ? 24 : 20);
+  const draw = (/** @type {MapView} */ v) => {
+    const arrows = orderArrows(around).filter((a) => !pick || a.from !== ends[0] || a.to !== ends[1]);
+    if (pick) arrows.push({ from: ends[0] ?? 0, to: ends[1] ?? 0, n: pick.n, kind: board.own[ends[1] ?? 0] === me() ? "move" : "atk" });
+    // The names once the camera is nearly there.
+    drawMap(locator, w, board, colorOf, { sel, hi: pick ? new Set(ends) : around, labels, names: v.s >= target.s * 0.75 ? names : undefined, strong, view: v, arrows, me: me() });
+  };
+  flyLocator(`${sel}:${frame.join(",")}`, target, cw, lh, draw);
   bodyEl.scrollTop = scroll;
   if (fresh) {
     fresh = false;
@@ -1233,6 +1316,8 @@ function watchScreen() {
     const arrows = [];
     /** @type {Map<number, string>} */
     const labels = new Map();
+    /** @type {Map<number, string>} */
+    const names = new Map();
     let frame = allLand();
     let pad = 0.6;
     if (ev && (ev.type === "attack" || ev.type === "move" || ev.type === "clash")) {
@@ -1241,13 +1326,14 @@ function watchScreen() {
       frame = [a, b];
       pad = 3;
       for (const i of near) labels.set(i, String(board.arm[i] ?? 0));
+      names.set(a, tName(a)).set(b, tName(b));
       const mineToo = ev.p === me() || ev.foe === me() || ev.q === me();
       arrows.push({ from: a, to: b, kind: ev.type === "move" ? "move" : mineToo ? "hot" : "atk" });
       if (ev.type === "clash") arrows.push({ from: b, to: a, kind: mineToo ? "hot" : "atk" });
     } else if (ev?.type === "place") {
       for (const [i, p, n] of ev.add ?? []) if (p === me()) labels.set(i, `+${n}`);
     }
-    drawMap(canvas, w, board, colorOf, { frame, pad, maxScale: 15, labels, arrows, me: me(), sel: ev && ev.type !== "place" ? (ev.type === "clash" ? ev.b : ev.to) : -1, hi: new Set(labels.keys()) });
+    drawMap(canvas, w, board, colorOf, { frame, pad, maxScale: 15, labels, names, strong: new Set(names.keys()), arrows, me: me(), sel: ev && ev.type !== "place" ? (ev.type === "clash" ? ev.b : ev.to) : -1, hi: new Set(labels.keys()) });
 
     // What happened to one's own armies, as far as the TV got.
     const items = /** @type {any[]} */ (v.me?.feed ?? []).filter(told);

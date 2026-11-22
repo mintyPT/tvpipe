@@ -111,9 +111,15 @@ The world is two SVG layers (`screen/map.js`): a static board drawn once
 (raised hex tiles with a lit top edge and a dark side, wild parchment
 lower than held land, grooves between territories and deeper ones
 between continents, old-map water lines along the coasts, the
-continents' names and bonuses in the seas) and a light layer of what
-moves (army tokens, arrows, floods, sparks); splitting them keeps the
-capture at 30 fps. The HUD stays in the seas: the standings in the
+continents' names and bonuses in the seas, every territory's name by
+its token) and a light layer of what moves (army tokens, arrows, floods,
+sparks); splitting them keeps the capture at 30 fps. The phones talk
+about territories by name, so the TV, where everyone looks, names them
+all: light capitals with a dark rim, placed by `game/names.ts` (next to
+the token, on the territory's own land as far as it goes, clear of the
+tokens, of each other, of the continents' labels and, where it can, of
+the HUD; one line or two, a smaller size where it is crowded). In a
+battle they zoom with the camera and dim with the rest. The HUD stays in the seas: the standings in the
 North-East Pacific, the round and clock top right, the fight card at the
 bottom, tvpipe's join badge bottom left.
 
@@ -141,20 +147,26 @@ own territories next to foes, each with its armies, the placement
 stepper and the foes as chips, weakest first (a chip opens the attack
 at once; a territory a neighbour would probably take is marked). Inland
 territories come below, the orders at the end. A territory's **sheet**
-(from the bottom, over a backdrop) zooms the map to it and its
-neighbours and lists Attack or Move for each; choosing an amount shows
-the chance to win (`game/odds.ts`: the exact odds of a fight to the end)
+(from the bottom, over a backdrop) has a close-up that is a camera: it
+flies from the whole world down to the territory and its neighbours,
+with their names written on the land (the words of the list below, on
+the places), and lists Attack or Move for each. Choosing an amount
+(from the sheet or straight from a chip or an order) flies on to the
+route's two ends, the rest dimmed, with the order drawn as an arrow
+carrying the amount: where the armies go, to confirm before sending.
+Choosing an amount shows the chance to win (`game/odds.ts`: the exact odds of a fight to the end)
 and quick amounts (half, safe: the fewest with 80 %, all). Ready sits in
 a dock with a dot per player. During the battle the phone shows what is
 on the TV (the sides, the dice, the result, timed to the TV with
-`room.step.ms`), its own feed, and the standings, and buzzes with its
+`room.step.ms`; the close-up with the fight's two territories named),
+its own feed, and the standings, and buzzes with its
 own results as the TV shows them.
 
 ## 8. Checking it
 
 `npm test` (rules with a tiny world, the real world's shape and its
-generator, the odds, whole games with bots, drop-outs, latecomers, too
-few players), and in `test/live/`: `play.ts` plays a game in headless
+generator, the odds, where the names go, whole games with bots,
+drop-outs, latecomers, too few players), and in `test/live/`: `play.ts` plays a game in headless
 Chrome through tvpipe with screenshots of the TV and of the phone at six
 sizes and layout checks (`--shots DIR` for the games list); `record.ts`
 records a game's TV views from bots in memory and `stage.ts` replays

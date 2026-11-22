@@ -96,9 +96,12 @@ body {
 .contlabel.held .roundel circle { fill: var(--c); stroke: #fff; stroke-opacity: 1; }
 .contlabel.held .bonus { fill: #fff; }
 
+/* The territories' names on the land, by their badges: light letters with a dark rim (any tile colour under them). */
+.tname { font-family: var(--text); font-weight: 600; letter-spacing: .05em; fill: #fbf4e2; stroke: rgba(6, 18, 24, .82); stroke-width: .3; stroke-linejoin: round; paint-order: stroke; pointer-events: none; }
+
 /* The army tokens. */
 .badge { transition: opacity .4s; }
-.world.bare .badges, .world.bare .labels { opacity: 0; }
+.world.bare .badges, .world.bare .labels, .world.bare .tnames { opacity: 0; }
 .badge.cold { opacity: .45; }
 .badge .puck { fill: rgba(0, 0, 0, .5); }
 .badge .ring { fill: #151b22; stroke-width: .36; }
