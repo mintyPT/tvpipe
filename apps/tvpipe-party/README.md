@@ -75,7 +75,8 @@ worker, icons, offline page). `--no-build` reuses the last builds.
 `check-pages.ts` (BASE, default `http://localhost:8787`) opens each page
 and reports errors, screenshots in `/tmp/tvpipe-pages/`
 (docs/browser-party-design.md, "Pages on tvpipe.party").
-`test/live/web-party.ts` (BASE likewise; `--only table,games,full,switch,reload,phone,window,quit,short,burst,looks`)
+`test/live/web-party.ts` (BASE likewise; `--only table,games,full,switch,reload,phone,window,quit,short,burst,looks`,
+`--games` for some games, `--relay` for TURN only: every peer connection relayed, checked with getStats)
 plays whole parties in one headless Chrome, a browser context per person:
 the games list, the launcher, the host page in table mode, phones joining
 over data channels (the game's bot moving on each phone's own client),

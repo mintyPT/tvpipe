@@ -6,14 +6,15 @@
  * signaling:
  *
  *   npm run dev                                         # another terminal
- *   node test/live/web-party.ts [BASE] [--only a,b] [--games x,y] [--out DIR]
+ *   node test/live/web-party.ts [BASE] [--only a,b] [--games x,y] [--out DIR] [--relay]
  *
  * BASE defaults to http://localhost:8787 (wrangler dev; use localhost, not
  * 127.0.0.1), DIR to /tmp/tvpipe-web-validate. Scenarios (`--only`, default
  * all): `table` (games list → launcher → This screen → host page in table
  * mode, 4 phones join over WebRTC, the VIP starts, rounds are played),
  * `games` (every game of /g/index.json through lobby, start and its first
- * round; `--games` picks some), `full` (jinx and drawbluff to the end),
+ * round; `--games` picks some), `full` (jinx and drawbluff to the end, or
+ * the `--games`),
  * `switch` (Other game: phones follow with their names), `reload` (the
  * host reloads, phones come back), `phone` (a phone reloads, one goes
  * offline and back), `screen` (an extra screen at /tv, approved; after
@@ -27,6 +28,13 @@
  * channel and the phone's page shows what follows. Exits 1 when a check
  * failed; every page's console errors are reported. `DBG_PC=1` logs the
  * host's peer connection states around a phone closing its page.
+ *
+ * `--relay` forces every page's peer connections to TURN only
+ * (`iceTransportPolicy: "relay"`, the constructor wrapped before any page
+ * script runs) and checks with getStats that each phone's and the host's
+ * selected candidate pair is a relay one (logged: protocol, TURN server).
+ * Without TURN servers from `/api/turn` (local dev without the secrets)
+ * it stops at once with that.
  *
  * Not reachable here: DevTools' offline mode does not reach WebRTC (a
  * locked phone is a frozen page instead), real NAT and TURN, Safari.
@@ -45,6 +53,8 @@ const opt = (name: string): string | undefined => {
   return i >= 0 ? args[i + 1] : undefined;
 };
 const valued = new Set(["--only", "--games", "--out", "--phones"]);
+/** `--relay`: every peer connection TURN only (iceTransportPolicy "relay"), checked with getStats. */
+const RELAY = args.includes("--relay");
 const BASE = (args.find((a, i) => !a.startsWith("--") && !valued.has(args[i - 1] ?? "")) ?? "http://localhost:8787").replace(/\/$/, "");
 const OUT = opt("out") ?? "/tmp/tvpipe-web-validate";
 const ONLY = opt("only")?.split(",");
@@ -210,6 +220,7 @@ class Ctx {
     if (view.mobile) await tab.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
     if (o.ua) await tab.send("Emulation.setUserAgentOverride", { userAgent: o.ua, platform: o.ua.includes("iPhone") ? "iPhone" : "MacIntel" });
     if (o.hook) await hookClients(tab);
+    if (RELAY) await tab.send("Page.addScriptToEvaluateOnNewDocument", { source: RELAY_ONLY });
     if (url !== "about:blank") await page.go(url);
     return page;
   }
@@ -249,6 +260,62 @@ async function hookClients(tab: Tab): Promise<void> {
   await tab.send("Fetch.enable", { patterns: [{ urlPattern: "*/_tvpipe/lib/client.js*", requestStage: "Response" }] });
   await tab.send("Network.enable");
   await tab.send("Network.setCacheDisabled", { cacheDisabled: true });
+}
+
+/**
+ * `--relay`: the page's `RTCPeerConnection` with `iceTransportPolicy:
+ * "relay"` (TURN only), the connections in `globalThis.__relayPcs`.
+ */
+const RELAY_ONLY = `{
+  const P = globalThis.RTCPeerConnection;
+  if (P && !P.__relayOnly) {
+    const pcs = (globalThis.__relayPcs = []);
+    const R = function RTCPeerConnection(config, ...rest) {
+      const pc = new P({ ...(config ?? {}), iceTransportPolicy: "relay" }, ...rest);
+      pcs.push(pc);
+      return pc;
+    };
+    R.prototype = P.prototype;
+    Object.setPrototypeOf(R, P);
+    R.__relayOnly = true;
+    globalThis.RTCPeerConnection = R;
+  }
+}`;
+
+/** The selected candidate pairs of the page's connected peer connections (`--relay`). */
+const SELECTED_PAIRS = `(async () => {
+  const out = [];
+  for (const pc of globalThis.__relayPcs ?? []) {
+    if (pc.connectionState !== "connected") continue;
+    const st = await pc.getStats();
+    let pair;
+    st.forEach((r) => { if (r.type === "transport" && r.selectedCandidatePairId) pair = st.get(r.selectedCandidatePairId); });
+    if (!pair) st.forEach((r) => { if (r.type === "candidate-pair" && r.nominated && r.state === "succeeded") pair = r; });
+    if (!pair) { out.push({ local: "none" }); continue; }
+    const l = st.get(pair.localCandidateId) ?? {};
+    const r = st.get(pair.remoteCandidateId) ?? {};
+    out.push({ local: l.candidateType, remote: r.candidateType, proto: l.relayProtocol ?? l.protocol, url: l.url ?? "", rtt: pair.currentRoundTripTime ?? null });
+  }
+  return out;
+})()`;
+
+interface Pair {
+  local: string;
+  remote?: string;
+  proto?: string;
+  url?: string;
+  rtt?: number | null;
+}
+
+/** `--relay`: every phone's (and the host's) connected peer connections go through TURN. */
+async function checkRelay(h: Host, phones: Phone[]): Promise<void> {
+  const show = (p: Pair) => `${p.local}→${p.remote ?? "?"} ${p.proto ?? ""} ${p.url ?? ""}${p.rtt != null ? ` rtt ${Math.round(p.rtt * 1000)} ms` : ""}`.trim();
+  for (const p of phones) {
+    const pairs = await p.page.eval<Pair[]>(SELECTED_PAIRS).catch(() => [] as Pair[]);
+    check(pairs.length > 0 && pairs.every((x) => x.local === "relay"), `${p.name}: through TURN: ${pairs.map(show).join("; ") || "no connected peer connection"}`);
+  }
+  const host = await h.page.eval<Pair[]>(SELECTED_PAIRS).catch(() => [] as Pair[]);
+  check(host.length >= phones.length && host.every((x) => x.local === "relay"), `host: ${host.length} connections through TURN: ${[...new Set(host.map(show))].join("; ")}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -325,6 +392,8 @@ async function hostInfo(page: Page, game: WebGame): Promise<{ code: string; join
 
 /** The TV page in the host's tab (table mode), as text. */
 const tableTv = `(() => { const f = document.querySelector(".tvpipe-table iframe"); return f?.contentDocument?.body?.innerText ?? ""; })()`;
+/** Whether a page's text shows `name` (TV pages set names in capitals with CSS: innerText has them so). */
+const shows = (text: string, name: string) => text.toLowerCase().includes(name.toLowerCase());
 /** What the TV page shows (its text and the phases it marks), to tell its screens apart. */
 const tableTvKey = `(() => { const d = document.querySelector(".tvpipe-table iframe")?.contentDocument; if (!d?.body) return ""; return [...d.querySelectorAll("[data-phase]")].map((e) => e.dataset.phase).join(",") + "|" + d.body.innerText.replace(/\\s+/g, " "); })()`;
 
@@ -428,7 +497,8 @@ async function quickSettings(h: Host): Promise<void> {
     if (${JSON.stringify(name)} === "jinx") { tryset("rounds", 1); tryset("write", 30); }
     else if (${JSON.stringify(name)} === "drawbluff") { tryset("rounds", 1); tryset("timers", "fast"); }
     else if (${JSON.stringify(name)} === "garble") { tryset("timers", "fast"); }
-    else if (g.FAST_TIMINGS && g.game.configure) { try { g.game.configure({ timings: g.FAST_TIMINGS }); } catch {} }
+    else if (g.FAST_TIMINGS && g.game.configure) {
+      if (${JSON.stringify(name)} === "busted") tryset("rounds", 6); try { g.game.configure({ timings: g.FAST_TIMINGS }); } catch {} }
     return true;
   })()`);
 }
@@ -489,6 +559,17 @@ async function play(h: Host, phones: Phone[], until: "round" | "end", maxMs: num
 // ---------------------------------------------------------------------------
 // Scenarios
 
+if (RELAY) {
+  const turn = (await (await fetch(`${BASE}/api/turn`)).json()) as { iceServers?: { urls: string | string[] }[] };
+  const urls = (turn.iceServers ?? []).flatMap((x) => (Array.isArray(x.urls) ? x.urls : [x.urls]));
+  const relays = urls.filter((u) => /^turns?:/.test(u));
+  if (relays.length === 0) {
+    log(`FAIL --relay: ${BASE}/api/turn gives no TURN server (${urls.join(", ") || "none"}): nothing to relay through`);
+    process.exit(1);
+  }
+  log(`--relay: TURN servers from /api/turn: ${relays.join(", ")}`);
+}
+
 const chrome = await Chrome.launch();
 const want = (s: string) => !ONLY || ONLY.includes(s);
 
@@ -502,6 +583,7 @@ async function party(game: WebGame, n: number, o: { bots?: boolean; screen?: "th
     phones.push(p);
     log(`${p.name} joined in ${p.joinedMs} ms (link opened → the host lists them)`);
   }
+  if (RELAY) await checkRelay(h, phones);
   return { h, phones };
 }
 
@@ -529,7 +611,7 @@ async function scenarioTable(): Promise<void> {
   await sleep(300);
   check(await p.eval<boolean>(`getComputedStyle(document.querySelector(".tvpipe-table")).visibility !== "hidden"`), "Back returns to the game");
   const tv = await p.eval<string>(tableTv);
-  check(NAMES.slice(0, PHONES).every((n) => tv.includes(n)), `the TV shows the phones' names: ${tv.replace(/\s+/g, " ").slice(0, 120)}`);
+  check(NAMES.slice(0, PHONES).every((n) => shows(tv, n)), `the TV shows the phones' names: ${tv.replace(/\s+/g, " ").slice(0, 120)}`);
   const via = await Promise.all(phones.map((x) => phoneState(x)));
   check(via.every((s) => /\/api\/rooms\/[A-Z]+\/join/.test(s.url) && s.status === "open"), `phones are on data channels through the room's signaling (${via.map((s) => s.url.replace(/^.*\/api/, "/api").replace(/\?.*/, "")).join(", ")})`);
   await phones[0]!.page.shot("table-phone-lobby");
@@ -548,7 +630,7 @@ async function scenarioGames(names: string[], until: "round" | "end"): Promise<v
       const n = Math.max(PHONES, game.players.min);
       const { h, phones } = await party(game, n);
       const tv = await h.page.eval<string>(tableTv);
-      check(phones.every((p) => tv.includes(p.name)), `${name}: the TV lists the phones`);
+      check(phones.every((p) => shows(tv, p.name)), `${name}: the TV lists the phones`);
       await play(h, phones, until, until === "end" ? 420_000 : 180_000);
       await h.page.shot(`${name}-${until}-tv`);
       await phones[0]!.page.shot(`${name}-${until}-phone`);
@@ -596,7 +678,7 @@ async function scenarioSwitch(): Promise<void> {
     check(ok, `${p.name} followed to drawbluff with the name carried`);
   }
   const tv = await h.page.eval<string>(tableTv);
-  check(phones.every((p) => tv.includes(p.name)), `drawbluff's TV lists ${phones.map((p) => p.name).join(", ")}`);
+  check(phones.every((p) => shows(tv, p.name)), `drawbluff's TV lists ${phones.map((p) => p.name).join(", ")}`);
   if (screen) {
     const back = await screen.page
       .until(`document.body.dataset.state === "shown" && document.getElementById("tv").src.includes("/g/drawbluff/")`, 30_000)
@@ -631,7 +713,7 @@ async function extraScreen(h: Host): Promise<{ ctx: Ctx; page: Page } | undefine
     await sleep(2500);
     const names = await h.page.eval<string[]>(`${G(h)}.party.players.map((p) => p.name)`);
     const text = await page.eval<string>(`document.getElementById("tv").contentDocument?.body?.innerText ?? ""`);
-    check(names.every((n) => text.includes(n)), `the extra screen shows the TV page with ${names.join(", ")}`);
+    check(names.every((n) => shows(text, n)), `the extra screen shows the TV page with ${names.join(", ")}`);
     await page.shot("screen-shown");
     return { ctx, page };
   });
@@ -718,7 +800,7 @@ async function scenarioWindow(): Promise<void> {
   const p1 = await joinPhone(chrome, h, "Ann");
   await sleep(1500);
   const text = await popup.eval<string>(`document.getElementById("tv").contentDocument?.body?.innerText ?? ""`);
-  check(text.includes("Ann"), `the window shows the TV page with Ann: ${text.replace(/\s+/g, " ").slice(0, 80)}`);
+  check(shows(text, "Ann"), `the window shows the TV page with Ann: ${text.replace(/\s+/g, " ").slice(0, 80)}`);
   await popup.shot("window-popup");
   check(!(await h.page.eval<boolean>(`!!document.querySelector(".tvpipe-table")`)), "the host page shows itself (no table mode)");
   await h.page.shot("window-host");
@@ -852,7 +934,7 @@ try {
   if (want("short")) await step("short", scenarioShort);
   if (want("burst")) await step("burst", scenarioBurst);
   if (want("games")) await scenarioGames(GAMES ?? index.games.map((g) => g.name), "round");
-  if (want("full")) await scenarioGames(["jinx", "drawbluff"], "end");
+  if (want("full")) await scenarioGames(GAMES ?? ["jinx", "drawbluff"], "end");
 } finally {
   for (const p of pages) p.collect();
   const errs = pages.filter((p) => p.errors.length > 0);
