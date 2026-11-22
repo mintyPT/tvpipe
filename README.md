@@ -134,8 +134,9 @@ this repository's games are [`games/drawbluff`](games/drawbluff/)
 (3–50 players), [`games/jinx`](games/jinx/) (3–8),
 [`games/garble`](games/garble/) (3–12),
 [`games/krakel`](games/krakel/) (3–10),
-[`games/shifty`](games/shifty/) (3–10) and
-[`games/landgrab`](games/landgrab/) (2–6), each released on its own as
+[`games/shifty`](games/shifty/) (3–10),
+[`games/landgrab`](games/landgrab/) (2–6) and
+[`games/crosstalk`](games/crosstalk/) (4–12), each released on its own as
 `NAME-vX.Y.Z`. Closing
 the window ends everything. Design: [`docs/playshare-design.md`](docs/playshare-design.md).
 

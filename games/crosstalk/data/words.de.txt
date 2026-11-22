@@ -1,0 +1,1002 @@
+# Jinx secret words (German). word<TAB>difficulty<TAB>category<TAB>also_right<TAB>banned<TAB>english
+# also_right (accepted guesses), banned (translations rejected as clues, as written) and english (English translations, also rejected in their English forms) are optional, comma-separated. Built from design/words/de/source.txt; see design/words/de/README.md.
+Abendessen	medium	food	Abendbrot,Nachtessen,Znacht	cena	dinner,supper
+Abenteuer	hard	event		aventura,aventure,avventura	adventure
+Adler	easy	animal		aguila,aigle,aquila	eagle
+Adventskalender	medium	event			advent calendar
+Adventskranz	medium	event			advent wreath,advent crown
+Affe	easy	animal		mono,singe,scimmia	monkey,ape
+Akkordeon	hard	music	Ziehharmonika,Handharmonika,Quetschkommode,Schifferklavier	acordeon,accordeon,fisarmonica	accordion
+Alphabet	hard	science	ABC,Abece	alfabeto	alphabet,alphabet
+Alphorn	hard	music	Alpenhorn		alpine horn,alphorn
+Alufolie	medium	material	Aluminiumfolie,Alu,Stanniol,Silberpapier	papier aluminium,alluminio	tin foil,aluminium foil,aluminum foil,foil
+Ameise	easy	animal		hormiga,fourmi,formica	ant
+Ampel	easy	transport	Verkehrsampel,Lichtsignal	semaforo,feu rouge,feux	traffic light,traffic lights
+Ananas	easy	food		pina	pineapple
+angeln	medium	action		pescar,pecher,pescare	fish,fishing
+Anker	medium	transport		ancla,ancre,ancora	anchor
+Antenne	hard	science		antena	antenna,aerial
+Anwalt	hard	people	Anwältin,Rechtsanwalt,Advokat	abogado,avocat,avvocato	lawyer,attorney
+Apfel	easy	food		manzana,pomme,mela	apple
+Apotheke	hard	place		farmacia,pharmacie	pharmacy,chemist,drugstore
+Applaus	hard	music	Beifall	aplauso,applaudissements,applauso	applause
+Aprikose	hard	food	Marille	albaricoque,abricot,albicocca	apricot
+Aquarium	medium	place			aquarium
+Arm	easy	body		brazo,bras,braccio	arm
+Arzt	easy	people	Ärztin,Doktor,Doktorin,Doc	medico,medecin	doctor
+Ast	hard	nature		rama,branche,ramo	branch
+Asteroid	hard	nature			asteroid
+Astronaut	easy	people	Astronautin,Kosmonaut,Raumfahrer	astronauta,astronaute	astronaut
+Auge	easy	body		ojo,oeil,occhio	eye
+Ausflug	hard	event	Tagesausflug,Ausflügli	gita	trip,outing,excursion,day trip
+Auto	easy	transport	Wagen,PKW,Automobil,Karre	coche,voiture,macchina	auto,car
+Autobahn	medium	transport		autopista,autoroute,autostrada	motorway,highway,freeway
+Autogramm	hard	music		autografo,autographe	autograph
+Avocado	hard	food		aguacate,avocat	avocado
+Axt	medium	tool		hacha,hache,ascia	axe,ax
+Baby	easy	people	Bébé	bambino	baby
+backen	medium	action		hornear,cuire,cuocere	bake,baking
+Bäcker	easy	people	Bäckerin,Beck	panadero,boulanger,fornaio	baker
+Bäckerei	medium	place	Beck	panaderia,boulangerie,panetteria	bakery
+Badeanzug	medium	clothing		banador	swimsuit,bathing suit
+Badewanne	medium	home	Wanne	banera,baignoire,vasca	bathtub,bath,tub
+Badezimmer	medium	place	Bad,Badzimmer,Nasszelle	bano,bagno	bathroom
+Bagger	medium	transport		excavadora,pelleteuse,ruspa	excavator,digger
+Baguette	medium	food	Stangenbrot		baguette
+Bahnhof	easy	place	Hauptbahnhof,Bahnstation	estacion,gare,stazione	train station,railway station
+Balkon	medium	place		balcon,balcone	balcony
+Ball	easy	sport			ball
+Ballerina	medium	people	Ballerine,Balletttänzerin		ballerina
+Ballett	medium	music		balletto	ballet
+Bambus	medium	nature	Bambusrohr	bambu,bambou	bamboo
+Banane	easy	food		platano	banana
+Bank	hard	place	Sitzbank,Parkbank	banco,banc,banca,panchina	bank,bench
+Bär	easy	animal		oso,ours,orso	bear
+Bart	easy	body	Vollbart	barba,barbe	beard
+Basketball	easy	sport			basketball
+Batterie	medium	tool	Akku,Akkumulator	bateria,batteria	battery
+Bauch	easy	body	Ranzen,Wampe,Bäuchlein	barriga,ventre,pancia	belly,stomach,tummy
+Bauchnabel	medium	body	Nabel	ombligo,nombril,ombelico	belly button,navel
+Bauer	medium	people	Bäuerin,Landwirt,Landwirtin	granjero,fermier,contadino	farmer
+Bauernhof	easy	place	Hof	granja,ferme,fattoria	farm
+Baum	easy	nature		arbol,arbre,albero	tree
+Baumwolle	hard	material		algodon,coton,cotone	cotton
+Bein	easy	body		pierna,jambe,gamba	leg
+bellen	medium	action		ladrar,aboyer,abbaiare	bark,barking
+Berg	easy	nature		montana,montagne,montagna	mountain
+Besen	easy	home	Hexenbesen,Kehrbesen	escoba,balai,scopa	broom,broomstick
+Bett	easy	home		cama,lit,letto	bed
+Biber	medium	animal			beaver
+Bibliothek	medium	place	Bücherei	biblioteca,bibliotheque	library
+Biene	easy	animal		abeja,abeille,ape	bee
+Birne	medium	food		pera,poire	pear
+Blatt	medium	nature	Laubblatt	hoja,feuille,foglia	leaf
+blau	easy	quality		azul,bleu,blu	blue
+Bleistift	medium	home		lapiz,crayon,matita	pencil
+Blitz	easy	nature		rayo,fulmine	lightning,flash
+Blume	easy	nature		flor,fleur,fiore	flower
+Blumenkohl	hard	food	Karfiol	coliflor,chou-fleur,cavolfiore	cauliflower
+Blüte	hard	nature		flor,fleur,fiore	blossom,bloom
+Boden	hard	home	Fußboden	suelo,sol	floor,ground
+Bogen	hard	sport		arco,arc	bow
+Bohne	medium	food		frijol,judia,haricot,fagiolo	bean
+Bohrer	hard	tool	Bohrmaschine	taladro,perceuse,trapano	drill
+Bonbon	easy	food	Zuckerl,Täfeli,Zältli	caramelo	candy,sweet
+Boot	easy	transport		barco,bateau,barca	boat
+Bösewicht	hard	fantasy	Schurke,Fiesling	villano,mechant,cattivo	villain
+Bowling	medium	sport			bowling
+Boxen	medium	sport	Boxkampf,Boxsport	boxeo,boxe,pugilato	boxing
+Bratwurst	medium	food			bratwurst
+Braut	medium	people		novia,mariee,sposa	bride
+Brezel	easy	food	Breze,Brezn,Bretzel,Brezen		pretzel
+Briefkasten	medium	home	Postkasten	buzon,cassetta postale	mailbox,letterbox
+Briefträger	medium	people	Postbote,Postbotin,Pöstler,Briefträgerin,Postler	cartero,facteur,postino	postman,mailman,mail carrier
+Brille	easy	clothing	Augengläser,Lesebrille	gafas,lunettes,occhiali	glasses,spectacles,eyeglasses
+Brokkoli	medium	food	Broccoli	brocoli
+Brot	easy	food		pan,pain,pane	bread
+Brücke	easy	place		puente,pont,ponte	bridge
+Bruder	easy	people		hermano,frere,fratello	brother
+brüllen	medium	action		rugir,ruggire	roar
+Brunnen	medium	place	Springbrunnen	fuente,fontaine,fontana	fountain,well
+Buch	easy	home		libro,livre	book
+Bügeleisen	hard	home	Glätteisen	plancha	iron
+Bühne	hard	music		escenario,scene,palcoscenico	stage
+Bumerang	hard	sport			boomerang
+Buntstift	medium	tool	Farbstift,Holzfarbe	pastello	crayon,colored pencil,coloured pencil,colour pencil
+Burg	easy	place	Ritterburg	castillo,chateau,castello	castle,fortress
+Burger	medium	food	Hamburger	hamburguesa	burger
+Büro	hard	place		oficina,bureau,ufficio	office
+Bus	easy	transport	Autobus,Omnibus		bus
+Butter	easy	food		mantequilla,beurre	butter
+Butterbrot	medium	food	Stulle,Bemme
+Chamäleon	hard	animal			chameleon
+Chemie	hard	science		quimica,chimie,chimica	chemistry
+Chips	medium	food	Kartoffelchips		crisps,potato chips
+Chor	hard	music	Kirchenchor	coro,choeur	choir
+Clown	easy	people	Clownin	payaso,pagliaccio	clown,clown
+Comic	medium	music	Comicheft,Comicbuch	tebeo,bande dessinee,fumetto	comic,comic,comics
+Computer	easy	science	Rechner,PC	ordenador,computadora,ordinateur	computer
+Cowboy	easy	people			cowboy
+Croissant	medium	food	Hörnchen,Gipfeli,Kipferl	cornetto	croissant
+Currywurst	medium	food
+Dach	easy	home		techo,tejado,toit,tetto	roof
+Dachboden	medium	place	Estrich,Speicher,Dachstube	atico,grenier,soffitta	attic
+Dackel	medium	animal	Dachshund,Dackl		wiener dog
+Darts	medium	sport	Dart	dardos,flechettes,freccette
+Daumen	medium	body		pulgar,pouce,pollice	thumb
+Decke	hard	home	Bettdecke,Wolldecke	manta,couverture,coperta	blanket,ceiling
+Delfin	easy	animal	Delphin	delfino,dauphin	dolphin
+Detektiv	medium	people	Detektivin		detective
+Diamant	medium	material	Brillant	diamante	diamond
+Dinosaurier	easy	animal	Dino,Saurier		dinosaur
+Dirigent	hard	music	Dirigentin,Kapellmeister	director,chef d'orchestre,direttore	conductor
+Dirndl	medium	clothing	Dirndlkleid
+Disco	medium	music	Disko,Diskothek	discoteca	discotheque
+Domino	hard	sport	Dominostein
+Döner	medium	food	Kebab,Döner Kebab
+Donner	easy	nature		trueno,tonnerre,tuono	thunder
+Dorf	medium	place		pueblo,aldea,villaggio	village
+Drache	easy	fantasy	Drachen,Lindwurm	drago	dragon
+Dreieck	easy	science		triangulo,triangolo	triangle
+Dschungel	medium	nature		selva,jungla,giungla	jungle
+Dudelsack	medium	music		gaita,cornemuse,cornamusa	bagpipes,bagpipe
+dunkel	hard	quality		oscuro,sombre,scuro	dark
+Dusche	easy	home		ducha,douche,doccia	shower
+E-Mail	medium	science	Mail	correo,courriel	e-mail
+Echo	hard	nature	Widerhall		echo
+Edelstein	medium	material	Schmuckstein	joya,joyau,gioiello	jewel,gem,gemstone
+Edelweiß	medium	nature			edelweiss
+Eichhörnchen	easy	animal	Eichkätzchen,Eichkatze	ardilla,ecureuil,scoiattolo	squirrel
+Eidechse	medium	animal		lagarto,lezard,lucertola	lizard
+Eimer	medium	home	Kübel	cubo,seau,secchio	bucket,pail
+Einhorn	easy	fantasy		unicornio,licorne,unicorno	unicorn
+einkaufen	medium	action	shoppen,posten	comprar	shop,shopping
+Eis	easy	food	Speiseeis,Glace	helado,gelato	ice,ice cream
+Eisberg	medium	nature			iceberg
+Eisen	hard	material		hierro,fer,ferro	iron
+Eishockey	medium	sport			ice hockey
+Eiszapfen	medium	nature		carambano,glacon,ghiacciolo	icicle
+Elch	medium	animal			moose,elk
+Elefant	easy	animal		elefante	elephant
+Elfe	medium	fantasy	Elfin	elfo
+Ellbogen	hard	body	Ellenbogen	codo,coude,gomito	elbow
+Entdecker	hard	people	Entdeckerin	explorador,explorateur,esploratore	explorer
+Ente	easy	animal		pato,canard,anatra	duck
+Erbse	medium	food		guisante,petit pois,pisello	pea,peas
+Erdbeere	easy	food		fresa,fraise,fragola	strawberry
+Erde	medium	nature	Erdball,Planet Erde	tierra,terre,terra	earth,world
+Erdmännchen	medium	animal			meerkat
+Erdnuss	medium	food		cacahuete,mani,arachide	peanut
+Ernte	hard	event		cosecha,recolte,raccolto	harvest
+Esel	easy	animal		burro,ane,asino	donkey
+Eule	easy	animal		buho,hibou,chouette,gufo	owl
+Experiment	hard	science	Versuch	experimento,experience,esperimento	experiment
+Fabrik	hard	place	Werk,Fabrikhalle	fabrica,usine,fabbrica	factory
+Faden	hard	material	Zwirn	hilo,fil,filo	thread,yarn
+Fähre	medium	transport	Fährschiff,Fähri	ferri,traghetto	ferry
+Fahrkarte	hard	transport	Ticket,Fahrschein,Billett,Fahrausweis	billete,billet,biglietto
+Fahrrad	easy	transport	Rad,Velo,Drahtesel,Radl,Bike	bicicleta,bicyclette,bicicletta	bicycle
+Falle	hard	tool		trampa,piege,trappola	trap
+Fallschirm	medium	transport		paracaidas,paracadute	parachute
+Fangen	hard	sport	Fangis,Fangerl,Fangspiel		tig,tag game
+Fasching	medium	event	Karneval,Fasnacht,Fastnacht,Fasnet,Fosnat	carnaval,carnevale,mardi gras	carnival
+Faultier	medium	animal			sloth
+Feder	medium	animal		pluma,plume,piuma	feather
+Federball	medium	sport	Badminton		shuttlecock
+Federmäppchen	medium	tool	Mäppchen,Federmappe,Etui,Federpennal,Federschachtel,Federtasche,Schüleretui	estuche,trousse,astuccio	pencil case
+Fee	easy	fantasy	Feen	hada,fata	fairy
+Feld	medium	nature		campo,champ	field
+Fell	medium	animal			fur
+Felsen	medium	nature	Fels	roca,rocher,roccia
+Fenster	easy	home		ventana,fenetre,finestra	window
+Ferkel	medium	animal			piglet
+Fernbedienung	medium	home		mando,telecomando	remote,remote control
+Fernrohr	medium	tool	Teleskop	telescopio	telescope
+Fernseher	easy	home	Fernsehgerät,Glotze,TV	tele,televisor,televisione	television
+Feuer	easy	nature		fuego,feu,fuoco	fire
+Feuerwehr	easy	people	Feuerwehrmann,Feuerwehrfrau,Feuerwehrler	bombero,pompier,pompiere	firefighter,fireman,fire brigade
+Feuerwerk	medium	event	Feuerwerkskörper	fuegos artificiales,feu d'artifice,fuochi d'artificio	firework,fireworks
+Film	easy	music	Kinofilm,Streifen	pelicula	film,movie,film,film
+Finger	easy	body		dedo,doigt	finger
+Fisch	easy	animal		pez,pescado,poisson,pesce	fish
+Flamingo	medium	animal			flamingo
+Flasche	easy	home		botella,bouteille,bottiglia	bottle
+Flaschengeist	medium	fantasy	Dschinn,Djinn	genio
+flauschig	medium	quality	flaumig	esponjoso,pelucheux,soffice	fluffy
+Fledermaus	medium	animal		murcielago,chauve-souris	bat
+Fliege	medium	animal		mosca,mouche	fly
+Floh	medium	animal			flea
+Flohmarkt	medium	event	Trödelmarkt,Flomarkt	rastro,mercadillo,mercatino	flea market
+Floß	medium	transport		balsa,radeau,zattera	raft
+Flöte	medium	music	Blockflöte,Querflöte	flauta,flauto	flute
+Flügel	medium	body		ala,aile	wing,wings
+Flughafen	easy	place	Flugplatz	aeropuerto,aeroport,aeroporto	airport
+Flugzeug	easy	transport	Flieger	avion,aereo	airplane,aeroplane,aircraft
+Fluss	easy	nature		rio,fleuve,riviere,fiume	river
+flüstern	medium	action	wispern	susurrar,chuchoter,sussurrare	whisper
+Föhn	medium	home	Fön,Haartrockner,Haarföhn	secador,phon	hair dryer,blow dryer
+Fossil	medium	science	Versteinerung	fosil,fossile	fossil
+Foto	easy	music	Fotografie,Photo,Photographie,Foti	fotografia	photograph,picture
+Freund	easy	people	Freundin	amigo,ami,amico	friend
+Friseur	medium	people	Frisör,Friseurin,Frisörin,Coiffeur,Coiffeuse	peluquero,parrucchiere	hairdresser,barber
+Frosch	easy	animal		rana,grenouille	frog
+Frühling	easy	nature	Frühjahr,Lenz	primavera,printemps	spring
+Frühstück	easy	food	Zmorge	desayuno,colazione	breakfast
+Fuchs	easy	animal		zorro,renard,volpe	fox
+Führerschein	medium	transport	Fahrausweis,Führerausweis,Fahrerlaubnis	carnet,permis,patente	driving licence,driver's license,licence,license
+Fuß	easy	body		pie,pied,piede	foot
+Fußabdruck	hard	nature	Fußspur	huella,empreinte,impronta	footprint
+Fußball	easy	sport	Fußballspiel	futbol,calcio	football,soccer
+Gabel	easy	home		tenedor,fourchette,forchetta	fork
+gähnen	easy	action		bostezar,bailler,sbadigliare	yawn
+Galaxie	hard	nature	Galaxis	galaxia,galassia	galaxy
+Gans	medium	animal			goose
+Gänseblümchen	medium	nature	Massliebchen	margarita,marguerite,margherita	daisy
+Gänsehaut	medium	body		pelle d'oca	goosebumps,goose pimples
+Garage	medium	place			garage
+Garten	easy	place		jardin,giardino	garden
+Gartenzwerg	medium	fantasy			garden gnome,gnome
+Gärtner	medium	people	Gärtnerin	jardinero,jardinier,giardiniere	gardener
+Geburtstag	easy	event	Wiegenfest,Geburri	cumpleanos,anniversaire,compleanno	birthday
+Gedicht	hard	music		poema,poeme,poesia	poem
+Gehirn	easy	body	Hirn	cerebro,cerveau,cervello	brain
+Geier	medium	animal		buitre,vautour	vulture
+Geige	easy	music	Violine,Fiedel	violon,violino	violin,fiddle
+gelb	easy	quality		amarillo,jaune,giallo	yellow
+Geld	medium	home	Kohle,Knete,Moneten,Zaster	dinero,argent,soldi	money,cash
+Geldbörse	medium	home	Portemonnaie,Portmonee,Geldbeutel,Brieftasche,Geldtasche	cartera,portefeuille,portafoglio	wallet,purse
+Gemälde	hard	music	Ölbild,Ölgemälde	cuadro,pintura,tableau,quadro	painting,picture
+Gemüse	medium	food		verdura,legume	vegetable,vegetables
+Genie	hard	people	Genius	genio
+Gepäck	hard	transport	Reisegepäck	equipaje,bagages,bagagli	luggage,baggage
+Gepard	medium	animal			cheetah
+Geschenk	easy	event	Präsent,Gschenkli	regalo,cadeau	gift,present
+Geschichte	hard	music		historia,histoire,storia	story,history
+Gesicht	easy	body		cara,visage,faccia,viso	face
+Gespenst	easy	fantasy	Geist,Gespenster	fantasma,fantome,spettro	ghost
+Geweih	hard	animal			antler,antlers
+Gewitter	medium	nature		tormenta,orage,temporale	thunderstorm,storm
+Gipfel	medium	nature	Bergspitze	cima,sommet,vetta	summit,peak
+Giraffe	easy	animal		jirafa,girafe,giraffa	giraffe
+Gitarre	easy	music	Klampfe	guitarra,guitare,chitarra	guitar
+Glas	easy	material		vidrio,verre,vetro	glass
+Glatze	medium	body	Glatzkopf	calvo,calvicie,calvitie,calvizie	bald head
+Gletscher	medium	nature	Ferner,Kees	glaciar,ghiacciaio	glacier
+Glitzer	medium	material	Glitter,Glitzerpulver	purpurina,brillantini
+Globus	medium	science	Erdkugel	globo	globe
+Glocke	medium	music	Kirchenglocke	campana,cloche	bell
+Glühbirne	medium	home	Birne,Glühlampe	bombilla,ampoule,lampadina	light bulb,bulb
+Glühwürmchen	hard	animal	Leuchtkäfer		firefly
+Gold	easy	material			gold
+Goldfisch	medium	animal			goldfish
+Golf	easy	sport			golf
+Gorilla	easy	animal			gorilla
+graben	hard	action	buddeln,ausgraben	cavar,creuser,scavare	dig,digging
+Gras	easy	nature		hierba,herbe,erba	grass,lawn
+Grill	medium	home	Griller	barbacoa	grill,bbq
+grün	easy	quality		verde,vert	green
+Gummibärchen	medium	food	Gummibär,Gummibärli		gummy bear,gummi bear
+Gurke	easy	food	Salatgurke	pepino,concombre,cetriolo	cucumber
+Gürtel	medium	clothing		cinturon,ceinture,cintura	belt
+Haar	easy	body	Haare	pelo,cabello,cheveux,capelli	hair
+Hafen	medium	place	Hafenbecken	puerto	harbour,harbor,port
+Hahn	medium	animal	Gockel	gallo,coq	rooster,cock
+Hai	easy	animal	Haifisch	tiburon,requin,squalo	shark
+Hals	medium	body		cuello,cou,collo	neck,throat
+Halskette	medium	clothing	Kette,Kollier,Collier	collar,collana	necklace
+Hammer	easy	tool		martillo,marteau,martello	hammer
+Hamster	easy	animal			hamster
+Hand	easy	body		mano,main	hand
+Handball	hard	sport			handball
+Handschuh	easy	clothing	Handschuhe	guante,gant,guanto	glove,gloves
+Handtuch	medium	home	Frottiertuch,Badetuch	toalla,asciugamano	towel
+Handy	easy	tool	Mobiltelefon,Natel	movil,telefono,portable,cellulare	phone,cellphone,mobile phone,telephone
+Hängematte	medium	home		hamaca,hamac,amaca	hammock
+Harfe	medium	music		arpa,harpe	harp
+Hase	easy	animal	Häschen,Hasi	conejo,lapin,coniglio	rabbit,bunny,hare
+Haus	easy	place		casa,maison	house,home
+Hausaufgabe	medium	event	Hausaufgaben,Hausübung,Ufzgi	deberes,tarea,devoirs,compiti	homework
+Hausschuh	medium	clothing	Pantoffel,Finken,Patschen,Puschen,Schlappen,Latschen,Hausschuhe	zapatilla,pantoufle,pantofola	slipper,slippers
+Heft	medium	science	Schulheft	cuaderno,cahier,quaderno	exercise book
+Heidelbeere	hard	food	Blaubeere,Schwarzbeere	arandano,myrtille,mirtillo	blueberry
+heiß	medium	quality		caliente,chaud,caldo	hot
+Heißluftballon	medium	transport		globo,montgolfiere,mongolfiera	hot-air balloon
+Held	hard	people	Heldin	heroe,heros,eroe	hero
+Helm	medium	clothing	Schutzhelm,Fahrradhelm	casco,casque	helmet
+Hemd	easy	clothing	Oberhemd	camisa,chemise,camicia
+Herbst	easy	nature		otono,automne,autunno	autumn
+Herd	medium	home	Kochherd	cocina,cuisiniere,fornello	stove,cooker
+Herz	easy	body		corazon,coeur,cuore	heart
+Heu	medium	nature		heno,foin,fieno	hay
+heulen	hard	action		aullar,hurler,ululare	howl,cry
+Heuschrecke	hard	animal	Grashüpfer		grasshopper,locust
+Hexe	easy	fantasy		bruja,sorciere,strega	witch
+Hexenkessel	hard	fantasy	Zauberkessel	caldero,chaudron,calderone	cauldron
+Himbeere	hard	food		frambuesa,framboise,lampone	raspberry
+Himmel	easy	nature	Firmament	cielo,ciel	sky,heaven
+Hirsch	medium	animal			stag,deer
+Hochzeit	easy	event	Trauung	boda,mariage,matrimonio	wedding
+Höhle	easy	nature		cueva,grotta	cave
+Holz	medium	material		madera,bois,legno	wood
+Honig	easy	food		miel,miele	honey
+Horizont	hard	nature		horizonte,orizzonte	horizon
+Horn	medium	music	Waldhorn		horn
+Hose	easy	clothing	Hosen,Beinkleid	pantalones,pantalon,pantaloni	trousers,pants
+Hotdog	medium	food			hot dog
+Hotel	easy	place			hotel
+Hubschrauber	easy	transport	Helikopter,Heli	helicoptero,helicoptere,elicottero	helicopter
+Hufeisen	medium	sport		herradura	horseshoe
+Hügel	medium	nature	Anhöhe,Hubel	colina,colline,collina	hill
+Huhn	easy	animal	Henne	pollo,poule	chicken,hen
+Hummer	hard	animal		langosta,homard,aragosta	lobster
+Hund	easy	animal		perro,chien,cane	dog
+Hut	easy	clothing		chapeau,cappello	hat
+Hütte	medium	place	Berghütte,Almhütte,Holzhütte	cabana,cabane,capanna	cabin
+Igel	easy	animal		erizo,herisson,riccio	hedgehog
+Iglu	easy	place			igloo
+Insel	easy	nature	Eiland	isla,ile,isola	island
+Internet	easy	science	Netz,Web		internet
+Jacke	easy	clothing		chaqueta,veste,giacca	jacket
+Jahrmarkt	medium	event	Kirmes,Rummel,Kirtag,Chilbi,Dult,Kerb,Kirchweih,Rummelplatz	feria,fete foraine,luna park	funfair,fairground,carnival
+Jazz	medium	music			jazz
+Jeans	medium	clothing	Jeanshose,Bluejeans	vaqueros,jean	jeans
+Joghurt	medium	food	Jogurt,Yoghurt	yogur	yogurt
+Käfer	medium	animal			beetle,bug
+Kaffee	easy	food			coffee
+Käfig	medium	home		jaula,gabbia	cage
+Kakao	easy	food	Kakaogetränk	cacao	cocoa,hot chocolate
+Kaktus	easy	nature			cactus
+Kalender	hard	home		calendario,calendrier	calendar
+kalt	medium	quality		frio,froid,freddo	cold
+Kamel	easy	animal		camello,chameau,cammello	camel
+Kamera	easy	tool	Fotoapparat,Fotokamera	camara,appareil photo,macchina fotografica	camera
+Kamin	medium	home	Cheminée	chimenea,camino	fireplace
+Känguru	easy	animal	Känguruh	canguro	kangaroo
+Kanu	medium	transport	Kanadier	canoa	canoe
+Kapitän	medium	people	Kapitänin,Käpt'n	capitan,capitaine,capitano	captain
+Karaoke	medium	music			karaoke
+Karate	medium	sport			karate
+Karotte	easy	food	Möhre,Mohrrübe,Rüebli,Gelbe Rübe	zanahoria,carotte,carota	carrot
+Kartoffel	easy	food	Erdapfel,Grundbirne,Härdöpfel	patata	potato
+Karussell	medium	event	Ringelspiel,Rösslispiel	carrusel,giostra	carousel,merry-go-round
+Käse	easy	food		queso,fromage,formaggio	cheese
+Kastanie	medium	nature	Marone,Maroni,Rosskastanie	castana,chataigne,marron,castagna	chestnut
+Katapult	hard	fantasy		catapulta,catapulte	catapult
+Kater	hard	animal			tomcat,hangover
+Katze	easy	animal	Mieze	gato,gatto	cat
+Kaugummi	medium	food	Bubblegum	chicle	chewing gum,gum
+Kaulquappe	hard	animal			tadpole
+Keks	easy	food	Guetzli,Kekse	galleta,biscotto	cookie,biscuit
+Keller	medium	place	Untergeschoss	sotano,cave,cantina	basement,cellar
+Kellner	medium	people	Kellnerin,Ober,Serviertochter,Servierer	camarero,serveur,cameriere	waiter,waitress
+Kerze	easy	home		vela,bougie,candela	candle
+Ketchup	easy	food	Ketschup		ketchup
+Kette	hard	material		cadena,chaine,catena	chain
+kichern	medium	action		reirse,glousser,ridacchiare	giggle
+Kiefer	hard	nature	Föhre,Forche	pino,pin,mandibula,machoire,mascella	pine,jaw
+Kindergarten	easy	place	Kita,Kindertagesstätte,Chindsgi,Kindi		kindergarten
+Kinderwagen	medium	home	Kinderwagerl	cochecito,poussette,passeggino	pram,stroller,baby carriage
+Kino	easy	place	Lichtspielhaus	cine	cinema,movie theater,movies
+Kirsche	easy	food		cereza,cerise,ciliegia	cherry
+Kissen	easy	home	Kopfkissen,Polster,Kopfpolster,Pfulmen	almohada,oreiller,cuscino	pillow,cushion
+Kissenschlacht	medium	sport	Polsterschlacht		pillow fight
+Kiste	medium	home		caja,caisse	crate
+kitzeln	easy	action		cosquillas,chatouiller,solletico	tickle
+Kiwi	medium	food			kiwi
+Klassenfahrt	medium	event	Schulreise,Klassenreise,Schulausflug,Landschulwoche		school trip,field trip,class trip
+Klassenzimmer	medium	place	Klassenraum,Schulzimmer		classroom
+klatschen	hard	action	applaudieren	aplaudir,applaudir,applaudire	clap,clapping
+Klavier	easy	music	Piano	pianoforte
+Kleber	medium	tool	Klebstoff,Leim,Pick,Kleister	pegamento,colle,colla	glue
+klebrig	medium	quality	pappig	pegajoso,collant,appiccicoso	sticky
+Kleeblatt	medium	nature	Glücksklee	trebol,trefle,trifoglio	clover,four-leaf clover
+Kleid	easy	clothing		vestido,vestito	dress
+Klempner	medium	people	Installateur,Spengler,Klempnerin	fontanero,plombier,idraulico	plumber
+klettern	medium	action	kraxeln	trepar,escalar,grimper,arrampicarsi	climb,climbing
+Klippe	hard	nature	Kliff,Felsklippe	acantilado,falaise,scogliera	cliff
+Knete	medium	material	Knetmasse,Plastilin,Plastilina,Knetgummi		play-doh,playdough,plasticine,modelling clay
+Knie	easy	body		rodilla,genou,ginocchio	knee
+Knoblauch	hard	food		ajo,ail,aglio	garlic
+Knöchel	hard	body	Fußknöchel	tobillo,cheville,caviglia	ankle,knuckle
+Knochen	easy	body		hueso,os,osso	bone
+Knödel	medium	food	Kloß,Klöße,Knödl		dumpling,dumplings
+Knopf	hard	clothing		boton,bouton,bottone
+Koala	easy	animal	Koalabär		koala
+Kobold	medium	fantasy	Kobolde,Goblin	duende,lutin,folletto
+Koch	easy	people	Köchin	cocinero,cuisinier,cuoco	chef,cook
+kochen	easy	action		cocinar,cuisiner,cucinare	cook,cooking
+Koffer	easy	home	Reisekoffer	maleta,valise,valigia	suitcase
+Kohl	hard	food	Kraut,Kabis	col,chou,cavolo	cabbage
+Kohle	medium	material	Steinkohle,Holzkohle	carbon,charbon,carbone	coal,charcoal
+Kokosnuss	medium	food	Kokos	coco,cocco	coconut
+Komet	hard	nature		cometa,comete	comet
+Kompass	hard	tool		brujula,boussole,bussola	compass
+Konfetti	medium	event		coriandoli,confeti	confetti
+König	easy	people		rey,roi	king
+Königin	easy	people		reina,reine,regina	queen
+Königreich	hard	fantasy		reino,royaume,regno	kingdom
+Konzert	medium	music		concierto,concerto	concert
+Korb	medium	home		cesta,panier,cesto	basket
+Kostüm	medium	clothing	Verkleidung,Faschingskostüm	disfraz,deguisement	costume
+Krabbe	medium	animal		cangrejo,crabe,granchio	crab
+Krähe	hard	animal			crow
+Krake	medium	animal	Oktopus	pulpo,polpo,poulpe	octopus
+Krankenhaus	easy	place	Spital,Klinik,Klinikum,Hospital	hopital,ospedale
+Krankenschwester	medium	people	Krankenpfleger,Krankenpflegerin,Pfleger,Pflegerin,Pflegefachfrau	enfermera,infirmiere,infermiera	nurse
+Krankenwagen	medium	transport	Rettungswagen,Rettung,Ambulanz,Sanka,Sanitätswagen	ambulancia,ambulanza	ambulance
+Krater	hard	nature		cratere	crater
+Krawatte	medium	clothing	Schlips,Binder	corbata,cravate,cravatta	tie,necktie
+Kreide	medium	tool	Tafelkreide	tiza,craie,gesso	chalk
+Kreis	medium	science		circulo,cercle,cerchio	circle
+Kreisel	hard	sport		peonza,toupie,trottola	spinning top
+Kreuzfahrt	hard	transport		crucero,croisiere,crociera	cruise
+Kreuzworträtsel	hard	sport		crucigrama,mots croises,cruciverba	crossword
+Kristall	medium	material		cristal,cristallo	crystal
+Krokodil	easy	animal		cocodrilo,coccodrillo	crocodile
+Krone	easy	fantasy		couronne	crown
+Küche	easy	place		cocina,cuisine,cucina	kitchen
+Kuchen	easy	food		pastel,gateau,torta	cake
+Kuckuck	medium	animal			cuckoo
+Kuckucksuhr	medium	home			cuckoo clock
+Kugelschreiber	medium	home	Kuli,Kugeli,Kulli	boligrafo,stylo,penna	pen,ballpoint,biro
+Kuh	easy	animal		vaca,vache,mucca	cow
+Kühlschrank	easy	home	Eiskasten	nevera,frigo,frigorifero	fridge,refrigerator
+Küken	medium	animal	Kücken,Bibeli	pollito,poussin,pulcino	chick
+Künstler	hard	people	Künstlerin	artista,artiste
+Kürbis	easy	food		calabaza,citrouille,zucca	pumpkin
+Küste	hard	nature		costa,cote	coast,shore
+Kutsche	medium	transport	Pferdekutsche	carruaje,caleche,carrozza	carriage,horse carriage
+Labyrinth	hard	sport	Irrgarten	laberinto,labyrinthe,labirinto	labyrinth,maze
+Lächeln	hard	body		sonrisa,sourire,sorriso	smile
+lachen	easy	action		reir,rire,ridere	laugh,laughing
+Lachs	hard	animal			salmon
+Lagerfeuer	medium	event		hoguera,fogata,falo	campfire,bonfire
+Lama	medium	animal			lama,llama
+Lamm	easy	animal		cordero,agneau,agnello	lamb
+Lampe	easy	home	Leuchte	lampara,lampada	lamp
+Landkarte	medium	tool	Karte	mapa,carte,mappa	map
+Laptop	easy	science	Notebook,Klapprechner	portatil,ordinateur portable	laptop
+Laser	hard	science	Laserstrahl		laser
+Lastwagen	easy	transport	Lkw,Laster,Lastauto,Lastkraftwagen,Brummi	camion	truck,lorry
+Laterne	medium	home	Lampion	linterna,lanterne,lanterna	lantern
+Lava	medium	nature			lava
+Lawine	medium	nature	Lahn,Schneelawine	avalancha,valanga	avalanche
+Lebkuchen	medium	food	Pfefferkuchen		gingerbread
+Leder	medium	material		cuero,cuir,cuoio,pelle	leather
+Lederhose	medium	clothing	Krachlederne		lederhosen,leather trousers
+Lehrer	easy	people	Lehrerin,Lehrkraft,Pauker	profesor,professeur,insegnante	teacher
+Leiter	hard	tool		escalera,echelle,scala	ladder
+Lenkrad	hard	transport	Volant	volante	steering wheel
+Leopard	medium	animal			leopard
+lesen	easy	action		lire,leggere	read,reading
+Leuchtturm	medium	place		faro,phare	lighthouse
+Libelle	hard	animal			dragonfly
+Lied	medium	music	Song	cancion,chanson,canzone
+lila	medium	quality	lilafarben	morado,violeta	purple,violet
+Limonade	medium	food	Limo	limonada	lemonade
+Lineal	medium	tool	Massstab	regla,regle,righello	ruler
+Lippe	medium	body		labio,levre,labbro	lip,lips
+Lippenstift	medium	clothing		pintalabios,rossetto	lipstick
+Löffel	easy	home		cuchara,cuillere,cucchiaio	spoon
+Lokomotive	medium	transport	Lok	locomotora,locomotiva	locomotive,engine
+Löwe	easy	animal		leon,leone	lion
+Löwenzahn	medium	nature	Butterblume,Kuhblume,Röhrlsalat	pissenlit,tarassaco	dandelion
+Luftballon	easy	event	Ballon	globo,palloncino	balloon
+Lupe	medium	tool	Vergrößerungsglas	lupa,loupe	magnifying glass,magnifier
+Lutscher	medium	food	Lolli,Lolly,Schlecker		lollipop,lollypop
+Magnet	medium	tool		iman,aimant,magnete	magnet
+Mais	easy	food	Kukuruz	maiz	maize
+malen	medium	action		pintar,peindre,dipingere	paint,painting,draw
+Maler	medium	people	Malerin,Anstreicher	pintor,peintre,pittore	painter
+Mammut	medium	animal			mammoth
+Mango	medium	food			mango
+Mantel	easy	clothing		abrigo,manteau,cappotto	coat
+Marathon	hard	sport	Marathonlauf		marathon
+Märchen	hard	fantasy		cuento,fiaba	fairy tale
+Marienkäfer	medium	animal			ladybug,ladybird
+Marionette	hard	music		titere,marionnetta	marionette,puppet,marionette
+Markt	medium	place	Wochenmarkt,Marktplatz	mercado,marche,mercato	market
+Marmelade	easy	food	Konfitüre	mermelada,confiture	jam,jelly
+Maske	medium	clothing		masque,maschera	mask
+Mathe	medium	science	Mathematik	matematicas,matematica	math,maths,mathematics
+Matratze	hard	home		colchon,matelas,materasso	mattress
+Matrose	medium	people	Seemann,Seefahrer	marinero,marin,marinaio	sailor
+Maulwurf	easy	animal			mole
+Maus	easy	animal		raton,souris,topo	mouse
+Mayonnaise	medium	food	Mayo,Majonäse	mayonesa,maionese	mayonnaise
+Mechaniker	medium	people	Mechanikerin,Automechaniker,Mechatroniker	mecanico,mecanicien,meccanico	mechanic
+Medaille	medium	sport		medalla,medaglia	medal
+Medizin	medium	science	Medikament,Arznei,Arzneimittel	medicina,medicament	medicine
+Meer	easy	nature		mar,mer,mare	sea
+Meerjungfrau	easy	fantasy	Nixe,Seejungfrau	sirena	mermaid
+Meerschweinchen	medium	animal			guinea pig
+Mehl	hard	food		harina,farine,farina	flour
+Melone	medium	food			melon
+Messer	easy	home		cuchillo,couteau,coltello	knife
+Metzger	medium	people	Fleischer,Fleischhauer,Schlachter,Metzgerin	carnicero,boucher,macellaio	butcher
+Mikrofon	easy	tool	Mikro,Mikrophon	micro,microfono	microphone,mic
+Mikroskop	medium	science		microscopio	microscope
+Mikrowelle	medium	home	Mikrowellenherd	microondas,micro-ondes,microonde	microwave
+Milch	easy	food		leche,lait	milk
+Minigolf	medium	sport			mini golf
+Mittagessen	medium	food	Zmittag	almuerzo,dejeuner,pranzo	lunch
+Mitternacht	hard	event		medianoche,minuit,mezzanotte	midnight
+Mond	easy	nature		luna,lune	moon
+Monster	easy	fantasy	Ungeheuer,Ungetüm	monstruo,monstre,mostro	monster
+Moos	hard	nature		musgo,mousse,muschio	moss
+Morgen	hard	event		manana,matin,mattina,mattino	morning
+Motorrad	medium	transport	Töff,Motorbike	moto,motocicleta	motorcycle
+Möwe	medium	animal		gaviota,mouette	seagull,gull
+Mücke	medium	animal	Gelse,Stechmücke,Moskito	zanzara	mosquito
+Muffin	easy	food			muffin
+Mülleimer	medium	home	Mistkübel,Abfalleimer,Abfallkübel,Kehrichteimer	basura,poubelle,pattumiera	trash can,garbage can,bin,dustbin
+Mund	easy	body	Maul,Gosche,Gusch	boca,bouche,bocca	mouth
+Mundharmonika	medium	music	Fotzhobel	armonica	harmonica,mouth organ
+Münze	medium	home	Geldstück	moneda,piece,moneta	coin
+Murmel	medium	sport	Klicker,Marmel,Murmeln,Chlicker	canica,bille,biglia	marble,marbles
+Murmeltier	hard	animal			marmot
+Muschel	easy	nature	Muschelschale	concha,coquillage,conchiglia	seashell,shell,mussel
+Museum	medium	place			museum
+Musik	medium	music		musica,musique	music
+Muskel	hard	body		musculo,muscolo	muscle
+Müsli	medium	food	Müesli		cereal,cereals,muesli
+Mutter	easy	people	Mama,Mami,Mutti	madre,mere	mother,mom,mum,mommy
+Mütze	easy	clothing	Haube,Kappe,Wollmütze	gorro,bonnet,berretto	woolly hat
+Nachbar	hard	people	Nachbarin	vecino,voisin,vicino	neighbour,neighbor
+Nacht	easy	nature		noche,nuit,notte	night
+Nachtisch	hard	food	Dessert,Nachspeise	postre
+Nadel	medium	tool	Nähnadel	aguja,aiguille,ago	needle,pin
+Nagel	hard	body	Fingernagel	una,ongle,chiodo,unghia	nail,fingernail
+nähen	medium	action		coser,coudre,cucire	sew,sewing
+Nase	easy	body		nariz,nez,naso	nose
+Nashorn	medium	animal	Rhinozeros,Rhino		rhinoceros
+Nebel	medium	nature		niebla,brouillard,nebbia	fog,mist
+Nest	medium	nature			nest
+niesen	easy	action		estornudar,eternuer,starnutire	sneeze
+Nilpferd	medium	animal	Flusspferd,Hippo		hippopotamus
+Ninja	medium	people			ninja
+Nudel	easy	food	Nudeln,Teigwaren	fideo	noodle,noodles
+Nuss	medium	food		nuez,noix,noce	nut
+Obst	medium	food		fruta,fruits,frutta	fruit
+Ofen	easy	home	Backofen,Backrohr	horno,forno	oven,stove
+Ohr	easy	body		oreja,oreille,orecchio	ear
+Ohrring	medium	clothing	Ohrringe	pendiente,arete,boucle d'oreille,orecchino	earring,earrings
+Olive	medium	food		aceituna,oliva	olive,olive
+Oma	easy	people	Großmutter,Omi,Großmama,Grosi	nana,abuela,nonna	grandma,granny,grandmother
+Onkel	easy	people		tio,oncle,zio	uncle
+Opa	easy	people	Großvater,Opi,Großpapa,Grosspapi	abuelo,nonno	grandpa,grandfather,grandad
+Oper	hard	music			opera
+Orange	easy	food	Apfelsine	naranja,arancia	orange
+Orchester	medium	music		orquesta,orchestre	orchestra
+Osterhase	medium	fantasy			easter bunny
+Otter	medium	animal	Fischotter		otter
+Ozean	medium	nature	Weltmeer	oceano	ocean
+Palme	medium	nature	Palmenbaum	palmera,palmier,palma	palm,palm tree
+Panda	easy	animal	Pandabär		panda
+Panther	medium	animal	Panter		panther,panther
+Papagei	easy	animal		loro,perroquet,pappagallo	parrot
+Papier	easy	material		papel,carta	paper
+Pappe	medium	material		cartone	cardboard
+Paprika	medium	food		pimiento,poivron,peperone	bell pepper
+Parfüm	medium	home	Parfum	perfum,profumo	perfume
+Park	easy	place	Stadtpark	parque,parc,parco	park
+Parkplatz	medium	place		parking,aparcamiento	parking lot,car park
+Party	easy	event	Fete,Festl	fiesta,festa	party
+Pause	hard	science	große Pause,Schulpause	recreo,recreation,ricreazione	pause,break,recess,playtime
+Pelikan	hard	animal			pelican
+Perle	medium	material		perla	pearl
+Perücke	medium	clothing		peluca,perruque,parrucca	wig
+Pfanne	easy	home	Bratpfanne	sarten,poele,padella	pan,frying pan
+Pfau	medium	animal			peacock
+Pfeffer	medium	food		pimienta,poivre,pepe	pepper
+Pfeife	hard	tool	Trillerpfeife	silbato,sifflet,fischietto	whistle,pipe
+pfeifen	medium	action		silbar,siffler,fischiare	whistle,whistling
+Pfeil	easy	sport		flecha,fleche,freccia	arrow
+Pferd	easy	animal	Ross,Gaul	caballo,cheval,cavallo	horse
+Pferdeschwanz	medium	body	Rossschwanz	coleta	ponytail
+Pfirsich	medium	food		melocoton,durazno,peche,pesca	peach
+Pflaster	medium	tool	Heftpflaster,Wundpflaster,Hansaplast	tirita,pansement,cerotto	plaster,band-aid
+Pfote	hard	animal	Tatze		paw
+Pfütze	medium	nature	Lacke	charco,flaque,pozzanghera	puddle
+Pharao	hard	people		faraon,pharaon,faraone	pharaoh
+Phönix	hard	fantasy	Feuervogel	fenix,phenix,fenice	phoenix
+Pickel	medium	body	Pustel,Bibeli,Wimmerl	grano,bouton,brufolo	pimple,zit
+Picknick	medium	event		pique-nique	picnic
+Pilot	easy	people	Pilotin,Flugkapitän	piloto,pilote,pilota	pilot
+Pilz	easy	food	Schwammerl	champinon,fungo,seta	mushroom
+Pinguin	easy	animal		pinguino	penguin
+Pinsel	medium	music	Malpinsel	pincel,pinceau,pennello	paintbrush,brush
+Pirat	easy	fantasy	Seeräuber,Freibeuter,Piratin	pirata	pirate
+Pizza	easy	food			pizza
+Planet	medium	nature		planeta,planete,pianeta	planet
+Plastik	medium	material	Kunststoff,Plaste	plastico,plastique,plastica	plastic
+Pokal	medium	sport	Siegerpokal	trofeo,trophee	trophy
+Polizei	easy	people	Polizist,Polizistin,Polente,Bulle	policia,polizia	police
+Pommes	easy	food	Fritten,Pommes frites	frites	fries,french fries
+Pony	easy	animal			pony
+Popcorn	easy	food	Puffmais,Popkorn	palomitas
+Preis	hard	event		premio,prix	prize,award,price
+Prinz	easy	fantasy		principe	prince
+Prinzessin	easy	fantasy		princesa,principessa	princess
+Prüfung	medium	science	Klausur,Schularbeit,Examen,Klassenarbeit	esame	exam
+Pudel	medium	animal			poodle
+Pullover	easy	clothing	Pulli	pull,maglione	pullover,sweater,jumper,pullover
+Puppe	easy	sport		muneca,poupee,bambola	doll
+Purzelbaum	medium	sport	Burzelbaum,Rolle vorwärts	voltereta,culbute,capriola	somersault,roll
+Puzzle	medium	sport	Puzzlespiel	rompecabezas,casse-tete	puzzle
+Pyramide	easy	place		piramide	pyramid
+Quadrat	medium	science		cuadrado,carre,quadrato	square
+Qualle	medium	animal			jellyfish
+Quiz	medium	event	Quizshow,Ratespiel		quiz
+Rabe	medium	animal			raven
+Rad	medium	transport		rueda,roue,ruota	wheel
+Radiergummi	medium	tool	Radierer,Gummi	goma,gomme,gomma	eraser,rubber
+Radio	medium	tool	Radioapparat,Radiogerät		radio
+Rakete	easy	transport		cohete,fusee,razzo	rocket
+Rätsel	hard	sport		enigme,indovinello	riddle
+Ratte	easy	animal		rata,ratto	rat
+Raumschiff	medium	transport		nave espacial,vaisseau,astronave	spaceship,spacecraft
+Raupe	medium	animal			caterpillar
+Rechteck	hard	science		rectangulo,rettangolo	rectangle
+Regal	medium	home	Bücherregal,Stellage	estante,etagere,scaffale	shelf,shelves
+Regen	easy	nature		lluvia,pluie,pioggia	rain
+Regenbogen	easy	nature		arco iris,arc-en-ciel,arcobaleno	rainbow
+Regenschirm	easy	home	Schirm,Parapluie	paraguas,ombrello	umbrella
+Reh	medium	animal			deer,roe deer
+Reifen	hard	sport	Pneu	neumatico,pneumatico	tire,tyre,hoop
+Reis	easy	food		arroz,riz,riso	rice
+Reisepass	medium	transport	Pass	pasaporte,passeport,passaporto	passport
+Reißverschluss	hard	clothing	Zipp,Zipper	cremallera,fermeture eclair,cerniera	zip
+reiten	medium	action		montar,cavalcare	ride,riding,horse riding
+rennen	medium	action		correr,courir,correre	run,running
+Rentier	medium	animal			reindeer
+Restaurant	easy	place	Gaststätte,Lokal	restaurante	restaurant
+Rezept	hard	food		receta,recette,ricetta	recipe
+Richter	hard	people	Richterin	juez,juge,giudice	judge
+Riese	easy	fantasy	Riesin	gigante,geant	giant
+Ring	medium	clothing	Fingerring	anillo,anneau,bague,anello	ring
+Ritter	easy	fantasy		caballero,chevalier,cavaliere	knight
+Robbe	medium	animal		foca,phoque	seal
+Roboter	easy	science	Robot
+Rock	medium	clothing	Jupe	falda,gonna	skirt
+Roller	medium	transport	Tretroller,Trottinett,Scooter,Trotinett	patinete,trottinette,monopattino
+Rollschuh	medium	sport	Rollschuhe		roller skate,roller blades
+Rose	easy	nature	Röschen		rose
+Rost	hard	material		oxido,rouille,ruggine	rust
+rot	easy	quality		rojo,rosso	red
+Rücken	medium	body		espalda,dos,schiena	back
+Rucksack	easy	clothing		mochila,zaino	rucksack,backpack,knapsack
+Ruder	hard	transport		remo,rame,timone	oar,rudder
+Rutsche	medium	sport	Rutschbahn,Wasserrutsche	tobogan,toboggan,scivolo	slide
+Safari	medium	event			safari
+Saft	medium	food		zumo,jugo,jus,succo	juice
+Säge	medium	tool		sierra,scie,sega	saw
+Salat	easy	food	Kopfsalat	ensalada,salade,insalata	salad,lettuce
+Salz	easy	food		sal,sel,sale	salt
+Sand	easy	material		sable,sabbia	sand
+Sandkasten	medium	place	Sandkiste,Sandhaufen		sandbox,sandpit
+Sanduhr	hard	tool	Stundenglas	sablier,clessidra	hourglass,egg timer
+Sänger	medium	people	Sängerin	cantante,chanteur	singer
+Satellit	hard	science		satelite	satellite
+Sattel	medium	transport		silla,selle,sella	saddle
+sauer	hard	quality		acido,acide,aspro	sour
+Sauerkraut	medium	food			sauerkraut
+Sauerstoff	hard	science		oxigeno,oxygene,ossigeno	oxygen
+Saxofon	medium	music	Saxophon,Sax	sassofono	saxophone
+Schach	easy	sport	Schachspiel	ajedrez,echecs,scacchi	chess
+Schaf	easy	animal		oveja,mouton,pecora	sheep
+Schal	medium	clothing		bufanda,echarpe,sciarpa	scarf
+scharf	hard	quality		picante,piquant,piccante	spicy,hot
+Schatten	hard	nature		sombra,ombre,ombra	shadow,shade
+Schatz	medium	fantasy		tesoro	treasure
+Schaufel	medium	tool	Schippe	pala,pelle	shovel,spade
+Schaukel	easy	sport	Hutsche,Gigampfi,Ritiseili	columpio,balancoire,altalena
+Schauspieler	medium	people	Schauspielerin,Darsteller,Mime	acteur,attore	actor,actress
+Scheinwerfer	hard	music	Spot,Spotlight	foco,projecteur,riflettore
+Schere	easy	tool		tijeras,ciseaux,forbici	scissors
+Scheune	hard	place	Stadel,Scheuer,Schober,Tenne	granero,grange,fienile	barn
+Schiedsrichter	medium	people	Schiri,Unparteiischer,Schiedsrichterin	arbitro,arbitre	referee,umpire
+Schiff	easy	transport		barco,buque,navire,nave	ship
+Schild	hard	fantasy		escudo,bouclier,scudo	shield,sign
+Schildkröte	easy	animal		tortuga,tortue,tartaruga	turtle,tortoise
+Schinken	medium	food		jamon,jambon,prosciutto	ham
+Schlafanzug	medium	clothing	Pyjama,Pischi	pijama	pajamas,pyjamas
+schlafen	easy	action	pennen	dormir,dormire	sleep
+Schlaflied	hard	music	Wiegenlied,Gutenachtlied	nana,berceuse,ninna nanna	lullaby
+Schlafzimmer	hard	place		dormitorio,chambre	bedroom
+Schlagzeug	medium	music	Drums,Drumset	bateria	drum kit
+Schlamm	medium	material	Matsch,Morast,Gatsch	barro,lodo,boue,fango	mud
+Schlange	easy	animal		serpiente,serpent,serpente	snake
+Schleife	hard	clothing	Masche,Mascherl	lazo,noeud,fiocco	ribbon,bow
+Schleim	medium	material	Slime	baba,bave,bava
+Schlitten	easy	sport	Schlitte	trineo,luge,slitta	sled,sledge,sleigh
+Schlittschuh	medium	sport	Schlittschuhe,Eislaufschuh	patin,pattino	ice skate,ice skates,skate
+Schloss	medium	place		castillo,chateau,castello	castle,palace,lock
+Schlucht	hard	nature		canon,gola	gorge,ravine
+Schluckauf	medium	body	Schnackerl,Hitzgi,Hecker,Schluckser	hipo,hoquet,singhiozzo	hiccup,hiccups,hiccough
+Schlüssel	easy	home		llave,cle,chiave	key
+schmelzen	hard	action		derretir,fondre,sciogliere	melt
+Schmetterling	easy	animal	Falter	mariposa,papillon,farfalla	butterfly
+Schnabel	medium	animal			beak,bill
+Schnabeltier	hard	animal			platypus
+schnarchen	medium	action		roncar,ronfler,russare	snore
+Schnecke	easy	animal		caracol,escargot,lumaca	snail,slug
+Schnee	easy	nature		nieve,neige,neve	snow
+Schneeballschlacht	medium	sport			snowball fight
+Schneeflocke	easy	nature	Flocke	flocon	snowflake
+Schneemann	medium	nature			snowman
+Schnitzel	medium	food	Wiener Schnitzel		schnitzel
+Schnitzeljagd	hard	sport			scavenger hunt,paper chase,treasure hunt
+Schnorchel	hard	sport		boccaglio	snorkel
+Schnuller	medium	home	Nuggi,Dutzi,Nuggel	chupete,tetine,ciuccio	pacifier,dummy
+Schnurrbart	medium	body	Schnauzer,Schnauz,Oberlippenbart	bigote,baffi	moustache,mustache
+Schnürsenkel	medium	clothing	Schuhband,Schnürband,Schuhbandl,Senkel,Schuhbändel	cordon,lacet,laccio	shoelace,shoelaces
+Schokolade	easy	food	Schoki,Schoko	cioccolato,chocolat	chocolate
+Schornsteinfeger	medium	people	Kaminkehrer,Rauchfangkehrer,Kaminfeger,Schornsteinfegerin		chimney sweep
+Schrank	medium	home	Kasten,Kleiderschrank	armario,armoire,armadio	cupboard,wardrobe,closet
+Schraube	medium	tool		tornillo,vis,vite	screw
+Schraubenzieher	medium	tool	Schraubendreher	destornillador,tournevis,cacciavite	screwdriver
+schreiben	easy	action		escribir,ecrire,scrivere	write,writing
+Schreibtisch	medium	home		escritorio,bureau,scrivania	desk
+schreien	medium	action		gritar,crier,urlare	scream,shout,yell
+Schriftsteller	hard	people	Schriftstellerin,Autor,Autorin	escritor,ecrivain,scrittore	author,writer
+Schubkarre	medium	tool	Schubkarren,Scheibtruhe,Karrette	carretilla,brouette,carriola	wheelbarrow
+Schublade	hard	home	Lade,Schubfach,Schublad	cajon,tiroir,cassetto	drawer
+Schuh	easy	clothing	Schuhe	zapato,chaussure,scarpa	shoe,shoes
+Schule	easy	place		escuela,ecole,scuola	school
+Schüler	medium	people	Schülerin	alumno,eleve,alunno	pupil
+Schulranzen	medium	tool	Ranzen,Schultasche,Schulrucksack,Schulthek,Thek	mochila,cartable,cartella	school bag,satchel
+Schulter	medium	body		hombro,epaule,spalla	shoulder
+Schultüte	medium	event	Zuckertüte		school cone
+Schwamm	medium	home		esponja,eponge,spugna	sponge
+Schwan	medium	animal		cisne,cygne,cigno	swan
+Schwein	easy	animal	Sau	cerdo,cochon,maiale	pig
+Schwerkraft	hard	science	Gravitation,Erdanziehung,Anziehungskraft	gravedad,gravite,gravita	gravity
+Schwert	easy	fantasy		espada,epee,spada	sword
+Schwester	medium	people		hermana,soeur,sorella	sister
+Schwimmbad	easy	place	Badi	piscina,piscine
+schwimmen	easy	action		nadar,nuotare	swim,swimming
+See	medium	nature		lago,lac	lake
+Seepferdchen	medium	animal			seahorse
+Segel	medium	transport		vela,voile	sail
+Seide	hard	material		seda,soie,seta	silk
+Seife	easy	home		jabon,savon,sapone	soap
+Seifenblase	medium	nature		burbuja,bolla	bubble,soap bubble
+Seil	medium	tool		cuerda,corde,corda	rope
+Seilbahn	medium	transport	Gondelbahn,Luftseilbahn	teleferico,telepherique,funivia	cable car,gondola
+Seilspringen	medium	sport	Seilhüpfen,Seilchenspringen	comba	jump rope,skipping,skipping rope,rope jumping
+Senf	medium	food	Mostrich	mostaza,moutarde,senape	mustard
+Shampoo	medium	home	Schampon,Schampoo,Haarshampoo	champu	shampoo
+Silber	medium	material		plata,argent,argento	silver
+Silvester	medium	event	Altjahrsabend,Sylvester,Jahreswechsel	nochevieja,reveillon,capodanno
+singen	easy	action		cantar,chanter,cantare	sing,singing
+Sirene	medium	tool	Martinshorn	sirena	siren
+Skateboard	easy	sport			skateboard
+Skelett	easy	fantasy	Gerippe	esqueleto,squelette,scheletro	skeleton
+Ski	medium	sport	Schi,Skier	esqui,sci	ski
+Skorpion	medium	animal			scorpion
+Snowboard	medium	sport			snowboard
+Socke	easy	clothing	Socken	calcetin,chaussette,calzino	sock,socks
+Sofa	easy	home	Couch,Kanapee,Diwan		sofa
+Sommer	easy	nature		verano,ete,estate	summer
+Sommersprosse	medium	body	Sommersprossen	peca,lentiggine	freckle,freckles
+Sonne	easy	nature		sol,soleil,sole	sun
+Sonnenaufgang	medium	nature		amanecer,alba	sunrise
+Sonnenblume	medium	nature		girasol,tournesol,girasole	sunflower
+Sonnenbrille	medium	clothing			sunglasses
+Sonnenfinsternis	hard	nature	Eklipse		eclipse,solar eclipse
+Sonnenuntergang	medium	nature		atardecer,tramonto	sunset
+Spaghetti	easy	food	Spagetti		spaghetti,spaghetti
+Spargel	hard	food		esparrago,asperge,asparago	asparagus
+Sparschwein	medium	home	Sparbüchse,Kässeli,Sparschweinchen	hucha,tirelire,salvadanaio	piggy bank
+Spatz	medium	animal	Sperling		sparrow
+Specht	hard	animal			woodpecker
+Speck	medium	food			bacon
+Speisekarte	medium	food	Menü,Menükarte		menu
+Sphinx	hard	fantasy	Sphynx	esfinge,sfinge	sphinx
+Spiegel	medium	home		espejo,miroir,specchio	mirror
+Spiegelei	medium	food		huevo,oeuf,uovo	fried egg,egg
+Spielplatz	easy	place		parque infantil,parco giochi	playground
+Spinat	hard	food		espinaca,epinard,spinaci	spinach
+Spinne	easy	animal		arana,araignee,ragno	spider
+Spinnennetz	medium	nature	Spinnwebe	telarana,toile d'araignee,ragnatela	spider web,web,cobweb
+Spion	medium	people	Spionin,Agent,Geheimagent,Agentin	espia,espion,spia	spy
+springen	medium	action		saltar,sauter,saltare	jump,jumping
+Spritze	medium	tool		jeringa,seringue,siringa	syringe,injection,needle
+Spülmaschine	medium	home	Geschirrspüler,Geschirrspülmaschine,Abwaschmaschine	lavavajillas,lave-vaisselle,lavastoviglie	dishwasher
+Stadion	medium	place	Fußballstadion	estadio,stade,stadio	stadium
+Stadt	easy	place	Großstadt	ciudad,ville,citta	town
+Statue	hard	music	Standbild	estatua,statua	statue,statue,sculpture
+Stau	hard	transport	Verkehrsstau,Autoschlange	atasco,embouteillage,ingorgo	traffic jam,jam,traffic
+Staub	medium	material		polvo,poussiere,polvere	dust
+Staubsauger	medium	home	Sauger	aspiradora,aspirateur,aspirapolvere	vacuum,vacuum cleaner,hoover
+Steak	medium	food			steak
+Stein	easy	nature		piedra,pierre,pietra	stone
+Steinbock	hard	animal			ibex
+Steinschleuder	hard	sport	Schleuder,Zwille	tirachinas,lance-pierre,fionda	slingshot
+Stern	easy	nature		estrella,etoile,stella
+Sternschnuppe	medium	nature	Meteor	estrella fugaz,etoile filante,stella cadente	shooting star
+Stethoskop	hard	tool	Hörrohr	estetoscopio,stetoscopio	stethoscope
+Stiefel	easy	clothing		bota,botte,stivale
+Stier	medium	animal	Bulle	toro,taureau	bull
+Stimme	hard	body		voz,voix,voce	voice
+Stinktier	medium	animal	Skunk
+stolpern	hard	action		tropezar,trebucher,inciampare	stumble
+Storch	medium	animal			stork
+Strand	easy	nature		playa,plage,spiaggia	beach
+Straße	easy	place		calle,rue,strada	street,road
+Straßenbahn	medium	transport	Tram,Bim,Trambahn,Tramway	tranvia	streetcar
+Strauß	medium	animal	Vogel Strauß		ostrich
+Streich	hard	event	Schabernack	broma,scherzo	prank,practical joke
+Streichholz	medium	home	Zündholz,Streichhölzer	cerilla,allumette,fiammifero	matches
+Stroh	medium	material		paja,paille,paglia	straw
+Strom	hard	science	Elektrizität	electricidad,electricite,elettricita	electricity,power,current
+Stuhl	easy	home		silla,chaise,sedia	chair
+Stundenplan	hard	science		horario,orario	timetable,schedule
+Sturm	medium	nature		tormenta,tempete,tempesta	storm
+Superheld	medium	fantasy	Superheldin	superheroe,super-heros,supereroe	superhero
+Supermarkt	medium	place		supermercado,supermarche,supermercato	supermarket
+Suppe	easy	food		sopa,soupe,zuppa	soup
+Surfbrett	medium	sport	Surfboard
+Sushi	medium	food			sushi
+süß	medium	quality		dulce,sucre,dolce	sweet
+T-Shirt	easy	clothing	Shirt,Leibchen,Leiberl	camiseta,maglietta
+Tafel	medium	tool	Wandtafel,Schultafel	pizarra,tableau,lavagna	blackboard,chalkboard,board
+Tal	hard	nature		valle,vallee	valley
+Tango	hard	music			tango
+Tanne	medium	nature	Tannenbaum	abeto,sapin,abete	fir,fir tree
+Tannenzapfen	medium	nature	Zapfen,Föhrenzapfen,Kiefernzapfen	pina,pigna	pine cone,cone
+Tante	easy	people		tia,zia	aunt,auntie
+tanzen	easy	action	Tanz	bailar,danser,ballare	dance,dancing
+Tänzer	medium	people	Tänzerin	bailarin,danseur,ballerino	dancer
+Tasche	medium	clothing	Hosentasche	bolsillo,poche,tasca	pocket,bag
+Taschenlampe	medium	home		linterna,torcia	flashlight,torch
+Taschenmesser	medium	tool	Sackmesser,Klappmesser,Feitel	navaja,canif,coltellino	pocket knife,penknife
+Taschenrechner	medium	tool		calculadora,calculatrice,calcolatrice	calculator
+Tasse	easy	home	Häferl,Kaffeetasse	taza,tazza
+Tastatur	hard	tool	Keyboard	teclado,tastiera
+Taube	medium	animal		paloma,colombe,piccione	pigeon,dove
+tauchen	medium	action		bucear,plonger,tuffarsi	dive,diving
+Taxi	easy	transport	Taxe		taxi
+Teddybär	easy	home	Teddy,Plüschbär	teddy bear,peluche,orsacchiotto
+Tee	easy	food			tea
+Teenager	medium	people	Teenie,Jugendlicher,Jugendliche,Teeny	adolescente,ado	teenager,teen
+Teich	medium	nature	Weiher	estanque,etang,stagno	pond
+Teller	easy	home		plato,assiette,piatto	plate
+Tennis	easy	sport			tennis
+Teppich	medium	home		alfombra,tapis,tappeto	carpet,rug
+Theater	medium	place	Schauspielhaus	teatro	theater,theatre,theater
+Thron	hard	fantasy		trono,trone	throne
+Thunfisch	hard	food	Thun,Tunfisch	atun,tonno	tuna
+Tierarzt	medium	people	Tierärztin,Veterinär	veterinario,veterinaire	vet,veterinarian
+Tiger	easy	animal		tigre	tiger
+Tinte	medium	material		tinta,encre,inchiostro	ink
+Tisch	easy	home		mesa,tavolo,tavola	table
+Tischtennis	medium	sport	Pingpong		table tennis
+Toast	easy	food	Toastbrot	tostada	toast
+Toaster	medium	home		tostadora,grille-pain,tostapane	toaster
+Toilette	easy	home	Klo,WC,Klosett,Abort	inodoro,toilettes,gabinetto	toilet,loo,bathroom
+Tomate	easy	food	Paradeiser	pomodoro	tomato
+Ton	hard	material		arcilla,argile,argilla	clay
+Topf	easy	home	Kochtopf,Häfen	olla,casserole,pentola	pot,cooking pot
+Tor	medium	sport	Goal	porteria,porta	gate
+Torte	medium	food		gateau,tarta	cake
+Torwart	medium	people	Torhüter,Tormann,Goalie,Keeper,Torfrau,Goalkeeper	portero,gardien,portiere
+Totenkopf	medium	fantasy	Totenschädel	calavera,crane,teschio	skull
+Tourist	medium	people	Touristin	turista,touriste	tourist
+Traktor	easy	transport	Trecker,Schlepper,Bulldog	tracteur,trattore	tractor
+Trampolin	easy	sport		trampolino	trampoline
+Traube	medium	food	Weintraube	uva,raisin	grape,grapes
+Traum	hard	event		sueno,reve,sogno	dream
+Treppe	medium	place	Stiege	escalera,escalier,scala	stairs,staircase,stairway
+Triangel	hard	music		triangulo,triangolo	triangle
+Troll	medium	fantasy			troll
+Trommel	easy	music		tambor,tambour,tamburo	drum,drums
+Trompete	medium	music		trompeta,trompette,tromba	trumpet
+Truthahn	medium	animal	Pute,Puter,Trute		turkey
+Tulpe	medium	nature		tulipan,tulipe,tulipano	tulip
+Tunnel	medium	place			tunnel
+Tür	easy	home	Türe	puerta,porte,porta	door
+Turm	easy	place		torre	tower
+Turnhalle	medium	place	Sporthalle,Turnsaal	gimnasio,palestra	gym
+Turnschuh	medium	clothing	Sportschuh,Sneaker,Turnschuhe	zapatilla,basket	sneakers,trainers
+U-Bahn	medium	transport	Metro,Untergrundbahn	subte	subway,underground,tube
+U-Boot	medium	transport	Unterseeboot	submarino,sous-marin,sottomarino	submarine,sub
+Überraschung	hard	event		sorpresa	surprise
+Uhr	easy	home		reloj,horloge,orologio	clock,watch
+umarmen	medium	action		abrazar,embrasser,abbracciare	hug
+Umhang	medium	fantasy	Cape	capa,mantello	cloak
+Umzug	hard	event	Festumzug,Parade,Faschingsumzug	desfile,defile,sfilata	procession
+Uniform	hard	clothing	Dienstkleidung	uniforme	uniform
+Urlaub	medium	event		vacaciones,vacances,vacanza,vacanze	holiday,holidays,vacation
+Vampir	medium	fantasy	Vampirin	vampiro	vampire
+Vase	medium	home	Blumenvase	jarron,florero	vase,vase
+Vater	easy	people	Papa,Papi,Vati,Paps	padre,pere	father,dad,daddy
+Verstecken	easy	sport	Versteckspiel,Versteckis,Versteckerl	escondite,cache-cache,nascondino	hide-and-seek
+Vogel	easy	animal		pajaro,oiseau,uccello	bird
+Vogelscheuche	easy	fantasy		espantapajaros,epouvantail,spaventapasseri	scarecrow
+Volleyball	medium	sport	Volley		volleyball
+Vollmond	medium	nature		luna llena,pleine lune	full moon
+Vorhang	hard	home	Gardine	cortina,rideau,tenda	curtain
+Vulkan	easy	nature		volcan,vulcano	volcano
+Waage	hard	tool	Personenwaage,Küchenwaage	bascula,bilancia	scale,scales
+Waffel	medium	food		gaufre	waffle,wafer
+Wal	easy	animal	Walfisch	ballena,baleine,balena	whale
+Wald	easy	nature		bosque,foret,bosco,foresta	forest,woods
+Walross	hard	animal			walrus
+Wand	medium	home		pared,mur,parete,muro	wall
+wandern	medium	action		senderismo,randonnee,escursione	hike,hiking
+Wange	hard	body	Backe	mejilla,joue,guancia	cheek
+Waschbär	medium	animal			raccoon
+Waschbecken	hard	home	Lavabo	lavandino	sink,washbasin
+Waschmaschine	medium	home		lavadora,lave-linge,lavatrice	washing machine
+Wasser	easy	nature		agua,eau,acqua	water
+Wasserfall	medium	nature		cascada,cascade,cascata	waterfall
+Wasserkocher	hard	home		hervidor,bouilloire,bollitore	kettle
+Wassermelone	medium	food		sandia,pasteque,anguria	watermelon
+Wecker	medium	home	Weckeruhr,Weckuhr		alarm clock
+weich	hard	quality		blando,suave,doux,morbido	soft
+Weihnachten	easy	event	Christfest,Weihnacht	navidad,noel,natale	christmas,xmas
+Weihnachtsbaum	easy	event	Christbaum,Tannenbaum		christmas tree
+Weihnachtsmann	easy	fantasy	Santa Claus	papa noel,pere noel,babbo natale	santa,father christmas
+Weihnachtsmarkt	medium	event	Christkindlmarkt,Christkindlesmarkt	mercado navideno	christmas market
+weinen	easy	action	flennen,plärren	llorar,pleurer,piangere	cry,crying
+Welle	medium	nature	Woge	ola,vague,onda	wave
+Wellensittich	hard	animal	Sittich		budgie,budgerigar,parakeet
+Welpe	medium	animal			puppy
+Weltall	medium	nature	Weltraum,All,Universum,Kosmos	espacio,espace,spazio,universo	space,outer space,universe
+werfen	medium	action	schmeißen	lanzar,tirar,lancer,lanciare	throw,throwing
+Werwolf	medium	fantasy		hombre lobo,loup-garou,lupo mannaro	werewolf
+Wespe	medium	animal		avispa,guepe,vespa	wasp
+Wiese	easy	nature		pradera,prado,prato	meadow,field
+Wind	easy	nature		viento,vent,vento	wind
+Windel	medium	clothing	Pampers	panal,couche,pannolino	diaper,nappy
+Windmühle	medium	place		molino,moulin,mulino	windmill
+winken	medium	action		saludar,faire coucou,salutare	wave,waving
+Winter	easy	nature		invierno,hiver,inverno	winter
+Wissenschaftler	hard	people	Wissenschaftlerin	cientifico,scientifique,scienziato	scientist
+Witz	medium	music		chiste,blague,barzelletta	joke
+Wohnwagen	medium	transport	Caravan,Wohnanhänger		rv
+Wolf	easy	animal		lobo,loup,lupo	wolf
+Wolke	easy	nature		nube,nuage,nuvola	cloud
+Wolkenkratzer	medium	place		rascacielos,gratte-ciel,grattacielo	skyscraper
+Wolle	medium	material		lana,laine	wool
+Wörterbuch	medium	science		diccionario,dictionnaire,dizionario	dictionary
+Würfel	easy	sport		dado	dice,cube
+Wurm	easy	animal	Regenwurm	gusano	worm
+Wurst	easy	food	Würstchen,Würstel	salchicha,saucisse,salsiccia	sausage
+Wurzel	hard	nature		raiz,racine,radice	root
+Wüste	easy	nature		desierto,deserto	desert
+Yoga	medium	sport	Joga		yoga
+Zahn	easy	body		diente,dent,dente	tooth,teeth
+Zahnarzt	medium	people	Zahnärztin	dentista,dentiste	dentist
+Zahnbürste	medium	home		spazzolino	toothbrush
+Zahnfee	medium	fantasy		raton perez	tooth fairy
+Zahnpasta	hard	home	Zahncreme,Zahnpaste	dentifrico,dentifrice,dentifricio	toothpaste
+Zauberer	easy	fantasy	Zauberin,Magier	mago,sorcier	wizard,sorcerer,magician
+Zauberspruch	hard	fantasy	Zauberformel,Zauberwort	hechizo,sortilege,incantesimo	spell,magic spell
+Zauberstab	easy	fantasy		varita,baguette magique,bacchetta	magic wand
+Zaubertrank	medium	fantasy	Zaubertrunk	pocion,potion magique,pozione	potion,magic potion
+Zaun	medium	home	Gartenzaun,Hag	valla,cerca,recinzione	fence
+Zebra	easy	animal			zebra
+Zebrastreifen	medium	transport	Fußgängerstreifen,Schutzweg,Fußgängerüberweg	passage pieton,strisce pedonali	zebra crossing,crosswalk,crossing
+Zeh	medium	body	Zehe,Zehen	orteil,alluce	toe,toes
+Zeitschrift	hard	home	Magazin,Illustrierte	revista,revue,rivista	magazine
+Zeitung	medium	home	Tageszeitung	periodico,giornale	newspaper,paper
+Zelt	easy	home		tienda,tente,tenda	tent
+Zeugnis	medium	event	Schulzeugnis	boletin,bulletin,pagella	report card,school report
+Ziege	easy	animal	Geiß	cabra,chevre,capra	goat
+Ziegel	hard	material	Ziegelstein,Backstein	ladrillo,brique,mattone	brick
+Zimt	hard	food		canela,cannelle,cannella	cinnamon
+Zirkus	easy	music	Circus	circo,cirque
+Zitrone	easy	food		limon,citron	lemon
+Zombie	easy	fantasy	Untoter		zombie
+Zoo	easy	place	Tiergarten,Tierpark	zoologico	zoo
+Zopf	medium	body	Flechtzopf,Zöpfchen	trenza,tresse,treccia	braid,plait
+Zucker	easy	food		azucar,sucre,zucchero	sugar
+Zuckerwatte	medium	food			cotton candy,candy floss
+Zug	easy	transport		tren,treno	train
+Zunge	easy	body		lengua,langue,lingua	tongue
+Zwerg	easy	fantasy	Gnom	enano,nain,nano	dwarf,gnome
+Zwiebel	easy	food		cebolla,oignon,cipolla	onion
+Zwilling	medium	people	Zwillinge	gemelo,jumeau,gemello	twin,twins

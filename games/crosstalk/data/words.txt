@@ -1,0 +1,991 @@
+# Jinx secret words (English). word<TAB>difficulty<TAB>category<TAB>also_right<TAB>banned
+# also_right (accepted guesses) and banned (clues rejected as too close) are optional, comma-separated. See README.md.
+accordion	hard	music
+acorn	medium	nature
+acrobat	hard	music
+actor	medium	people
+adventure	hard	event
+airport	easy	place
+alarm	medium	home
+alligator	medium	animal
+almond	hard	food
+alphabet	hard	science
+anchor	medium	transport
+ankle	medium	body
+ant	easy	animal
+antenna	hard	science
+antler	hard	animal
+anvil	hard	tool
+apple	easy	food		manzana,pomme,apfel,mela
+apron	medium	clothing
+aquarium	medium	place
+arcade	hard	place
+archery	medium	sport
+arm	medium	body
+armadillo	medium	animal
+armchair	medium	home
+arrow	easy	tool
+artist	easy	people
+asteroid	medium	nature
+astronaut	easy	people	cosmonaut,spaceman	astronauta
+atom	hard	science
+auction	hard	event
+author	hard	people
+autograph	hard	music
+autumn	medium	nature	fall	otono,automne,herbst,autunno
+avalanche	medium	nature
+baby	easy	people		bebe,bambino
+backpack	easy	clothing	rucksack	mochila,zaino
+bacon	easy	food
+baguette	medium	food
+bake	medium	action
+baker	easy	people
+bakery	medium	place
+balcony	medium	place
+ball	easy	sport
+ballerina	medium	people
+ballet	medium	music
+balloon	easy	event
+bamboo	medium	nature
+banana	easy	food
+banjo	hard	music
+bank	medium	place
+barbecue	medium	event	bbq,barbeque
+barber	hard	people
+bark	hard	animal
+barn	medium	place
+basement	medium	place
+basket	medium	home
+basketball	easy	sport
+bat	medium	animal
+bath	easy	home
+bathroom	medium	place
+battery	medium	tool
+beach	easy	place		playa,plage,spiaggia
+beak	medium	animal
+bean	medium	food
+bear	easy	animal		oso,ours,orso
+beard	easy	body
+beaver	easy	animal
+bed	easy	home		cama,bett,letto
+bedroom	hard	place
+bee	easy	animal
+beehive	medium	nature
+beetle	medium	animal
+bell	easy	music
+belt	medium	clothing
+bench	medium	home
+bicycle	easy	transport	bike	bicicleta,velo,fahrrad,bicicletta
+bird	easy	animal		pajaro,oiseau,vogel,uccello
+birthday	easy	event
+blacksmith	medium	people
+blanket	medium	home
+blender	hard	home
+blindfold	hard	clothing
+blizzard	hard	nature
+blossom	medium	nature
+blue	easy	quality
+blueberry	medium	food
+blush	hard	action
+boat	easy	transport
+bone	easy	body
+bonfire	medium	event
+book	easy	home		libro,livre,buch
+bookmark	hard	home
+boomerang	hard	sport
+bottle	easy	home
+bounce	medium	action
+bow	hard	sport
+bowl	medium	home
+bowling	medium	sport
+box	medium	home
+bracelet	medium	clothing
+brain	easy	body
+bread	easy	food		brot
+breakfast	easy	food
+breeze	medium	nature
+brick	medium	material
+bride	medium	people
+bridge	medium	place		puente,pont,brucke,ponte
+briefcase	hard	home
+broccoli	easy	food
+broom	easy	home
+broomstick	hard	fantasy
+brother	easy	people
+brush	medium	home
+bubble	easy	nature
+bucket	medium	home
+buffet	hard	event
+bug	medium	animal
+builder	medium	people
+bulb	medium	home
+bull	easy	animal
+bulldozer	medium	transport
+burger	medium	food	hamburger
+bus	easy	transport
+butler	medium	people
+butter	easy	food
+butterfly	easy	animal		mariposa,papillon,schmetterling,farfalla
+button	medium	clothing
+cabbage	medium	food
+cabin	medium	place
+cactus	easy	nature
+cage	medium	home
+cake	easy	food		kuchen,gateau,torta
+calculator	medium	tool
+calendar	medium	home
+camel	easy	animal
+camera	easy	tool
+camp	medium	event
+canal	medium	place
+canary	hard	animal
+candle	easy	home
+canoe	medium	transport
+canyon	medium	nature
+cape	medium	clothing
+captain	medium	people
+car	easy	transport		coche,voiture
+caramel	medium	food
+cardboard	medium	material
+carnival	medium	event
+carousel	hard	event
+carpenter	hard	people
+carrot	easy	food		zanahoria,carotte,karotte,carota
+cartoon	easy	music
+cartwheel	hard	sport
+castle	easy	place		castillo,chateau,schloss,castello
+cat	easy	animal		gato,chat,katze,gatto
+catapult	medium	fantasy
+caterpillar	easy	animal
+cauldron	medium	fantasy
+cauliflower	medium	food
+cave	easy	nature
+caveman	hard	people
+celebrity	medium	people
+celery	medium	food
+centipede	hard	animal
+cereal	medium	food
+chain	medium	material
+chair	easy	home		silla,chaise,stuhl,sedia
+chalk	medium	science
+chameleon	medium	animal
+chandelier	hard	home
+chariot	hard	transport
+cheese	easy	food		queso,fromage,kase,formaggio
+cheetah	medium	animal
+chef	easy	people
+chemistry	hard	science
+cherry	easy	food
+chess	easy	sport
+chicken	easy	animal
+chimney	medium	home
+chocolate	easy	food
+cinnamon	medium	food
+circle	medium	science
+circus	easy	music
+city	easy	place		ciudad,ville,stadt,citta
+classroom	medium	place
+claw	medium	animal
+clay	medium	material
+cliff	medium	nature
+climb	medium	action
+cloak	medium	fantasy
+clock	easy	home		reloj,horloge,uhr,orologio
+cloud	easy	nature
+clover	medium	nature
+clown	easy	music
+coal	medium	material
+coat	easy	clothing
+cobra	medium	animal
+cobweb	hard	fantasy
+coconut	medium	food
+cocoon	hard	nature
+coffee	easy	food
+coin	easy	home
+cold	medium	quality
+comb	medium	home
+comedy	hard	music
+comet	medium	nature
+compass	hard	tool
+computer	easy	science
+concert	medium	music
+cone	medium	food
+confetti	medium	event
+continent	hard	nature
+cookie	easy	food
+copycat	hard	people
+coral	medium	nature
+corn	easy	food
+costume	medium	clothing
+cotton	medium	material
+cow	easy	animal		vaca,vache,kuh,mucca
+cowboy	easy	people
+crab	easy	animal
+crater	hard	nature
+crayon	easy	tool
+cream	medium	food
+crocodile	easy	animal
+croissant	medium	food
+crossword	hard	sport
+crow	medium	animal
+crown	easy	fantasy
+cruise	medium	transport
+crystal	medium	material
+cube	medium	science
+cucumber	medium	food
+cup	easy	home
+cupboard	medium	home
+cupcake	medium	food
+curry	medium	food
+curtain	medium	home
+cushion	medium	home
+daisy	easy	nature
+dance	medium	music
+dancer	medium	people
+dandelion	hard	nature
+dark	medium	quality
+dart	medium	sport
+deer	easy	animal
+denim	hard	material
+dentist	easy	people
+desert	easy	nature
+desk	medium	home
+dessert	medium	food
+detective	medium	people
+diamond	easy	material
+diary	hard	home
+dice	medium	sport	die
+dictionary	medium	science
+dig	medium	action
+dinner	medium	food
+dinosaur	easy	animal	dino
+disco	medium	music
+dishwasher	medium	home
+dive	medium	action
+doctor	easy	people
+dog	easy	animal		perro,chien,hund
+doll	easy	sport
+dolphin	easy	animal
+donkey	easy	animal
+doodle	hard	music
+door	easy	home		puerta,porte,porta
+doorbell	hard	home
+dough	medium	food
+dragon	easy	fantasy
+dragonfly	hard	animal
+drawbridge	hard	place
+drawer	medium	home
+dream	hard	event
+dress	easy	clothing
+drill	medium	tool
+drum	easy	music
+duck	easy	animal		pato,canard,ente,anatra
+dumpling	hard	food
+dungeon	medium	fantasy
+dust	medium	material
+eagle	easy	animal
+ear	easy	body
+earring	medium	clothing
+earth	medium	nature
+echo	hard	nature
+eclipse	hard	nature
+egg	easy	food		huevo,oeuf,uovo
+elbow	medium	body
+electricity	medium	science
+elephant	easy	animal		elefante,elefant
+elf	medium	fantasy
+email	medium	science	e-mail
+envelope	medium	home
+escalator	hard	transport
+exam	medium	science
+experiment	medium	science
+explorer	medium	people
+eye	easy	body
+eyebrow	hard	body
+face	easy	body
+factory	medium	place
+fairy	easy	fantasy
+fan	hard	home
+farm	easy	place
+farmer	easy	people
+father	easy	people	dad,daddy	padre,vater
+feather	medium	animal
+fence	medium	home
+ferry	medium	transport
+festival	medium	event
+finger	easy	body
+fingerprint	hard	body
+fire	easy	nature		fuego,feu,feuer,fuoco
+firefighter	medium	people	fireman	bombero,pompier,feuerwehrmann,pompiere
+firefly	medium	animal
+fireplace	medium	home
+firework	medium	event
+fish	easy	animal		pez,pescado,poisson,fisch,pesce
+flamingo	easy	animal
+floor	medium	home
+flour	medium	food
+flower	easy	nature		flor,fleur,blume,fiore
+fluffy	medium	quality
+flute	medium	music
+fog	medium	nature
+foot	easy	body
+footprint	hard	nature
+forest	easy	nature		bosque,foret,wald,bosco
+fork	easy	home
+fossil	medium	science
+fountain	medium	place
+fox	easy	animal
+freezer	medium	home
+fridge	easy	home	refrigerator,refridgerator
+friend	medium	people		amigo,ami,freund,amico
+frog	easy	animal		rana,grenouille,frosch
+frost	hard	nature
+fur	medium	animal
+galaxy	medium	nature
+garage	medium	place
+garden	easy	place		jardin,garten,giardino
+garlic	medium	food
+gecko	hard	animal
+genie	easy	fantasy
+genius	medium	people
+ghost	easy	fantasy		fantasma,fantome,gespenst
+giant	easy	fantasy
+gift	medium	event	present	regalo,cadeau,geschenk
+giggle	medium	action
+giraffe	easy	animal
+glacier	hard	nature
+gladiator	hard	people
+glass	medium	material
+glider	hard	transport
+globe	medium	science
+glove	easy	clothing
+glue	easy	material
+gnome	hard	fantasy
+goal	medium	sport
+goalkeeper	hard	sport
+goat	easy	animal
+goblin	medium	fantasy
+gold	easy	material
+goldfish	medium	animal
+golf	easy	sport
+goose	medium	animal
+gorilla	easy	animal
+graduation	hard	event
+grandma	easy	people	granny,grandmother,nan,nana,gran	abuela,oma,nonna
+grandpa	easy	people	grandad,granddad,grandfather	abuelo,opa,nonno
+grape	medium	food
+grass	easy	nature
+grasshopper	medium	animal
+gravity	hard	science
+growl	medium	action
+guitar	easy	music
+gum	medium	food
+gym	medium	place
+hair	easy	body
+haircut	medium	event
+hairdresser	medium	people
+ham	medium	food
+hammer	easy	tool
+hammock	medium	home
+hamster	easy	animal
+hand	easy	body
+handshake	hard	action
+handstand	hard	sport
+harp	medium	music
+harvest	medium	event
+hat	easy	clothing
+hay	medium	nature
+heart	easy	body		corazon,coeur,herz,cuore
+heartbeat	hard	body
+hedge	medium	nature
+hedgehog	easy	animal
+helicopter	easy	transport
+helmet	medium	clothing
+hero	medium	people
+hexagon	hard	science
+hiccup	medium	body	hiccough
+hike	medium	event
+hippo	easy	animal	hippopotamus
+hive	hard	nature
+homework	medium	science
+honey	easy	food
+honeycomb	hard	food
+hoof	medium	body
+hoop	hard	sport
+hopscotch	hard	sport
+horizon	hard	nature
+horn	medium	music
+horse	easy	animal		caballo,cheval,pferd,cavallo
+horseshoe	hard	sport
+hospital	easy	place
+hotel	easy	place
+hourglass	hard	tool
+house	easy	place		casa,maison,haus
+howl	hard	action
+hug	easy	action
+hurdle	hard	sport
+hyena	hard	animal
+ice	easy	nature		hielo,glace,eis,ghiaccio
+iceberg	easy	nature
+igloo	easy	place
+ink	medium	material
+internet	easy	science
+island	easy	nature		isla,ile,insel,isola
+jacket	easy	clothing
+jaw	hard	body
+jazz	medium	music
+jellyfish	easy	animal
+jester	hard	fantasy
+jewel	medium	material
+jigsaw	medium	sport
+jockey	hard	people
+joke	medium	music
+judge	medium	people
+juice	medium	food
+jump	medium	action
+jungle	easy	nature
+kaleidoscope	hard	sport
+kangaroo	easy	animal
+karate	medium	sport
+kayak	hard	transport
+ketchup	easy	food	catsup
+kettle	medium	home
+key	easy	home		llave,cle,schlussel,chiave
+keyboard	medium	tool
+king	easy	people		rey,roi,konig
+kingdom	medium	fantasy
+kitchen	easy	place
+kite	easy	sport
+kitten	easy	animal	kitty
+knee	medium	body
+knife	easy	home
+knight	easy	fantasy
+knot	medium	home
+koala	easy	animal
+laboratory	hard	place
+ladder	medium	tool
+lake	medium	nature
+lamb	easy	animal
+lamp	easy	home
+lantern	medium	home
+laptop	easy	science
+laser	hard	science
+laugh	easy	action
+laundry	medium	home
+lava	medium	nature
+lavender	hard	nature
+lawyer	medium	people
+leaf	easy	nature
+leather	medium	material
+leg	medium	body
+lemon	easy	food		limon,citron,zitrone,limone
+lemonade	easy	food
+leopard	medium	animal
+leprechaun	hard	fantasy
+lettuce	medium	food
+librarian	medium	people
+library	easy	place
+lick	medium	action
+lifeguard	medium	people
+lighthouse	medium	place
+lightning	easy	nature
+lime	medium	food
+limousine	hard	transport
+lion	easy	animal		leon,leone,lowe
+lip	medium	body
+lipstick	medium	clothing
+lizard	easy	animal
+llama	medium	animal
+lobster	medium	animal
+lock	medium	home
+lollipop	easy	food	lolly
+luggage	medium	transport	baggage
+lullaby	hard	music
+lunch	easy	food
+magazine	medium	home
+magic	easy	fantasy
+magnet	medium	science
+mammoth	medium	animal
+mango	medium	food
+mansion	medium	place
+map	easy	tool
+marathon	medium	sport
+marble	medium	material
+market	medium	place
+marshmallow	easy	food
+mascot	hard	sport
+mask	medium	clothing
+match	hard	home
+mattress	medium	home
+mayonnaise	hard	food
+maze	medium	sport
+mechanic	medium	people
+medal	medium	sport
+medicine	medium	science
+megaphone	hard	tool
+melon	medium	food
+melt	medium	action
+menu	medium	food
+mermaid	easy	fantasy
+meteor	hard	nature
+microphone	easy	tool	mic
+microscope	medium	science
+microwave	easy	home
+midnight	medium	event
+milk	easy	food		leche,lait,milch
+milkshake	medium	food
+mint	medium	food
+mirror	medium	home
+money	medium	home	cash	dinero,argent,geld,soldi
+monkey	easy	animal
+monster	easy	fantasy
+moon	easy	nature		luna,lune,mond
+mop	medium	home
+morning	medium	event
+mosquito	medium	animal
+moss	medium	nature
+mother	easy	people	mom,mum,mommy,mummy	madre,mutter
+motorcycle	medium	transport	motorbike	moto,motorrad
+mountain	easy	nature
+mouse	easy	animal		raton,souris,maus
+mouth	easy	body
+mud	easy	material
+muffin	easy	food
+mug	medium	home
+muscle	medium	body
+museum	medium	place
+mushroom	easy	food
+music	medium	music
+mustard	medium	food
+nail	medium	body
+napkin	medium	home
+neck	medium	body
+necklace	medium	clothing
+needle	medium	tool
+nest	medium	nature
+newspaper	hard	home
+nickname	hard	people
+night	easy	nature		noche,nuit,nacht,notte
+ninja	easy	people
+noodle	medium	food
+nose	easy	body
+notebook	medium	science
+nurse	easy	people
+nut	medium	food
+oar	hard	transport
+oasis	hard	place
+ocean	easy	nature
+octopus	easy	animal
+office	medium	place
+ogre	medium	fantasy
+olive	medium	food
+onion	easy	food
+opera	medium	music
+orbit	hard	science
+orchestra	medium	music
+origami	hard	sport
+ostrich	medium	animal
+otter	medium	animal
+oven	easy	home
+owl	easy	animal		buho,hibou,eule,gufo
+oxygen	medium	science
+oyster	hard	animal
+paddle	hard	sport
+padlock	hard	home
+paint	medium	music
+palace	medium	place
+palm	medium	nature
+pancake	easy	food
+panda	easy	animal
+panther	medium	animal
+paper	easy	material
+parachute	medium	transport
+parade	medium	event
+park	easy	place
+parrot	easy	animal
+party	easy	event
+passport	medium	transport
+pasta	easy	food
+paw	medium	animal
+pea	medium	food
+peach	medium	food
+peacock	medium	animal
+peanut	easy	food
+pear	medium	food
+pearl	medium	material
+pedal	hard	transport
+pelican	hard	animal
+pen	easy	home
+pencil	easy	science
+penguin	easy	animal
+pepper	medium	food
+pepperoni	medium	food
+perfume	medium	home
+periscope	hard	tool
+petal	medium	nature
+pharaoh	hard	people
+phoenix	hard	fantasy
+phone	easy	tool	telephone,cellphone,mobile	telefono
+photo	medium	music	photograph	foto
+piano	easy	music
+pickle	medium	food
+picnic	medium	event
+pie	easy	food
+pier	medium	place
+pig	easy	animal
+pigeon	medium	animal
+pillow	easy	home
+pilot	easy	people
+pinball	hard	sport
+pine	medium	nature
+pineapple	easy	food
+pirate	easy	fantasy
+pitchfork	hard	tool
+pizza	easy	food
+plane	easy	transport	airplane,aeroplane	avion,flugzeug,aereo
+planet	medium	nature
+plastic	medium	material
+plate	medium	home
+platypus	hard	animal
+playground	easy	place
+plug	medium	home
+plumber	medium	people
+pocket	medium	clothing
+podium	hard	sport
+poem	medium	music
+police	medium	people
+pollen	hard	nature
+pond	medium	nature
+pony	easy	animal
+ponytail	medium	body
+poodle	medium	animal
+pool	easy	place
+popcorn	easy	food
+porcupine	hard	animal
+postcard	hard	home
+potato	easy	food
+pottery	hard	material
+prank	hard	event
+prince	easy	fantasy
+princess	easy	fantasy
+printer	medium	tool
+prize	medium	event
+puck	hard	sport
+puddle	medium	nature
+pumpkin	easy	food
+puppet	medium	music
+puppy	easy	animal
+purple	medium	quality
+puzzle	medium	sport
+pyramid	easy	place
+queen	easy	people		reina,reine,konigin,regina
+quicksand	hard	nature
+quill	hard	tool
+quiz	medium	event
+rabbit	easy	animal	bunny	conejo,lapin,hase,kaninchen,coniglio
+raccoon	hard	animal
+radio	medium	tool
+raft	medium	transport
+rain	easy	nature		lluvia,pluie,regen,pioggia
+rainbow	easy	nature
+rake	medium	tool
+raspberry	medium	food
+raven	medium	animal
+recipe	medium	food
+rectangle	medium	science
+red	easy	quality
+reef	medium	nature
+referee	medium	sport
+reindeer	easy	animal
+restaurant	easy	place
+rhino	easy	animal	rhinoceros
+ribbon	medium	clothing
+rice	easy	food		arroz,riz,reis,riso
+riddle	hard	sport
+ring	medium	clothing
+river	easy	nature		rio,fleuve,fluss,fiume
+roar	medium	action
+robot	easy	science
+rock	medium	nature
+rocket	easy	transport
+roof	medium	home
+rooster	medium	animal
+rope	easy	tool
+rugby	medium	sport
+ruler	medium	tool
+runway	hard	transport
+rust	medium	material
+saddle	medium	transport
+safari	medium	event
+sail	medium	transport
+sailor	medium	people
+salad	easy	food
+salmon	medium	animal
+salt	easy	food
+sand	easy	material
+sandwich	easy	food
+sapphire	hard	material
+satellite	hard	science
+sauna	hard	place
+sausage	easy	food
+saxophone	medium	music
+scarecrow	easy	fantasy
+scarf	easy	clothing
+school	easy	place		escuela,ecole,schule,scuola
+scientist	medium	people
+scooter	easy	transport
+scorpion	medium	animal
+scream	medium	action
+sculpture	hard	music
+sea	easy	nature		mar,mer,meer
+seagull	medium	animal
+seahorse	hard	animal
+seal	medium	animal
+seashell	medium	nature
+seaweed	medium	nature
+seed	medium	nature
+sew	medium	action
+shadow	medium	nature
+shampoo	medium	home
+shark	easy	animal
+sheep	easy	animal
+shelf	medium	home
+shield	medium	fantasy
+ship	easy	transport
+shirt	easy	clothing
+shoe	easy	clothing
+shoelace	medium	clothing
+shovel	medium	tool
+shower	easy	home
+shrink	hard	action
+sidekick	hard	people
+silk	medium	material
+silver	medium	material
+sing	easy	action
+sink	medium	home
+siren	medium	tool
+skateboard	easy	sport
+skeleton	easy	fantasy
+ski	medium	sport
+skirt	easy	clothing
+skull	medium	fantasy
+skunk	medium	animal
+sky	easy	nature
+skyscraper	medium	place
+sleep	medium	action
+sleeve	medium	clothing
+sleigh	hard	transport
+slide	medium	sport
+slime	medium	material
+slingshot	hard	sport
+slipper	medium	clothing
+sloth	hard	animal
+slug	medium	animal
+smile	medium	body
+smoothie	medium	food
+snail	easy	animal
+snake	easy	animal
+sneeze	easy	action
+snore	hard	action
+snorkel	hard	sport
+snow	easy	nature		nieve,neige,schnee,neve
+snowflake	easy	nature
+snowman	medium	nature
+soap	easy	home
+sock	easy	clothing
+sofa	easy	home	couch
+somersault	hard	sport
+song	easy	music
+sorcerer	hard	fantasy
+soup	easy	food		sopa,soupe,suppe,zuppa
+sour	medium	quality
+souvenir	hard	event
+space	medium	nature
+spaceship	medium	transport	spacecraft
+spell	hard	fantasy
+sphinx	hard	fantasy
+spicy	hard	quality
+spider	easy	animal		arana,araignee,spinne,ragno
+spill	hard	action
+spinach	medium	food
+splash	medium	nature
+sponge	medium	home
+spoon	easy	home
+spotlight	hard	music
+spring	hard	nature
+sprint	hard	sport
+spy	medium	people
+squirrel	easy	animal
+stadium	medium	place
+staircase	medium	place
+stamp	medium	home
+stapler	medium	tool
+star	easy	nature		estrella,etoile
+starfish	hard	animal
+statue	medium	music
+steak	medium	food
+steam	medium	nature
+stethoscope	medium	tool
+stew	medium	food
+sticker	medium	home
+sticky	medium	quality
+stomach	medium	body
+stopwatch	hard	tool
+stork	hard	animal
+storm	easy	nature
+story	hard	music
+stove	medium	home
+straw	medium	home
+strawberry	easy	food
+street	medium	place
+student	medium	people
+submarine	medium	transport
+sugar	easy	food		azucar,sucre,zucker,zucchero
+suitcase	medium	home
+summer	easy	nature
+sun	easy	nature		sol,soleil,sonne
+sunflower	medium	nature
+sunrise	medium	nature
+sunset	medium	nature
+superhero	medium	fantasy
+supermarket	easy	place
+surfboard	medium	sport
+surprise	hard	event
+sushi	easy	food
+swan	easy	animal
+sweater	medium	clothing	jumper
+swim	easy	action
+swing	medium	sport
+sword	easy	fantasy
+syrup	medium	food
+table	easy	home		mesa,tisch,tavolo
+tadpole	hard	animal
+tail	medium	animal
+tambourine	hard	music
+tango	hard	music
+tape	medium	home
+tarantula	medium	animal
+taxi	easy	transport	cab
+tea	easy	food
+teacher	easy	people
+teapot	hard	home
+teenager	medium	people
+telescope	medium	tool
+tennis	easy	sport
+tent	easy	home
+tentacle	hard	animal
+thermometer	medium	tool
+thorn	medium	nature
+thread	medium	material
+throne	medium	fantasy
+thumb	medium	body
+thunder	easy	nature
+tiara	hard	clothing
+ticket	medium	event
+tickle	easy	action
+tie	medium	clothing
+tiger	easy	animal		tigre
+tightrope	hard	music
+tiptoe	hard	action
+toast	easy	food
+toaster	medium	home
+toe	medium	body
+tomato	easy	food		tomate,pomodoro
+tongue	easy	body
+tooth	easy	body
+toothbrush	hard	home
+toothpaste	medium	home
+tortoise	easy	animal
+tourist	medium	people
+towel	easy	home
+tower	medium	place
+tractor	easy	transport
+traffic	medium	transport
+train	easy	transport		tren,zug,treno
+trampoline	easy	sport
+trap	medium	tool
+trapeze	hard	music
+treadmill	hard	sport
+treasure	easy	fantasy
+tree	easy	nature		arbol,arbre,baum,albero
+treehouse	hard	place
+triangle	easy	science
+trident	hard	fantasy
+trombone	hard	music
+trophy	medium	sport
+truck	easy	transport	lorry	camion,lastwagen
+trumpet	medium	music
+tulip	hard	nature
+tuna	medium	food
+tunnel	medium	place
+turtle	easy	animal
+tusk	hard	animal
+tutu	hard	clothing
+twin	medium	people
+ukulele	hard	music	uke,ukelele
+umbrella	easy	home
+unicorn	easy	fantasy
+unicycle	hard	transport
+uniform	medium	clothing
+universe	medium	nature
+vacuum	medium	home	hoover
+vampire	medium	fantasy
+vanilla	medium	food
+vase	medium	home
+vegetable	medium	food
+vet	medium	people	veterinarian
+village	medium	place
+villain	hard	fantasy
+vinegar	medium	food
+violin	medium	music
+voice	hard	body
+volcano	easy	nature
+volleyball	medium	sport
+vulture	medium	animal
+waddle	hard	action
+waffle	medium	food
+waiter	medium	people
+wall	medium	home
+wallet	medium	home
+wallpaper	hard	home
+walnut	medium	food
+walrus	medium	animal
+wand	easy	fantasy
+wardrobe	medium	home	closet
+wasp	medium	animal
+water	easy	nature		agua,eau,wasser,acqua
+waterfall	medium	nature
+watermelon	easy	food
+wave	medium	nature
+web	medium	nature
+wedding	easy	event
+werewolf	medium	fantasy
+whale	easy	animal
+wheat	medium	food
+wheel	easy	transport
+wheelbarrow	medium	tool
+whisker	hard	body
+whisper	medium	action
+whistle	medium	tool
+wig	medium	clothing
+wind	easy	nature
+windmill	medium	place
+window	easy	home		ventana,fenetre,fenster,finestra
+wing	medium	body
+winter	easy	nature		invierno,hiver,inverno
+witch	easy	fantasy
+wizard	easy	fantasy
+wolf	easy	animal		lobo,loup,lupo
+wood	medium	material
+woodpecker	hard	animal
+wool	medium	material
+worm	easy	animal
+wrist	medium	body
+yacht	medium	transport
+yawn	easy	action
+yellow	easy	quality
+yoga	medium	sport
+yolk	medium	food
+zebra	easy	animal
+zombie	easy	fantasy
+zoo	easy	place

@@ -86,6 +86,20 @@
         { "src": "static/games/landgrab/phone-plan.png", "alt": "Planning on a phone: the world small with the orders as arrows, the fronts listed with their foes as chips (Central Europe marked for an attack with 4), plus and minus to place armies, Ready at the bottom", "kind": "phone" },
         { "src": "static/games/landgrab/phone-attack.png", "alt": "One territory's sheet on a phone: Hudson Bay zoomed in with its neighbours, an attack on Quebec with 1 army and its 42 % chance to win, Attack buttons for the other neighbours", "kind": "phone" }
       ]
+    },
+    {
+      "name": "crosstalk",
+      "title": "Crosstalk",
+      "summary": "Two spymasters send secret clues to their teams' phones, both teams guess at once on one board of 25 words, and everyone can hear what the other team says",
+      "players": { "min": 4, "max": 12 },
+      "languages": ["en", "de"],
+      "source": "gh:mitsuhiko/tvpipe/crosstalk@crosstalk-v*",
+      "home": "https://github.com/mitsuhiko/tvpipe/tree/main/games/crosstalk",
+      "screenshots": [
+        { "src": "static/games/crosstalk/tv-flip.png", "alt": "The TV in round 3: a board of 25 word cards, eight turned in red and blue; Red (spymaster Mia) has 4 of 8 and is still guessing, Blue (spymaster Sara) has 3 of 8 and has locked its card, the clock at 27 seconds", "kind": "tv" },
+        { "src": "static/games/crosstalk/phone-operative.png", "alt": "Guessing on Blue's phone: the secret clue NIGHT 2, Phil's pin on GHOST and Ava's on CASTLE, one more pin needed to lock; below, the team's pad: \"NOT this one: MOON\", \"they whispered 'space', so not ROCKET\", \"left over for later: PIANO\", \"careful with BRIDGE\"", "kind": "phone" },
+        { "src": "static/games/crosstalk/phone-spymaster.png", "alt": "The spymaster's phone: the key with every card in its colour and the assassin SHARK in black, \"Say nothing. Show nothing.\", the clue SAILOR typed for 3 cards and about to be sent", "kind": "phone" }
+      ]
     }
   ]
 }

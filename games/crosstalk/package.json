@@ -1,0 +1,22 @@
+{
+  "name": "crosstalk",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A team word game for tvpipe (tvpipe game play): two spymasters send secret clues to their teams' phones, both teams guess at once on one board of 25 words, and the other team can hear every word you say",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node scripts/build.ts",
+    "zip": "node scripts/pack.ts",
+    "check": "tsc -p tsconfig.json && tsc -p tsconfig.pages.json && tsc -p tsconfig.build.json --noEmit",
+    "test": "node --test \"test/*.test.ts\""
+  },
+  "devDependencies": {
+    "@tvpipe/party": "file:../../npm/party",
+    "@types/node": "^22.19.0",
+    "typescript": "~5.9.3"
+  }
+}
