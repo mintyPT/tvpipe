@@ -100,6 +100,22 @@
         { "src": "static/games/crosstalk/phone-operative.png", "alt": "Guessing on Blue's phone: the secret clue NIGHT 2, Phil's pin on GHOST and Ava's on CASTLE, one more pin needed to lock; below, the team's pad: \"NOT this one: MOON\", \"they whispered 'space', so not ROCKET\", \"left over for later: PIANO\", \"careful with BRIDGE\"", "kind": "phone" },
         { "src": "static/games/crosstalk/phone-spymaster.png", "alt": "The spymaster's phone: the key with every card in its colour and the assassin SHARK in black, \"Say nothing. Show nothing.\", the clue SAILOR typed for 3 cards and about to be sent", "kind": "phone" }
       ]
+    },
+    {
+      "name": "snug",
+      "title": "Snug",
+      "summary": "Fill one shape together with candy pieces nobody else can see until they are placed, talk and point, and beat the team clock",
+      "players": { "min": 2, "max": 8 },
+      "languages": ["en", "de"],
+      "source": "gh:mitsuhiko/tvpipe/snug@snug-v*",
+      "home": "https://github.com/mitsuhiko/tvpipe/tree/main/games/snug",
+      "screenshots": [
+        { "src": "static/games/snug/tv-board.png", "alt": "The TV during shape 1: a quilted cream cushion on a pink polka-dot background, a blue and three pink candy pieces with little faces placed on it, the cursors of Phil, Lena and Mia and a ping ring, the team down the left with a wrapped sweet for each piece still in hand, the clock at 4:46", "kind": "tv" },
+        { "src": "static/games/snug/tv-solved.png", "alt": "The shape filled: every candy smiles with its eyes closed, \"Snug!\" over the board, confetti, +30 s beside the clock, \"Lena placed the last piece\", and each player's spare piece that was not needed", "kind": "tv" },
+        { "src": "static/games/snug/tv-solution.png", "alt": "Time's up on shape 2: the board as the solution would have filled it, in the owners' colours, and the pieces each player still held beside their name", "kind": "tv" },
+        { "src": "static/games/snug/tv-lobby.png", "alt": "The lobby: the puffy snug logo with a bow, how to play in three steps, the join QR code in a candy-striped card, and the players as candies in a jar", "kind": "tv" },
+        { "src": "static/games/snug/phone-board.png", "alt": "Phil's phone: the shape with the pieces placed so far and the others' cursors, and below it his own three secret pieces, each with a flip button", "kind": "phone" }
+      ]
     }
   ]
 }

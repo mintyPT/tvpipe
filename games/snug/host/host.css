@@ -1,0 +1,4 @@
+/* Snug's look on tvpipe's standard host page (@tvpipe/party's HostPage draws the rest): bubble gum. */
+@font-face { font-family: "Fredoka"; src: url("../phone/fonts/fredoka.woff2") format("woff2"); font-weight: 400 700; }
+:root { --bg: #ffe6f1; --card: #ffffff; --line: #ffc6de; --text: #6b2148; --muted: #a65a83; --accent: #ff3d8e; --accent-text: #fff; --link: #d81b6a; --ok: #16a874; --error: #e0123a; }
+.logo { font-family: "Fredoka", sans-serif; font-weight: 700; font-size: 34px; line-height: 1; color: #ff5fa2; text-shadow: 0 3px 0 #d81b6a33; letter-spacing: -.5px; }

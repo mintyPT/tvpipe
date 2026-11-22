@@ -1,0 +1,13 @@
+{
+  "name": "snug",
+  "title": "Snug",
+  "tvpipe": "0.3",
+  "root": "dist",
+  "pages": {
+    "host": "host/index.html",
+    "tv": "screen/index.html",
+    "phone": "phone/index.html"
+  },
+  "players": { "min": 2, "max": 8 },
+  "tv": { "width": 1280, "height": 720 }
+}
