@@ -38,13 +38,18 @@ main.pick { padding-top: 36px; padding-bottom: 0; display: flex; flex-direction:
 .device.radio input { border-radius: 50%; }
 .device.radio input:checked::after { width: 6px; height: 6px; margin: 0; border: 0; border-radius: 50%; background: var(--bg); transform: none; }
 .device.selected .name { color: var(--ink); }
+.device.radio .name { white-space: normal; }
 .device .steps { margin: 8px 0 2px; padding-left: 20px; font-size: 14px; color: var(--ink); }
 .device .steps li { margin: 2px 0; }
-.device.off { cursor: default; }
-.device.off:hover { background: none; }
-.device.off .name, .device.off .meta, .device.off input { opacity: .55; }
-.tag.link { color: var(--accent); border-color: var(--accent); text-decoration: none; }
-.tag.link:hover { background: var(--accent); color: var(--bg); }
+/* The tvpipe app's row picked: its commands instead of Start. */
+.device.open .end { align-self: start; }
+.app-way { margin: 12px 0 4px; font-size: 14px; color: var(--ink-2); cursor: auto; scroll-margin-bottom: 110px; }
+.app-way p { margin: 0; }
+.app-intro { margin-bottom: 10px !important; color: var(--ink); }
+.app-way .cmd { display: flex; align-items: center; gap: 14px; margin: 0 0 8px; padding: 8px 8px 8px 16px; background: var(--panel); border-radius: 3px; }
+.app-way .cmd .lbl { flex: none; min-width: 96px; white-space: nowrap; }
+.app-way .cmd code { flex: 1; min-width: 0; font-size: 14px; color: var(--ink); overflow-wrap: anywhere; user-select: all; }
+.app-note { margin-top: 10px !important; max-width: 46em; }
 
 /* The game picked on /games/, above the question. */
 .web-game { margin: 0 0 30px; }
@@ -116,6 +121,8 @@ dialog.sync { width: min(520px, calc(100vw - 40px)); }
 @media (max-width: 720px) {
   main.pick, [data-mode="change"] main.pick { padding: 24px 20px 0; }
   .web-game img { width: 108px; }
+  .app-way .cmd { flex-wrap: wrap; row-gap: 4px; }
+  .app-way .cmd .lbl { width: 100%; }
   .res { grid-template-columns: auto; row-gap: 8px; }
   .res-note { grid-column: 1; margin: 0; }
   .device { grid-template-columns: 18px minmax(0, 1fr); }

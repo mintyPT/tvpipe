@@ -28,6 +28,7 @@ The launcher asks "Where should the game show?" and selects the best answer for 
 | A second window | other browsers on a computer | a window with the game's picture: drag it onto the TV or projector and click **Full screen** |
 | Apple TV, by mirroring | iPad, iPhone, Mac | instructions: Control Center, Screen Mirroring, the Apple TV; then the game fills this screen and the TV shows it |
 | Another screen | always | any browser shows the game: a smart TV's, a second laptop's (below) |
+| Apple TV or Chromecast — with the tvpipe app | always | instead of Start, the two commands for a computer on the TV's Wi-Fi: the install and `tvpipe game play NAME` (below) |
 
 Starting and the rounds stay on the first player's phone, as with tvpipe. Sound plays from the device that runs the game. While a game is open the screen stays on, where the browser allows it.
 
@@ -45,7 +46,7 @@ A page cannot cast to a TV by itself. Three ways around it:
 
 - **Mirroring** an iPad, iPhone or Mac to an Apple TV (Control Center, Screen Mirroring). The launcher shows the steps.
 - **Chrome's "Cast tab"**: pick *A second window*, then in that window the browser's menu, *Cast…*, *Sources*, *Cast tab*, and the Chromecast (under "More" in the launcher).
-- **The tvpipe app** casts to Apple TV and Chromecast itself, about a quarter of a second behind: [install it](install.md) and play with `tvpipe game play` ([Party games](party.md)). The launcher on tvpipe.party shows these TVs greyed out for that reason.
+- **The tvpipe app** casts to Apple TV and Chromecast itself, about a quarter of a second behind: [install it](install.md) and play with `tvpipe game play NAME` ([Party games](party.md)); it finds the TVs on its Wi-Fi and starts its own room, so the phones scan its QR code. Pick *Apple TV or Chromecast — with the tvpipe app* in the launcher on tvpipe.party for the two commands, with copy buttons.
 
 ## As an app
 

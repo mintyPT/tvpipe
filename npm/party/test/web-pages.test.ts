@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { parseJoin, phoneUrl } from "../src/join/join.ts";
-import { detectDevice, screenOptions } from "../src/launcher-options.ts";
+import { appWay, detectDevice, INSTALL, screenOptions } from "../src/launcher-options.ts";
 import { framedPath } from "../src/screen/screen.ts";
 import type { Device } from "../src/tvpipe.ts";
 
@@ -24,12 +24,27 @@ const UA = {
 const screens = (...names: string[]): Device[] => names.map((name) => ({ name, kind: "browser" }));
 
 test("the device: iPadOS's desktop Safari by its touch points", () => {
-  assert.deepEqual(detectDevice({ userAgent: UA.ipad, maxTouchPoints: 5 }, true), { touch: true, apple: "ipad", chromium: false });
-  assert.deepEqual(detectDevice({ userAgent: UA.macSafari, maxTouchPoints: 0 }, false), { touch: false, apple: "mac", chromium: false });
-  assert.deepEqual(detectDevice({ userAgent: UA.macChrome, maxTouchPoints: 0 }, false), { touch: false, apple: "mac", chromium: true });
-  assert.deepEqual(detectDevice({ userAgent: UA.iphone, maxTouchPoints: 5 }, true), { touch: true, apple: "iphone", chromium: false });
-  assert.deepEqual(detectDevice({ userAgent: UA.winFirefox, maxTouchPoints: 0 }, false), { touch: false, apple: null, chromium: false });
-  assert.deepEqual(detectDevice({ userAgent: UA.android, maxTouchPoints: 5 }, true), { touch: true, apple: null, chromium: false });
+  assert.deepEqual(detectDevice({ userAgent: UA.ipad, maxTouchPoints: 5 }, true), { touch: true, apple: "ipad", chromium: false, windows: false });
+  assert.deepEqual(detectDevice({ userAgent: UA.macSafari, maxTouchPoints: 0 }, false), { touch: false, apple: "mac", chromium: false, windows: false });
+  assert.deepEqual(detectDevice({ userAgent: UA.macChrome, maxTouchPoints: 0 }, false), { touch: false, apple: "mac", chromium: true, windows: false });
+  assert.deepEqual(detectDevice({ userAgent: UA.iphone, maxTouchPoints: 5 }, true), { touch: true, apple: "iphone", chromium: false, windows: false });
+  assert.deepEqual(detectDevice({ userAgent: UA.winFirefox, maxTouchPoints: 0 }, false), { touch: false, apple: null, chromium: false, windows: true });
+  assert.deepEqual(detectDevice({ userAgent: UA.android, maxTouchPoints: 5 }, true), { touch: true, apple: null, chromium: false, windows: false });
+});
+
+test("the tvpipe app's way: this computer's installer and the game's command; both installers on a tablet", () => {
+  const cmds = (ua: string, touch: boolean) => appWay(detectDevice({ userAgent: ua, maxTouchPoints: touch ? 5 : 0 }, touch), "jinx");
+  const mac = cmds(UA.macChrome, false);
+  assert.deepEqual(mac.commands, [{ text: "curl -fsSL https://tvpipe.party/install.sh | sh" }, { text: "tvpipe game play jinx" }]);
+  assert.equal(mac.intro, undefined);
+  assert.match(mac.note, /less delay than mirroring.*new QR code/);
+  assert.deepEqual(cmds(UA.winFirefox, false).commands, [{ text: "irm https://tvpipe.party/install.ps1 | iex" }, { text: "tvpipe game play jinx" }]);
+  const ipad = cmds(UA.ipad, true);
+  assert.equal(ipad.intro, "On a Mac, Windows or Linux computer on the TV's Wi-Fi:");
+  assert.deepEqual(
+    ipad.commands.map((c) => c.text),
+    [INSTALL.unix, INSTALL.windows, "tvpipe game play jinx"],
+  );
 });
 
 test("the answers: an iPad's own screen first, mirroring next, another screen last", () => {

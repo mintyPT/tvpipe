@@ -20,7 +20,8 @@
  * offline and back), `screen` (an extra screen at /tv, approved; after
  * Other game it is back without asking), `window` (A second window,
  * Change screen), `quit` (End), `short` (BASE/CODE), `burst` (12 phones
- * at once), `looks` (/games/ and the launcher on desktop, iPad, phone).
+ * at once), `looks` (/games/ and the launcher on desktop, iPad, phone, also
+ * with the tvpipe app's row picked).
  *
  * Phones join through their page (the name form, the VIP's Start); their
  * moves in the game are the game's own bot (`game/bots.js`) driving the
@@ -999,7 +1000,7 @@ async function scenarioBurst(): Promise<void> {
   await endParty(h, phones);
 }
 
-/** /games/ and the launcher's look on desktop, iPad and phone. */
+/** /games/ and the launcher's look on desktop, iPad and phone, also with the tvpipe app's row. */
 async function scenarioLooks(): Promise<void> {
   log("== looks: /games/ and the launcher");
   const game = gameOf("jinx");
@@ -1015,9 +1016,18 @@ async function scenarioLooks(): Promise<void> {
     await page.eval(`document.querySelector('a[data-play="${game.name}"]').click(); true`);
     await page.until(`location.pathname === "/_tvpipe/launcher/" && document.querySelectorAll("#devices .device").length > 1`);
     await sleep(500);
-    const offered = await page.eval<string[]>(`[...document.querySelectorAll("#devices .device")].map((d) => (d.dataset.name ?? "off") + ":" + d.querySelector(".name").textContent)`);
+    const offered = await page.eval<string[]>(`[...document.querySelectorAll("#devices .device")].map((d) => d.dataset.name + ":" + d.querySelector(".name").textContent)`);
     const wide = await page.eval<boolean>(`document.documentElement.scrollWidth <= innerWidth + 1`);
     check(wide, `launcher on ${name}: no sideways scroll; offers ${offered.join(" | ")} (${await page.shot(`launcher-${name}`)})`);
+    await page.eval(`document.querySelector('#devices .device[data-name="app"]').click(); true`);
+    await page.until(`!document.getElementById("app-way").hidden && document.getElementById("start").hidden`);
+    await sleep(600); // the row scrolls its commands into view
+    const cmds = await page.eval<string[]>(`[...document.querySelectorAll("#app-commands code")].map((c) => c.textContent)`);
+    const wideApp = await page.eval<boolean>(`document.documentElement.scrollWidth <= innerWidth + 1`);
+    check(
+      wideApp && cmds.at(-1) === `tvpipe game play ${game.name}` && cmds.length === (name === "desktop" ? 2 : 3),
+      `launcher on ${name}, the tvpipe app: ${cmds.join(" | ")} (${await page.shot(`launcher-${name}-app`)})`,
+    );
     await ctx.dispose();
   }
 }

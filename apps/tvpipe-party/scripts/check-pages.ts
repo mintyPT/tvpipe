@@ -77,8 +77,21 @@ const checks: Check[] = [
     view: DESK,
     until: `document.querySelectorAll("#devices .device").length > 1 && !document.getElementById("web-game").hidden && document.getElementById("web-title").textContent !== "" && !document.getElementById("web-cover").hidden && JSON.parse(sessionStorage.getItem("tvpipe-web")).game.name === ${JSON.stringify(game.name)}`,
   },
+  {
+    name: "launcher-desktop-app",
+    path: `/_tvpipe/launcher/?game=${game.name}`,
+    view: DESK,
+    until: `(document.querySelector('#devices .device[data-name="app"]')?.click(), !document.getElementById("app-way").hidden && document.getElementById("start").hidden && document.querySelector("#app-commands").innerText.includes("tvpipe game play ${game.name}") && document.querySelectorAll("#app-commands .cmd").length === 2)`,
+  },
   { name: "launcher-ipad", path: "/_tvpipe/launcher/", view: PAD, ua: IPAD, session: { game }, until: `document.querySelector('#devices .device[data-name="mirror"]') !== null && document.querySelector("#devices .device.selected")?.dataset.name === "this"` },
   { name: "launcher-ipad-mirror", path: "/_tvpipe/launcher/", view: PAD, ua: IPAD, session: { game }, until: `(document.querySelector('#devices .device[data-name="mirror"]')?.click(), document.querySelector(".steps") !== null)` },
+  {
+    name: "launcher-ipad-app",
+    path: `/_tvpipe/launcher/?game=${game.name}`,
+    view: PAD,
+    ua: IPAD,
+    until: `(document.querySelector('#devices .device[data-name="app"]')?.click(), !document.getElementById("app-way").hidden && document.getElementById("app-intro").textContent.startsWith("On a Mac, Windows or Linux") && document.querySelectorAll("#app-commands .cmd").length === 3)`,
+  },
   { name: "join-unknown", path: "/r/?r=BCDF#k=AbCdEfGhIjKlMnOpQr", view: PHONE, ua: IPHONE, until: `document.body.dataset.state === "bad"`, expect: [/api\/rooms\/BCDF/] },
   {
     name: "join-waiting",

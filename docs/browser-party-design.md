@@ -38,8 +38,10 @@ to tvpipe.party, without tvpipe.party carrying game traffic.
   NAME`, to the launcher for it; Other game during a web party shows
   `/games/` in its dialog. (At first a games list of its own, `/play/`;
   it went.)
-- **The web launcher shows Apple TV and Chromecast greyed out** with
-  "needs the tvpipe app", linking to the install.
+- **The web launcher offers Apple TV and Chromecast with the tvpipe
+  app**: a row like the others (never selected by default) whose
+  answer is the two commands, install and `tvpipe game play NAME`,
+  instead of Start. (At first a greyed-out row, "needs the tvpipe app".)
 - **AirPlay mirroring is instructions only**: a page can neither start
   nor detect it.
 - **Any browser can be an extra screen** of any room (`tvpipe.party/tv`
@@ -118,8 +120,20 @@ screens, `kind: "browser"`, with these names:
 | `none` "Another screen" | always | nothing here: screens join at `tvpipe.party/tv` |
 
 Apple TV by mirroring (iPadOS, iOS, macOS) is instructions, then `this`.
-Apple TV and Chromecast show greyed out with "needs the tvpipe app".
-Chrome's "Cast tab" is instructions under "More".
+Chrome's "Cast tab" is instructions under "More" (Chrome and Edge on a
+computer only).
+
+**Apple TV or Chromecast — with the tvpipe app** is a row like the
+others, last, never selected by default (`launcher-options.ts`:
+`APP_ROW`, `appWay`). Picked, it shows in the row, instead of Start:
+the installer for this computer (`curl -fsSL
+https://tvpipe.party/install.sh | sh` on macOS and Linux, `irm
+https://tvpipe.party/install.ps1 | iex` on Windows) and `tvpipe game
+play NAME`, each with a copy button, and "tvpipe finds the TVs on this
+Wi-Fi and casts sharper and with less delay than mirroring; it starts
+its own room, so phones scan its new QR code." On touch devices (iPad,
+phone): "On a Mac, Windows or Linux computer on the TV's Wi-Fi:" with
+both installers. The app's launcher has no such row.
 
 Where the TV page runs in the host's tab or in a window of it, it is a
 `role=screen` client over the **local transport** (`BroadcastChannel`),

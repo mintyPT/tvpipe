@@ -2,9 +2,10 @@
  * The web launcher's answers to "Where should the game show?"
  * (docs/browser-party-design.md, "The launcher"): the screens `WebHub`
  * offers (`kind: "browser"`, named `this`, `cable`, `window`, `none`)
- * with the words for this device, the best one first, and AirPlay
- * mirroring as instructions on Apple devices. No DOM here: the launcher
- * passes what it found out about the device (`detectDevice`).
+ * with the words for this device, the best one first, AirPlay mirroring
+ * as instructions on Apple devices, and the way to the tvpipe app for
+ * Apple TV and Chromecast (`appWay`). No DOM here: the launcher passes
+ * what it found out about the device (`detectDevice`).
  */
 
 import { LOCAL_PREFIX } from "./screens.ts";
@@ -18,6 +19,8 @@ export interface DeviceInfo {
   apple: "ipad" | "iphone" | "mac" | null;
   /** Chrome or Edge on a computer: Chrome's "Cast tab". */
   chromium: boolean;
+  /** Windows: the app's installer is PowerShell's. */
+  windows: boolean;
 }
 
 /** One answer of the launcher. */
@@ -48,7 +51,8 @@ export function detectDevice(nav: { userAgent: string; maxTouchPoints?: number; 
   const mobile = ipad || iphone || /Android|Mobile/.test(ua);
   const touch = mobile || (coarse && touchPoints > 0 && !/Windows|Macintosh|X11|CrOS/.test(ua));
   const chromium = !touch && /Chrome\/|Edg\//.test(ua) && !/OPR\//.test(ua);
-  return { touch, apple: ipad ? "ipad" : iphone ? "iphone" : mac ? "mac" : null, chromium };
+  const windows = !touch && /Windows/.test(ua);
+  return { touch, apple: ipad ? "ipad" : iphone ? "iphone" : mac ? "mac" : null, chromium, windows };
 }
 
 function thisLabel(d: DeviceInfo): string {
@@ -138,6 +142,47 @@ export function screenOptions(devices: readonly Device[], d: DeviceInfo): Screen
   else [here, window, mirror].forEach(add);
   add(none);
   return out;
+}
+
+/** The launcher's row for the tvpipe app (`ScreenOption.id`; not a screen of `select`). */
+export const APP_ROW = {
+  id: "app",
+  label: "Apple TV or Chromecast — with the tvpipe app",
+  tag: "tvpipe app",
+  note: "The tvpipe app on a computer casts the game to the TV itself.",
+} as const;
+
+/** The app's installers (site/build.py's install block). */
+export const INSTALL = {
+  unix: "curl -fsSL https://tvpipe.party/install.sh | sh",
+  windows: "irm https://tvpipe.party/install.ps1 | iex",
+} as const;
+
+/** What the launcher shows instead of Start when the tvpipe app's row is picked. */
+export interface AppWay {
+  /** Above the commands (touch devices: where to run them). */
+  intro?: string;
+  /** Commands to copy, in order; `os` labels an installer when there are both. */
+  commands: { text: string; os?: string }[];
+  note: string;
+}
+
+/**
+ * The way to the tvpipe app for `game`: this computer's installer and
+ * `tvpipe game play GAME`; on touch devices both installers, for a
+ * computer on the TV's Wi-Fi.
+ */
+export function appWay(d: DeviceInfo, game: string): AppWay {
+  const play = { text: `tvpipe game play ${game}` };
+  const note = "tvpipe finds the TVs on this Wi-Fi and casts sharper and with less delay than mirroring; it starts its own room, so phones scan its new QR code.";
+  if (d.touch) {
+    return {
+      intro: "On a Mac, Windows or Linux computer on the TV's Wi-Fi:",
+      commands: [{ text: INSTALL.unix, os: "macOS, Linux" }, { text: INSTALL.windows, os: "Windows" }, play],
+      note,
+    };
+  }
+  return { commands: [{ text: d.windows ? INSTALL.windows : INSTALL.unix }, play], note };
 }
 
 /**

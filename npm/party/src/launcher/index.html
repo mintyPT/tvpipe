@@ -56,6 +56,12 @@ if (new URLSearchParams(location.search).get('mode') === 'change') document.docu
   </div>
   <p class="lead" id="message">The game shows on the TVs you pick. Everyone plays on their own phone.</p>
   <ul id="devices" class="devices"></ul>
+  <!-- Web mode: the tvpipe app's row picked, in the row, instead of Start. -->
+  <div id="app-way" class="app-way" hidden>
+    <p id="app-intro" class="app-intro" hidden></p>
+    <div id="app-commands"></div>
+    <p id="app-note" class="app-note"></p>
+  </div>
   <p id="searching" class="searching">Looking for TVs on this network: they appear here as they answer.</p>
   <!-- Web mode (tvpipe.party): more ways to a TV, as instructions. -->
   <details id="more" class="more" hidden>
@@ -67,10 +73,6 @@ if (new URLSearchParams(location.search).get('mode') === 'change') document.docu
         <li>In the new window, open the browser's menu (⋮), then <i>Cast…</i>; under <i>Sources</i> choose <i>Cast tab</i> and pick the Chromecast.</li>
         <li>The TV runs about a second behind the phones: fine for drawing and word games, less for quick ones.</li>
       </ol>
-    </div>
-    <div class="howto">
-      <b>Casting without delay</b>
-      <p>The tvpipe app on a computer casts to Apple TV and Chromecast itself, about a quarter of a second behind. <a href="/manual/install/" target="_top">Install it</a>, then <code>tvpipe game play</code>.</p>
     </div>
   </details>
   <div class="gap"></div>

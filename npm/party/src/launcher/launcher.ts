@@ -3,13 +3,14 @@
  * the game show?", then the game's host page. With tvpipe the answers are
  * the TVs as they are found (AirPlay PIN pairing, TV sync, the
  * resolution); on tvpipe.party (web mode, docs/browser-party-design.md,
- * "The launcher") they are this device's screens, one of them. There
- * `?game=NAME` (Play now on /games/) puts the game in the tab's session
- * first. A game may bring its own launcher with the same API.
+ * "The launcher") they are this device's screens, one of them, or the way
+ * to the tvpipe app. There `?game=NAME` (Play now on /games/) puts the
+ * game in the tab's session first. A game may bring its own launcher with
+ * the same API.
  */
 
 import { displayLag, Flasher, MAX_LAG_MS } from "../flashsync.ts";
-import { appScreenNote, appScreens, detectDevice, screenOptions, type ScreenOption } from "../launcher-options.ts";
+import { APP_ROW, appScreenNote, appScreens, appWay, detectDevice, screenOptions, type ScreenOption } from "../launcher-options.ts";
 import { isWeb } from "../mode.ts";
 import { LOCAL_PREFIX, SCREEN_WINDOW } from "../screens.ts";
 import { writeWebSession } from "../session.ts";
@@ -447,21 +448,24 @@ let options: ScreenOption[] = [];
 /** The answer picked (`ScreenOption.id`). */
 let webChoice: string | null = null;
 const here = detectDevice(navigator, matchMedia("(pointer: coarse)").matches);
+/** The tvpipe app's commands, shown in its row when picked (moved there by `renderWeb`). */
+const appWayBox = $("app-way");
 
-function radio(name: string, checked: boolean, disabled = false): HTMLInputElement {
+function radio(name: string, checked: boolean): HTMLInputElement {
   const r = document.createElement("input");
   r.type = "radio";
   r.name = "where";
   r.checked = checked;
-  r.disabled = disabled;
   r.setAttribute("aria-label", name);
   return r;
 }
 
 function renderWeb(): void {
   options = screenOptions(devices, here);
-  if (!options.some((o) => o.id === webChoice)) webChoice = options[0]?.id ?? null;
-  const rows = options.map((o) => {
+  // The tvpipe app's row is never the first choice, but stays picked.
+  if (webChoice !== APP_ROW.id && !options.some((o) => o.id === webChoice)) webChoice = options[0]?.id ?? null;
+  const app: ScreenOption = { ...APP_ROW, device: "" };
+  const rows = [...options, app].map((o) => {
     const on = o.id === webChoice;
     const li = el("li", `device radio${on ? " selected" : ""}`);
     li.dataset["name"] = o.id;
@@ -472,29 +476,27 @@ function renderWeb(): void {
       ol.append(...o.steps.map((s) => el("li", "", s)));
       text.append(ol);
     }
+    if (on && o.id === APP_ROW.id) text.append(appWayBox);
+    if (on && (o.steps || o.id === APP_ROW.id)) li.classList.add("open");
     const end = el("div", "end");
     end.append(el("span", "tag", o.tag));
     li.append(radio(o.label, on), text, end);
     li.onclick = () => {
-      if (starting) return;
+      // Picked already: a click in its commands (selecting, copying) changes nothing.
+      if (starting || webChoice === o.id) return;
       webChoice = o.id;
       renderWeb();
+      // The commands may open below the window's edge (under the bar).
+      if (o.id === APP_ROW.id) appWayBox.scrollIntoView({ block: "nearest", behavior: "smooth" });
     };
     return li;
   });
-  // What only the app does: shown, greyed, with the way to it.
-  const off = el("li", "device radio off");
-  off.setAttribute("aria-disabled", "true");
-  const text = el("div", "grow");
-  text.append(el("div", "name", "Apple TV, Chromecast"), el("div", "meta", "Casting straight to a TV needs the tvpipe app on a computer."));
-  const end = el("div", "end");
-  const get = el("a", "tag link", "Needs the tvpipe app") as HTMLAnchorElement;
-  get.href = "/manual/install/";
-  get.target = "_top";
-  end.append(get);
-  off.append(radio("Apple TV, Chromecast", false, true), text, end);
-  $("devices").replaceChildren(...rows, off);
-  ($("start") as HTMLButtonElement).disabled = webChoice === null || starting !== null;
+  $("devices").replaceChildren(...rows);
+  // The tvpipe app: its commands instead of Start.
+  const withApp = webChoice === APP_ROW.id;
+  appWayBox.hidden = !withApp;
+  $("start").hidden = withApp;
+  ($("start") as HTMLButtonElement).disabled = webChoice === null || withApp || starting !== null;
   const st = $("state");
   const [t, cls] = stopped ? [stopped, "bad"] : starting ? [starting, "on"] : !$("error").hidden ? ["Something failed", "bad"] : ["Pick one", "ok"];
   st.textContent = t;
@@ -547,6 +549,36 @@ interface ScreenArea {
   isPrimary?: boolean;
 }
 
+/** The commands for the tvpipe app's row, each with a copy button. */
+function renderAppWay(game: string): void {
+  const way = appWay(here, game);
+  const part = (id: string) => appWayBox.querySelector<HTMLElement>(`#${id}`)!;
+  part("app-intro").hidden = !way.intro;
+  part("app-intro").textContent = way.intro ?? "";
+  part("app-note").textContent = way.note;
+  part("app-commands").replaceChildren(
+    ...way.commands.map((c) => {
+      const row = el("div", "cmd");
+      if (c.os) row.append(el("span", "lbl", c.os));
+      const copy = el("button", "btn small", "Copy") as HTMLButtonElement;
+      copy.type = "button";
+      copy.setAttribute("aria-label", `Copy ${c.text}`);
+      copy.onclick = (ev) => {
+        ev.stopPropagation();
+        navigator.clipboard?.writeText(c.text).then(
+          () => {
+            copy.textContent = "Copied";
+            setTimeout(() => (copy.textContent = "Copy"), 1500);
+          },
+          () => {},
+        );
+      };
+      row.append(el("code", "", c.text), copy);
+      return row;
+    }),
+  );
+}
+
 /** The game picked on /games/, above the question: its cover, title and players. */
 async function renderWebGame(): Promise<void> {
   $("web-game").hidden = false;
@@ -594,8 +626,8 @@ function webStart(): void {
 
 async function webMain(): Promise<void> {
   $("searching").hidden = true;
-  $("more").hidden = false;
-  $("cast-tab").hidden = !here.chromium;
+  // More: Chrome's Cast tab.
+  $("more").hidden = !here.chromium;
   $("no-tv").hidden = !changing;
   $("where").textContent = "tvpipe.party";
   if (changing) {
@@ -605,6 +637,7 @@ async function webMain(): Promise<void> {
     $("message").textContent = `Everyone plays ${info.title} on their own phone; pick the screen everyone looks at.`;
     void renderWebGame();
   }
+  renderAppWay(info.name);
   const chosen = await tvpipe.chosen().catch(() => ({ devices: [] as string[] }));
   devices = await tvpipe.watchDevices(true);
   const was = chosen.devices[0];

@@ -83,7 +83,7 @@ and reports errors, screenshots in `/tmp/tvpipe-pages/`
 `--games` for some games, `--relay` for TURN only: every peer connection relayed, checked with getStats,
 `--local-lib` for this checkout's built library on BASE's pages: a library change against production before it is deployed)
 plays whole parties in one headless Chrome, a browser context per person:
-/games/ and Play now, the launcher, the host page in table mode, phones joining
+/games/ and Play now, the launcher (also its tvpipe app row), the host page in table mode, phones joining
 over data channels (the game's bot moving on each phone's own client),
 every game's first round, two games to the end, Other game (/games/?switch in the dialog), reloads, a
 locked phone, an extra screen, a second window, End, the short link and 12
