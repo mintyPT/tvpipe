@@ -79,11 +79,12 @@ test("with a TURN key: Cloudflare's TURN servers, port 53 left out, shared for h
   assert.equal(calls[0]!.url, "https://rtc.live.cloudflare.com/v1/turn/keys/key-id/credentials/generate-ice-servers");
   assert.equal(calls[0]!.init.method, "POST");
   assert.equal((calls[0]!.init.headers as Record<string, string>).Authorization, "Bearer token");
-  assert.deepEqual(JSON.parse(calls[0]!.init.body as string), { ttl: 21600 });
+  assert.deepEqual(JSON.parse(calls[0]!.init.body as string), { ttl: 3600 });
+  assert.equal(TURN_TTL, 3600);
 
-  // An hour later: the same credentials, with what is left of their life.
-  res = await get(T0 + 3600_000);
-  assert.deepEqual(await res.json(), { iceServers: [...STUN, TURN], ttl: TURN_TTL - 3600 });
+  // 10 minutes later: the same credentials, with what is left of their life.
+  res = await get(T0 + 600_000);
+  assert.deepEqual(await res.json(), { iceServers: [...STUN, TURN], ttl: TURN_TTL - 600 });
   assert.equal(calls.length, 1);
   // After half their life: new ones.
   res = await get(T0 + (TURN_TTL / 2) * 1000);

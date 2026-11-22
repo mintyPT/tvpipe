@@ -221,12 +221,22 @@ request.
 when the Worker has `TURN_KEY_ID` and `TURN_KEY_API_TOKEN`, Cloudflare
 TURN credentials from
 `POST https://rtc.live.cloudflare.com/v1/turn/keys/ID/credentials/generate-ice-servers`
-with `{ttl: 21600}` (its STUN and port 53 left out: browsers block
+with `{ttl: 3600}` (its STUN and port 53 left out: browsers block
 it). 60 a minute per address (`TURNS`), then `429`. Without the secrets:
 STUN only, `ttl` 21600; when Cloudflare fails: STUN only, `ttl` 300.
 Pages fetch it before each offer or answer (cached for `ttl / 2`). The
 Worker shares credentials for half their life (an isolate asks
-Cloudflare once per 3 hours); `ttl` is what is left of their life.
+Cloudflare once per 30 minutes); `ttl` is what is left of their life.
+
+**The monthly cap** (TURN is free up to 1,000 GB a month): a Cron
+Trigger reads this calendar month's (UTC) TURN traffic of our key from
+the GraphQL Analytics API every 10 minutes
+(`callsTurnUsageAdaptiveGroups`, egress plus ingress) into D1. At
+`TURN_MONTHLY_LIMIT_GB` (900 by default), or when the last successful
+check is older than 2 hours or missing, `/api/turn` gives STUN only
+(`ttl` 300); a new month starts at 0. Credentials last 1 hour, so a cut
+takes effect within the hour. Without `TURN_ANALYTICS_TOKEN` (Account
+Analytics Read) TURN is not capped.
 
 ## The transport (`@tvpipe/party`)
 

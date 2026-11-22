@@ -2,7 +2,7 @@
 // rate limiter, a static-files fetcher and Durable Objects with
 // hibernating WebSockets (the `Room`s).
 
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 import type {
   D1Database,
@@ -20,7 +20,7 @@ import type {
 } from "../src/env.ts";
 import { Room, runtime } from "../src/room.ts";
 
-const MIGRATION = new URL("../migrations/0001_links.sql", import.meta.url);
+const MIGRATIONS = new URL("../migrations/", import.meta.url);
 
 class Statement implements D1PreparedStatement {
   db: DatabaseSync;
@@ -58,7 +58,9 @@ class Statement implements D1PreparedStatement {
 export class MemoryD1 implements D1Database {
   sqlite = new DatabaseSync(":memory:");
   constructor() {
-    this.sqlite.exec(readFileSync(MIGRATION, "utf8"));
+    for (const name of readdirSync(MIGRATIONS).filter((n) => n.endsWith(".sql")).sort()) {
+      this.sqlite.exec(readFileSync(new URL(name, MIGRATIONS), "utf8"));
+    }
   }
   prepare(query: string): D1PreparedStatement {
     return new Statement(this.sqlite, query);

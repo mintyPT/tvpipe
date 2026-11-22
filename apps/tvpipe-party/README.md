@@ -47,8 +47,8 @@ asset-first routing; `/manual` → `/manual/` and the like are Cloudflare's
 Files: `src/links.ts` (validation, the frame page's link, web rooms'
 links, codes, secrets, the SQL), `src/pages.ts` (the HTML), `src/app.ts`
 (the handler), `src/room.ts` (the `Room` Durable Object: signaling),
-`src/turn.ts` (`/api/turn`), `src/worker.ts` (the entry point, exports
-`Room`), `src/env.ts` (the few Cloudflare types it needs, declared by
+`src/turn.ts` (`/api/turn`), `src/turncap.ts` (the monthly TURN cap),
+`src/worker.ts` (the entry point, exports `Room`, runs the Cron Trigger), `src/env.ts` (the few Cloudflare types it needs, declared by
 hand), `migrations/` (D1's schema). No runtime dependencies.
 
 ## Local development
@@ -92,7 +92,9 @@ would not register. Open pages at `http://localhost:8787` (not
 `127.0.0.1`). `node test/live-signaling.ts BASE --slow` also waits for
 the 15 s answer timeout. Without TURN secrets `/api/turn` is STUN only;
 to try them locally put `TURN_KEY_ID=…` and `TURN_KEY_API_TOKEN=…` into
-`.dev.vars` (git-ignored). Try it:
+`.dev.vars` (git-ignored), and `TURN_ANALYTICS_TOKEN=…` for the cap
+(`wrangler dev --test-scheduled`, then `curl
+'localhost:8787/__scheduled?cron=*/10+*+*+*+*'` runs the check). Try it:
 
 ```sh
 curl -X POST localhost:8787/api/links \
@@ -126,7 +128,36 @@ tvpipe talks to another instance with `TVPIPE_PARTY_URL=http://127.0.0.1:8787`.
    a TURN key in the Cloudflare dashboard (Realtime → TURN), then
    `npx wrangler secret put TURN_KEY_ID --env-file ../../.env` and the same
    for `TURN_KEY_API_TOKEN`. Without them `/api/turn` gives public STUN
-   only.
+   only. With them, also set up the cap (below).
+
+### The TURN cap
+
+Cloudflare TURN is free up to 1,000 GB a month, then billed. A soft cap
+keeps tvpipe.party under it:
+
+- A Cron Trigger (`triggers.crons`, every 10 minutes) asks the GraphQL
+  Analytics API for this calendar month's (UTC) TURN traffic of our key
+  (`callsTurnUsageAdaptiveGroups`, filtered by `keyId` and the month's
+  start; egress plus ingress, counted together on purpose) and stores
+  it in D1 (`turn_usage`, a row per month).
+- `/api/turn` gives STUN only once the month reaches
+  `TURN_MONTHLY_LIMIT_GB` (a var in `wrangler.jsonc`, 900 by default:
+  GB of 10⁹ bytes), and also when the last successful check is older
+  than 2 hours or missing (the cron or the analytics broke: it fails
+  closed). A new month starts at 0 at once.
+- Credentials last 1 hour, so TURN stops within the hour of the cut
+  (credentials handed out stay good until they expire; the analytics lag
+  a few minutes). It is a soft cap: a month can end a little over the
+  limit, which is why it is below the 1,000 GB.
+- The token: a Cloudflare API token with **Account → Account Analytics →
+  Read** for the account (no other permissions), stored with
+  `npx wrangler secret put TURN_ANALYTICS_TOKEN --env-file ../../.env`.
+  The account is the var `CF_ACCOUNT_ID` in `wrangler.jsonc` (an account
+  id is no secret). Without the token TURN is not capped (logged once
+  per isolate); right after the first deploy with it, TURN waits for the
+  first check (at most 10 minutes).
+- The logs (`wrangler tail`) say when TURN goes off or on again and when
+  a check fails.
 5. In GitHub, the repository secrets `CLOUDFLARE_API_TOKEN` and
    `CLOUDFLARE_ACCOUNT_ID` for `.github/workflows/tvpipe-party.yml`.
 
@@ -168,5 +199,7 @@ party of 8 for an evening with a few game switches: some 100 requests
 of each kind, so on the order of a thousand parties a day fit the free
 plan (100,000 Worker and 100,000 Durable Object requests). Idle rooms
 hibernate: pings are answered without waking them. TURN is billed by
-Cloudflare by traffic (1,000 GB a month free) and used only by phones
-that cannot connect directly.
+Cloudflare by traffic (1,000 GB a month free; capped below that, "The
+TURN cap") and used only by phones that cannot connect directly. The cap
+costs 144 cron runs a day (each a GraphQL request and a D1 write) and a
+D1 read per `/api/turn`.

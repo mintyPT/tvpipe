@@ -35,7 +35,18 @@
     { "name": "UPDATES", "namespace_id": "1003", "simple": { "limit": 60, "period": 60 } },
     { "name": "ROOM_LOOKUPS", "namespace_id": "1004", "simple": { "limit": 120, "period": 60 } },
     { "name": "TURNS", "namespace_id": "1005", "simple": { "limit": 60, "period": 60 } }
-  ]
-  // Secrets (optional; without them GET /api/turn is STUN only):
-  // TURN_KEY_ID, TURN_KEY_API_TOKEN (`wrangler secret put`, README.md).
+  ],
+  // The TURN cap (src/turncap.ts): this month's TURN traffic from the
+  // GraphQL Analytics API every 10 minutes; TURN stops at the limit.
+  "triggers": { "crons": ["*/10 * * * *"] },
+  "vars": {
+    // The account whose TURN usage counts (the one deployed to; not a secret).
+    "CF_ACCOUNT_ID": "09397bcaeeaaa7968fe036cf08d43b8b",
+    // GB (10^9 bytes) a calendar month, egress + ingress; free: 1,000.
+    "TURN_MONTHLY_LIMIT_GB": "900"
+  }
+  // Secrets (`wrangler secret put`, README.md), all optional:
+  // TURN_KEY_ID, TURN_KEY_API_TOKEN (without them GET /api/turn is STUN
+  // only), TURN_ANALYTICS_TOKEN (Account Analytics Read; without it TURN
+  // is not capped).
 }

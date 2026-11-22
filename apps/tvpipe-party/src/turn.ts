@@ -1,8 +1,10 @@
 // GET /api/turn: the ICE servers pages use for WebRTC
 // (docs/browser-party-design.md, "TURN credentials"): public STUN, and
-// Cloudflare TURN credentials when the Worker has a TURN key.
+// Cloudflare TURN credentials when the Worker has a TURN key and the
+// month's TURN traffic is under the cap (turncap.ts).
 
 import type { Env } from "./env.ts";
+import { turnCap, type TurnCap } from "./turncap.ts";
 
 export interface IceServer {
   urls: string | string[];
@@ -17,11 +19,14 @@ export interface IceConfig {
 }
 
 export const STUN: IceServer[] = [{ urls: ["stun:stun.cloudflare.com:3478", "stun:stun.l.google.com:19302"] }];
-/** What Cloudflare is asked for: 6 hours. */
-export const TURN_TTL = 21600;
+/**
+ * What Cloudflare is asked for: 1 hour, so that the cap takes effect
+ * within the hour (credentials handed out stay good until they expire).
+ */
+export const TURN_TTL = 3600;
 /** Without a TURN key: STUN does not expire, but pages should look again now and then. */
 export const STUN_TTL = 21600;
-/** When Cloudflare failed: ask again soon. */
+/** When Cloudflare failed or TURN is capped: ask again soon. */
 export const FAILED_TTL = 300;
 export const TURN_TIMEOUT_MS = 3000;
 
@@ -30,13 +35,16 @@ const TURN_URL = "https://rtc.live.cloudflare.com/v1/turn/keys/";
 /**
  * Credentials are shared by everyone the isolate answers for half their
  * life (a page keeps them for half of what is left): one request to
- * Cloudflare per isolate and 3 hours, not one per phone.
+ * Cloudflare per isolate and 30 minutes, not one per phone.
  */
 let cache: { servers: IceServer[]; expires: number } | null = null;
+/** The cap's last state, to log changes only. */
+let lastCap: TurnCap = "ok";
 
 /** Forgets the cached credentials (tests). */
 export function clearTurnCache(): void {
   cache = null;
+  lastCap = "ok";
 }
 
 function stringList(v: unknown): string[] | null {
@@ -70,6 +78,14 @@ export async function iceConfig(env: Env, now: number, fetcher: typeof fetch = f
   const id = env.TURN_KEY_ID;
   const token = env.TURN_KEY_API_TOKEN;
   if (!id || !token) return { iceServers: STUN, ttl: STUN_TTL };
+  const cap = await turnCap(env, now);
+  if (cap !== lastCap) {
+    if (cap === "over") console.warn("TURN is off: this month's limit is reached");
+    else if (cap === "stale") console.error("TURN is off: no recent usage check");
+    else console.warn("TURN is on again");
+    lastCap = cap;
+  }
+  if (cap !== "ok") return { iceServers: STUN, ttl: FAILED_TTL };
   if (cache !== null && cache.expires > now) {
     // What is left of its life, as the page counts it.
     const ttl = Math.floor((cache.expires - now) / 1000) + TURN_TTL / 2;

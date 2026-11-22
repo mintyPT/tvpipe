@@ -92,4 +92,22 @@ export interface Env {
   /** Cloudflare Realtime TURN key (a secret; without it /api/turn is STUN only). */
   TURN_KEY_ID?: string;
   TURN_KEY_API_TOKEN?: string;
+  /**
+   * The monthly TURN cap (turncap.ts): an API token with Account
+   * Analytics Read (a secret; without it TURN is not capped), the account
+   * (a var) and the limit in GB (a var, default 900).
+   */
+  TURN_ANALYTICS_TOKEN?: string;
+  CF_ACCOUNT_ID?: string;
+  TURN_MONTHLY_LIMIT_GB?: string;
+}
+
+/** The Cron Trigger's event. */
+export interface ScheduledController {
+  readonly scheduledTime: number;
+  readonly cron: string;
+}
+
+export interface ExecutionContext {
+  waitUntil(promise: Promise<unknown>): void;
 }
