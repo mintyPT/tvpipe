@@ -137,8 +137,9 @@ this repository's games are [`games/drawbluff`](games/drawbluff/)
 [`games/shifty`](games/shifty/) (3–10),
 [`games/landgrab`](games/landgrab/) (2–6),
 [`games/crosstalk`](games/crosstalk/) (4–12),
-[`games/snug`](games/snug/) (2–8) and
-[`games/busted`](games/busted/) (3–10), each released on its own as
+[`games/snug`](games/snug/) (2–8),
+[`games/busted`](games/busted/) (3–10) and
+[`games/pinch`](games/pinch/) (3–8), each released on its own as
 `NAME-vX.Y.Z`. Closing
 the window ends everything. Design: [`docs/playshare-design.md`](docs/playshare-design.md).
 

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pinch · the look</title>
+<link rel="stylesheet" href="../../phone/deco.css">
+<style>
+  html, body { margin: 0; height: 100%; background: var(--black); color: var(--cream); font-family: var(--sans); overflow: hidden; }
+  canvas { display: block; }
+  /* The TV mock (1280×720). */
+  .tv { display: grid; grid-template: 52px 1fr 44px / 230px 1fr; height: 100vh; }
+  .tv-top { grid-column: 1 / 3; display: flex; align-items: center; gap: 18px; padding: 0 18px; background: var(--black); border-bottom: 2px solid var(--gold); }
+  .tv-top .logo { font-family: var(--display); color: var(--gold); font-size: 30px; }
+  .tv-top .who { font-size: 19px; letter-spacing: 0.06em; }
+  .tv-top .who b { color: var(--gold-light); }
+  .tv-top .clock { margin-left: auto; font-family: var(--display); font-size: 32px; color: var(--cream); }
+  .tv-top .alarm { font-family: var(--type); font-weight: 700; font-size: 20px; color: #fff; background: #b8262d; padding: 2px 8px; }
+  .tv-cat { background: #121014; border-right: 2px solid var(--gold-dark); padding: 10px 12px; overflow: hidden; }
+  .tv-cat h2 { margin: 2px 0 8px; font-family: var(--display); font-weight: 400; color: var(--gold); font-size: 20px; letter-spacing: 0.06em; }
+  .tv-cat .item { display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 6px; font-size: 15px; line-height: 1.1; margin: 0 0 5px; }
+  .tv-cat .item canvas { width: 30px; height: 30px; }
+  .tv-cat .item .v { font-family: var(--type); font-weight: 700; color: var(--gold-light); font-size: 14px; }
+  .tv-cat .item.gone { color: #8a8070; text-decoration: line-through; }
+  .tv-cat .item .room { grid-column: 2 / 4; font-family: var(--type); font-size: 12px; color: #e5483c; text-decoration: none; }
+  .tv-map { position: relative; }
+  .tv-ticker { grid-column: 1 / 3; display: flex; align-items: center; gap: 22px; padding: 0 18px; background: var(--paper); color: var(--ink); font-family: var(--type); font-weight: 700; font-size: 18px; white-space: nowrap; overflow: hidden; border-top: 3px solid var(--gold); }
+  .tv-ticker .claim { font-family: var(--sans); font-weight: 700; }
+  /* The phone mock (390×844). */
+  .phone { position: relative; height: 100vh; }
+  .phone canvas { position: absolute; inset: 0; }
+  .ph-top { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: rgba(13, 12, 14, 0.88); border-bottom: 2px solid var(--gold); }
+  .ph-top .clock { font-family: var(--display); font-size: 26px; }
+  .ph-top .role { font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold-light); font-weight: 700; }
+  .ph-top .slots { margin-left: auto; display: flex; gap: 4px; }
+  .ph-top .slots span { width: 30px; height: 30px; border: 2px solid var(--gold-dark); background: #1b1816; }
+  .ph-bottom { position: absolute; bottom: 18px; left: 12px; right: 12px; display: flex; gap: 10px; align-items: end; }
+  .ph-bottom .deco-btn { flex: 1; }
+  .ph-bottom .deco-btn-big { flex: 1.3; }
+</style>
+</head>
+<body>
+<script type="module" src="preview.js"></script>
+</body>
+</html>

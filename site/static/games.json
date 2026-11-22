@@ -131,6 +131,23 @@
         { "src": "static/games/busted/phone-rank.png", "alt": "Phil's phone ranking who would most likely sleep through an entire day: the players' press photos with gold, silver and bronze medals and a File it button", "kind": "phone" },
         { "src": "static/games/busted/phone-match.png", "alt": "Phil's phone matching the anonymous answers to their writers, a face beside each note, a heart on his favourite and his own note greyed out", "kind": "phone" }
       ]
+    },
+    {
+      "name": "pinch",
+      "title": "Pinch",
+      "summary": "A 1920s heist in real time: one thief sneaks through a dark estate for the loot and the getaway car, everyone else is house security with flashlights, and the TV is the radio the thief can hear",
+      "players": { "min": 3, "max": 8 },
+      "languages": ["en", "de"],
+      "source": "gh:mitsuhiko/tvpipe/pinch@pinch-v*",
+      "home": "https://github.com/mitsuhiko/tvpipe/tree/main/games/pinch",
+      "screenshots": [
+        { "src": "static/games/pinch/tv-heist.webp", "alt": "The TV during a heist: the estate as a blueprint with two houses, gardens, lamps and parking spots, the red pencil hatch of where the thief could be, the night's catalogue with GPS-tagged items down the left, the clock at 0:30 and the ticker: SYSTEM ARMED. ALL QUIET. FOR NOW.", "kind": "tv" },
+        { "src": "static/games/pinch/tv-tape.webp", "alt": "The tape after a heist: a VHS replay of the estate in full colour, the thief's line to the getaway car, the guards' dashed paths, a post mark, and the caption: Ben reaches the car with $12,400. Nobody checked the car.", "kind": "tv" },
+        { "src": "static/games/pinch/tv-outcome.png", "alt": "The outcome: GOT AWAY in gold Deco letters under the thief's portrait, and: Ben is gone. Security is still looking under the sofa.", "kind": "tv" },
+        { "src": "static/games/pinch/tv-lobby.png", "alt": "The lobby: the PINCH logo on a sunburst, how to play in three steps, the join QR code and the guests as bowler hats in their colours", "kind": "tv" },
+        { "src": "static/games/pinch/phone-thief.png", "alt": "The thief's phone: a lit bedroom in colour amid the dark blueprint, a GPS-tagged item in the sack, an arrow towards the car, and buttons to take a diamond ring or a lava lamp", "kind": "phone" },
+        { "src": "static/games/pinch/phone-guard.png", "alt": "A guard's phone: lit rooms around the corridor, two guards in bowler hats with their flashlights, the blueprint beyond, and the buttons for the flashlight, a door and the lights", "kind": "phone" }
+      ]
     }
   ]
 }

@@ -1,0 +1,184 @@
+/*
+ * Pinch's chrome, shared by the TV, the phone and the host page: the
+ * fonts, the Deco palette, stepped gold frames, buttons, sunbursts, the
+ * silent-film intertitle card, printed (teletype) and crayon text.
+ * docs/pinch-design.md §12. Pages link it as `../phone/deco.css` (the TV)
+ * or `deco.css` (the phone); the fonts are relative to this file.
+ *
+ *   <div class="intertitle"><div class="intertitle-text">Meanwhile, at the Van Doren Estate…</div></div>
+ *   <button class="deco-btn">Take</button>  <button class="deco-btn deco-btn-big">HOLD</button>
+ *   <div class="deco-frame">…</div>  <div class="sunburst"></div>  <span class="teletype">…</span>
+ */
+
+@font-face { font-family: "Limelight"; src: url("fonts/limelight.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Josefin Sans"; src: url("fonts/josefin-sans.woff2") format("woff2"); font-weight: 100 700; font-display: swap; }
+@font-face { font-family: "Courier Prime"; src: url("fonts/courier-prime.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Courier Prime"; src: url("fonts/courier-prime-bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+
+:root {
+  --gold: #d6a842;
+  --gold-light: #f3d27a;
+  --gold-dark: #8e6a22;
+  --black: #0d0c0e;
+  --ink: #16110d;
+  --cream: #f1e4c4;
+  --paper: #f4ecd6;
+  --emerald: #1f6b52;
+  --oxblood: #7c2230;
+  --blueprint: #17406f;
+  --blueprint-dark: #103259;
+  --night: #0a0f1f;
+  --pencil: #e5483c;
+  --display: "Limelight", Georgia, serif;
+  --sans: "Josefin Sans", Futura, "Century Gothic", "Trebuchet MS", sans-serif;
+  --type: "Courier Prime", "Courier New", monospace;
+  /* The stepped gold frame (90×90, sliced at 30). */
+  --deco-frame: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='90' height='90' viewBox='0 0 90 90'><path d='M16 4H74V10H80V16H86V74H80V80H74V86H16V80H10V74H4V16H10V10H16Z' fill='none' stroke='%23d6a842' stroke-width='2'/><path d='M22 13H68V17H73V22H77V68H73V73H68V77H22V73H17V68H13V22H17V17H22Z' fill='none' stroke='%238e6a22' stroke-width='1'/><path d='M4 4h4v4H4zM82 4h4v4h-4zM4 82h4v4H4zM82 82h4v4h-4z' fill='%23d6a842'/></svg>");
+}
+
+.deco-title { font-family: var(--display); color: var(--gold); letter-spacing: 0.04em; font-weight: 400; }
+.deco-caps { font-family: var(--sans); text-transform: uppercase; letter-spacing: 0.14em; font-weight: 600; }
+.teletype { font-family: var(--type); font-weight: 700; color: var(--ink); background: var(--paper); padding: 0.05em 0.4em; border: 1px solid var(--ink); }
+.crayon { font-family: var(--sans); font-weight: 700; text-shadow: 0 0 2px rgba(0, 0, 0, 0.6); }
+
+/* A stepped gold frame: corners notched twice, a second line inside, gold studs (an SVG border image). */
+.deco-frame {
+  --frame: 24px;
+  background: var(--black);
+  color: var(--cream);
+  border: var(--frame) solid transparent;
+  border-image: var(--deco-frame) 30 / var(--frame) stretch;
+  padding: calc(var(--frame) * 0.3);
+}
+
+/* Buttons: black with a gold edge and stepped corners; pressed goes gold. */
+.deco-btn {
+  --s: 5px;
+  font-family: var(--sans);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 1rem;
+  color: var(--gold-light);
+  background: linear-gradient(var(--black), #1d1a17);
+  border: 2px solid var(--gold);
+  box-shadow: inset 0 0 0 3px var(--black), inset 0 0 0 4px var(--gold-dark);
+  padding: 0.85em 1.4em 0.7em;
+  min-height: 48px;
+  cursor: pointer;
+  clip-path: polygon(var(--s) 0, calc(100% - var(--s)) 0, 100% var(--s), 100% calc(100% - var(--s)), calc(100% - var(--s)) 100%, var(--s) 100%, 0 calc(100% - var(--s)), 0 var(--s));
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.deco-btn:active, .deco-btn.on { background: var(--gold); color: var(--black); box-shadow: inset 0 0 0 3px var(--gold), inset 0 0 0 4px var(--black); }
+.deco-btn:disabled { color: #6d6556; border-color: #4a4337; box-shadow: none; }
+.deco-btn-big { font-family: var(--display); font-size: 2rem; letter-spacing: 0.08em; text-transform: none; padding: 0.4em 1.2em 0.3em; color: var(--black); background: var(--gold); }
+.deco-btn-big:active { background: var(--gold-light); }
+.deco-btn-red { color: var(--cream); background: var(--oxblood); border-color: var(--gold); }
+
+/* A sunburst behind a title or a card: gold rays on black. */
+.sunburst {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(13, 12, 14, 0) 0 18%, rgba(13, 12, 14, 0.9) 70%),
+    repeating-conic-gradient(from 0deg at 50% 50%, rgba(214, 168, 66, 0.28) 0deg 6deg, rgba(214, 168, 66, 0) 6deg 15deg),
+    var(--black);
+}
+
+/* A chevron band (the bars' edges). */
+.deco-band {
+  height: 8px;
+  background:
+    linear-gradient(135deg, var(--gold) 25%, transparent 25%) -4px 0 / 8px 8px,
+    linear-gradient(225deg, var(--gold) 25%, transparent 25%) -4px 0 / 8px 8px,
+    var(--black);
+}
+
+/* The intertitle: a silent film's card, full screen. */
+.intertitle {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #000;
+  z-index: 50;
+  animation: intertitle-in 0.5s steps(6) both;
+}
+.intertitle::after {
+  /* Film grain and a flicker. */
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px);
+  animation: intertitle-flicker 0.18s steps(2) infinite;
+}
+.intertitle-card {
+  --frame: clamp(36px, 7vmin, 60px);
+  position: relative;
+  box-sizing: border-box;
+  width: min(88vw, 150vh);
+  aspect-ratio: 4 / 3;
+  max-height: 88vh;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  background: var(--black);
+  border: var(--frame) solid transparent;
+  border-image: var(--deco-frame) 30 / var(--frame) stretch;
+}
+.intertitle-card::before, .intertitle-card::after {
+  /* Fans in the corners: quarter sunbursts. */
+  content: "";
+  position: absolute;
+  width: 16%;
+  aspect-ratio: 1;
+  background: repeating-conic-gradient(from 90deg at 0 0, var(--gold) 0deg 3deg, transparent 3deg 11.25deg);
+  -webkit-mask: radial-gradient(circle at 0 0, #000 0 70%, transparent 70.5%);
+  mask: radial-gradient(circle at 0 0, #000 0 70%, transparent 70.5%);
+  top: calc(var(--frame) * -0.15);
+  left: calc(var(--frame) * -0.15);
+  opacity: 0.85;
+}
+.intertitle-card::after {
+  top: auto;
+  left: auto;
+  bottom: calc(var(--frame) * -0.15);
+  right: calc(var(--frame) * -0.15);
+  transform: rotate(180deg);
+}
+.intertitle-text {
+  font-family: var(--display);
+  color: var(--cream);
+  font-size: clamp(22px, 6.2vmin, 64px);
+  line-height: 1.25;
+  max-width: 78%;
+  text-wrap: balance;
+  letter-spacing: 0.03em;
+  text-shadow: 0 0 1px var(--cream);
+}
+.intertitle-text small {
+  display: block;
+  margin-top: 0.7em;
+  font-family: var(--sans);
+  font-size: 0.42em;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.intertitle-rule {
+  display: block;
+  width: 40%;
+  height: 10px;
+  margin: 0.6em auto;
+  background:
+    linear-gradient(var(--gold), var(--gold)) center / 100% 2px no-repeat,
+    linear-gradient(45deg, transparent 35%, var(--gold) 35% 65%, transparent 65%) center / 10px 10px no-repeat;
+}
+@media (orientation: portrait) {
+  .intertitle-card { aspect-ratio: 3 / 4; width: 90vw; }
+  .intertitle-text { font-size: clamp(22px, 8.5vw, 48px); }
+}
+@keyframes intertitle-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes intertitle-flicker { 50% { opacity: 0.6; } }
+@media (prefers-reduced-motion: reduce) { .intertitle, .intertitle::after { animation: none; } }
