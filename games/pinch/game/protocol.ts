@@ -59,7 +59,14 @@ export const TIMES = {
   flashlight: 0.5,
   /** The hold (§5): reach, the lag window, a miss's cooldown, immunity after a hold, the arrest's reach. */
   holdRange: 5,
+  /**
+   * The lag window (§5, §15): `holdLag` without the action's age; with it
+   * (the party's `sentAt`), 2 × age + `holdLagExtra`, clamped to
+   * `holdLag`–`holdLagMax`.
+   */
   holdLag: 0.25,
+  holdLagExtra: 0.15,
+  holdLagMax: 0.5,
   holdCooldown: 2,
   holdImmunity: 5,
   arrestRange: 1.5,
@@ -91,6 +98,12 @@ export const TIMES = {
   noiseShow: 3,
   pingShow: 6,
 } as const;
+
+/** The hold's lag window for an action `age` seconds old when it arrived (undefined, junk: unknown, the default window). */
+export function holdWindow(age: number | undefined, t: { holdLag: number; holdLagExtra: number; holdLagMax: number } = TIMES): number {
+  if (typeof age !== "number" || !Number.isFinite(age) || age < 0) return t.holdLag;
+  return Math.min(t.holdLagMax, Math.max(t.holdLag, 2 * age + t.holdLagExtra));
+}
 
 /** The hold time for this many guards (§5): 10 s with 2, 0.8 s less per extra guard, at least 6 s. */
 export function holdTime(guards: number, t: { holdBase: number; holdPerGuard: number; holdMin: number } = TIMES): number {

@@ -50,6 +50,8 @@ const MIN_ACROSS = 10;
 const MAX_ACROSS = 24;
 /** A press this long without moving opens the marks menu (ms); a move this far (px) is a drag. */
 const LONG = 450;
+/** A tap where the thief was drawn this recently (ms) still sends `hold` (the host's window covers the lag). */
+const LATE_HOLD_MS = 1000;
 const SLOP = 10;
 
 /** One art per map (its caches). @type {{ key: string, art: ReturnType<typeof createArt> } | null} */
@@ -471,6 +473,14 @@ export function heistScreen(ctx, artKey) {
           void act({ a: "hold", target: thief.id });
           return;
         }
+      } else if (lastThief && now - lastThief.at < LATE_HOLD_MS && model.me?.role === "guard" && model.me.light === "on") {
+        // She just vanished from the picture (out of the light, behind a door): a tap where she was is still a shot;
+        // the host judges it against where she was a moment ago.
+        const s = toScreen(view, lastThief.x, lastThief.y);
+        if (Math.hypot(s.x - sx, s.y - sy) < Math.max(34, view.scale)) {
+          void act({ a: "hold", target: lastThief.id });
+          return;
+        }
       }
     }
     if (role === "guard") {
@@ -488,13 +498,9 @@ export function heistScreen(ctx, artKey) {
     }
     model.walkTo(p.x, p.y, now);
     tapMark = { x: p.x, y: p.y, at: now };
-    const seq = ++goSeq;
-    void act({ a: "go", x: Math.round(p.x * 100) / 100, y: Math.round(p.y * 100) / 100 }).then((ok) => {
-      // Refused (and no newer tap since): the prediction goes back to what the host does.
-      if (!ok && seq === goSeq) model.refused();
-    });
+    model.goSent(now);
+    void act({ a: "go", x: Math.round(p.x * 100) / 100, y: Math.round(p.y * 100) / 100 }).then((ok) => model.goDone(ok, now, performance.now()));
   }
-  let goSeq = 0;
   let tapMark = { x: 0, y: 0, at: -1e9 };
 
   // The marks menu: four crayon buttons round the finger.
@@ -779,12 +785,16 @@ export function heistScreen(ctx, artKey) {
 
   // ---------------------------------------------------------------- drawing
 
+  /** Where the thief was last drawn, and when (a tap there shortly after she vanished still holds). @type {{ id: string, x: number, y: number, at: number } | null} */
+  let lastThief = null;
+
   /** @param {number} now */
   function figures(now) {
     const me = model.me;
     /** @type {Figure[]} */
     const list = [];
     for (const o of model.others(now)) {
+      if (o.role === "thief") lastThief = { id: o.id, x: o.x, y: o.y, at: now };
       list.push({
         id: o.id, role: o.role, x: o.x, y: o.y, facing: o.facing, moving: o.moving, walk: o.walk, light: o.role === "guard" && o.light,
         held: o.held, sack: o.sack ?? 0, name: ctx.nameOf(o.id), cuffed: o.role === "thief" && !!model.pub?.arrest,

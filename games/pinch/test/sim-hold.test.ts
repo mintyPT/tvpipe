@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { holdTime } from "../game/protocol.ts";
+import { holdTime, holdWindow } from "../game/protocol.ts";
 import { Heist } from "../game/sim.ts";
 import { doorMap, kinds, kitEstate, kitHeist, openMap, put, steps } from "./sim-kit.ts";
 
@@ -261,4 +261,32 @@ test("frozen in a hold: the holder may only mark (and keep or drop the light), t
   assert.equal(h.peekHold(), null);
   assert.equal(h.go("G", 2.5, 2.5), null);
   assert.equal(h.go("T", 12.5, 3.5), null);
+});
+
+test("the lag window grows with the action's age: 2 × age + 150 ms, 250–500 ms", () => {
+  assert.equal(holdWindow(undefined), 0.25);
+  assert.equal(holdWindow(NaN), 0.25);
+  assert.equal(holdWindow(-1), 0.25);
+  assert.equal(holdWindow(0), 0.25);
+  assert.ok(Math.abs(holdWindow(0.15) - 0.45) < 1e-9);
+  assert.equal(holdWindow(0.3), 0.5);
+  assert.equal(holdWindow(5), 0.5);
+  /** The thief leaves the cone; the hold arrives `after` steps later, `age` seconds old (null: no sentAt). */
+  const exit = (after: number, age: number | null) => {
+    const h = setup(9, 3);
+    put(h, "T", 5, 1); // out of the cone from now on
+    steps(h, after);
+    return age === null ? h.hold("G") : h.act("G", { a: "hold" }, { age });
+  };
+  // 150 ms each way: the guard's picture is ~400 ms behind; the window is 450 ms
+  assert.equal(exit(8, 0.15), null, "a fair late hold at the exit is taken");
+  assert.equal(exit(8, null), "notInLight", "without sentAt: 250 ms");
+  assert.equal(exit(5, null), null);
+  assert.equal(exit(6, null), "notInLight");
+  assert.equal(exit(9, 0.15), null);
+  assert.equal(exit(10, 0.15), "notInLight");
+  // never more than 500 ms, however old
+  assert.equal(exit(10, 2), null);
+  assert.equal(exit(11, 2), "notInLight", "older than 500 ms is refused");
+  assert.equal(exit(11, 0.4), "notInLight");
 });

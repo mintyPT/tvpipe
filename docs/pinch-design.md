@@ -149,8 +149,10 @@ it.
 1. **Hold** (the shot): a guard with the flashlight on taps the thief
    (or the Hold button, which shows while the thief is in the cone) when
    the thief is in the guard's cone, within 5 tiles and in sight. The
-   host checks the conditions against the positions of the last 250 ms
-   (the phone's lag must not eat a fair shot). A miss costs 2 s before
+   host checks the conditions against the positions of a recent window
+   (the phone's lag must not eat a fair shot): 2 × the action's age
+   (from its `sentAt`) + 150 ms, at least 250 ms and at most 500 ms
+   (§15). A miss costs 2 s before
    the next try.
 2. **Held**: the thief is frozen for the hold time: **10 s** with 2
    guards, 0.8 s less per extra guard (6 s with 7). The holder is frozen
@@ -453,3 +455,29 @@ through the tunnel walking and holding (`test/live/lag.ts`): the time
 from a tap to the figure moving on the host, how far the phone's
 prediction is off, and how often a fair hold (by the phone's picture)
 is refused. The numbers decide the 250 ms window and the speeds.
+
+Measured (two phones and a bot in headless Chrome on one Mac, a thief
+walking across the cone's edge, the guard tapping when his phone shows
+her in the cone: on entry and in the last moment before she leaves;
+35 s each, about ten holds tried, the hold cut to 1.5 s so tries come
+often):
+
+| | local | local, +150 ms each way | tunnel |
+|---|---|---|---|
+| tap → the go at the host | 1 ms | 156 ms | 22 ms (p95 61) |
+| tap → the phone's frames show the move | 67 ms (p95 102) | 350 ms (p95 407) | 102 ms (p95 168) |
+| prediction vs the host, walking (mean/p95/max tiles) | 0.23/0.38/0.78 | 0.29/0.44/0.56 | 0.14/0.32/0.48 |
+| holds the host took (entry, exit) | 6/6, 4/4 | 1/1, 0/8 | 6/6, 3/3 |
+| window a hold needed (p95/max) | 36/36 ms | 388/388 ms | 69/69 ms |
+
+On these networks 250 ms is plenty; at 150 ms each way every exit shot
+is refused (notInLight): the guard's picture of the others is a frame
+and the interpolation (about 150 ms) behind the frames, and the frames
+and the tap each cost the one-way time. So the window counts the
+phone's lag: from the action's `sentAt` (the party's `ActionInfo`),
+2 × (received − sentAt) + 150 ms, at least 250 ms and at most 500 ms.
+This is what runs: game.ts passes each action's age to the sim, which
+checks a hold over `holdWindow(age)` (protocol.ts) and keeps 700 ms of
+positions.
+The speeds stay (3.5 tiles/s): the prediction is off by less than half
+a tile at p95 even with the delay, and the figure moves at the tap.

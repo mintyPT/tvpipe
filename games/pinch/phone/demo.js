@@ -256,6 +256,9 @@ export function demoClient(q) {
 
   /** @type {import("../game/views.ts").SettingsView} */
   const settings = { length, rounds: 1, late: "wait" };
+  /** Players left out of this phone's frames until then (ms): `client.hide(id, ms)`, for tests (out of the light, behind a door). @type {Map<string, number>} */
+  const hidden = new Map();
+  client.hide = (/** @type {string} */ id, /** @type {number} */ ms) => hidden.set(id, Date.now() + ms);
   let roomLang = lang;
   /** @type {number | null} */
   let deadline = phase0 === "briefing" ? Date.now() + 20_000 : phase0 === "scores" ? Date.now() + 8000 : null;
@@ -523,7 +526,7 @@ export function demoClient(q) {
     for (let i = 0; i < n; i++) light[i] = seen[i] ? (sight.light[i] ?? 0) : 0;
     const at = (/** @type {number} */ x, /** @type {number} */ y) => !!seen[Math.floor(y) * W + Math.floor(x)];
     const others = bodies
-      .filter((b) => b !== meBody && at(b.x, b.y))
+      .filter((b) => b !== meBody && at(b.x, b.y) && !((hidden.get(b.id) ?? 0) > Date.now()))
       .map((b) => ({
         id: b.id, role: b.role, x: r2(b.x), y: r2(b.y), facing: Math.round(b.angle), moving: b.moving, light: b.light === "on", held: b.frozen,
         ...(b.role === "thief" ? { sack: b.slots.length } : {}),

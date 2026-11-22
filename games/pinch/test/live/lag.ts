@@ -6,8 +6,11 @@
  * (a drag from his figure) so that the cone's edge lies on Anna; then
  * Anna walks back and forth across the edge by taps, pausing at each
  * end, and Ben taps her (a hold) when his phone shows her in the cone:
- * alternately the moment she comes in ("entry") and the moment before
- * she leaves ("exit", the worst fair shot). Measured:
+ * the moment she comes in ("entry") and the moment before she leaves
+ * ("exit", the worst fair shot). His trigger runs in his page (pointer
+ * events on the map): headless Chrome's touch input through DevTools
+ * lags 100–300 ms (the "CDP input" column), Anna's taps measure from
+ * her page's pointerup. Measured:
  *
  * - tap → moved: from Anna's tap (standing) to the first frame on her
  *   phone whose position differs; and the tap's way to the host (`go`);
@@ -172,8 +175,18 @@ const LAG_INIT = `(() => {
 })();`;
 
 /** In the guard's page: the phone's picture of the thief and the cone. */
-const PICTURE = `(async () => {
-  const S = (globalThis.__lagSight ??= await import("/game/sight.js"));
+/**
+ * In the guard's page: the phone's picture of the thief and the cone
+ * (`__lagPic()`), and the trigger (`__lagG`): every 10 ms, while `on`, a
+ * tap on her (pointer events on the map, as a finger's) the moment the
+ * picture shows her in the cone in range and in sight ("entry") and the
+ * moment before she leaves it ("exit"), at most one a second.
+ */
+const GUARD_INIT = `(async () => {
+  globalThis.__lagSight = await import("/game/sight.js");
+  globalThis.__lagPic = () => {
+  const S = globalThis.__lagSight;
+  if (!S) return null;
   const m = globalThis.pinchHeist;
   if (!m || !m.frame || !m.view || document.body.dataset.phase !== "heist") return null;
   const me = m.frame.me;
@@ -205,6 +218,25 @@ const PICTURE = `(async () => {
     soon: cone(th.x + vx * 0.15, th.y + vy * 0.15) && m.seesTile(th.x + vx * 0.15, th.y + vy * 0.15),
     sx: r.left + (th.x - v.left) * v.scale, sy: r.top + (th.y - v.top) * v.scale,
   };
+  };
+  const G = (globalThis.__lagG = { on: false, tries: [], was: false, next: 0, walked: 0 });
+  let id = 100;
+  setInterval(() => {
+    if (!G.on) return;
+    const p = globalThis.__lagPic();
+    if (!p) return;
+    const ready = p.light === "on" && !p.hold && !p.frozen && p.cool <= 0 && Date.now() >= G.next;
+    if (ready && p.seen && p.in && (!G.was || !p.soon)) {
+      G.tries.push([Date.now(), G.was ? 1 : 0]);
+      G.next = Date.now() + 1000;
+      const c = document.querySelector(".heist canvas.map");
+      const o = { pointerId: ++id, pointerType: "touch", isPrimary: true, clientX: p.sx, clientY: p.sy, bubbles: true, cancelable: true };
+      c.dispatchEvent(new PointerEvent("pointerdown", o));
+      c.dispatchEvent(new PointerEvent("pointerup", o));
+    }
+    G.was = p.in;
+  }, 10);
+  return true;
 })()`;
 
 type Picture = { light: string; cool: number; hold: boolean; frozen: boolean; gx: number; gy: number; angle: number; seen: boolean; in: boolean; soon: boolean; x?: number; y?: number; sx?: number; sy?: number };
@@ -312,6 +344,7 @@ async function play(b: Browser, tunnel: boolean, plan: { name: string; delay: nu
     for (const [name, tab] of [["Anna", anna], ["Ben", ben]] as const) {
       await until(tab, `${name}'s heist screen`, `!!(${PHONE_STATE})`, 15_000);
     }
+    await ben.eval(GUARD_INIT);
     log("heist");
     const st = (tab: Tab) => tab.eval<PhoneState | null>(PHONE_STATE);
     const truth = () =>
@@ -394,16 +427,16 @@ async function play(b: Browser, tunnel: boolean, plan: { name: string; delay: nu
       };
       const base = Math.atan2(ty - gy, tx - gx);
       if (${JSON.stringify(mode)} === "stand") {
-        let best = null;
+        const out = [];
         for (const r of [3.8, 3.3, 4.4, 2.9]) for (const off of [0, 20, -20, 40, -40, 60, -60, 90, -90, 120, -120, 180]) {
           const a = base + (off * Math.PI) / 180;
           const x = gx + Math.cos(a) * r, y = gy + Math.sin(a) * r;
           if (!los(x, y)) continue;
           const len = walk(x, y);
           if (len === Infinity || len > 8) continue;
-          if (!best || len < best.len) best = { x, y, len };
+          if (!out.some((o) => Math.hypot(o.x - x, o.y - y) < 1.5)) out.push({ x, y, len });
         }
-        return best;
+        return out.sort((a, b) => a.len - b.len).slice(0, 4);
       }
       const reach = (dx, dy) => {
         for (const k of [2.6, 2.2, 1.8, 1.4, 1, 0.6]) {
@@ -425,16 +458,19 @@ async function play(b: Browser, tunnel: boolean, plan: { name: string; delay: nu
       return best;
     })()`;
     waiting = "the thief's stand";
-    const stand = await anna.eval<{ x: number; y: number; len: number } | null>(GEO("stand", t0.gx, t0.gy));
-    if (!stand) notes.push("no stand 3–4.5 tiles from the guard in his sight");
-    else {
+    type Line = { a: { x: number; y: number }; b: { x: number; y: number }; len: number };
+    let geo: Line = (await anna.eval<Line>(GEO("line", t0.gx, t0.gy)))!;
+    const stands = (await anna.eval<{ x: number; y: number; len: number }[]>(GEO("stand", t0.gx, t0.gy))) ?? [];
+    if (!stands.length) notes.push("no stand 3–4.5 tiles from the guard in his sight");
+    for (const stand of stands) {
       const s = await st(anna);
       if (s) await tap(anna, toPx(s, stand.x, stand.y));
       await sleep(400);
-      await until(anna, "the thief at her stand", `!globalThis.pinchHeist.path && !globalThis.pinchHeist.frame.me.moving`, 6000).catch(() => notes.push("the thief did not reach her stand"));
+      await until(anna, "the thief at her stand", `!globalThis.pinchHeist.path && !globalThis.pinchHeist.frame.me.moving`, 6000).catch(() => notes.push("the thief did not reach a stand"));
       await sleep(300);
+      geo = (await anna.eval<Line>(GEO("line", t0.gx, t0.gy)))!;
+      if (geo.len >= 2.4) break;
     }
-    const geo = (await anna.eval<{ a: { x: number; y: number }; b: { x: number; y: number }; len: number }>(GEO("line", t0.gx, t0.gy)))!;
     const t1 = (await truth())!;
     if (geo.len < 2) notes.push(`little room to walk: ${geo.len.toFixed(1)} tiles`);
     const A = geo.a;
@@ -452,7 +488,7 @@ async function play(b: Browser, tunnel: boolean, plan: { name: string; delay: nu
       if (!s) return;
       const g = toPx(s, s.body.x, s.body.y);
       const r = (aimAngle * Math.PI) / 180;
-      await ben.drag([0, 20, 40, 60, 80].map((k) => [g.x + Math.cos(r) * k, g.y + Math.sin(r) * k] as [number, number]));
+      await ben.drag([0, 40, 80].map((k) => [g.x + Math.cos(r) * k, g.y + Math.sin(r) * k] as [number, number]));
     };
     waiting = "Ben's aim";
     let aimed = 0;
@@ -473,6 +509,7 @@ async function play(b: Browser, tunnel: boolean, plan: { name: string; delay: nu
       waiting = `the ${seg.name} beat`;
       for (const tab of [anna, ben]) await tab.eval(`globalThis.__lag.delay = ${seg.delay}; true`);
       await sleep(seg.delay ? 1200 : 300);
+      await aim();
       const from = Date.now();
       const to = from + SECS * 1000;
       segments.push({ name: seg.name, delay: seg.delay, from, to });
@@ -505,48 +542,44 @@ async function play(b: Browser, tunnel: boolean, plan: { name: string; delay: nu
           await sleep(150);
         }
       })();
-      // Ben: a hold when his phone shows her in the cone; entry and exit taps by turns.
+      // Ben: the trigger in his page; here the aim, the light, and back to his place when a tap walked him.
       const guard = (async () => {
-        let kind: "entry" | "exit" = "entry";
-        let was = false;
         let wasHold = false;
-        let dbg = 0;
-        const polls = { n: 0, seen: 0, in: 0, ready: 0, dark: 0 };
+        let reaimed = 0;
+        const polls = { n: 0, seen: 0, in: 0, walked: 0 };
         guardPolls.push(polls);
+        await ben.eval(`__lagG.on = true`);
         while (!over && Date.now() < to) {
-          const p = await ben.eval<Picture | null>(PICTURE).catch(() => null);
-          if (!p) {
-            await sleep(30);
-            continue;
-          }
-          if (wasHold && !p.hold && !p.frozen) {
-            await sleep(200);
-            await aim();
-          }
-          wasHold = p.hold || p.frozen;
-          if (p.light === "off") {
-            await lightOn();
-            continue;
-          }
-          const ready = p.light === "on" && !p.hold && !p.frozen && p.cool <= 0;
+          await sleep(60);
+          const p = await ben.eval<Picture | null>(`__lagPic()`).catch(() => null);
+          if (!p) continue;
           polls.n++;
           if (p.seen) polls.seen++;
           if (p.in) polls.in++;
-          if (ready) polls.ready++;
-          if (p.light !== "on") polls.dark++;
-          const go = ready && p.seen && p.in && (kind === "entry" ? !was : !p.soon);
-          was = p.in;
-          if (process.env["LAG_DEBUG"] && p.in && kind === "exit" && Date.now() - dbg > 400) {
-            dbg = Date.now();
-            log(`  exit? ${JSON.stringify(p)}`);
+          const s = await st(ben);
+          if (s?.path && !p.hold && !p.frozen) {
+            polls.walked++;
+            await ben.eval(`__lagG.on = false`);
+            await tap(ben, toPx(s, t1.gx, t1.gy));
+            await until(ben, "Ben back at his place", `!globalThis.pinchHeist.path`, 4000).catch(() => {});
+            await aim();
+            await ben.eval(`__lagG.on = true`);
+            continue;
           }
-          if (go) {
-            tries.push({ at: Date.now(), kind });
-            await tap(ben, { x: p.sx!, y: p.sy! });
-            kind = kind === "entry" ? "exit" : "entry";
-            await sleep(100);
-          } else await sleep(12);
+          // After a hold (the host turned him to her) or any drift: aim again.
+          if ((wasHold && !p.hold && !p.frozen) || (!p.hold && !p.frozen && Math.abs(diff(p.angle, aimAngle)) > 5 && Date.now() - reaimed > 1000)) {
+            reaimed = Date.now();
+            await ben.eval(`__lagG.on = false`);
+            if (wasHold) await sleep(150);
+            await aim();
+            await ben.eval(`__lagG.on = true`);
+            wasHold = false;
+            continue;
+          }
+          wasHold = p.hold || p.frozen;
+          if (p.light === "off") await lightOn();
         }
+        await ben.eval(`__lagG.on = false`);
       })();
       await Promise.race([Promise.all([thief, guard]), sleep(SECS * 1000 + 8000)]);
       over = true;
@@ -555,6 +588,7 @@ async function play(b: Browser, tunnel: boolean, plan: { name: string; delay: nu
     waiting = "the records";
     const rec = async (tab: Tab) => tab.eval<{ frames: number[][]; track: number[][]; sent: [number, string][]; ups: number[] }>(`({ frames: __lag.frames, track: __lag.track, sent: __lag.sent, ups: __lag.ups })`);
     const ra = await rec(anna);
+    for (const [at, exit] of await ben.eval<[number, number][]>(`__lagG.tries`)) tries.push({ at, kind: exit ? "exit" : "entry" });
     const host = await win.eval<{ steps: number[][]; acts: [number, string, string, string | null][] }>(`({ steps: __L.steps, acts: __L.acts })`);
     for (const [name, tab] of [["the window", win], ["Anna", anna], ["Ben", ben]] as const) {
       for (const e of tab.errors.splice(0)) notes.push(`${name}: ${e}`);

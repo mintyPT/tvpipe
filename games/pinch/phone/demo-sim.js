@@ -78,8 +78,8 @@ export function simHost(o) {
     async act(a) {
       await wait();
       const r = h.act(o.me, a);
-      await wait();
-      return r;
+      // The answer comes back in order with the frames, as over a WebSocket.
+      return new Promise((ok) => deliver(() => ok(r)));
     },
     /** @param {number} angle */
     aim(angle) {

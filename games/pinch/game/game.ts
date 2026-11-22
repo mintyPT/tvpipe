@@ -14,7 +14,7 @@
  * screen; the tape (everything revealed) goes to screens after the heist.
  */
 
-import { Emitter, PartyError, type Json, type Party, type Player, type Sender } from "@tvpipe/party";
+import { Emitter, PartyError, type ActionInfo, type Json, type Party, type Player, type Sender } from "@tvpipe/party";
 
 import { LANGS, pickCatalogue, type Lang, type NightItem } from "./items.ts";
 import { encodeBlueprint, generate, lootCount, lootPlaces, tryEstate, type Estate } from "./map.ts";
@@ -79,8 +79,12 @@ export interface GameOptions {
   rounds?: 1 | 2 | undefined;
   minPlayers?: number | undefined;
   timings?: Partial<Timings> | undefined;
-  /** Shuffles, estate seeds, words (default Math.random). */
+  /** Shuffles, estate seeds, words (default: seeded from `seed`, else Math.random). */
   rng?: (() => number) | undefined;
+  /** A seed for the game's rng when no `rng` is given: the same seed, the same thief order and estates. */
+  seed?: number | undefined;
+  /** Test and check hook: the thief order (see {@link Pinch.thiefOrder}). */
+  thiefOrder?: readonly string[] | undefined;
 }
 
 export interface Result {
@@ -145,6 +149,13 @@ export class Pinch extends Emitter<GameEvents> {
   timings: Timings;
   /** Stop after this many rounds (tests that are not about the rotation); null: every thief turn. */
   maxRounds: number | null = null;
+  /**
+   * Test and check hook (the live and lag checks, tests): the thief order
+   * for the next game, player ids, instead of the shuffle. Ids not in the
+   * game are skipped; players it leaves out follow, shuffled. With two
+   * turns each, the order is played twice. Null: shuffled (the game).
+   */
+  thiefOrder: readonly string[] | null = null;
   readonly #rng: () => number;
   #lang: Lang;
   #length: number;
@@ -175,7 +186,12 @@ export class Pinch extends Emitter<GameEvents> {
     this.party = party;
     this.minPlayers = options.minPlayers ?? MIN_PLAYERS;
     this.timings = { ...DEFAULT_TIMINGS, ...options.timings };
-    this.#rng = options.rng ?? Math.random;
+    if (options.rng) this.#rng = options.rng;
+    else if (options.seed !== undefined) {
+      const seeded = new Rng(options.seed >>> 0);
+      this.#rng = () => seeded.float();
+    } else this.#rng = Math.random;
+    this.thiefOrder = options.thiefOrder ? [...options.thiefOrder] : null;
     this.#lang = options.lang ?? "en";
     this.#length = TIMES.lengths.includes(options.length ?? -1) ? options.length! : TIMES.length;
     this.#rounds = options.rounds ?? 1;
@@ -297,7 +313,7 @@ export class Pinch extends Emitter<GameEvents> {
       if (!this.skip()) throw new PartyError("not-now", "Nothing to skip");
       return null;
     });
-    party.handle("h", (d, from) => this.#act(d, from));
+    party.handle("h", (d, from, info) => this.#act(d, from, info));
     party.handle("resync", (_d, from) => {
       if (from.role === "player") this.#keyFor.add(from.id);
       return null;
@@ -502,7 +518,13 @@ export class Pinch extends Emitter<GameEvents> {
 
   /** The thief order: everyone once (or twice, each pass shuffled, nobody twice in a row). */
   #order(ids: string[]): string[] {
+    // Seeded from the game's rng at the start of each game (its `rng` or `seed` option).
     const rng = new Rng(Math.floor(this.#rng() * 2 ** 32));
+    const fixed = this.thiefOrder ? [...new Set(this.thiefOrder)].filter((id) => ids.includes(id)) : null;
+    if (fixed) {
+      const pass = [...fixed, ...rng.shuffle(ids.filter((id) => !fixed.includes(id)))];
+      return this.#rounds === 2 ? [...pass, ...pass] : pass;
+    }
     const out = rng.shuffle(ids);
     if (this.#rounds === 2) {
       const again = rng.shuffle(ids);
@@ -862,14 +884,16 @@ export class Pinch extends Emitter<GameEvents> {
   }
 
   /** `h`: a heist action from a phone. */
-  #act(d: Json, from: Sender): null {
+  #act(d: Json, from: Sender, info?: ActionInfo): null {
     const r = this.#round;
     const heist = r?.heist;
     if (from.role !== "player") throw refusal("role");
     if (!r || !heist || this.#phase !== "heist" || heist.result || !r.cast.includes(from.id)) throw refusal("over");
     const a: Action | null = parseAction(d);
     if (!a) throw refusal("invalid");
-    const why = heist.act(from.id, a);
+    // how old the action is (the phone's lag): widens the hold's window (§5, §15)
+    const age = info && Number.isFinite(info.sentAt) ? Math.max(0, (this.party.now() - info.sentAt) / 1000) : undefined;
+    const why = heist.act(from.id, a, age === undefined ? undefined : { age });
     if (why) throw refusal(why);
     return null;
   }

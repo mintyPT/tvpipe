@@ -21,7 +21,9 @@
  *   ahead along the path from there;
  * - the host standing, frozen in a hold or busy (picking, taking,
  *   climbing): stand where it stands (a `go` still on its way excepted);
- * - a refused `go` ({@link Heist.refused}): back to the host's errand.
+ * - a `go` on its way (sent, not yet answered: {@link Heist.goSent},
+ *   {@link Heist.goDone}): the frames still show the errand before it;
+ *   refused: back to the host's errand.
  * Jumps of the simulated body are never drawn: the drawn position
  * ({@link Heist.at}) carries the difference as an offset that fades in
  * ~150 ms, so prediction and correction never fight over the body.
@@ -112,15 +114,19 @@ export class Heist {
     this.placed = false;
     /** @type {Path | null} */ this.path = null;
     /** @type {{ x: number, y: number } | null} */ this.goal = null;
-    this.goSent = -1e9;
+    /** `go`s sent and not answered yet, and when the last one left (ms). */
+    this.goPending = 0;
+    this.goSentAt = -1e9;
     this.waitDoor = -1;
     this.waitSince = 0;
     this.acc = 0;
     this.walked = 0;
     this.moving = false;
     this.lead = LEAD.first;
-    /** Corrections so far, by kind (tests, debugging). @type {Record<string, number>} */
+    /** Corrections so far, by kind, and the last few with why (tests, debugging). @type {Record<string, number>} */
     this.fixes = { resync: 0, stand: 0, snap: 0 };
+    /** @type {{ kind: string, t: number, why: string, off: number }[]} */ this.fixLog = [];
+    this.why = "";
     /** @type {{ at: number, x: number, y: number }[]} */ this.history = [];
     /** A standing guard's aim, set by dragging (degrees), and until when it holds over the host's. */
     this.aim = 90;
@@ -252,7 +258,6 @@ export class Heist {
    * @param {number} x @param {number} y @param {number} now
    */
   walkTo(x, y, now) {
-    this.goSent = now;
     if (this.me?.frozen) return false;
     const path = this.#pathTo(x, y);
     if (!path || !path.points.length) return false;
@@ -263,11 +268,36 @@ export class Heist {
     return true;
   }
 
-  /** The host refused the `go`: back to what the host does (the next frame puts the figure there). */
-  refused() {
-    this.path = null;
-    this.goal = null;
-    this.goSent = -1e9;
+  /**
+   * A `go` leaves (the page calls this as it sends one). Until the host's
+   * answer is back, frames may still show the errand before it: the host's
+   * answer comes on the same ordered connection before any frame made
+   * after it, so the answer, not a guess of the round trip, ends the wait.
+   * @param {number} now
+   */
+  goSent(now) {
+    this.goPending++;
+    this.goSentAt = now;
+  }
+
+  /**
+   * The host answered a `go` sent at `sentAt`: done (`ok`), or refused
+   * (back to what the host does; the next frame puts the figure there,
+   * unless a newer `go` is on its way). The round trip seeds the lead.
+   * @param {boolean} ok @param {number} sentAt @param {number} now
+   */
+  goDone(ok, sentAt, now) {
+    this.goPending = Math.max(0, this.goPending - 1);
+    if (ok) this.lead = clamp(this.lead + ((now - sentAt) / 1000 - this.lead) * 0.5, LEAD.min, LEAD.max);
+    else if (this.goPending === 0) {
+      this.path = null;
+      this.goal = null;
+    }
+  }
+
+  /** Whether a `go` is on its way (bounded: a lost answer stops counting after 3 s). @param {number} now */
+  pending(now) {
+    return this.goPending > 0 && now - this.goSentAt < 3000;
   }
 
   stop() {
@@ -284,11 +314,12 @@ export class Heist {
       this.placed = true;
       return;
     }
-    // A `go` is on its way until about a round trip has passed (and a little).
-    const quiet = now - this.goSent > Math.max(500, this.lead * 2000 + 250);
+    // A `go` on its way: the host's frames still show what it did before.
+    const quiet = !this.pending(now);
     const busy = me.busy && me.busy.kind !== "door";
 
     // Frozen in a hold, or busy picking, taking, climbing: stand where the host stands.
+    this.why = me.frozen ? "frozen" : busy ? `busy ${me.busy?.kind}` : "standing";
     if (me.frozen || busy) {
       if (me.frozen || quiet) {
         this.path = null;
@@ -309,6 +340,8 @@ export class Heist {
     const g = me.goal && fin(me.goal.x) && fin(me.goal.y) ? me.goal : null;
     const same = !!(g && this.goal && dist(g, this.goal) < 0.75);
     if (!same && !quiet) return; // the host still walks the last errand; the new one is on its way
+    // Arrived first (the prediction runs a lead ahead): the host follows to the same place.
+    if (!this.path && same && this.goal && dist(this.body, this.goal) < 0.3) return;
     if (this.path && same) {
       // On the track one walked? Then all is well, and how far back it is says the lead.
       let best = Infinity;
@@ -330,7 +363,8 @@ export class Heist {
       }
       // Waiting at the same door as the host: fine too.
       if (me.busy?.kind === "door" && this.waitDoor === me.busy.target && dist(host, this.body) < 0.8) return;
-    }
+      this.why = `off track ${best.toFixed(2)}${me.busy ? ` busy ${me.busy.kind}` : ""}${me.moving ? "" : " standing"}`;
+    } else this.why = !this.path ? "no path" : `other goal ${g ? dist(g, /** @type {{ x: number, y: number }} */ (this.goal)).toFixed(2) : "none"}`;
     this.#fix("resync", host, g, fin(me.facing) ? me.facing : undefined, !me.busy);
   }
 
@@ -343,6 +377,8 @@ export class Heist {
     this.fixes[kind] = (this.fixes[kind] ?? 0) + 1;
     // The simulated body moves; the drawn figure stays where it was and glides after it (the offset).
     const was = this.at;
+    this.fixLog.push({ kind, t: this.frame?.t ?? 0, why: this.why, off: Math.round(dist(was, host) * 100) / 100 });
+    if (this.fixLog.length > 30) this.fixLog.shift();
     this.body.x = host.x;
     this.body.y = host.y;
     if (fin(angle)) this.body.angle = /** @type {number} */ (angle);
@@ -409,6 +445,7 @@ export class Heist {
       while (this.acc >= DT && this.path) {
         this.acc -= DT;
         const ev = step(this.body, this.path, DT, this.world);
+        // Arrived (the goal stays: the host may still be on its way there) or stuck.
         if (ev?.kind === "arrived" || ev?.kind === "stuck") this.path = null;
         else if (ev?.kind === "door") {
           // At a closed door: it opens after the door pause (the host's says so a little later; a locked one the thief waits out).

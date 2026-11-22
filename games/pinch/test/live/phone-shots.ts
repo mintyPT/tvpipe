@@ -60,10 +60,11 @@ type Step = (tab: Tab, size: { width: number; height: number }) => Promise<void>
 const touch = (tab: Tab, type: string, x: number, y: number) =>
   tab.send("Input.dispatchTouchEvent", { type, touchPoints: type === "touchEnd" ? [] : [{ x, y }] });
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** A tap: down and up sent together, so a slow DevTools round trip on a loaded machine cannot make it a long press. */
+const tapPx = (tab: Tab, x: number, y: number) => Promise.all([touch(tab, "touchStart", x, y), touch(tab, "touchEnd", x, y)]);
 /** A tap at a share of the screen. */
 const tapAt = (fx: number, fy: number): Step => async (tab, s) => {
-  await touch(tab, "touchStart", s.width * fx, s.height * fy);
-  await touch(tab, "touchEnd", s.width * fx, s.height * fy);
+  await tapPx(tab, s.width * fx, s.height * fy);
 };
 /** A long press (the marks menu), the finger kept down. */
 const pressAt = (fx: number, fy: number): Step => async (tab, s) => {
@@ -138,7 +139,7 @@ async function gestures(browser: Browser): Promise<string[]> {
     return tab;
   };
   const model = <T>(tab: Tab, expr: string) => tab.eval<T>(`(() => { const m = globalThis.pinchHeist; return ${expr}; })()`);
-  const me = (tab: Tab) => model<{ x: number; y: number }>(tab, "(() => { const p = m.body; return { x: p.x, y: p.y }; })()");
+  const me = (tab: Tab) => model<{ x: number; y: number }>(tab, "(() => { const p = m.at; return { x: p.x, y: p.y }; })()");
   /** Where a tile is on the screen. */
   const screenOf = (tab: Tab, x: string, y: string) =>
     tab.eval<{ x: number; y: number }>(`(() => { const m = globalThis.pinchHeist; const c = document.querySelector("canvas.map"); const r = c.getBoundingClientRect(); const v = m.view; return { x: (${x} - v.left) * v.scale + r.left, y: (${y} - v.top) * v.scale + r.top }; })()`);
@@ -151,8 +152,7 @@ async function gestures(browser: Browser): Promise<string[]> {
   let tab = await open("demo=guard&scene=hold");
   try {
     const th = await screenOf(tab, "m.frame.others.find(o => o.role === 'thief').x", "m.frame.others.find(o => o.role === 'thief').y");
-    await touch(tab, "touchStart", th.x, th.y);
-    await touch(tab, "touchEnd", th.x, th.y);
+    await tapPx(tab, th.x, th.y);
     await sleep(600);
     check(await model<boolean>(tab, "(m.pub?.holds?.length ?? 0) === 1"), "tap the thief holds");
     // Holding, a guard still marks: long press, release, tap Look.
@@ -162,12 +162,30 @@ async function gestures(browser: Browser): Promise<string[]> {
     await sleep(700);
     await touch(tab, "touchEnd", gs.x, gs.y);
     const look = await tab.eval<{ x: number; y: number }>(`(() => { const r = document.querySelector(".radial .look").getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
-    await touch(tab, "touchStart", look.x, look.y);
-    await touch(tab, "touchEnd", look.x, look.y);
+    await tapPx(tab, look.x, look.y);
     await sleep(500);
     check(await model<boolean>(tab, "(m.pub?.marks ?? []).some(k => k.kind === 'look')"), "holding, a guard still marks");
   } finally {
     tab.close();
+  }
+
+  // A guard: the thief just vanished from the picture (out of the light, a door): a tap where she was still holds
+  // within a second; later it walks.
+  for (const [wait, holds] of [[350, true], [1400, false]] as const) {
+    tab = await open("demo=guard&scene=hold");
+    try {
+      const th = await screenOf(tab, "m.others(performance.now()).find(o => o.role === 'thief').x", "m.others(performance.now()).find(o => o.role === 'thief').y");
+      await tab.eval(`globalThis.pinchDemo.hide("p2", 6000)`);
+      await sleep(wait);
+      const gone = await model<boolean>(tab, "!m.others(performance.now()).some(o => o.role === 'thief')");
+      await tapPx(tab, th.x, th.y);
+      await sleep(600);
+      const held = await model<boolean>(tab, "(m.pub?.holds?.length ?? 0) === 1");
+      const walks = await model<boolean>(tab, "!!m.path || !!m.frame.me.goal || m.frame.me.moving");
+      check(gone && held === holds && walks === !holds, `a tap where the thief vanished ${wait} ms ago ${holds ? "holds" : "walks"} (gone ${gone}, held ${held}, walks ${walks})`);
+    } finally {
+      tab.close();
+    }
   }
 
   // A guard: aim by dragging from oneself; a refusal with the light off.
@@ -191,35 +209,31 @@ async function gestures(browser: Browser): Promise<string[]> {
     await sleep(700);
     await touch(tab, "touchEnd", hs.x, hs.y);
     const post = await tab.eval<{ x: number; y: number }>(`(() => { const r = document.querySelector(".radial .post").getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
-    await touch(tab, "touchStart", post.x, post.y);
-    await touch(tab, "touchEnd", post.x, post.y);
+    await tapPx(tab, post.x, post.y);
     await sleep(500);
     check(await model<boolean>(tab, "(m.pub?.marks ?? []).some(k => k.kind === 'post')"), `long press, then tap Post (${await tab.eval("document.querySelector('.heist .toast').textContent")})`);
     // Removing it: a tap on one's own mark opens the pop (and does not walk); a tap elsewhere closes it, Remove removes it.
     const markAt = () => screenOf(tab, "m.pub.marks.find(k => k.kind === 'post').x", "m.pub.marks.find(k => k.kind === 'post').y");
     const popShown = () => tab.eval<boolean>(`!document.querySelector(".heist .markpop").hidden`);
     let ms = await markAt();
-    await touch(tab, "touchStart", ms.x, ms.y);
-    await touch(tab, "touchEnd", ms.x, ms.y);
+    await tapPx(tab, ms.x, ms.y);
     await sleep(200);
     const walked = await model<boolean>(tab, "!!m.path");
     const shown = await popShown();
-    await touch(tab, "touchStart", 60, 500);
-    await touch(tab, "touchEnd", 60, 500);
+    await tapPx(tab, ms.x - 60, ms.y + 40);
     await sleep(300);
     const closed = !(await popShown()) && (await model<boolean>(tab, "(m.pub?.marks ?? []).some(k => k.kind === 'post')"));
     check(shown && !walked && closed, `a tap on one's own mark offers Remove without walking; a tap elsewhere keeps the mark (shown ${shown}, walked ${walked}, closed ${closed})`);
-    await sleep(1500);
+    // The tap that closed the pop walked: tap the mark again once standing (the pop follows its mark as the map moves).
+    await tab.until("!globalThis.pinchHeist.path && !globalThis.pinchHeist.frame.me.moving", 20000);
     ms = await markAt();
-    await touch(tab, "touchStart", ms.x, ms.y);
-    await touch(tab, "touchEnd", ms.x, ms.y);
+    await tapPx(tab, ms.x, ms.y);
     await sleep(200);
-    await tab.screenshot(join(out, "gesture-remove-mark-390x844.png"));
+    if (!(await popShown())) console.log("  (the pop did not open: mark at", ms, await model<string>(tab, "JSON.stringify({ at: m.at, marks: m.pub?.marks?.length, view: m.view })"), ")");
     const rm = await tab.eval<{ x: number; y: number }>(`(() => { const r = document.querySelector(".markpop .remove").getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
-    await touch(tab, "touchStart", rm.x, rm.y);
-    await touch(tab, "touchEnd", rm.x, rm.y);
+    await tapPx(tab, rm.x, rm.y);
     await sleep(500);
-    check(!(await model<boolean>(tab, "(m.pub?.marks ?? []).some(k => k.kind === 'post')")), "Remove removes one's own mark");
+    check(!(await model<boolean>(tab, "(m.pub?.marks ?? []).some(k => k.kind === 'post')")), `Remove removes one's own mark (the pop at ${Math.round(rm.x)},${Math.round(rm.y)})`);
     // The tap that closed the pop walked: aim once standing.
     await tab.until("!globalThis.pinchHeist.path && !globalThis.pinchHeist.frame.me.moving", 20000);
     await sleep(300);
@@ -254,8 +268,7 @@ async function gestures(browser: Browser): Promise<string[]> {
     await tab.eval(`document.querySelector(".heist .tool").click()`);
     await sleep(100);
     const armed = await tab.eval<boolean>(`!document.querySelector(".heist .hint").hidden`);
-    await touch(tab, "touchStart", 195, 300);
-    await touch(tab, "touchEnd", 195, 300);
+    await tapPx(tab, 195, 300);
     await sleep(1600);
     check(armed && (await model<number>(tab, "m.frame.me.firecrackers")) === 1, "the firecracker button arms, a tap throws");
   } finally {
@@ -298,8 +311,7 @@ async function prediction(browser: Browser, role: string, net: string): Promise<
     if (!plan) return [`prediction ${role} ${net}: no closed door near`];
     const tapTile = async (p: { x: number; y: number }) => {
       const s = await tab.eval<{ x: number; y: number }>(`(() => { const m = globalThis.pinchHeist, v = m.view; return { x: (${p.x} - v.left) * v.scale, y: (${p.y} - v.top) * v.scale }; })()`);
-      await touch(tab, "touchStart", s.x, s.y);
-      await touch(tab, "touchEnd", s.x, s.y);
+      await tapPx(tab, s.x, s.y);
     };
     // Record every animation frame: the drawn figure, the host's last position and whether it walks.
     await tab.eval(`(() => {
@@ -314,6 +326,7 @@ async function prediction(browser: Browser, role: string, net: string): Promise<
     type Rec = { t: number; x: number; y: number; hx: number; hy: number; hm: boolean; ft: number; busy: boolean };
     const rec = await tab.eval<Rec[]>("globalThis.pinchRec");
     const fixes = await tab.eval<Record<string, number>>("globalThis.pinchHeist.fixes");
+    const lead = await tab.eval<number>("globalThis.pinchHeist.lead");
     // Where the host stops next, per sample (the prediction gets there first: no parking).
     const stop: { x: number; y: number }[] = new Array(rec.length);
     let ahead = rec.at(-1)!;
@@ -341,9 +354,11 @@ async function prediction(browser: Browser, role: string, net: string): Promise<
     const end = rec.at(-1)!;
     const off = Math.hypot(end.x - end.hx, end.y - end.hy);
     const gaps = rec.map((r) => r.ft).filter((t, k, a) => k > 0 && t !== a[k - 1]).map((t, k, a) => (k ? t - a[k - 1]! : 0)).slice(1);
-    const ok = parked < 450 && jump < 0.35 && apart < 3 && off < 0.3 && !fixes["snap"];
-    const what = `prediction ${role} ${net}: parked ${Math.round(parked)} ms, step ≤ ${jump.toFixed(2)} tiles/frame, apart ≤ ${apart.toFixed(2)}, end off ${off.toFixed(2)}, fixes ${JSON.stringify(fixes)}, frame gaps ${Math.min(...gaps).toFixed(2)}–${Math.max(...gaps).toFixed(2)} s`;
+    // Apart: the prediction runs a round trip ahead of the host's frames, plus a door pause, plus a little.
+    const ok = parked < 450 && jump < 0.35 && apart < 1.5 + lead * 3.5 && off < 0.3 && !fixes["snap"];
+    const what = `prediction ${role} ${net}: parked ${Math.round(parked)} ms, step ≤ ${jump.toFixed(2)} tiles/frame, apart ≤ ${apart.toFixed(2)} (lead ${lead.toFixed(2)} s), end off ${off.toFixed(2)}, fixes ${JSON.stringify(fixes)}, frame gaps ${Math.min(...gaps).toFixed(2)}–${Math.max(...gaps).toFixed(2)} s`;
     console.log(`${ok ? "✓" : "✗"} ${what}`);
+    if (!ok || process.env["PINCH_DEBUG"]) console.log(JSON.stringify(await tab.eval("globalThis.pinchHeist.fixLog")));
     if (!ok) fails.push(what);
     if (tab.errors.length) fails.push(...tab.errors);
   } finally {

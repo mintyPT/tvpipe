@@ -79,4 +79,32 @@ suite("rounds", { concurrency: true }, () => {
       close();
     }
   });
+
+  test("the thief order hook: a fixed order (unknown ids skipped, the rest after it); the same seed, the same shuffle", async () => {
+    const { g, party, players, ended, close } = await game(4, { seed: 21, maxRounds: 4, timings: { heist: 3 } });
+    try {
+      const ids = party.players.map((p) => p.id);
+      g.thiefOrder = [ids[2]!, "nobody", ids[0]!];
+      await players[0]!.client.act("start");
+      const result = await ended;
+      const thieves = result.history.map((h) => h.thief);
+      assert.deepEqual(thieves.slice(0, 2), [ids[2], ids[0]]);
+      assert.deepEqual(new Set(thieves.slice(2)), new Set([ids[1], ids[3]]));
+    } finally {
+      close();
+    }
+    // Shuffled from the game's rng: two games with the same seed pick the same order.
+    const orders: string[][] = [];
+    for (let k = 0; k < 2; k++) {
+      const { g, players, ended, close } = await game(4, { seed: 33, maxRounds: 4, timings: { heist: 3 } });
+      try {
+        await players[0]!.client.act("start");
+        await ended;
+        orders.push(g.history.map((h) => g.party.player(h.thief)!.name));
+      } finally {
+        close();
+      }
+    }
+    assert.deepEqual(orders[0], orders[1]);
+  });
 });

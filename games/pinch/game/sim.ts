@@ -50,6 +50,7 @@ import {
   CLOSE_PASS,
   EVENTS_KEPT,
   holdTime,
+  holdWindow,
   parseAction,
   TAPE_HZ,
   TIMES,
@@ -424,9 +425,9 @@ export class Heist {
    * A phone's action (protocol.ts `Action`, untrusted): null when done
    * (or started), else why not. `aim` is never refused.
    */
-  act(id: string, raw: unknown): Refusal | null {
+  act(id: string, raw: unknown, info?: { age?: number }): Refusal | null {
     try {
-      return this.#act(id, raw);
+      return this.#act(id, raw, info?.age);
     } catch {
       this.#faults++;
       return "invalid";
@@ -446,7 +447,10 @@ export class Heist {
   firecracker(id: string, x: number, y: number): Refusal | null { return this.act(id, { a: "firecracker", x, y }); }
   flashlight(id: string, on: boolean): Refusal | null { return this.act(id, { a: "flashlight", on }); }
   aim(id: string, angle: number): void { this.act(id, { a: "aim", angle }); }
-  hold(id: string, target?: string): Refusal | null { return this.act(id, target === undefined ? { a: "hold" } : { a: "hold", target }); }
+  /** `age`: seconds from the phone's sending to now (the party's `sentAt`), widening the lag window (protocol.ts `holdWindow`). */
+  hold(id: string, target?: string, age?: number): Refusal | null {
+    return this.act(id, target === undefined ? { a: "hold" } : { a: "hold", target }, age === undefined ? undefined : { age });
+  }
   wriggle(id: string): Refusal | null { return this.act(id, { a: "wriggle" }); }
   mark(id: string, kind: MarkKind, x: number, y: number, angle?: number): Refusal | null {
     return this.act(id, angle === undefined ? { a: "mark", kind, x, y } : { a: "mark", kind, x, y, angle });
@@ -490,7 +494,7 @@ export class Heist {
     if (!this.over) this.#left = 0;
   }
 
-  #act(id: string, raw: unknown): Refusal | null {
+  #act(id: string, raw: unknown, age: number | undefined): Refusal | null {
     const a = parseAction(raw);
     if (!a || !ACTION_KINDS.includes(a.a)) return "invalid";
     const p = this.#actors.get(id);
@@ -504,7 +508,7 @@ export class Heist {
     const h = this.#hold;
     if (h?.thief === p && a.a !== "wriggle") return "held";
     if (h?.guard === p && a.a !== "mark" && a.a !== "unmark" && a.a !== "flashlight") return "holding";
-    if (a.a === "hold") return this.#tryHold(p, a.target);
+    if (a.a === "hold") return this.#tryHold(p, a.target, holdWindow(age, this.times));
     const plan = this.#plan(p, a);
     if (typeof plan === "string") return plan;
     plan();
@@ -804,13 +808,13 @@ export class Heist {
   }
 
   /** The shot over the lag window: ok, or the best reason why not. */
-  #fair(g: Actor): "ok" | "notInLight" | "tooFar" | "notInSight" {
+  #fair(g: Actor, lag: number): "ok" | "notInLight" | "tooFar" | "notInSight" {
     const gi = this.#guards.indexOf(g);
     let why: "notInLight" | "tooFar" | "notInSight" = "notInLight";
     const rank = { notInLight: 0, tooFar: 1, notInSight: 2 };
     for (let k = this.#history.length - 1; k >= 0; k--) {
       const e = this.#history[k]!;
-      if (e.t < this.#t - this.times.holdLag - 1e-6) break;
+      if (e.t < this.#t - lag - 1e-6) break;
       const r = this.#shot(e, gi);
       if (r === "ok") return "ok";
       if (rank[r] > rank[why]) why = r;
@@ -818,8 +822,8 @@ export class Heist {
     return why;
   }
 
-  #tryHold(g: Actor, target: string | undefined): Refusal | null {
-    const r = this.#holdCheck(g, target);
+  #tryHold(g: Actor, target: string | undefined, lag: number): Refusal | null {
+    const r = this.#holdCheck(g, target, lag);
     if (r === null || r === "notInLight" || r === "tooFar" || r === "notInSight") {
       this.#tapeOnly(r === null ? { k: "holdTry", guard: g.id, ok: true } : { k: "holdTry", guard: g.id, ok: false, why: r });
     }
@@ -833,7 +837,7 @@ export class Heist {
     return null;
   }
 
-  #holdCheck(g: Actor, target: string | undefined): Refusal | null {
+  #holdCheck(g: Actor, target: string | undefined, lag: number): Refusal | null {
     if (g.role !== "guard") return "role";
     if (target !== undefined && target !== this.#thief.id) return "invalid";
     if (this.#hold?.guard === g) return "holding";
@@ -841,7 +845,7 @@ export class Heist {
     if (g.light !== 2) return "lightOff";
     if (this.#t < this.#thief.immuneUntil - 1e-9) return "slippery";
     if (g.cooldown > 1e-9) return "cooldown";
-    const f = this.#fair(g);
+    const f = this.#fair(g, lag);
     return f === "ok" ? null : f;
   }
 
@@ -1287,7 +1291,8 @@ export class Heist {
       ty: th.body.y,
       g: this.#guards.map((g) => ({ x: g.body.x, y: g.body.y, a: g.body.angle, on: g.light === 2, sees: this.#seesTile(g, tt) })),
     });
-    while (this.#history.length > 2 && this.#history[0]!.t < this.#t - this.times.holdLag - 0.2) this.#history.shift();
+    const keep = Math.max(this.times.holdLag, this.times.holdLagMax) + 0.2;
+    while (this.#history.length > 2 && this.#history[0]!.t < this.#t - keep) this.#history.shift();
     if (final || this.#t >= this.#nextSample - 1e-6) {
       this.#nextSample += 1 / TAPE_HZ;
       for (const a of this.#order) {
@@ -1485,7 +1490,7 @@ export class Heist {
   }
 
   #canHold(g: Actor): boolean {
-    if (this.#holdCheck(g, undefined) !== null) return false;
+    if (this.#holdCheck(g, undefined, this.times.holdLag) !== null) return false;
     // now, not just in the lag window: what the HOLD button shows
     const e = this.#history[this.#history.length - 1];
     return !!e && this.#shot(e, this.#guards.indexOf(g)) === "ok";

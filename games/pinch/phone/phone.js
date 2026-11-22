@@ -41,6 +41,7 @@ const params = new URLSearchParams(location.search);
 const demo = params.get("demo");
 /** @type {any} */
 const client = demo ? (await import("./demo.js")).demoClient(params) : PartyClient.fromLocation();
+if (demo) /** @type {any} */ (globalThis).pinchDemo = client;
 if (!demo) blockEmoji();
 
 const app = /** @type {HTMLElement} */ (document.getElementById("app"));
