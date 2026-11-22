@@ -83,6 +83,13 @@ export const BUSY_BYTES = 64 * 1024;
 export const PING_MS = 15_000;
 /** Closed (1006) after this without any message, ms. */
 export const DEAD_MS = 45_000;
+/**
+ * A peer connection `disconnected` this long (or `failed` at once) ends
+ * its channel with 1006, ms. Browsers drop a closed tab's connection
+ * without a word; ICE notices in about 5 s, the pings only after
+ * {@link DEAD_MS}.
+ */
+export const LOST_MS = 5_000;
 /** The data channel's label. */
 export const CHANNEL_LABEL = "party";
 /**
@@ -130,6 +137,30 @@ export class ChannelEnd {
             }
             this.control({ t: "ping" });
         }, pingMs);
+        const peer = o.peer;
+        if (peer) {
+            const lostMs = o.lostMs ?? LOST_MS;
+            peer.onconnectionstatechange = () => {
+                const state = peer.connectionState;
+                if (state === "failed" || state === "closed")
+                    this.#lost();
+                else if (state === "disconnected")
+                    this.#lostTimer ??= setTimeout(() => this.#lost(), lostMs);
+                else {
+                    clearTimeout(this.#lostTimer);
+                    this.#lostTimer = undefined;
+                }
+            };
+        }
+    }
+    #lostTimer;
+    /** The peer is gone (ICE): over, as without a close frame. */
+    #lost() {
+        this.#end(1006, "lost");
+        try {
+            this.#ch.close();
+        }
+        catch { }
     }
     /** More than 64 KiB wait to be sent. */
     get busy() {
@@ -232,6 +263,9 @@ export class ChannelEnd {
         if (this.#timer)
             clearInterval(this.#timer);
         this.#timer = undefined;
+        clearTimeout(this.#lostTimer);
+        if (this.#o.peer)
+            this.#o.peer.onconnectionstatechange = null;
         this.#ch.onmessage = null;
         this.#ch.onbufferedamountlow = null;
         this.#ch.onclose = null;

@@ -105,6 +105,55 @@ test("a dropped phone comes back by its token; a network cut is 1006 and reconne
   assert.equal(ann.you!["id"], id);
 });
 
+test("a phone that vanishes without a word (its tab closed): away once ICE says so, not after the pings", async () => {
+  const { code, party, relay } = await host({ relay: { limits: { lostMs: 30 } } });
+  const ann = phone(code, party.joinKey);
+  await ann.join("Ann");
+  let away = 0;
+  party.on("away", () => away++);
+  // The host's peer connection: ICE disconnected (no close frame, the channel still "open").
+  const hostPeer = FakePeer.all.find((p) => p.remoteDescription?.type === "offer")!;
+  hostPeer.connectionState = "disconnected";
+  hostPeer.onconnectionstatechange?.({});
+  await tick(10);
+  assert.equal(away, 0, "a short disconnect is waited out");
+  hostPeer.connectionState = "connected";
+  hostPeer.onconnectionstatechange?.({});
+  await tick(60);
+  assert.equal(away, 0, "back within the wait: nothing happened");
+  hostPeer.connectionState = "disconnected";
+  hostPeer.onconnectionstatechange?.({});
+  await until(() => away === 1, 1000, "away after the wait");
+  assert.equal([...relay.connections()].length, 0);
+  // `failed` ends it at once (on the phone's side too: it reconnects).
+  await until(() => ann.status === "open" && party.connectedPlayers.length === 1, 4000, "back");
+  const peer = FakePeer.all.filter((p) => p.channel).at(-1)!;
+  peer.connectionState = "failed";
+  peer.onconnectionstatechange?.({});
+  await until(() => ann.status !== "open", 1000, "the phone saw it");
+});
+
+test("a phone's page goes (pagehide): the host hears 1001 at once", async () => {
+  // Node has no window: the page's events, for this test.
+  const g = globalThis as { addEventListener?: unknown; removeEventListener?: unknown };
+  const page = new EventTarget();
+  g.addEventListener = page.addEventListener.bind(page);
+  g.removeEventListener = page.removeEventListener.bind(page);
+  cleanup.push(() => {
+    delete g.addEventListener;
+    delete g.removeEventListener;
+  });
+  const { code, party } = await host();
+  const ann = phone(code, party.joinKey);
+  await ann.join("Ann");
+  const closes: number[] = [];
+  party.on("away", () => closes.push(Date.now()));
+  const t = Date.now();
+  page.dispatchEvent(new Event("pagehide"));
+  await until(() => closes.length === 1, 1000, "away");
+  assert.ok(closes[0]! - t < 500);
+});
+
 test("close codes travel: kicked is final on the phone", async () => {
   const { code, party } = await host();
   const ann = phone(code, party.joinKey);

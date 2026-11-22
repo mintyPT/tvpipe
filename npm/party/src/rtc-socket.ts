@@ -46,6 +46,13 @@ export class DataChannelSocket implements WebSocketLike {
   #end: ChannelEnd | undefined;
   #cancel: (() => void) | undefined;
   #timer: ReturnType<typeof setTimeout> | undefined;
+  /**
+   * The page goes (closed, reloaded, another page): the channel closes
+   * with 1001 at once, as a WebSocket would. Without it the browser drops
+   * the peer connection silently and the host sees the phone away only
+   * after the pings' 45 s.
+   */
+  readonly #onPageHide = () => this.close(1001, "going away");
 
   constructor(url: string, deps: WebDeps = webDeps()) {
     this.url = url;
@@ -85,11 +92,13 @@ export class DataChannelSocket implements WebSocketLike {
     if (this.readyState !== 0) return;
     clearTimeout(this.#timer);
     this.#end = new ChannelEnd(ch, {
+      peer: this.#pc,
       onmessage: (data) => this.onmessage?.({ data }),
       oncontrol: (msg) => this.oncontrol?.(msg),
       onclose: (code, reason) => this.#closed(code, reason),
     });
     this.readyState = 1;
+    (globalThis as any).addEventListener?.("pagehide", this.#onPageHide);
     this.onopen?.({});
   }
 
@@ -105,6 +114,7 @@ export class DataChannelSocket implements WebSocketLike {
     if (this.readyState === 3) return;
     this.readyState = 3;
     clearTimeout(this.#timer);
+    (globalThis as any).removeEventListener?.("pagehide", this.#onPageHide);
     this.#cancel?.();
     const pc = this.#pc;
     // The close frame needs a moment on the wire before the peer goes.

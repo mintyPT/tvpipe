@@ -243,7 +243,11 @@ Cloudflare once per 3 hours); `ttl` is what is left of their life.
 - **Control messages** are text frames starting with `!`, JSON after it
   (the party protocol's messages start with `{`): `!{"t":"close","code":C,"reason":R}`
   before a close (a channel that ends without one is 1006), `!{"t":"ping"}`
-  / `!{"t":"pong"}` every 15 s (closed after 45 s without a message),
+  / `!{"t":"pong"}` every 15 s (closed after 45 s without a message;
+  1006 as soon as the peer connection is `disconnected` for 5 s or
+  `failed`: browsers drop a closed tab's connection without a word, and
+  ICE notices in about 5 s), a page that goes (`pagehide`) closes its
+  channel 1001, as a WebSocket would,
   `!{"t":"screen",...}` for extra screens (below).
 - **Backpressure:** `busy` above 64 KiB of `bufferedAmount`, `drain` on
   `bufferedamountlow`.

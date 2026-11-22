@@ -14,11 +14,12 @@
  * numbers) on data channels: messages up to 64 KiB (1009), 20 a second
  * with a burst of 50 (4008), `maxConnections` (a refused offer), the
  * first message within 10 s (4002); pings every 15 s, closed after 45 s
- * of silence. Connections of another game's page (`g=NAME/RELEASE` in
+ * of silence, or 1006 once the peer connection is `disconnected` for 5 s
+ * or `failed` (a closed tab says nothing; ICE notices). Connections of another game's page (`g=NAME/RELEASE` in
  * the query, not {@link WebRtcRelay.game}) are closed with 4014.
  */
 import { TokenBucket } from "./limits.js";
-import { CHANNEL_LABEL, ChannelEnd, gathered, iceServers, MAX_MESSAGE, utf8Over, webDeps } from "./rtc.js";
+import { CHANNEL_LABEL, ChannelEnd, gathered, iceServers, LOST_MS, MAX_MESSAGE, utf8Over, webDeps } from "./rtc.js";
 /** A data channel's connection as the host sees it. */
 class RtcConn {
     id;
@@ -34,7 +35,7 @@ class RtcConn {
     #end;
     #first;
     #ended = false;
-    constructor(id, offer, ch, limits, done) {
+    constructor(id, offer, ch, pc, limits, done) {
         this.id = id;
         this.address = offer.addr;
         this.query = offer.query;
@@ -49,6 +50,8 @@ class RtcConn {
         this.#end = new ChannelEnd(ch, {
             pingMs: limits.pingMs,
             deadMs: limits.deadMs,
+            peer: pc,
+            lostMs: limits.lostMs,
             onmessage: (data) => {
                 if (this.closed)
                     return;
@@ -133,7 +136,7 @@ export class WebRtcRelay {
         this.maxConnections = o.maxConnections ?? 32;
         this.#deps = o.deps ?? webDeps();
         this.#ice = o.iceServers ?? (() => iceServers(this.#deps));
-        this.#limits = { message: MAX_MESSAGE, rate: 20, burst: 50, firstMs: 10_000, pingMs: 15_000, deadMs: 45_000, ...o.limits };
+        this.#limits = { message: MAX_MESSAGE, rate: 20, burst: 50, firstMs: 10_000, pingMs: 15_000, deadMs: 45_000, lostMs: LOST_MS, ...o.limits };
         o.signal.onoffer = (offer) => void this.#offer(offer);
     }
     /** Takes the connections of a local transport too (`via: "local"`; no limits). */
@@ -195,7 +198,7 @@ export class WebRtcRelay {
                     return;
                 clearTimeout(timer);
                 this.#peers.delete(pc);
-                conn = new RtcConn(this.nextId(), offer, ch, this.#limits, (c) => {
+                conn = new RtcConn(this.nextId(), offer, ch, pc, this.#limits, (c) => {
                     this.#conns.delete(c);
                     setTimeout(drop, 1000);
                 });
