@@ -34,40 +34,6 @@ function token(): string {
   return t;
 }
 
-/** "Chrome on a Mac": what the host is asked about. */
-export function browserName(ua: string): string {
-  const browser = /Edg\//.test(ua)
-    ? "Edge"
-    : /SamsungBrowser/.test(ua)
-      ? "Samsung Internet"
-      : /Firefox\//.test(ua)
-        ? "Firefox"
-        : /Chrome\/|CriOS/.test(ua)
-          ? "Chrome"
-          : /Safari\//.test(ua)
-            ? "Safari"
-            : "A browser";
-  const tv = /SMART-TV|SmartTV|Tizen|Web0S|webOS|BRAVIA|AFT|CrKey|GoogleTV|Android TV/i.test(ua);
-  const on = tv
-    ? "a TV"
-    : /iPad/.test(ua)
-      ? "an iPad"
-      : /iPhone/.test(ua)
-        ? "an iPhone"
-        : /Android/.test(ua)
-          ? "Android"
-          : /Macintosh/.test(ua)
-            ? "a Mac"
-            : /Windows/.test(ua)
-              ? "Windows"
-              : /CrOS/.test(ua)
-                ? "a Chromebook"
-                : /Linux/.test(ua)
-                  ? "Linux"
-                  : "";
-  return on ? `${browser} on ${on}` : browser;
-}
-
 /** The TV page the host named, when it is a page of this site. */
 export function framable(url: string, origin: string): string | null {
   try {
@@ -128,7 +94,8 @@ async function ask(quiet = false): Promise<void> {
       const room = r.ok ? ((await r.json()) as { host?: boolean }) : { host: false };
       if (r.ok && !room.host) reason = "no-host";
       else {
-        const a = await requestScreen(code, { token: token(), agent: browserName(navigator.userAgent) });
+        // The user agent as it is: the host names the browser in its question (webhub.ts `browserName`).
+        const a = await requestScreen(code, { token: token(), agent: navigator.userAgent });
         if (mine !== round) return;
         if (a.ok) {
           const src = framable(a.url, location.origin);
