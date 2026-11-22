@@ -169,7 +169,11 @@ export class Bot {
       }
       return true;
     } catch (e) {
-      this.errors.push(String((e as { code?: string })?.code ?? e));
+      const code = String((e as { code?: string })?.code ?? e);
+      // A move sent as the board ends (solved, time's up) is refused with
+      // not-now: a race on a slow machine, not a bot's mistake.
+      if (code === "not-now") this.refused.push(code);
+      else this.errors.push(code);
       return false;
     }
   }

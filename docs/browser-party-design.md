@@ -1,6 +1,7 @@
 # Party games without tvpipe: tvpipe.party in the browser
 
-Status: being built (branch `browser-party`). Extends
+Status: built, live on tvpipe.party (checked end to end in headless
+Chrome against production, also forced through TURN). Extends
 playshare-design.md (the host page, the relay), party-protocol.md
 (unchanged on the wire), short-links.md (the code registry) and
 game-switching.md (the room outlives a game). The UX was judged on a
@@ -39,7 +40,7 @@ to tvpipe.party, without tvpipe.party carrying game traffic.
 - **Any browser can be an extra screen** of any room (`tvpipe.party/tv`
   and the code), approved by the host.
 - **Later, the app's phones use WebRTC too**, with the tunnel as the
-  fallback (not in this branch).
+  fallback (not built yet).
 - **One name for users:** everything people open is tvpipe.party; the
   command and its window are "the tvpipe app".
 
@@ -367,7 +368,7 @@ which finds the next game.
 - Wake Lock while the room is open (where the browser has it).
 - Sound plays from the device; it needs the Start tap (autoplay rules).
 
-## Not in this branch
+## Not built yet
 
 - The app's phones over WebRTC.
 - Saving the host's game state for a resume after a reload (a reload
