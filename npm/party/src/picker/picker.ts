@@ -8,15 +8,10 @@
  * once, a remote one is downloaded and, when new, asked about; then
  * tvpipe puts it in its slot and the window goes to it.
  *
- * On tvpipe.party (web mode, docs/browser-party-design.md) the list is
- * `/g/index.json`, the games built from this repository: picking one
- * puts it in the tab's session and goes to the launcher; in the dialog
- * it tells the host page, whose `WebHub` switches.
+ * tvpipe.party (web mode, docs/browser-party-design.md) has no use for
+ * it: its games list is the site's games page (`/games/`, and
+ * `/games/?switch` in the dialog).
  */
-
-import { isWeb } from "../mode.ts";
-import { readWebSession, writeWebSession } from "../session.ts";
-import { loadWebGames, type WebGame } from "../webhub.ts";
 
 /** The message to the page around the dialog (`Tvpipe.showGamePicker`). */
 const GAME_PICKER_MESSAGE = "tvpipe:game-picker";
@@ -325,107 +320,6 @@ async function poll(): Promise<void> {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Web mode: the games of tvpipe.party, picked into the tab's session
-
-/** `?bots` (test players on the host page) goes along to the launcher. */
-const bots = new URLSearchParams(location.search).has("bots");
-
-function webEntry(g: WebGame): Entry {
-  return {
-    name: g.name,
-    title: g.title,
-    summary: g.summary,
-    min: g.players.min,
-    max: g.players.max,
-    languages: g.languages,
-    ...(g.cover ? { screenshots: [{ src: g.cover, alt: g.title, kind: "tv" as const }] } : {}),
-  };
-}
-
-function webPick(g: WebGame): void {
-  const game = { name: g.name, release: g.release };
-  if (switching) {
-    window.parent.postMessage({ type: GAME_PICKER_MESSAGE, picked: true, game }, location.origin);
-    return;
-  }
-  writeWebSession({ game });
-  location.assign(`/_tvpipe/launcher/${bots ? "?bots" : ""}`);
-}
-
-function webCards(games: WebGame[]): HTMLLIElement[] {
-  const now = readWebSession().game;
-  return games.map((g) => {
-    const li = card(webEntry(g), false);
-    li.dataset["key"] = `web:${g.name}`;
-    // `card` wired tvpipe's API: this list picks into the session instead.
-    li.onclick = () => webPick(g);
-    li.onkeydown = (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        webPick(g);
-      }
-    };
-    if (switching && now?.name === g.name) li.append(el("span", "tag now", "Playing"));
-    return li;
-  });
-}
-
-/** Once, on iPadOS and iOS in Safari: tvpipe.party can be a Home Screen app. */
-function homeScreenHint(): void {
-  if (switching || !location.pathname.startsWith("/play")) return;
-  const ua = navigator.userAgent;
-  const ipad = /iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
-  const ios = ipad || /iPhone|iPod/.test(ua);
-  const app = (navigator as { standalone?: boolean }).standalone === true || matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches;
-  if (!ios || app) return;
-  try {
-    if (localStorage.getItem("tvpipe-home-hint")) return;
-    localStorage.setItem("tvpipe-home-hint", "1");
-  } catch {
-    return;
-  }
-  const note = el("p", "note home-hint");
-  note.append(
-    el("span", "", `Tip: in Safari, Share → Add to Home Screen makes tvpipe.party an app on this ${ipad ? "iPad" : "iPhone"}: full screen, one tap away.`),
-  );
-  const ok = el("button", "btn small", "OK");
-  ok.type = "button";
-  ok.onclick = () => note.remove();
-  note.append(ok);
-  $("message").after(note);
-}
-
-async function webMain(): Promise<void> {
-  $("where").textContent = "tvpipe.party";
-  $("elsewhere").hidden = true;
-  $("local-part").hidden = true;
-  $("online-part").hidden = false;
-  const part = document.querySelector("#online-part .part .lbl");
-  if (part) part.textContent = "Games";
-  $("online-note").textContent = "They run in this browser: nothing to install, on the phones neither.";
-  if (switching) $("message").textContent = "The screen and the join link stay; phones go to the next game by themselves.";
-  else {
-    $("message").textContent = "One screen everyone sees shows the game; everyone plays on their own phone.";
-    navigator.serviceWorker?.register("/sw.js").catch(() => {});
-    homeScreenHint();
-  }
-  setState("Loading the games…", "on");
-  try {
-    const list = await loadWebGames();
-    $("games").replaceChildren(...webCards(list.games));
-    $("empty").hidden = list.games.length > 0;
-    $("empty").textContent = "No games here yet.";
-    const now = readWebSession().game;
-    const playing = switching && now ? list.games.find((g) => g.name === now.name) : undefined;
-    setState(playing ? `Playing ${playing.title}` : "Pick a game", "ok");
-    $("game").textContent = playing?.title ?? "Pick one";
-  } catch (err) {
-    setState("Something failed", "bad");
-    showError(`The games did not load: ${(err as Error).message}.`);
-  }
-}
-
 /** Closes the dialog without a new game (`?mode=switch`). */
 async function cancel(): Promise<void> {
   if (current.state === "ask") await call({ back: true }).catch(() => {});
@@ -451,7 +345,6 @@ function themes(): void {
 async function main(): Promise<void> {
   themes();
   $("where").textContent = `tvpipe game · ${location.host}`;
-  const web = isWeb();
   if (switching) {
     $("title").textContent = "Pick the next game";
     $("message").textContent = "The TVs and the join link stay; phones go to the next game by themselves.";
@@ -461,7 +354,6 @@ async function main(): Promise<void> {
       if (ev.key === "Escape" && !$<HTMLDialogElement>("ask").open) void cancel();
     });
   }
-  if (web) return webMain();
   $("other").onsubmit = (e) => {
     e.preventDefault();
     const v = $<HTMLInputElement>("source").value.trim();

@@ -76,6 +76,3 @@ dialog .buttons { margin-top: 24px; }
 @media (max-width: 720px) {
   .field { flex-direction: column; }
 }
-
-/* tvpipe.party: the Home Screen tip (iPadOS, iOS), once. */
-.home-hint { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: -10px 0 22px; }

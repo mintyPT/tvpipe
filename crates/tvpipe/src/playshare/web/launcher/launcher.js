@@ -3,14 +3,16 @@
  * the game show?", then the game's host page. With tvpipe the answers are
  * the TVs as they are found (AirPlay PIN pairing, TV sync, the
  * resolution); on tvpipe.party (web mode, docs/browser-party-design.md,
- * "The launcher") they are this device's screens, one of them. A game may
- * bring its own launcher with the same API.
+ * "The launcher") they are this device's screens, one of them. There
+ * `?game=NAME` (Play now on /games/) puts the game in the tab's session
+ * first. A game may bring its own launcher with the same API.
  */
 import { displayLag, Flasher, MAX_LAG_MS } from "../lib/flashsync.js";
 import { appScreenNote, appScreens, detectDevice, screenOptions } from "../lib/launcher-options.js";
 import { isWeb } from "../lib/mode.js";
 import { LOCAL_PREFIX, SCREEN_WINDOW } from "../lib/screens.js";
 import { writeWebSession } from "../lib/session.js";
+import { GAMES_PAGE, loadWebGames } from "../lib/webhub.js";
 import { GAME_PICKER, PICKER_MESSAGE, Tvpipe, TV_DISPLAY_MS, TV_RENDER_MS, TVSYNC_PAGE, } from "../lib/tvpipe.js";
 const $ = (id) => document.getElementById(id);
 const KIND = {
@@ -515,6 +517,19 @@ function openScreenWindow(cable) {
     }
     return w;
 }
+/** The game picked on /games/, above the question: its cover, title and players. */
+async function renderWebGame() {
+    $("web-game").hidden = false;
+    $("web-title").textContent = info.title;
+    const { min, max } = info.players;
+    $("web-facts").textContent = min === max ? `${min} players` : `${min}–${max} players`;
+    const g = (await loadWebGames().catch(() => null))?.games.find((x) => x.name === info.name);
+    const img = $("web-cover");
+    if (g?.cover) {
+        img.src = g.cover;
+        img.hidden = false;
+    }
+}
 function webStart() {
     const o = options.find((x) => x.id === webChoice);
     if (!o || starting)
@@ -557,8 +572,7 @@ async function webMain() {
     }
     else {
         $("message").textContent = `Everyone plays ${info.title} on their own phone; pick the screen everyone looks at.`;
-        // The games list's app: offline page, Home Screen (/sw.js).
-        navigator.serviceWorker?.register("/sw.js").catch(() => { });
+        void renderWebGame();
     }
     const chosen = await tvpipe.chosen().catch(() => ({ devices: [] }));
     devices = await tvpipe.watchDevices(true);
@@ -576,7 +590,7 @@ async function webMain() {
     renderWeb();
     $("start").onclick = webStart;
     $("other-game").hidden = changing;
-    $("other-game").onclick = () => location.assign("/play/");
+    $("other-game").onclick = () => location.assign(GAMES_PAGE);
     if (changing) {
         $("no-tv").onclick = () => answer(null);
         addEventListener("keydown", (ev) => {
@@ -612,6 +626,25 @@ async function main() {
     }
     $("where").textContent = `tvpipe game · ${location.host}`;
     const web = isWeb();
+    // Play now on /games/: this game in the tab's session (an unknown one: back to the list).
+    const want = new URLSearchParams(location.search).get("game");
+    if (web && want !== null && !changing) {
+        let list;
+        try {
+            list = await loadWebGames();
+        }
+        catch (err) {
+            stopped = "Not connected";
+            showError(`The games did not load: ${err.message}.`);
+            return;
+        }
+        const g = list.games.find((x) => x.name === want);
+        if (!g) {
+            location.replace(GAMES_PAGE);
+            return;
+        }
+        writeWebSession({ game: { name: g.name, release: g.release } });
+    }
     try {
         tvpipe = await Tvpipe.connect();
     }
@@ -628,7 +661,7 @@ async function main() {
     catch (err) {
         // tvpipe.party without a game in this tab: the games list first.
         if (web && err.code === "no-game" && !changing) {
-            location.replace("/play/");
+            location.replace(GAMES_PAGE);
             return;
         }
         stopped = "Not connected";

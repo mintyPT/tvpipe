@@ -54,12 +54,30 @@ game.name = first.name;
 game.release = first.release;
 
 const checks: Check[] = [
-  { name: "play-desktop", path: "/play/", view: DESK, until: `document.querySelectorAll("#games .game").length > 0` },
-  { name: "play-ipad", path: "/play/", view: PAD, ua: IPAD, until: `document.querySelectorAll("#games .game").length > 0 && !!document.querySelector(".home-hint")` },
-  { name: "picker-switch", path: "/_tvpipe/picker/?mode=switch", view: { width: 1000, height: 760 }, session: { game }, until: `document.querySelector("#games .tag.now") !== null` },
-  { name: "launcher-nogame", path: "/_tvpipe/launcher/", view: DESK, until: `location.pathname === "/play/"` },
-  { name: "launcher-desktop", path: "/_tvpipe/launcher/", view: DESK, session: { game }, until: `document.querySelectorAll("#devices .device").length > 1` },
-  { name: "launcher-ipad", path: "/_tvpipe/launcher/", view: PAD, ua: IPAD, session: { game }, until: `document.querySelector('#devices .device[data-name="mirror"]') !== null` },
+  // Every game has Play now, to its launcher.
+  {
+    name: "games-desktop",
+    path: "/games/",
+    view: DESK,
+    until: `document.querySelectorAll("article.gm").length === ${index.games.length} && [...document.querySelectorAll("article.gm")].every((g) => new URL(g.querySelector("a[data-play]").href).pathname === "/_tvpipe/launcher/" && new URL(g.querySelector("a[data-play]").href).searchParams.get("game") === g.id)`,
+  },
+  { name: "games-jinx", path: "/games/jinx/", view: DESK, until: `document.querySelector('a[data-play="jinx"]')?.textContent === "Play now"` },
+  { name: "games-ipad", path: "/games/", view: PAD, ua: IPAD, until: `!!document.querySelector(".home-hint")` },
+  {
+    name: "games-switch",
+    path: `/games/?switch&current=${game.name}`,
+    view: { width: 1000, height: 760 },
+    until: `document.querySelector("#${game.name} .now")?.textContent === "Playing" && !!document.querySelector(".gh.pick button") && getComputedStyle(document.querySelector("header.top")).display === "none"`,
+  },
+  { name: "launcher-nogame", path: "/_tvpipe/launcher/", view: DESK, until: `location.pathname === "/games/"` },
+  { name: "launcher-unknown", path: "/_tvpipe/launcher/?game=no-such-game", view: DESK, until: `location.pathname === "/games/"` },
+  {
+    name: "launcher-desktop",
+    path: `/_tvpipe/launcher/?game=${game.name}`,
+    view: DESK,
+    until: `document.querySelectorAll("#devices .device").length > 1 && !document.getElementById("web-game").hidden && document.getElementById("web-title").textContent !== "" && !document.getElementById("web-cover").hidden && JSON.parse(sessionStorage.getItem("tvpipe-web")).game.name === ${JSON.stringify(game.name)}`,
+  },
+  { name: "launcher-ipad", path: "/_tvpipe/launcher/", view: PAD, ua: IPAD, session: { game }, until: `document.querySelector('#devices .device[data-name="mirror"]') !== null && document.querySelector("#devices .device.selected")?.dataset.name === "this"` },
   { name: "launcher-ipad-mirror", path: "/_tvpipe/launcher/", view: PAD, ua: IPAD, session: { game }, until: `(document.querySelector('#devices .device[data-name="mirror"]')?.click(), document.querySelector(".steps") !== null)` },
   { name: "join-unknown", path: "/r/?r=BCDF#k=AbCdEfGhIjKlMnOpQr", view: PHONE, ua: IPHONE, until: `document.body.dataset.state === "bad"`, expect: [/api\/rooms\/BCDF/] },
   {
@@ -92,7 +110,7 @@ const checks: Check[] = [
   { name: "screen-bad", path: "/_tvpipe/screen/?u=https%3A%2F%2Fexample.com%2F", view: TV, until: `!document.getElementById("bad").hidden` },
   { name: "offline", path: "/offline", view: PHONE, until: `document.querySelector("button") !== null` },
   { name: "manual", path: "/manual/in-the-browser/", view: DESK, until: `document.querySelector("h1") !== null` },
-  { name: "home", path: "/", view: DESK, until: `!!document.querySelector('a[href$="play/"]')` },
+  { name: "home", path: "/", view: DESK, until: `!!document.querySelector('main a[href$="games/"]') && ![...document.querySelectorAll("a[href]")].some((a) => new URL(a.href).pathname === "/play/")` },
 ];
 
 async function prepare(tab: Tab, c: Check): Promise<void> {
@@ -131,13 +149,13 @@ try {
     for (const e of tab.errors.filter((e) => !errors.includes(e))) console.log(`     (expected) ${e.slice(0, 160)}`);
     tab.close();
   }
-  // The service worker: /play/ registers it and it takes the page.
-  const tab = await browser.open(`${base}/play/`, DESK);
+  // The service worker: /games/ registers it and it takes the page.
+  const tab = await browser.open(`${base}/games/`, DESK);
   let sw = "ok  ";
   try {
     await tab.until(`navigator.serviceWorker.getRegistration().then((r) => !!r?.active)`, 10_000);
     await tab.eval(`location.reload(); true`);
-    await tab.until(`!!navigator.serviceWorker.controller && document.querySelectorAll("#games .game").length > 0`, 10_000);
+    await tab.until(`!!navigator.serviceWorker.controller && document.querySelectorAll("article.gm").length > 0`, 10_000);
   } catch (err) {
     sw = "FAIL";
     failed++;

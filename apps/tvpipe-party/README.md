@@ -66,12 +66,16 @@ node test/live/web-party.ts   # (with dev running) whole parties in browsers: a 
 
 `build:web` is `python3 ../../site/build.py`, then `scripts/site.ts`:
 it builds `npm/party` (tsc) and every game of `site/static/games.json`
-(`npm ci` where `node_modules` is missing, `npm run build`) and adds
-the web pages to `site/_out`: the library at `/_tvpipe/lib/` (`WEB =
-true`) with the launcher and games list, `/play/`, `/r/`, `/tv/`,
+(`npm ci` where `node_modules` is missing, `npm run build`; a listed
+game that is missing or does not build fails it: `/games/` has Play now
+for each) and adds the web pages to `site/_out`: the library at
+`/_tvpipe/lib/` (`WEB = true`) with the launcher, `/r/`, `/tv/`,
 `/_tvpipe/screen/`, the games at `/g/NAME/RELEASE/` with
 `/g/index.json`, and the web app's files from `web/` (manifest, service
-worker, icons, offline page). `--no-build` reuses the last builds.
+worker, icons, offline page). The web's games list is the site's
+`/games/` (Play now: `/_tvpipe/launcher/?game=NAME`; `site/static/games.js`
+registers the service worker and is Other game's dialog,
+`/games/?switch`). `--no-build` reuses the last builds.
 `check-pages.ts` (BASE, default `http://localhost:8787`) opens each page
 and reports errors, screenshots in `/tmp/tvpipe-pages/`
 (docs/browser-party-design.md, "Pages on tvpipe.party").
@@ -79,9 +83,9 @@ and reports errors, screenshots in `/tmp/tvpipe-pages/`
 `--games` for some games, `--relay` for TURN only: every peer connection relayed, checked with getStats,
 `--local-lib` for this checkout's built library on BASE's pages: a library change against production before it is deployed)
 plays whole parties in one headless Chrome, a browser context per person:
-the games list, the launcher, the host page in table mode, phones joining
+/games/ and Play now, the launcher, the host page in table mode, phones joining
 over data channels (the game's bot moving on each phone's own client),
-every game's first round, two games to the end, Other game, reloads, a
+every game's first round, two games to the end, Other game (/games/?switch in the dialog), reloads, a
 locked phone, an extra screen, a second window, End, the short link and 12
 phones at once; screenshots in `/tmp/tvpipe-web-validate/`.
 

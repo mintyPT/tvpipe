@@ -45,6 +45,15 @@ main.pick { padding-top: 36px; padding-bottom: 0; display: flex; flex-direction:
 .device.off .name, .device.off .meta, .device.off input { opacity: .55; }
 .tag.link { color: var(--accent); border-color: var(--accent); text-decoration: none; }
 .tag.link:hover { background: var(--accent); color: var(--bg); }
+
+/* The game picked on /games/, above the question. */
+.web-game { margin: 0 0 30px; }
+.web-game .back { display: inline-block; margin: 0 0 18px; font-size: 14px; color: var(--ink-2); text-decoration: none; }
+.web-game .back:hover { color: var(--accent); }
+.web-game-row { display: flex; align-items: center; gap: 20px; }
+.web-game img { flex: none; width: 152px; height: auto; border-radius: 4px; box-shadow: 0 0 0 1px var(--rule); background: var(--panel); }
+.web-title { font: 400 24px/1.2 var(--title); letter-spacing: -.01em; color: var(--ink); }
+.web-facts { margin: 6px 0 0; font-size: 14px; color: var(--ink-2); }
 .more { margin: 18px 0 0; font-size: 14px; color: var(--ink-2); }
 .more .howto { margin: 10px 0 0; padding: 12px 16px; border-left: 2px solid var(--rule); }
 .more .howto b { display: block; font-weight: 500; color: var(--ink); margin-bottom: 4px; }
@@ -106,6 +115,7 @@ dialog.sync { width: min(520px, calc(100vw - 40px)); }
 
 @media (max-width: 720px) {
   main.pick, [data-mode="change"] main.pick { padding: 24px 20px 0; }
+  .web-game img { width: 108px; }
   .res { grid-template-columns: auto; row-gap: 8px; }
   .res-note { grid-column: 1; margin: 0; }
   .device { grid-template-columns: 18px minmax(0, 1fr); }

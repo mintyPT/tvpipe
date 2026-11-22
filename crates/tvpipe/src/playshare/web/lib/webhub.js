@@ -17,11 +17,12 @@
  * `409`, refreshed every 6 hours), `devices.watch`, `select` /
  * `selection` (the session's `screen`), `cast.start` / `cast.stop`
  * (screens.ts), `shortlink` (the room's), `qr` (qr.ts), `quit` (every
- * client closed 4011, the link deleted, the session cleared, `/play/`),
+ * client closed 4011, the link deleted, the session cleared, `/games/`),
  * `relay.attach` (`WebRtcRelay` on the room's signaling, and the local
  * transport). Pairing, `tvsync.set` and surfaces: `unsupported`.
  * Extra screens are asked about in a dialog (approved tokens stay in the
- * session); Other game switches with `switchGame`.
+ * session); Other game switches with `switchGame` (the games pages in
+ * the dialog name the game, its release when they know it).
  */
 import { LocalHost } from "./local.js";
 import { roomCode, token } from "./party.js";
@@ -32,9 +33,9 @@ import { keepAwake, ScreenCaster, screenTitle } from "./screens.js";
 import { clearWebSession, readWebSession, writeWebSession } from "./session.js";
 import { HostSignal } from "./signaling.js";
 import { TvpipeError } from "./tvpipe.js";
-/** The standard launcher and the games list (web). */
+/** The standard launcher and the games list (web: the site's games page). */
 const LAUNCHER = "/_tvpipe/launcher/";
-const PLAY = "/play/";
+export const GAMES_PAGE = "/games/";
 /** Registration: codes tried at most. */
 const CODE_TRIES = 8;
 /** The room's link is refreshed this often while it lives, ms. */
@@ -367,10 +368,10 @@ export class WebHub {
         this.#asking = turn.catch(() => { });
         await turn;
     }
-    /** Web mode's Other game: the room goes on with `next`. */
+    /** Web mode's Other game: the room goes on with `next` (without a release: the list's). */
     async switchGame(next) {
         const list = await loadWebGames(this.#deps);
-        const game = list.games.find((g) => g.name === next.name && g.release === next.release);
+        const game = list.games.find((g) => g.name === next.name && (next.release === undefined || g.release === next.release));
         if (!game)
             throw new TvpipeError("no-game", `${next.name} is not in the games list`);
         writeWebSession({ game: { name: game.name, release: game.release } });
@@ -399,7 +400,7 @@ export class WebHub {
         }
         clearWebSession();
         this.#leave();
-        this.#loc.assign(PLAY);
+        this.#loc.assign(GAMES_PAGE);
     }
     #leave() {
         if (this.#refresh)

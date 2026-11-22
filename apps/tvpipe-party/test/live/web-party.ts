@@ -10,17 +10,17 @@
  *
  * BASE defaults to http://localhost:8787 (wrangler dev; use localhost, not
  * 127.0.0.1), DIR to /tmp/tvpipe-web-validate. Scenarios (`--only`, default
- * all): `table` (games list → launcher → This screen → host page in table
+ * all): `table` (/games/ → Play now → launcher → This screen → host page in table
  * mode, 4 phones join over WebRTC, the VIP starts, rounds are played),
  * `games` (every game of /g/index.json through lobby, start and its first
  * round; `--games` picks some), `full` (jinx and drawbluff to the end, or
  * the `--games`),
- * `switch` (Other game: phones follow with their names), `reload` (the
+ * `switch` (Other game through /games/?switch in the dialog: phones follow with their names), `reload` (the
  * host reloads, phones come back), `phone` (a phone reloads, one goes
  * offline and back), `screen` (an extra screen at /tv, approved; after
  * Other game it is back without asking), `window` (A second window,
  * Change screen), `quit` (End), `short` (BASE/CODE), `burst` (12 phones
- * at once), `looks` (the launcher on desktop, iPad, phone).
+ * at once), `looks` (/games/ and the launcher on desktop, iPad, phone).
  *
  * Phones join through their page (the name form, the VIP's Start); their
  * moves in the game are the game's own bot (`game/bots.js`) driving the
@@ -287,7 +287,7 @@ async function intercept(tab: Tab, hook: boolean): Promise<void> {
   await tab.send("Fetch.enable", { patterns });
   await tab.send("Network.enable");
   await tab.send("Network.setCacheDisabled", { cacheDisabled: true });
-  // The service worker (/play/ registers it) would fetch past the interception.
+  // The service worker (/games/ registers it) would fetch past the interception.
   if (LOCAL_LIB) await tab.send("Network.setBypassServiceWorker", { bypass: true });
 }
 
@@ -444,17 +444,17 @@ interface Host {
 /** The host page's global of the running game (`jinx`, `drawbluff`, …). */
 const G = (h: Host) => h.game.name;
 
-/** /play/ → the game → the launcher → `screen` → Start → the host page. */
+/** /games/ → Play now → the launcher → `screen` → Start → the host page. */
 async function startHost(ctx: Ctx, game: WebGame, screen: "this" | "window" | "none" = "this", o: { bots?: boolean; view?: typeof DESK; ua?: string } = {}): Promise<Host> {
   const page = await ctx.open("about:blank", o.view ?? DESK, { ua: o.ua, name: `${ctx.name}` });
   if (process.env["DBG_PC"])
     await page.tab.send("Page.addScriptToEvaluateOnNewDocument", {
       source: `{ const P = RTCPeerConnection; globalThis.__pcs = []; globalThis.RTCPeerConnection = class extends P { constructor(...a) { super(...a); const rec = { pc: this, log: [] }; globalThis.__pcs.push(rec); this.addEventListener("connectionstatechange", () => rec.log.push([Date.now(), "conn:" + this.connectionState])); this.addEventListener("iceconnectionstatechange", () => rec.log.push([Date.now(), "ice:" + this.iceConnectionState])); } }; }`,
     });
-  await page.go(`${BASE}/play/${o.bots ? "?bots" : ""}`);
-  await page.until(`document.querySelectorAll("#games .game").length > 0`);
-  await page.eval(`document.querySelector('#games [data-key="web:${game.name}"]').click(); true`);
-  await page.until(`location.pathname === "/_tvpipe/launcher/" && document.querySelectorAll("#devices .device").length > 1`);
+  await page.go(`${BASE}/games/${o.bots ? "?bots" : ""}`);
+  await page.until(`!!document.querySelector('a[data-play="${game.name}"]')`);
+  await page.eval(`document.querySelector('a[data-play="${game.name}"]').click(); true`);
+  await page.until(`location.pathname === "/_tvpipe/launcher/" && document.querySelectorAll("#devices .device").length > 1 && document.getElementById("web-title").textContent === ${JSON.stringify(game.title)}`);
   const offered = await page.eval<string[]>(`[...document.querySelectorAll("#devices .device")].map((d) => d.dataset.name ?? "off")`);
   log(`${ctx.name}: launcher offers ${offered.join(", ")}`);
   await page.eval(`document.querySelector('#devices .device[data-name="${screen}"]').click(); true`);
@@ -686,7 +686,7 @@ async function endParty(h: Host, phones: Phone[]): Promise<void> {
 
 /** Scenario 1: table mode, 4 phones, the first rounds. */
 async function scenarioTable(): Promise<void> {
-  log("== table: /play/ → jinx → This screen → table mode, 4 phones over WebRTC");
+  log("== table: /games/ → Play now jinx → This screen → table mode, 4 phones over WebRTC");
   const game = gameOf("jinx");
   const { h, phones } = await party(game, PHONES);
   const p = h.page;
@@ -730,11 +730,19 @@ async function scenarioGames(names: string[], until: "round" | "end"): Promise<v
   }
 }
 
-/** Opens the games list over the host page and picks `next`. */
+/** Opens the games list over the host page (/games/?switch) and picks `next`. */
 async function otherGame(h: Host, next: WebGame): Promise<Host> {
   await h.page.eval(`(() => { document.querySelector('.tvpipe-table button[aria-label^="The room"]')?.click(); document.getElementById("other-game").click(); return true; })()`);
-  await h.page.until(`(() => { const f = document.querySelector("dialog.tvpipe-game-picker iframe"); return !!f?.contentDocument?.querySelector('#games [data-key="web:${next.name}"]'); })()`, 15_000);
-  await h.page.eval(`document.querySelector("dialog.tvpipe-game-picker iframe").contentDocument.querySelector('#games [data-key="web:${next.name}"]').click(); true`);
+  const doc = `document.querySelector("dialog.tvpipe-game-picker iframe")?.contentDocument`;
+  await h.page.until(`(() => { const d = ${doc}; return !!d?.querySelector('a[data-play="${next.name}"]') && !!d.querySelector("#${h.game.name} .now"); })()`, 15_000);
+  const dialog = await h.page.eval<{ src: string; top: string; playing: string[] }>(
+    `(() => { const d = ${doc}; return { src: document.querySelector("dialog.tvpipe-game-picker iframe").getAttribute("src"), top: getComputedStyle(d.querySelector("header.top")).display, playing: [...d.querySelectorAll("article.gm .now")].map((n) => n.closest("article").id) }; })()`,
+  );
+  check(
+    dialog.src === `/games/?switch&current=${h.game.name}` && dialog.top === "none" && dialog.playing.join() === h.game.name,
+    `Other game: /games/ in the dialog (${dialog.src}), no site header, ${h.game.name} marked Playing (${await h.page.shot("switch-dialog")})`,
+  );
+  await h.page.eval(`${doc}.querySelector('a[data-play="${next.name}"]').click(); true`);
   await h.page.until(`location.pathname === ${JSON.stringify(next.pages.host)} && !!globalThis.${next.name}?.party`, 30_000);
   const info = await hostInfo(h.page, next);
   return { ...h, game: next, ...info };
@@ -933,8 +941,8 @@ async function scenarioQuit(): Promise<void> {
   const { h, phones } = await party(gameOf("jinx"), 2);
   const code = h.code;
   await h.page.eval(`(() => { document.querySelector('.tvpipe-table button[aria-label^="The room"]').click(); document.getElementById("quit").click(); return true; })()`);
-  await h.page.until(`location.pathname === "/play/"`, 15_000);
-  check(true, "End: the host is back at /play/");
+  await h.page.until(`location.pathname === "/games/"`, 15_000);
+  check(true, "End: the host is back at /games/");
   check(await h.page.eval<boolean>(`sessionStorage.getItem("tvpipe-web") === null || !JSON.parse(sessionStorage.getItem("tvpipe-web")).room`), "the session is cleared");
   for (const p of phones) {
     const s = await p.page
@@ -991,9 +999,9 @@ async function scenarioBurst(): Promise<void> {
   await endParty(h, phones);
 }
 
-/** The launcher's look on desktop, iPad and phone. */
+/** /games/ and the launcher's look on desktop, iPad and phone. */
 async function scenarioLooks(): Promise<void> {
-  log("== looks: the launcher");
+  log("== looks: /games/ and the launcher");
   const game = gameOf("jinx");
   for (const [name, view, ua] of [
     ["desktop", DESK, undefined],
@@ -1001,10 +1009,10 @@ async function scenarioLooks(): Promise<void> {
     ["phone", PHONE, IPHONE_UA],
   ] as const) {
     const ctx = await chrome.context(`looks-${name}`);
-    const page = await ctx.open(`${BASE}/play/`, view, { ua });
-    await page.until(`document.querySelectorAll("#games .game").length > 0`);
-    await page.shot(`play-${name}`);
-    await page.eval(`document.querySelector('#games [data-key="web:${game.name}"]').click(); true`);
+    const page = await ctx.open(`${BASE}/games/`, view, { ua });
+    await page.until(`!!document.querySelector('a[data-play="${game.name}"]')`);
+    check(await page.eval<boolean>(`document.documentElement.scrollWidth <= innerWidth + 1`), `/games/ on ${name}: no sideways scroll (${await page.shot(`games-${name}`)})`);
+    await page.eval(`document.querySelector('a[data-play="${game.name}"]').click(); true`);
     await page.until(`location.pathname === "/_tvpipe/launcher/" && document.querySelectorAll("#devices .device").length > 1`);
     await sleep(500);
     const offered = await page.eval<string[]>(`[...document.querySelectorAll("#devices .device")].map((d) => (d.dataset.name ?? "off") + ":" + d.querySelector(".name").textContent)`);

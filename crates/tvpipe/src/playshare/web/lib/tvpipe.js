@@ -66,6 +66,8 @@ export const TVSYNC_PAGE = "/_tvpipe/tvsync/";
 export const PICKER_MESSAGE = "tvpipe:cast-picker";
 /** tvpipe's games list. */
 export const GAME_PICKER = "/_tvpipe/picker/";
+/** Web mode's games list in the dialog: tvpipe.party's games page (site/static/games.js). */
+const WEB_GAME_PICKER = "/games/?switch";
 /** The message the games list in a dialog sends its parent page (`{type, done}`). */
 export const GAME_PICKER_MESSAGE = "tvpipe:game-picker";
 /** tvpipe's API socket (docs/playshare-design.md §5). */
@@ -354,12 +356,15 @@ export class Tvpipe extends Emitter {
      * (docs/game-switching.md): the games on this computer and the online
      * ones, the current one marked. Resolves `true` once another game was
      * picked (tvpipe swaps it in, and the `game` event takes this page
-     * there), `false` when cancelled.
+     * there), `false` when cancelled. In web mode the list is tvpipe.party's
+     * games page (`/games/?switch&current=NAME`), which names the game, and
+     * this page's `WebHub` switches.
      */
     async showGamePicker() {
         const doc = globalThis.document;
         if (!doc)
             throw new TvpipeError("unsupported", "the games list needs a page");
+        const current = isWeb() ? ((await this.info().catch(() => null))?.name ?? "") : "";
         return new Promise((resolve) => {
             const dialog = doc.createElement("dialog");
             dialog.className = "tvpipe-game-picker";
@@ -367,7 +372,7 @@ export class Tvpipe extends Emitter {
                 "padding:0;border:0;border-radius:12px;width:min(1000px,96vw);height:min(760px,92vh);overflow:hidden;background:transparent;box-shadow:0 20px 60px rgb(0 0 0 / 40%)";
             const frame = doc.createElement("iframe");
             frame.title = "Pick another game";
-            frame.src = `${GAME_PICKER}?mode=switch`;
+            frame.src = isWeb() ? `${WEB_GAME_PICKER}${current ? `&current=${encodeURIComponent(current)}` : ""}` : `${GAME_PICKER}?mode=switch`;
             frame.style.cssText = "display:block;width:100%;height:100%;border:0";
             dialog.append(frame);
             const done = (picked) => {
@@ -385,8 +390,9 @@ export class Tvpipe extends Emitter {
                 // Web mode: the list names the game and this page switches (no tvpipe to do it).
                 const game = d.game;
                 const switchGame = this.#transport.switchGame;
-                if (d.picked === true && switchGame && typeof game?.name === "string" && typeof game.release === "string") {
-                    void switchGame.call(this.#transport, { name: game.name, release: game.release }).catch((err) => console.error(err));
+                if (d.picked === true && switchGame && typeof game?.name === "string") {
+                    const release = typeof game.release === "string" ? game.release : undefined;
+                    void switchGame.call(this.#transport, { name: game.name, release }).catch((err) => console.error(err));
                 }
                 done(d.picked === true);
             };

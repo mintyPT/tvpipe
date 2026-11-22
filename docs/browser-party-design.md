@@ -33,6 +33,11 @@ to tvpipe.party, without tvpipe.party carrying game traffic.
   whose options depend on the device, the best one selected.
 - **Table mode:** no separate host screen. The room's controls sit behind
   ⋯ on the shared screen; starting and rounds stay on the VIP's phone.
+- **The website's games pages are the web entry** (`/games/`,
+  `/games/NAME/`): every game has **Play now** beside `tvpipe game play
+  NAME`, to the launcher for it; Other game during a web party shows
+  `/games/` in its dialog. (At first a games list of its own, `/play/`;
+  it went.)
 - **The web launcher shows Apple TV and Chromecast greyed out** with
   "needs the tvpipe app", linking to the install.
 - **AirPlay mirroring is instructions only**: a page can neither start
@@ -96,7 +101,13 @@ new tab makes a new one.
 
 One launcher in `@tvpipe/party` (`launcher/`), used by the app (with
 tvpipe's API) and by the web (with `WebHub`). Steps: the games list,
-"Where should the game show?", Start. In web mode the devices are
+"Where should the game show?", Start. In web mode Play now on the games
+pages opens `/_tvpipe/launcher/?game=NAME`: the launcher puts the game
+of `/g/index.json` by that name into the session (`{name, release}`;
+an unknown name goes back to `/games/`), shows it above the question
+(cover, title, players, "← All games" to `/games/`), then asks. Without
+`?game=` it takes the session's game, and without one goes to
+`/games/`; Other game there goes to `/games/` too. The devices are
 screens, `kind: "browser"`, with these names:
 
 | Device name | Offered | Cast does |
@@ -323,14 +334,14 @@ this room before; then it answers `!{"t":"screen","ok":true,"url":TV}`
 
 | Path | |
 |---|---|
-| `/play/` | the games list (web: the picker's page, its files at `/_tvpipe/picker/`), then the launcher; the web app's start: `/manifest.webmanifest` (`start_url` `/play/`, standalone, fullscreen where offered), `/icons/`, `/apple-touch-icon.png`, `/sw.js` (network first; pages and tvpipe.party's own files kept as they come by, `/offline.html` for a page never seen; not the API or the games' files). `/play/` and the launcher register it; `/play/` shows "Add to Home Screen" once on iPadOS and iOS |
-| `/_tvpipe/lib/`, `/_tvpipe/launcher/`, `/_tvpipe/picker/`, `/_tvpipe/tvsync/`, `/_tvpipe/wait/` | the library (web build: `mode.js` says `WEB = true`) and its pages, the files tvpipe embeds (`npm/party/scripts/web.ts`); `/_tvpipe/ui.css` and `/_tvpipe/fonts/` as tvpipe serves them |
+| `/games/`, `/games/NAME/` | the website's games pages (`site/build.py`), the web's games list: every game has **Play now** (`/_tvpipe/launcher/?game=NAME`) beside `tvpipe game play NAME`. The web app's start: their head links `/manifest.webmanifest` (`id` and `start_url` `/games/`, standalone, fullscreen where offered), `/apple-touch-icon.png` and `site/static/games.js`, which registers `/sw.js` (network first; pages and tvpipe.party's own files kept as they come by, `/games/` from the start, `/offline.html` for a page never seen; not the API or the games' files) and shows "Add to Home Screen" once on iPadOS and iOS. `/games/?switch&current=NAME`: the dialog of Other game (below); `?bots` passes on to the launcher |
+| `/_tvpipe/lib/`, `/_tvpipe/launcher/`, `/_tvpipe/tvsync/`, `/_tvpipe/wait/` | the library (web build: `mode.js` says `WEB = true`) and its pages, the files tvpipe embeds (`npm/party/scripts/web.ts`; not the app's games list, `/_tvpipe/picker/`); `/_tvpipe/ui.css` and `/_tvpipe/fonts/` as tvpipe serves them |
 | `/_tvpipe/screen/?u=PATH` | a window of the TV page (cable, second window): `PATH` (a path of this site with its fragment, nothing else) in a frame, a Full screen button that goes once the window is full screen, "Drag this window onto the TV" beside it. The host talks to it on `BroadcastChannel("tvpipe-screen")`: `{t: "show", url}` (answered `{t: "shown", url}`), `{t: "close"}`; the window says `{t: "gone"}` when it goes. The launcher opens the window (blank) on the Start click, and for the cable moves it to the other screen (`getScreenDetails()`); the host page's cast takes it by its name |
 | `/g/NAME/RELEASE/…` | the games of the list (`site/static/games.json`), built from this repository (`RELEASE`: the game's `package.json` version), the manifest's `root` and `tvpipe.json`; `/g/index.json` lists them (below), a page `…/index.html` as its directory `…/` (Cloudflare's `html_handling` answers `index.html` with a `307` to it) |
 | `/r/?r=CODE#k=KEY` | a web room's join link: asks `GET /api/rooms/CODE`, then `location.replace`s to the game's phone page with `?r=CODE#k=KEY` and the link's other fragment pairs (`&p=…`); without a host or a game it waits and asks again (1.5 s the first three times, then every 4 s, 8 s after two minutes, 20 s after a `429`); `404`: "No game with the code CODE", a link to `/join`. Self-contained (no library), English and German |
 | `/tv/` | an extra screen: the code (or `#r=CODE`), `GET /api/rooms/CODE` (`404`: "No game with the code"; no host: waits), `requestScreen`, the TV page full page in a frame; a Full screen button, Wake Lock; asks again at the frame's `tvpipe:next-game` |
 
-`apps/tvpipe-party/scripts/site.ts` (`npm run build:web` there: `site/build.py`, then it) builds npm/party (`tsc`) and every listed game (`npm ci` where `node_modules` is missing, `npm run build`), writes all of the above into `site/_out`, and checks Cloudflare's limits for assets (20,000 files, 25 MiB each); `npm run dev`, `npm run deploy` and the workflow run it. `node scripts/check-pages.ts` opens the pages in headless Chrome against `wrangler dev`.
+`apps/tvpipe-party/scripts/site.ts` (`npm run build:web` there: `site/build.py`, then it) builds npm/party (`tsc`) and every listed game (`npm ci` where `node_modules` is missing, `npm run build`; a listed game that is not in the repository or does not build fails it, so every Play now works), writes all of the above into `site/_out`, and checks Cloudflare's limits for assets (20,000 files, 25 MiB each); `npm run dev`, `npm run deploy` and the workflow run it. `node scripts/check-pages.ts` opens the pages in headless Chrome against `wrangler dev`.
 
 `/g/index.json`:
 
@@ -348,11 +359,18 @@ interface WebGames {
 }
 ```
 
-The games list (`/play/`, and `/_tvpipe/picker/` in web mode) sets the
-session's `game` and goes to `/_tvpipe/launcher/`; the launcher's Start
-goes to the game's host page. In a dialog over a host page
-(`?mode=switch`) the picker posts `{type: "tvpipe:game-picker", picked:
-true, game: {name, release}}`, and the host's `WebHub` switches.
+Play now on the games pages goes to `/_tvpipe/launcher/?game=NAME`,
+which sets the session's `game`; the launcher's Start goes to the
+game's host page. Other game during a web party (`Tvpipe.showGamePicker`
+in web mode) shows `/games/?switch&current=NAME` in its dialog (the app
+keeps its picker, `/_tvpipe/picker/?mode=switch`): `games.js` hides the
+site's header, footer and intro, heads the page "Pick the next game"
+with Cancel, marks NAME "Playing", opens other links in a new tab, and
+Play now posts `{type: "tvpipe:game-picker", picked: true, game: {name,
+release}}` to the page around it (`release` from `/g/index.json`, left
+out when that failed: `WebHub.switchGame` takes the list's), Cancel and
+Escape `{type: "tvpipe:game-picker", picked: false}`. The host's
+`WebHub` switches.
 
 Game switching (game-switching.md) works as with tvpipe: the host tells
 the room the next game (`{t: "game"}`), closes clients with 4014, and

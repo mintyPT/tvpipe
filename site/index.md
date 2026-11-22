@@ -35,7 +35,7 @@ Files, URLs, cameras, the screen, a browser tab or any web page.
 
 Games on the TV that everyone plays on their own phone: scan the code, type a name, play. `tvpipe game play` downloads one and starts it. [All the games](games/)
 
-No tvpipe at hand? The games also run in a browser, on a laptop or an iPad: [play in the browser](/play/).
+No tvpipe at hand? The games also run in a browser, on a laptop or an iPad: [play in the browser](/games/).
 
 :::covers
 :::

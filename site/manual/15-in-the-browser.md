@@ -3,16 +3,16 @@ title: Playing in the browser
 summary: The games of the list on a laptop or an iPad, without tvpipe.
 group: Use
 spec:
-  Start: [tvpipe.party/play](/play/)
+  Start: [tvpipe.party/games](/games/)
   Needs: a browser; the internet
   Games: the [list](game-list.md)
   Another screen: `tvpipe.party/tv`
 ---
 
-The games of the [list](game-list.md) also run in a browser, with nothing to install: open [tvpipe.party/play](/play/) on a laptop or an iPad, pick a game, say where it should show, and press Start. The browser runs the game; the phones join as they do with tvpipe, by the QR code or the code on the screen, and talk to it directly.
+The games of the [list](game-list.md) also run in a browser, with nothing to install: open [tvpipe.party/games](/games/) on a laptop or an iPad, press **Play now** under a game, say where it should show, and press Start. The browser runs the game; the phones join as they do with tvpipe, by the QR code or the code on the screen, and talk to it directly.
 
 :::buttons
-[Play in the browser](/play/)
+[Play in the browser](/games/)
 :::
 
 ## Where the game shows

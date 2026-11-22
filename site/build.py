@@ -16,6 +16,9 @@ Sources:
   site/static/games/     the games' screenshots (games.json's `screenshots`),
                          rendered on /games/ (games/index.html) and on
                          each game's own page, /games/NAME/
+  site/static/games.js   the games pages' script: the web app (service
+                         worker, the Home Screen tip) and the dialog of
+                         a web party's Other game (/games/?switch)
   crates/tvpipe/src/browser/fonts/  the fonts (shared with tvpipe's share page)
   site/shots/            screenshots (site/screenshots.mjs makes them)
 Output: site/_out/ (static files, serve the directory). Every page is a
@@ -75,6 +78,16 @@ LANGUAGES = {"en": "English", "de": "German", "fr": "French", "es": "Spanish", "
              "nl": "Dutch", "pt": "Portuguese", "ja": "Japanese"}
 SOURCE = "https://github.com/mitsuhiko/tvpipe"
 LICENSE = SOURCE + "/blob/main/LICENSE"
+# The games pages are tvpipe.party's web app (docs/browser-party-design.md,
+# "Pages on tvpipe.party"): its manifest, icon and script. The manifest, the
+# icons and /_tvpipe/launcher/ come with the deploy (apps/tvpipe-party).
+APP_HEAD = """<link rel="manifest" href="{root}manifest.webmanifest">
+<link rel="apple-touch-icon" href="{root}apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="tvpipe.party">
+<script src="{root}static/games.js"></script>
+"""
 FOOTER_NOTE = f'tvpipe is open source. <a href="{LICENSE}">License</a>'
 # The colour theme switch (site.js), in the footer of every page.
 THEME = """<div class="theme" role="group" aria-label="Colour theme">  <button data-t="light" title="Light" aria-label="Light"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2.75"/><path d="M8 1.25v1.5M8 13.25v1.5M1.25 8h1.5M13.25 8h1.5M3.2 3.2l1.06 1.06M11.74 11.74l1.06 1.06M3.2 12.8l1.06-1.06M11.74 4.26l1.06-1.06"/></svg></button>  <button data-t="dark" title="Dark" aria-label="Dark"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.6 10.2A6 6 0 0 1 5.8 2.4a6 6 0 1 0 7.8 7.8z"/></svg></button>  <button data-t="auto" title="Like the system" aria-label="Like the system"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.75"/><path class="fill" d="M8 2.25a5.75 5.75 0 0 1 0 11.5z"/></svg></button></div>"""
@@ -329,6 +342,9 @@ def game_block(g, ctx, solo):
         facts += f"<dt>Languages</dt><dd>{html.escape(languages(g))}</dd>"
     home = f'<a class="home" href="{html.escape(g["home"])}">Source and rules</a>' if g.get("home") else ""
     play = code_block("sh", [f'$ tvpipe game play {g["name"]}'])
+    # In the browser: the launcher for this game (static/games.js passes ?bots on).
+    play += (f'<a class="btn primary" href="{ctx.root}_tvpipe/launcher/?game={g["name"]}" '
+             f'data-play="{g["name"]}" data-noboost>Play now</a>')
     title = html.escape(g["title"])
     if solo:
         head, cls = f"<h1>{title}</h1>", "gm solo"
@@ -684,11 +700,11 @@ def nav_html(pages, current, ctx):
     return "".join(out)
 
 
-def layout(title, crumb, body, root, kind):
+def layout(title, crumb, body, root, kind, head=""):
     tpl = (SITE / "templates" / "layout.html").read_text(encoding="utf-8")
     for k, v in {
         "title": html.escape(title), "crumb": crumb, "body": body, "root": root,
-        "kind": kind, "source": SOURCE,
+        "kind": kind, "source": SOURCE, "head": head.replace("{root}", root),
     }.items():
         tpl = tpl.replace("{{" + k + "}}", v)
     return tpl
@@ -749,7 +765,7 @@ def build(out):
     body = (f'<main class="landing gamespage"><header class="gh"><h1>{html.escape(meta.get("heading", "Games"))}</h1>'
             f'{render(lines, ctx)}</header>{games_page(ctx)}</main>'
             f'<footer class="lf"><div>{FOOTER_NOTE}</div><div class="r">{THEME}</div></footer>')
-    write(out, "games/", layout(meta.get("title", "Games"), "", body, ctx.root, "landing"))
+    write(out, "games/", layout(meta.get("title", "Games"), "", body, ctx.root, "landing", APP_HEAD))
 
     # A page per game: /games/NAME/.
     games = games_list()
@@ -758,7 +774,7 @@ def build(out):
         body = (f'<main class="landing gamespage">{game_page(games, i, ctx)}</main>'
                 f'<footer class="lf"><div>{FOOTER_NOTE}</div><div class="r">{THEME}</div></footer>')
         title = f'{g["title"]} · {meta.get("title", "Games")}'
-        write(out, game_dir(g), layout(title, "", body, ctx.root, "landing"))
+        write(out, game_dir(g), layout(title, "", body, ctx.root, "landing", APP_HEAD))
     print(f"built {len(pages) + 2 + len(games)} pages into {out}")
 
 

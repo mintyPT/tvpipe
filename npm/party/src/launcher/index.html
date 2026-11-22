@@ -42,6 +42,14 @@ if (new URLSearchParams(location.search).get('mode') === 'change') document.docu
 </header>
 
 <main class="pick">
+  <!-- Web mode (tvpipe.party): the game picked on /games/. -->
+  <div id="web-game" class="web-game" hidden>
+    <a class="back" href="/games/" target="_top">← All games</a>
+    <div class="web-game-row">
+      <img id="web-cover" alt="" width="1280" height="720" hidden>
+      <div><div class="web-title" id="web-title"></div><p class="web-facts" id="web-facts"></p></div>
+    </div>
+  </div>
   <div class="head">
     <h1 id="title">Where should the game show?</h1>
     <span class="state" id="state">Connecting…</span>

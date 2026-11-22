@@ -154,7 +154,7 @@ test("the host page: a party on the room, phones over data channels, Other game,
   assert.ok(service.requests.includes(`DELETE /api/links/${code}`));
   assert.equal(service.links.has(code), false);
   assert.deepEqual(readWebSession(), {});
-  assert.deepEqual(loc.assigned, ["/play/"]);
+  assert.deepEqual(loc.assigned, ["/games/"]);
 });
 
 test("extra screens through the hub: asked once per token, shown the watch link", async () => {
@@ -218,7 +218,9 @@ test("Tvpipe.connect() in web mode is the hub's; PartyClient.fromLocation uses d
     const ann = PartyClient.fromLocation({ storage: memoryStorage(), session: memoryStorage(), WebSocket: dataChannelSocket(service.deps) });
     cleanup.push(() => ann.close());
     await ann.join("Ann");
-    await h.switchGame({ name: "snug", release: "0.2.0" });
+    // The games page in the dialog may name the game alone: the list's release.
+    await h.switchGame({ name: "snug" });
+    assert.deepEqual(readWebSession().game, { name: "snug", release: "0.2.0" });
     await until(() => replaced.length === 1, 2000, "replace");
     assert.equal(replaced[0], `/r/?r=${party.code}#k=${encodeURIComponent(party.joinKey)}`);
   } finally {

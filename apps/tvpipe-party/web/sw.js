@@ -2,20 +2,20 @@
 // tvpipe.party"): network first. Pages and tvpipe.party's own files are
 // kept as they come by, and answer from the cache only when the network
 // fails; a page never seen gives the offline page. The API, the games'
-// files and other origins are not touched. Registered by /play/ and the
-// launcher (scope /).
+// files and other origins are not touched. Registered by the games pages,
+// /games/ and /games/NAME/ (site/static/games.js; scope /).
 
-const CACHE = "tvpipe-party-1";
+const CACHE = "tvpipe-party-2";
 // Cloudflare serves offline.html as /offline (a cached redirect could not answer a page).
 const OFFLINE = "/offline";
-/** Kept when fetched: the games list, the launcher, the library, the look. */
-const KEEP = /^\/(?:play\/|_tvpipe\/|static\/|icons\/|offline$|manifest\.webmanifest$|g\/index\.json$|$)/;
+/** Kept when fetched: the games pages, the launcher, the library, the look. */
+const KEEP = /^\/(?:games\/|_tvpipe\/|static\/|icons\/|offline$|manifest\.webmanifest$|g\/index\.json$|$)/;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((c) => c.addAll([OFFLINE, "/play/"]))
+      .then((c) => c.addAll([OFFLINE, "/games/"]))
       .then(() => self.skipWaiting()),
   );
 });

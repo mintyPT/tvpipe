@@ -22,7 +22,7 @@
   const pages = new Map();
   function boostable(a, e) {
     if (e && (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.defaultPrevented)) return false;
-    if (a.target || a.hasAttribute("download") || a.origin !== location.origin) return false;
+    if (a.target || a.hasAttribute("download") || a.hasAttribute("data-noboost") || a.origin !== location.origin) return false;
     if (a.pathname === location.pathname && a.hash) return false;   // a jump within the page
     return /(\.html|\/)$/.test(a.pathname);
   }

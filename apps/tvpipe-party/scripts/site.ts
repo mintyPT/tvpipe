@@ -4,11 +4,12 @@
  * tvpipe.party"):
  *
  *   /_tvpipe/lib/         the library (npm/party), `mode.js` saying WEB = true
- *   /_tvpipe/launcher/, /_tvpipe/picker/, /_tvpipe/tvsync/, /_tvpipe/wait/
- *                         its pages, as tvpipe serves them (npm/party/scripts/web.ts)
+ *   /_tvpipe/launcher/, /_tvpipe/tvsync/, /_tvpipe/wait/
+ *                         its pages, as tvpipe serves them (npm/party/scripts/web.ts;
+ *                         not the app's games list, /_tvpipe/picker/: on the web
+ *                         that is /games/, with its Play now buttons)
  *   /_tvpipe/screen/      the TV page's window (cable, second window)
  *   /_tvpipe/ui.css, /_tvpipe/fonts/   tvpipe's look
- *   /play/                the games list: the web app's start
  *   /r/                   a web room's join link
  *   /tv/                  an extra screen
  *   /g/NAME/RELEASE/      the games of site/static/games.json, built here
@@ -18,7 +19,9 @@
  *   node scripts/site.ts              # builds npm/party and the games, then writes
  *   node scripts/site.ts --no-build   # uses what npm/party and the games built last
  *
- * Checks Cloudflare's limits for assets: at most 20,000 files, 25 MiB each.
+ * Every game of the list must build: /games/ links each one's launcher
+ * (`/_tvpipe/launcher/?game=NAME`). Checks Cloudflare's limits for assets:
+ * at most 20,000 files, 25 MiB each.
  */
 
 import { execFileSync } from "node:child_process";
@@ -126,12 +129,14 @@ const { webFiles } = (await import(pathToFileURL(join(party, "scripts", "web.ts"
 rmSync(join(out, "_tvpipe"), { recursive: true, force: true });
 let webMode = false;
 for (const [rel, text] of webFiles()) {
+  // The app's games list talks to tvpipe only.
+  if (rel.startsWith("picker/")) continue;
   let t = text;
   if (rel === "lib/mode.js") {
     t = text.replace(/^export const WEB = false;$/m, "export const WEB = true;");
     webMode = t !== text;
   }
-  if (rel === "launcher/index.html" || rel === "picker/index.html") t = withAppHead(t);
+  if (rel === "launcher/index.html") t = withAppHead(t);
   write(`_tvpipe/${rel}`, t);
 }
 if (!webMode) throw new Error("npm/party's lib/mode.js has no line `export const WEB = false;` to turn on");
@@ -149,14 +154,6 @@ for (const [src, js, to] of pages) {
   write(`${to}/index.html`, readFileSync(join(party, "src", src, "index.html"), "utf8"));
   write(`${to}/${js}`, pageJs(src, js));
 }
-// /play/: the games list, its files where the picker's are.
-const picker = readFileSync(join(party, "src", "picker", "index.html"), "utf8")
-  .replace('href="picker.css"', 'href="/_tvpipe/picker/picker.css"')
-  .replace('src="picker.js"', 'src="/_tvpipe/picker/picker.js"')
-  .replace("<title>tvpipe · pick a game</title>", "<title>tvpipe.party · party games in the browser</title>");
-if (!picker.includes('src="/_tvpipe/picker/picker.js"')) throw new Error("npm/party/src/picker/index.html: no picker.js to point at");
-write("play/index.html", withAppHead(picker));
-
 // The web app: manifest, service worker, icons, the offline page.
 cpSync(join(app, "web"), out, { recursive: true });
 
@@ -166,10 +163,8 @@ rmSync(join(out, "g"), { recursive: true, force: true });
 const index: WebGames = { v: 1, games: [] };
 for (const g of listed) {
   const dir = join(repo, "games", g.name);
-  if (!existsSync(join(dir, "tvpipe.json"))) {
-    console.warn(`games/${g.name}: not in this repository, not on the web`);
-    continue;
-  }
+  // /games/ has a Play now for every game of the list: each must be on the web.
+  if (!existsSync(join(dir, "tvpipe.json"))) throw new Error(`games/${g.name}: listed in site/static/games.json but not in this repository (no tvpipe.json)`);
   if (build) {
     install(dir);
     run(dir, "npm", ["run", "build"]);
