@@ -10,8 +10,9 @@
  *                         that is /games/, with its Play now buttons)
  *   /_tvpipe/screen/      the TV page's window (cable, second window)
  *   /_tvpipe/ui.css, /_tvpipe/fonts/   tvpipe's look
- *   /r/                   a web room's join link
+ *   /r/                   a web room's join link (with the frame page's link preview)
  *   /tv/                  an extra screen
+ *   /games/NAME/launcher/ each game's launcher (with the game page's link preview)
  *   /g/NAME/RELEASE/      the games of site/static/games.json, built here
  *   /g/index.json         the list of them
  *   /manifest.webmanifest, /sw.js, /offline.html, /icons/, /apple-touch-icon.png
@@ -109,6 +110,22 @@ function withAppHead(html: string): string {
   return html.replace('<link rel="icon" href="data:,">', '<link rel="icon" href="/static/logo.svg" type="image/svg+xml">').replace("</head>", `${APP_HEAD}</head>`);
 }
 
+/**
+ * The link preview tags of a page site/build.py wrote (its description,
+ * Open Graph and X card, from social_head): for the pages written here.
+ */
+function socialTags(builtPage: string): string {
+  const html = readFileSync(join(out, builtPage), "utf8");
+  const tags = html.match(/^<(?:meta name="description"|meta property="og:|meta name="twitter:|link rel="canonical").*>$/gm);
+  if (!tags?.some((t) => t.includes('property="og:image"'))) throw new Error(`site/_out/${builtPage} has no link preview (og:image)`);
+  return `${tags.join("\n")}\n`;
+}
+
+function withSocial(html: string, tags: string): string {
+  if (!html.includes("</head>")) throw new Error("a page without </head>");
+  return html.replace("</head>", `${tags}</head>`);
+}
+
 /** A page of npm/party's own (no tvpipe copy): its `../x.js` imports are the library's. */
 function pageJs(dir: string, js: string): string {
   return readFileSync(join(party, "dist", dir, js), "utf8")
@@ -159,7 +176,10 @@ const pages: [src: string, js: string, to: string][] = [
   ["tvscreen", "tvscreen.js", "tv"],
 ];
 for (const [src, js, to] of pages) {
-  write(`${to}/index.html`, readFileSync(join(party, "src", src, "index.html"), "utf8"));
+  let html = readFileSync(join(party, "src", src, "index.html"), "utf8");
+  // A web room's join link (tvpipe.party/CODE leads there): the join links' preview, as the frame page's.
+  if (to === "r") html = withSocial(html, socialTags("p.html"));
+  write(`${to}/index.html`, html);
   write(`${to}/${js}`, pageJs(src, js));
 }
 // The web app: manifest, service worker, icons, the offline page.
@@ -178,9 +198,13 @@ for (const g of listed) {
     run(dir, "npm", ["run", "build"]);
   }
   // Play now: /games/NAME/launcher/ is the launcher (its files stay in /_tvpipe/launcher/).
+  // With the game's link preview, from its page /games/NAME/.
   write(
     `games/${g.name}/launcher/index.html`,
-    launcherHtml.replace('href="launcher.css"', 'href="/_tvpipe/launcher/launcher.css"').replace('src="launcher.js"', 'src="/_tvpipe/launcher/launcher.js"'),
+    withSocial(
+      launcherHtml.replace('href="launcher.css"', 'href="/_tvpipe/launcher/launcher.css"').replace('src="launcher.js"', 'src="/_tvpipe/launcher/launcher.js"'),
+      socialTags(`games/${g.name}/index.html`),
+    ),
   );
   const release = (JSON.parse(readFileSync(join(dir, "package.json"), "utf8")) as { version: string }).version;
   if (!/^[0-9A-Za-z.+-]{1,40}$/.test(release)) throw new Error(`games/${g.name}: version ${release} is no path`);

@@ -21,6 +21,10 @@ Sources:
                          a web party's Other game (/games/?switch)
   crates/tvpipe/src/browser/fonts/  the fonts (shared with tvpipe's share page)
   site/shots/            screenshots (site/screenshots.mjs makes them)
+  site/static/social/    the link preview cards (Open Graph images,
+                         site/social.mjs makes them): site.jpg, manual.jpg,
+                         games.jpg, join.jpg and games/NAME.jpg for every
+                         listed game; each page's head names its card
 Output: site/_out/ (static files, serve the directory). Every page is a
 directory with an index.html (manual/receivers/index.html), and links
 point at the directory (manual/receivers/).
@@ -61,6 +65,7 @@ slug, without the number, so renumbering does not break links; /games/ from
 the site's root).
 """
 
+import hashlib
 import html
 import json
 import posixpath
@@ -88,6 +93,8 @@ APP_HEAD = """<link rel="manifest" href="{root}manifest.webmanifest">
 <meta name="apple-mobile-web-app-title" content="tvpipe.party">
 <script src="{root}static/games.js"></script>
 """
+# The site's address: link previews need absolute URLs (og:url, og:image).
+SITE_URL = "https://tvpipe.party/"
 FOOTER_NOTE = f'tvpipe is open source. <a href="{LICENSE}">License</a>'
 # The colour theme switch (site.js), in the footer of every page.
 THEME = """<div class="theme" role="group" aria-label="Colour theme">  <button data-t="light" title="Light" aria-label="Light"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2.75"/><path d="M8 1.25v1.5M8 13.25v1.5M1.25 8h1.5M13.25 8h1.5M3.2 3.2l1.06 1.06M11.74 11.74l1.06 1.06M3.2 12.8l1.06-1.06M11.74 4.26l1.06-1.06"/></svg></button>  <button data-t="dark" title="Dark" aria-label="Dark"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.6 10.2A6 6 0 0 1 5.8 2.4a6 6 0 1 0 7.8 7.8z"/></svg></button>  <button data-t="auto" title="Like the system" aria-label="Like the system"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.75"/><path class="fill" d="M8 2.25a5.75 5.75 0 0 1 0 11.5z"/></svg></button></div>"""
@@ -370,6 +377,99 @@ def game_page(games, i, ctx):
                                      ("next", "Next game", games[i + 1] if i + 1 < len(games) else None)) if o)
     return f'{back}{game_block(g, ctx, True)}<nav class="gpn" aria-label="More games">{pn}</nav>'
 
+
+
+# ---------------------------------------------------------------- link previews
+
+# The cards are made by site/social.mjs: 1200×630 JPEGs, small enough for
+# every previewer (WhatsApp skips images much over 300 KiB).
+CARD_SIZE = (1200, 630)
+CARD_MAX = 300 * 1024
+
+
+def jpeg_size(data):
+    """(width, height) of a baseline or progressive JPEG, from its SOF
+    segment, or None."""
+    if not data.startswith(b"\xff\xd8"):
+        return None
+    i = 2
+    while i + 4 <= len(data):
+        if data[i] != 0xFF:
+            return None
+        marker = data[i + 1]
+        if marker == 0xFF:  # fill byte
+            i += 1
+            continue
+        if marker in (0x01, *range(0xD0, 0xD8)):  # no length
+            i += 2
+            continue
+        length = int.from_bytes(data[i + 2:i + 4], "big")
+        if length < 2:
+            return None
+        # SOF0..SOF15 but DHT (C4), JPG (C8) and DAC (CC).
+        if 0xC0 <= marker <= 0xCF and marker not in (0xC4, 0xC8, 0xCC):
+            if i + 9 > len(data):
+                return None
+            return int.from_bytes(data[i + 7:i + 9], "big"), int.from_bytes(data[i + 5:i + 7], "big")
+        i += 2 + length
+    return None
+
+
+def card_url(name):
+    """The absolute URL of the card static/social/NAME.jpg, checked, with a
+    hash of its bytes so previewers fetch it again when it changes."""
+    rel = f"static/social/{name}.jpg"
+    path = SITE / rel
+    if not path.is_file():
+        raise SystemExit(f"site/{rel} is missing: run node site/social.mjs {name.rpartition('/')[2]}")
+    data = path.read_bytes()
+    if len(data) > CARD_MAX:
+        raise SystemExit(f"site/{rel} is {len(data) // 1024} KiB, at most {CARD_MAX // 1024}")
+    if jpeg_size(data) != CARD_SIZE:
+        raise SystemExit(f"site/{rel} must be a {CARD_SIZE[0]}×{CARD_SIZE[1]} JPEG (node site/social.mjs)")
+    return f"{SITE_URL}{rel}?v={hashlib.sha256(data).hexdigest()[:12]}"
+
+
+def social_head(title, description, card, alt, here=None):
+    """The page's description and link preview: Open Graph (Facebook,
+    iMessage, WhatsApp, Slack, Discord, LinkedIn) and X's card. `here` is
+    the page's directory for og:url and the canonical link; None for pages
+    whose URL carries a room (the join pages)."""
+    a = lambda s: html.escape(s, quote=True)
+    tags = [f'<meta name="description" content="{a(description)}">']
+    if here is not None:
+        tags.append(f'<link rel="canonical" href="{SITE_URL}{here}">')
+        tags.append(f'<meta property="og:url" content="{SITE_URL}{here}">')
+    tags += [
+        '<meta property="og:type" content="website">',
+        '<meta property="og:site_name" content="tvpipe.party">',
+        f'<meta property="og:title" content="{a(title)}">',
+        f'<meta property="og:description" content="{a(description)}">',
+        f'<meta property="og:image" content="{card_url(card)}">',
+        f'<meta property="og:image:width" content="{CARD_SIZE[0]}">',
+        f'<meta property="og:image:height" content="{CARD_SIZE[1]}">',
+        f'<meta property="og:image:alt" content="{a(alt)}">',
+        '<meta name="twitter:card" content="summary_large_image">',
+    ]
+    return "\n".join(tags) + "\n"
+
+
+# The join links' card (tvpipe.party/CODE → /p or /r/): p.html's head has the
+# marker; scripts/site.ts gives /r/ the same tags.
+JOIN_SOCIAL = ("Join the game", "You're invited to a party game on the TV: open the link on your phone, "
+               "type a name and play along. Nothing to install.", "join",
+               "Phones playing tvpipe party games")
+SOCIAL_MARKER = "<!-- social -->"
+
+
+def game_social(g):
+    langs = [LANGUAGES[lang] for lang in g.get("languages", [])]
+    facts = players(g["players"]) + (f', in {", ".join(langs[:-1])} and {langs[-1]}' if len(langs) > 1
+                                     else f", in {langs[0]}" if langs else "")
+    description = (f'{g["summary"].rstrip(".")}. {facts}. A party game on the TV that everyone plays on their phone; '
+                   "play it in the browser or with tvpipe.")
+    return (f'{g["title"]} · tvpipe.party', description, f'games/{g["name"]}',
+            f'{g["title"]}: the TV and a phone during a game')
 
 
 # ---------------------------------------------------------------- blocks
@@ -729,6 +829,11 @@ def build(out):
     for name in ROOT_FILES:
         if (SITE / "static" / name).exists():
             shutil.copy(SITE / "static" / name, out / name)
+    # The frame page, where join links lead: their preview.
+    frame = (SITE / "static" / "p.html").read_text(encoding="utf-8")
+    if SOCIAL_MARKER not in frame:
+        raise SystemExit(f"site/static/p.html has no {SOCIAL_MARKER} in its head")
+    (out / "p.html").write_text(frame.replace(SOCIAL_MARKER, social_head(*JOIN_SOCIAL).rstrip("\n")), encoding="utf-8")
     if (SITE / "shots").exists():
         shutil.copytree(SITE / "shots", out / "shots")
 
@@ -751,13 +856,18 @@ def build(out):
                 f'<div class="pn">{pn}</div><div class="r">{THEME}</div></footer></main></div>')
         crumb = f'Section {page["num"]}<span>{html.escape(page["title"])}</span>'
         title = ("" if i == 0 else page["title"] + " · ") + "tvpipe operations manual"
-        write(out, page["dir"], layout(title, crumb, body, ctx.root, "manual"))
+        social = social_head(page["title"] + " · tvpipe operations manual" if i else "tvpipe operations manual",
+                             page.get("summary") or "The tvpipe operations manual.", "manual",
+                             "The tvpipe operations manual", page["dir"])
+        write(out, page["dir"], layout(title, crumb, body, ctx.root, "manual", social))
 
     meta, lines = read_md(SITE / "index.md")
     ctx = Ctx("", None, pages)
     body = f'<main class="landing">{render(lines, ctx)}</main>'
     body += f'<footer class="lf"><div>{FOOTER_NOTE}</div><div class="r">{THEME}</div></footer>'
-    write(out, "", layout(meta.get("title", "tvpipe"), "", body, ctx.root, "landing"))
+    social = social_head(meta.get("title", "tvpipe"), meta["description"], "site",
+                         "tvpipe: video from your computer on the TV", "")
+    write(out, "", layout(meta.get("title", "tvpipe"), "", body, ctx.root, "landing", social))
 
     # The games page, from the games list.
     meta, lines = read_md(SITE / "games.md")
@@ -765,7 +875,9 @@ def build(out):
     body = (f'<main class="landing gamespage"><header class="gh"><h1>{html.escape(meta.get("heading", "Games"))}</h1>'
             f'{render(lines, ctx)}</header>{games_page(ctx)}</main>'
             f'<footer class="lf"><div>{FOOTER_NOTE}</div><div class="r">{THEME}</div></footer>')
-    write(out, "games/", layout(meta.get("title", "Games"), "", body, ctx.root, "landing", APP_HEAD))
+    social = social_head(meta.get("title", "Games"), meta["description"], "games",
+                         "Screens of tvpipe's party games", "games/")
+    write(out, "games/", layout(meta.get("title", "Games"), "", body, ctx.root, "landing", social + APP_HEAD))
 
     # A page per game: /games/NAME/.
     games = games_list()
@@ -774,7 +886,8 @@ def build(out):
         body = (f'<main class="landing gamespage">{game_page(games, i, ctx)}</main>'
                 f'<footer class="lf"><div>{FOOTER_NOTE}</div><div class="r">{THEME}</div></footer>')
         title = f'{g["title"]} · {meta.get("title", "Games")}'
-        write(out, game_dir(g), layout(title, "", body, ctx.root, "landing", APP_HEAD))
+        social = social_head(*game_social(g), game_dir(g))
+        write(out, game_dir(g), layout(title, "", body, ctx.root, "landing", social + APP_HEAD))
     print(f"built {len(pages) + 2 + len(games)} pages into {out}")
 
 

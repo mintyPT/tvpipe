@@ -255,6 +255,9 @@ test("/join: the form, and ?code= as /CODE", async () => {
     assert.ok(page.includes(attr), attr);
   }
   assert.ok(!page.includes("<script"));
+  // The join links' preview card (site/static/social/join.jpg).
+  assert.ok(page.includes('<meta property="og:image" content="https://tvpipe.party/static/social/join.jpg">'));
+  assert.ok(page.includes('<meta name="twitter:card" content="summary_large_image">'));
 
   res = await handle(req("GET", "/join?code=bcdf"), env, T0);
   assert.equal(res.status, 302);

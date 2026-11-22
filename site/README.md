@@ -20,6 +20,7 @@ python3 -m http.server -d site/_out    # look at it
 | `static/p.html`, `static/frame.js` | the frame page at `/p` (copied to the root; Cloudflare serves `p.html` as `/p`): a game's phone page from its tunnel inside a page of tvpipe.party, where the QR codes and short links lead ([docs/short-links.md](../docs/short-links.md)) |
 | `static/games.json`, `static/games/NAME/` | the games list (also at `/games.json`, what `tvpipe game play NAME` reads) and its screenshots, taken by each game's `test/live/play.ts --shots` |
 | `shots/` | screenshots, made by `node site/screenshots.mjs` |
+| `static/social/` | the link preview cards (Open Graph images, 1200×630 JPEG): `site.jpg`, `manual.jpg`, `games.jpg`, `join.jpg` and `games/NAME.jpg` for every listed game, made by `node site/social.mjs` |
 | `build.py` | the generator: standard-library Python, its Markdown subset is described at the top |
 
 The generator has no dependencies. Its Markdown is a small subset plus a few
@@ -32,6 +33,16 @@ containers for the manual's layout (`:::aside`, `:::caution`, `:::steps`,
 `tvpipe share --to browser`, opens their pages in headless Chrome and saves
 the PNGs in `shots/`. Rerun it when the player or the share page changes.
 Needs Node 22+ and Chrome.
+
+## Link previews
+
+Every page's head has a description, Open Graph tags and X's card
+(`build.py`'s `social_head`), with absolute URLs on `https://tvpipe.party/`.
+`node site/social.mjs [NAME ...]` renders the cards in headless Chrome
+(Node 22+, Chrome) into `static/social/`; rerun it for a new game, or when
+a game's title, players or pictures change. `build.py` fails when a card
+is missing, is not a 1200×630 JPEG or is over 300 KiB. Check a page with
+a previewer such as https://www.opengraph.xyz/ after deploying.
 
 ## Publishing
 

@@ -1,5 +1,6 @@
 ---
 title: tvpipe: video from your computer on the TV
+description: tvpipe puts video and sound from your computer on a TV: files, URLs, cameras, the screen and web pages, to Apple TV, Chromecast and browsers. One command line tool for macOS, Linux and Windows, and party games played on everyone's phone.
 ---
 
 <h1><svg viewBox="0 0 560 520" aria-hidden="true"><use href="#logo"/></svg><span>tv<b>pipe</b></span></h1>

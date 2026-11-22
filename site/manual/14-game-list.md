@@ -40,4 +40,4 @@ A game on this list is a game anyone can play by name. Publish it as a release (
 | `tv` | 1280×720 | the TV page at a lively moment: a vote, a reveal, the results |
 | `phone` | 390×844 | the phone page: what a player does, one or two |
 
-Each a PNG, JPEG or WebP of at most 400 KiB, with an `alt` text that says what it shows. `python3 site/build.py` checks the entry and the pictures. Everyone can also play a game from its release without the list: `tvpipe game play gh:OWNER/REPO`.
+Each a PNG, JPEG or WebP of at most 400 KiB, with an `alt` text that says what it shows. `node site/social.mjs NAME` then makes the game's link preview from its title, players, cover and first phone picture (`site/static/social/games/NAME.jpg`, the picture chat apps and social sites show for a link to its page). `python3 site/build.py` checks the entry, the pictures and the preview. Everyone can also play a game from its release without the list: `tvpipe game play gh:OWNER/REPO`.

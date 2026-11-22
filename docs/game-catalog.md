@@ -50,7 +50,8 @@ for people; tvpipe only reads the list.
   repository, never hot-linked. `kind` is `tv` (16:9, 1280×720) or
   `phone` (portrait, 390×844). `alt` describes the picture.
 - `python3 site/build.py` checks every entry: the fields, that each
-  picture exists, is a PNG, JPEG or WebP, at most 400 KiB.
+  picture exists, is a PNG, JPEG or WebP, at most 400 KiB, and that the
+  game has its link preview card (below).
 
 ## The site
 
@@ -63,6 +64,22 @@ to `/games/` above it and the previous and next game of the list below.
 The titles on `/games/`, the landing page's covers and the manual's "Games
 to play" list link to the games' pages; the old anchors (`/games/#NAME`)
 still work.
+
+### Link previews
+
+Every page has a description, Open Graph tags and X's
+`summary_large_image` card (`build.py`'s `social_head`), so a link to it
+shows a picture in chat apps and on social sites. The pictures are cards
+in `site/static/social/`, 1200×630 JPEGs of at most 300 KiB (WhatsApp
+skips bigger ones), made by `node site/social.mjs [NAME …]` in headless
+Chrome with the site's fonts and logo: `site.jpg` (the landing page),
+`manual.jpg`, `games.jpg`, `join.jpg` (the join links: `/p`, `/r/` and
+the Worker's `/join`) and `games/NAME.jpg` per game (its title, players,
+cover and first phone picture; also on its launcher,
+`/games/NAME/launcher/`). Re-run it for a new game or when a game's
+title, players or pictures change; `build.py` refuses a listed game
+without its card. The image URL carries a hash of the card
+(`?v=…`), so previewers that cache by URL fetch a changed one.
 
 ## Picking in the window
 

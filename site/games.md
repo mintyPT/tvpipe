@@ -1,6 +1,7 @@
 ---
 title: Games to play · tvpipe
 heading: Games to play
+description: Party games for the TV and everyone's phones. The TV shows the game and a QR code; everyone scans it, types a name and plays. Play in the browser or with tvpipe, nothing to install.
 ---
 
 Party games for the TV and everyone's phones. The TV shows the game and a QR code; everyone scans it, types a name and plays on their own phone. Nobody installs anything.

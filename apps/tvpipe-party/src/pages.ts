@@ -41,7 +41,24 @@ a { color: var(--link); }
 nav { margin-top: 28px; font-size: 15px; }
 `;
 
-function layout(title: string, body: string): string {
+/**
+ * The join page's link preview: the join links' card, as site/build.py puts
+ * it on the frame page (/p) and scripts/site.ts on /r/ (they add a hash of
+ * the card for previewers' caches; this page is not built, so it has none).
+ */
+const JOIN_SOCIAL = `<meta name="description" content="You're invited to a party game on the TV: type the code, type a name and play along on your phone. Nothing to install.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="tvpipe.party">
+<meta property="og:title" content="Join the game">
+<meta property="og:description" content="You're invited to a party game on the TV: type the code, type a name and play along on your phone. Nothing to install.">
+<meta property="og:image" content="https://tvpipe.party/static/social/join.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Phones playing tvpipe party games">
+<meta name="twitter:card" content="summary_large_image">
+`;
+
+function layout(title: string, body: string, head = ""): string {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -49,7 +66,7 @@ function layout(title: string, body: string): string {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <title>${esc(title)}</title>
-<style>${STYLE}</style>
+${head}<style>${STYLE}</style>
 </head>
 <body>
 <main>
@@ -72,6 +89,7 @@ export function joinPage(message?: string, code = ""): string {
 <button type="submit">Join</button>
 </form>
 `,
+    JOIN_SOCIAL,
   );
 }
 
