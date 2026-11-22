@@ -36,6 +36,11 @@
  * Without TURN servers from `/api/turn` (local dev without the secrets)
  * it stops at once with that.
  *
+ * `--local-lib` serves the library (`/_tvpipe/lib/`) and `/r/`'s script
+ * from this checkout's build (`npm run build:web`) to pages of BASE: a
+ * library change against production's signaling and TURN before it is
+ * deployed.
+ *
  * Not reachable here: DevTools' offline mode does not reach WebRTC (a
  * locked phone is a frozen page instead), real NAT and TURN, Safari.
  */
@@ -53,6 +58,8 @@ const opt = (name: string): string | undefined => {
   return i >= 0 ? args[i + 1] : undefined;
 };
 const valued = new Set(["--only", "--games", "--out", "--phones"]);
+/** `DBG_JOIN=1`: each party's joins as a timeline of the host's and the phones' fetches, sockets and ICE. */
+const TIMELINE = !!process.env["DBG_JOIN"];
 /** `--relay`: every peer connection TURN only (iceTransportPolicy "relay"), checked with getStats. */
 const RELAY = args.includes("--relay");
 const BASE = (args.find((a, i) => !a.startsWith("--") && !valued.has(args[i - 1] ?? "")) ?? "http://localhost:8787").replace(/\/$/, "");
@@ -220,7 +227,9 @@ class Ctx {
     if (view.mobile) await tab.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
     if (o.ua) await tab.send("Emulation.setUserAgentOverride", { userAgent: o.ua, platform: o.ua.includes("iPhone") ? "iPhone" : "MacIntel" });
     if (o.hook) await hookClients(tab);
+    else if (LOCAL_LIB) await intercept(tab, false);
     if (RELAY) await tab.send("Page.addScriptToEvaluateOnNewDocument", { source: RELAY_ONLY });
+    if (TIMELINE) await tab.send("Page.addScriptToEvaluateOnNewDocument", { source: TIMELINE_HOOK });
     if (url !== "about:blank") await page.go(url);
     return page;
   }
@@ -237,29 +246,49 @@ class Ctx {
  * domain; the page is otherwise as served).
  */
 async function hookClients(tab: Tab): Promise<void> {
-  const hook = `
+  await intercept(tab, true);
+}
+
+/** `--local-lib`: the library and `/r/`'s script from this checkout's `site/_out` (built), BASE's for everything else. */
+const LOCAL_LIB = args.includes("--local-lib");
+const SITE = new URL("../../../../site/_out/", import.meta.url);
+const CLIENT_HOOK = `
 ;{ const reg = (globalThis.__tvp ??= { clients: [], listeners: [], acts: { ok: 0, refused: [] } });
   const on = PartyClient.prototype.on;
   PartyClient.prototype.on = function (ev, fn) { if (!reg.clients.includes(this)) reg.clients.push(this); reg.listeners.push([this, ev, fn]); return on.call(this, ev, fn); };
   const act = PartyClient.prototype.act;
   PartyClient.prototype.act = function (type, data) { const p = act.call(this, type, data); p.then(() => reg.acts.ok++, (e) => reg.acts.refused.push(type + ":" + (e && e.code))); return p; };
 }`;
-  tab.on("Fetch.requestPaused", (p: { requestId: string; responseStatusCode?: number; responseHeaders?: { name: string; value: string }[] }) => {
+
+/** The page's requests for the library: `hook` adds the client hook to client.js; `--local-lib` serves the local build. */
+async function intercept(tab: Tab, hook: boolean): Promise<void> {
+  type Paused = { requestId: string; request: { url: string }; responseStatusCode?: number; responseHeaders?: { name: string; value: string }[] };
+  tab.on("Fetch.requestPaused", (p: Paused) => {
     void (async () => {
-      if (p.responseStatusCode !== 200) return void (await tab.send("Fetch.continueRequest", { requestId: p.requestId }));
-      const body = (await tab.send("Fetch.getResponseBody", { requestId: p.requestId })) as { body: string; base64Encoded: boolean };
-      const text = body.base64Encoded ? Buffer.from(body.body, "base64").toString("utf8") : body.body;
-      await tab.send("Fetch.fulfillRequest", {
-        requestId: p.requestId,
-        responseCode: 200,
-        responseHeaders: (p.responseHeaders ?? []).filter((h) => !/^(content-(length|encoding)|etag)$/i.test(h.name)),
-        body: Buffer.from(text + hook).toString("base64"),
-      });
-    })().catch(() => {});
+      const path = new URL(p.request.url).pathname;
+      const addHook = hook && path === "/_tvpipe/lib/client.js";
+      let text: string;
+      let headers: { name: string; value: string }[];
+      if (LOCAL_LIB) {
+        text = readFileSync(new URL(path.slice(1), SITE), "utf8");
+        headers = [{ name: "Content-Type", value: "text/javascript; charset=utf-8" }, { name: "Cache-Control", value: "no-store" }];
+      } else {
+        if (p.responseStatusCode !== 200) return void (await tab.send("Fetch.continueRequest", { requestId: p.requestId }));
+        const body = (await tab.send("Fetch.getResponseBody", { requestId: p.requestId })) as { body: string; base64Encoded: boolean };
+        text = body.base64Encoded ? Buffer.from(body.body, "base64").toString("utf8") : body.body;
+        headers = (p.responseHeaders ?? []).filter((h) => !/^(content-(length|encoding)|etag)$/i.test(h.name));
+      }
+      await tab.send("Fetch.fulfillRequest", { requestId: p.requestId, responseCode: 200, responseHeaders: headers, body: Buffer.from(text + (addHook ? CLIENT_HOOK : "")).toString("base64") });
+    })().catch(() => void tab.send("Fetch.continueRequest", { requestId: p.requestId }).catch(() => {}));
   });
-  await tab.send("Fetch.enable", { patterns: [{ urlPattern: "*/_tvpipe/lib/client.js*", requestStage: "Response" }] });
+  const patterns = LOCAL_LIB
+    ? [{ urlPattern: "*/_tvpipe/lib/*.js*", requestStage: "Request" }, { urlPattern: "*/r/join.js*", requestStage: "Request" }]
+    : [{ urlPattern: "*/_tvpipe/lib/client.js*", requestStage: "Response" }];
+  await tab.send("Fetch.enable", { patterns });
   await tab.send("Network.enable");
   await tab.send("Network.setCacheDisabled", { cacheDisabled: true });
+  // The service worker (/play/ registers it) would fetch past the interception.
+  if (LOCAL_LIB) await tab.send("Network.setBypassServiceWorker", { bypass: true });
 }
 
 /**
@@ -281,6 +310,57 @@ const RELAY_ONLY = `{
     globalThis.RTCPeerConnection = R;
   }
 }`;
+
+/** `DBG_JOIN`: the page's fetches, WebSockets and peer connections into `globalThis.__t` ([epoch ms, what]). */
+const TIMELINE_HOOK = `{
+  const T = (globalThis.__t = []);
+  const mark = (m) => T.push([Math.round(performance.timeOrigin + performance.now()), m]);
+  mark("page " + location.pathname);
+  const P = globalThis.RTCPeerConnection;
+  if (P) {
+    const R = function RTCPeerConnection(c, ...r) {
+      const pc = new P(c, ...r);
+      const id = (globalThis.__pcn = (globalThis.__pcn ?? 0) + 1);
+      mark("pc" + id + " new (" + (c?.iceServers ?? []).length + " servers)");
+      pc.addEventListener("icegatheringstatechange", () => mark("pc" + id + " gathering " + pc.iceGatheringState));
+      pc.addEventListener("icecandidate", (e) => mark("pc" + id + " candidate " + (e.candidate ? e.candidate.type + " " + e.candidate.protocol + " " + (e.candidate.url ?? "") : "(end)")));
+      pc.addEventListener("connectionstatechange", () => mark("pc" + id + " " + pc.connectionState));
+      return pc;
+    };
+    R.prototype = P.prototype;
+    Object.setPrototypeOf(R, P);
+    globalThis.RTCPeerConnection = R;
+  }
+  const W = globalThis.WebSocket;
+  const S = function WebSocket(u, p) {
+    const ws = p === undefined ? new W(u) : new W(u, p);
+    const at = String(u).replace(/^.*\\/api/, "/api").replace(/\\?.*/, "");
+    mark("ws " + at);
+    ws.addEventListener("open", () => mark("ws open " + at));
+    ws.addEventListener("message", (e) => mark("ws message " + at + " " + String(e.data).slice(0, 40)));
+    ws.addEventListener("close", (e) => mark("ws close " + at + " " + e.code));
+    return ws;
+  };
+  S.prototype = W.prototype;
+  Object.setPrototypeOf(S, W);
+  globalThis.WebSocket = S;
+  const F = globalThis.fetch;
+  globalThis.fetch = function (u, ...r) {
+    const at = String(u?.url ?? u).replace(/^https?:\\/\\/[^/]+/, "");
+    mark("fetch " + at);
+    return F.call(this, u, ...r).then((x) => (mark("fetched " + at + " " + x.status), x));
+  };
+}`;
+
+/** `DBG_JOIN`: the host's and a phone's timeline from `from` on (ms after it). */
+async function timeline(h: Host, p: Phone, from: number): Promise<void> {
+  const get = (page: Page) => page.eval<[number, string][]>(`globalThis.__t ?? []`).catch(() => [] as [number, string][]);
+  const rows = [...(await get(h.page)).map(([t, m]) => [t, "host ", m] as const), ...(await get(p.page)).map(([t, m]) => [t, p.name.padEnd(5), m] as const)]
+    .filter(([t]) => t >= from)
+    .sort((a, b) => a[0] - b[0]);
+  log(`${p.name}'s join:`);
+  for (const [t, who, m] of rows.slice(0, 80)) console.log(`        +${String(t - from).padStart(5)} ${who} ${m}`);
+}
 
 /** The selected candidate pairs of the page's connected peer connections (`--relay`). */
 const SELECTED_PAIRS = `(async () => {
@@ -382,6 +462,15 @@ async function startHost(ctx: Ctx, game: WebGame, screen: "this" | "window" | "n
   await page.eval(`document.getElementById("start").click(); true`);
   await page.until(`location.pathname === ${JSON.stringify(game.pages.host)} && !!globalThis.${game.name}?.party`, 30_000);
   const h = await hostInfo(page, game);
+  // Phones scan once the QR code is up and the room answers (the host's signaling is a moment behind the page).
+  const t = Date.now();
+  for (;;) {
+    const r = await fetch(`${BASE}/api/rooms/${h.code}`).catch(() => null);
+    const room = r?.ok ? ((await r.json()) as { host?: boolean; game?: unknown }) : null;
+    if (room?.host && room.game) break;
+    if (Date.now() - t > 20_000) throw new Error(`room ${h.code}: no host after 20 s`);
+    await sleep(200);
+  }
   return { ctx, page, game, ...h };
 }
 
@@ -411,11 +500,13 @@ interface Phone {
 async function joinPhone(chrome: Chrome, h: Host, name: string, o: { wait?: boolean } = {}): Promise<Phone> {
   const ctx = await chrome.context(`phone-${name}`);
   const t = Date.now();
+  if (TIMELINE) await h.page.eval(`(globalThis.__t ??= []).push([Date.now(), "phone ${name} opens the link"]), true`);
   const page = await ctx.open(h.join, PHONE, { ua: IPHONE_UA, hook: true });
   const phone: Phone = { ctx, page, name };
   if (o.wait === false) return phone;
   await fillName(phone, h);
   phone.joinedMs = Date.now() - t;
+  if (TIMELINE) await timeline(h, phone, t);
   return phone;
 }
 
