@@ -130,6 +130,8 @@ pub struct AudioRequest {
     pub codec: AudioCodecId,
     /// Audio lead in samples.
     pub latency_max: u32,
+    /// `latencyMin` in samples: 0, the lead for an LG TV (§2.7).
+    pub latency_min: u32,
     pub layout: AudioLayout,
     /// HAP profile: the 32-byte ChaCha audio key.
     pub shk: Option<[u8; 32]>,
@@ -151,7 +153,7 @@ impl AudioRequest {
             .with("audioFormat", fmt)
             .with("audioMode", "default")
             .with("usingScreen", true)
-            .with("latencyMin", 0i64)
+            .with("latencyMin", self.latency_min as i64)
             .with("latencyMax", self.latency_max as i64)
             .with("redundantAudio", 2i64);
         match self.layout {
@@ -383,6 +385,7 @@ pub(crate) mod tests {
             stream_id: 1794957874532018000,
             codec: AudioCodecId::Alac,
             latency_max: 3748,
+            latency_min: 0,
             layout: AudioLayout::S,
             shk: Some(ramp(0x80, 32).try_into().unwrap()),
             control_port: 50001,
@@ -458,6 +461,7 @@ pub(crate) mod tests {
             stream_id: 1,
             codec: AudioCodecId::Alac,
             latency_max: 3748,
+            latency_min: 0,
             layout: AudioLayout::S,
             shk: Some([0; 32]),
             control_port: 53817,

@@ -287,6 +287,7 @@ The sender picks one pair of playout leads for the session:
 |---|---|---|---|
 | normal (wired/unknown route) | 75 ms | 85 ms | 3748 |
 | wireless route | 100 ms | 170 ms | 7497 |
+| LG TV, with audio | 300 ms | 300 ms | 13230 |
 | explicit (user) | L | L | floor(L × 44.1) |
 
 The reference picks "wireless" when the control connection's local
@@ -294,6 +295,23 @@ interface is Wi-Fi (an OS query); tvpipe cannot ask the OS portably, so
 use "normal" by default and let the user override (or choose "wireless"
 when unsure; it only costs latency). Explicit values are clamped to
 5–2000 ms. ms → samples always truncates (`floor(ms × 44100 / 1000)`).
+
+**LG TVs** (`manufacturer` "LG" in `/info` or the TXT record) take the
+audio descriptor's `latencyMin` (§4.6) as their audio buffer and seem to
+ignore the lead the sync packets announce: with `latencyMin` 0 the sound is
+missing or crackles at any lead the sender picks. Send `latencyMin` =
+`latencyMax` (both the audio lead), and without an explicit latency use the
+LG row above whenever the session carries audio [HW: an OLED65C5 (webOS,
+sourceVersion 377.40.00), the beep of the test pattern and a 25 s 440 Hz
+tone. With `latencyMin` 0: 170 and 300 ms silent, 450 ms crackling, 600 ms
+clean. With `latencyMin` = `latencyMax`: 170 and 250 ms slightly crackling,
+300 ms clean. The picture was fine at the wireless profile. USER: PR #8, a
+55UA84006LB on the same sourceVersion: crackling or no sound at the
+wireless profile and 500 ms, clean at 600 ms, with `latencyMin` 0]. A
+session with an LG TV (known from its advertisement) uses 300 ms on every
+receiver, Cast and browser tabs included, so that they stay in step; one
+given by address is only known after `/info`, so its session's other
+receivers keep their own delays. Without audio the profiles above apply.
 
 ---
 
@@ -468,7 +486,7 @@ Audio descriptor, common keys:
 | `audioFormat` | int | 0x40000 (ALAC) or 0x1000000 (AAC-ELD) |
 | `audioMode` | string | `default` |
 | `usingScreen` | bool | true |
-| `latencyMin` | int | 0 |
+| `latencyMin` | int | 0; an LG TV: the same as `latencyMax` (§2.7) |
 | `latencyMax` | int | audio lead in samples (§2.7) |
 | `redundantAudio` | int | 2 |
 
@@ -1271,6 +1289,7 @@ not the session.
 | Apple TV 3rd gen (AppleTV3,2, sourceVersion 220.68) [MODEL] | legacy raw pairing, plaintext control | media-first | NTP, receiver probes | layout P, no shk, AES-CBC | needs `ekey`/`eiv`/`et` in the session SETUP; no `supportedFormats` (use feature bits); video AES-CTR |
 | Roku (Streaming Stick 4K 3820R2, sourceVersion 377.40.00) [MODEL; Roku/TCL Roku reported working] | legacy (HKP 3) | media-first | advertises PTP (feature 41, `PTPInfo`), uses NTP with receiver probes | layout P | omits `supportedFormats`; AAC-ELD |
 | LG (75UP75009LC, sourceVersion 377.25.06) [MODEL; LG not in the reference's tested list] | HKP 3 but TLV8/HAP, encrypted control | media-first (rejects control-only SETUP) | advertises PTP but sends no timing headers → NTP from the start (§2.5) | — | ALAC only (`screenStream` 0x40000); third-party TV family |
+| LG OLED65C5 (webOS, firmware 43.21.96, sourceVersion 377.40.00, AirPlay SDK 3.72.210.0) [HW] | HAP pair-verify with a stored PIN pairing (HKP 3); no FairPlay (feature 14 clear) | control-first, SETUP #1 accepted; the audio SETUP takes ~540 ms | advertises PTP, no timing headers on `/info` → NTP, which it queries | layout S (feature 59), no MediaDataControl (no feature 60), ALAC; `latencyMin` = `latencyMax`, 300 ms (§2.7) | `displays` (1920×1080, max 3840×2160 at 60 fps) in `/info` before SETUP; `GET_PARAMETER volume` always answers −144, and the −144 sent back does not mute it; a body-less `TEARDOWN` is answered 200 in ~200 ms and its service stays up; third-party TV family (features 49 and 51) |
 | Samsung The Frame 43" (LS03B, sourceVersion 377.40.00) [USER: issue #5] | HAP pair-verify; no FairPlay (feature 14 clear) | control-first, SETUP #1 accepted | advertises PTP (feature 41), accepts the PTP SETUP #1 but its response has no timing headers (that `/info` lacks them too is assumed, not reported); after that abandoned session it answers neither TEARDOWN nor a new connection's pair-verify (15 s timeout); for how long is unknown → NTP from the start (no timing headers on `/info`, or remembered), else the §2.5 reconnect attempts | ALAC | 1080p60 canvas; third-party TV family |
 | Samsung TU8300, Hisense, TCL Google TV [REF: reported working] | — | — | — | — | no per-family facts recorded; third-party TVs need an explicit initial volume |
 | UxPlay (open-source receiver, advertises AppleTV3,2) [MODEL] | legacy raw pairing | control-first | NTP, receiver probes | ALAC, layout P | no `eventPort`; AES-CTR video keyed from `K = SHA-512(K_fp ‖ S)[0..16]`, because the legacy pair-verify sent `X-Apple-PD: 1` (§2.2, §5.2) |

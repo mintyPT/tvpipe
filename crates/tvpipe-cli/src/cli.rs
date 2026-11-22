@@ -638,7 +638,7 @@ macro_rules! play_opts {
             Opt::new(PlayArg::Latency)
                 .long("latency")
                 .value("MS")
-                .help("Playout delay in ms, the same on every receiver (default: Cast 300, AirPlay automatic ~100-170, browser 100)"),
+                .help("Playout delay in ms, the same on every receiver (default: Cast 300, AirPlay automatic ~100-170 or 300 with sound on an LG TV, browser 100)"),
             Opt::new(PlayArg::Size)
                 .long("size")
                 .value("WxH")

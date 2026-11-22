@@ -508,7 +508,7 @@ impl<S: ControlStream> Session<S> {
                 .map_err(|e| Error::io("airplay: clone timing socket", e))?;
             Some(NtpResponder::start(sock, peer.ip())?)
         };
-        let leads = Leads::new(opts.latency_ms);
+        let leads = Leads::for_receiver(opts.latency_ms, &info, opts.audio);
         let mut session = Session {
             control_sock: control.socket().try_clone().ok(),
             control: Arc::new(Mutex::new(control)),
@@ -592,10 +592,12 @@ impl<S: ControlStream> Session<S> {
             self.audio.key = Some(random_array()?);
         }
         // §8.10: MediaDataControl (receiver audio reports) only with HAP,
-        // features 59 + 60, sourceVersion >= 450.1.0 and automatic leads.
+        // features 59 + 60, sourceVersion >= 450.1.0 and automatic leads
+        // (the wireless profile, not an LG TV's, §2.7).
         if self.hap
             && opts.audio
             && opts.latency_ms.is_none()
+            && self.leads == Leads::WIRELESS
             && policy::has(features, bit::STREAM_CONNECTIONS)
             && policy::has(features, bit::MEDIA_DATA_CONTROL)
             && policy::version_at_least(self.version.as_deref(), MDC_MIN_VERSION)
@@ -766,6 +768,7 @@ impl<S: ControlStream> Session<S> {
             stream_id: self.audio_id,
             codec: self.audio.codec,
             latency_max: self.leads.audio_samples(),
+            latency_min: self.leads.audio_min_samples(&self.info),
             layout,
             shk: self.audio.key,
             control_port: udp_port(&self.audio.sockets.control)?,

@@ -335,13 +335,17 @@ is the same everywhere:
 |---|---|---|---|
 | `--latency L` | L | L / L | L |
 | Cast present, no `--latency` | 300 ms | 300 / 300 ms | 300 ms |
+| An LG TV with sound, no `--latency` | 300 ms | 300 / 300 ms | 300 ms |
 | AirPlay only, no `--latency` | — | automatic, 100 / 170 ms | 100 ms |
 | Browser only, no `--latency` | — | — | 100 ms |
 
 `L` is clamped to 5–2000 ms, which both protocols accept. Mixed with Cast,
 AirPlay takes the shared budget instead of its automatic profile, which
 would show every frame 200 ms before the Cast TV (MediaDataControl only
-runs with the automatic leads).
+runs with the automatic leads). An LG TV's sound needs 300 ms and
+`latencyMin` set to the lead (spec §2.7); its advertisement says LG, so
+the whole session takes 300 ms. An LG given by address is known only
+after `/info`: it takes 300 ms, the others keep theirs.
 
 **Partial failures.** A `--to` that cannot be resolved or connected is
 logged and left out; the session goes on with the others and fails only
@@ -628,7 +632,8 @@ blocked `recv`, socket timeouts per handle, PowerShell pipes) are handled in por
 
 ## Known Gaps
 
-- **Untested hardware:** LG and Samsung AirPlay, and the legacy AirPlay
+- **Untested hardware:** Samsung AirPlay, LG models other than the
+  OLED65C5 of `docs/airplay-mirroring.md` §10, and the legacy AirPlay
   pairing and media profile (including the no-FairPlay variant, which
   sends random `shk`/`shiv` and audio in the clear).
 - **Cast:** testing on real hardware is in progress.

@@ -175,7 +175,7 @@ fn browse_rejoin(
         fps: Some(fps),
         ..opts.clone()
     });
-    let budget = shared_budget(opts.latency_ms, &targets);
+    let budget = shared_budget(opts.latency_ms, &targets, audio);
     let d = Desired {
         size: offer.size,
         fps,

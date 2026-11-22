@@ -432,7 +432,7 @@ fn budgets() {
         addr: "127.0.0.1:7000".parse().unwrap(),
         device: None,
     };
-    let b = |l, t: &[Target]| shared_budget(l, t);
+    let b = |l, t: &[Target]| shared_budget(l, t, true);
     let both = [cast.clone(), airplay.clone()];
     let d = DEFAULT_LATENCY_MS;
     assert_eq!(d, 300);
@@ -488,6 +488,33 @@ fn budgets() {
         (BROWSER_LATENCY_MS, d)
     );
     assert_eq!(b(Some(9000), &[]).session_ms, 2000);
+    // An LG TV with sound: 300 ms everywhere, the others in step (§2.7).
+    let mut dev = crate::net::device::tests::lan_devices()
+        .into_iter()
+        .find(|d| d.airplay.is_some())
+        .unwrap();
+    dev.airplay.as_mut().unwrap().txt.manufacturer = Some("LG".into());
+    let lg = Target::AirPlay {
+        name: "lg".into(),
+        addr: "127.0.0.1:7000".parse().unwrap(),
+        device: Some(Box::new(dev)),
+    };
+    let all = Budget {
+        cast_ms: d,
+        airplay_ms: Some(d),
+        browser_ms: d,
+        session_ms: d,
+    };
+    assert_eq!(b(None, std::slice::from_ref(&lg)), all);
+    assert_eq!(b(None, &[lg.clone(), airplay.clone()]), all);
+    assert_eq!(b(None, &[lg.clone(), Target::Browser(Box::default())]), all);
+    assert_eq!(
+        b(Some(120), &[lg.clone(), airplay.clone()]).airplay_ms,
+        Some(120)
+    );
+    // Without sound the automatic profile, as for any receiver.
+    let quiet = shared_budget(None, &[lg, airplay.clone()], false);
+    assert_eq!(quiet.airplay_ms, None);
     // Clamped to what both protocols take.
     assert_eq!(b(Some(1), &both).cast_ms, 5);
     assert_eq!(b(Some(9000), &both).airplay_ms, Some(2000));

@@ -98,6 +98,8 @@ pub struct Behaviour {
     /// Advertise FairPlay (feature 14). The fake cannot do it, so both
     /// `/fp-setup` requests get 404 (a FairPlay build goes on without).
     pub fairplay_bit: bool,
+    /// `manufacturer` in `/info` (default: none, as the Apple TV).
+    pub manufacturer: Option<&'static str>,
     /// The display it reports once a session exists: nominal and
     /// decoder-maximum pixels and `maxFPS` (default: the dev Apple TV's
     /// 1280x720, 3840x2160 max, 60 fps).
@@ -139,6 +141,7 @@ impl Default for Behaviour {
             legacy_no_fairplay: false,
             hang_feedback: false,
             fairplay_bit: false,
+            manufacturer: None,
             display: Display::default(),
         }
     }
@@ -249,8 +252,8 @@ fn reply(req: &Request, status: u16, body: Option<Plist>) -> Response {
     r
 }
 
-fn info(display: Option<Display>, fairplay: bool) -> Plist {
-    let features = if fairplay {
+fn info(display: Option<Display>, behaviour: &Behaviour) -> Plist {
+    let features = if behaviour.fairplay_bit {
         FEATURES | 1 << 14
     } else {
         FEATURES
@@ -266,6 +269,9 @@ fn info(display: Option<Display>, fairplay: bool) -> Plist {
             "supportedFormats",
             Plist::dict().with("screenStream", 0x144_0800i64),
         );
+    if let Some(m) = behaviour.manufacturer {
+        p = p.with("manufacturer", m);
+    }
     if let Some(d) = display {
         p = p.with(
             "displays",
@@ -340,7 +346,7 @@ fn handle(req: &Request, ctx: &Arc<Ctx>) -> Response {
                 ctx.session
                     .load(Ordering::Acquire)
                     .then_some(ctx.behaviour.display),
-                ctx.behaviour.fairplay_bit,
+                &ctx.behaviour,
             )),
         ),
         "RECORD" => {
@@ -479,10 +485,7 @@ fn run_events<S: Read + std::io::Write>(conn: &mut Conn<S>, ctx: &Ctx) {
     {
         let body = Plist::dict()
             .with("type", "updateInfo")
-            .with(
-                "value",
-                info(Some(ctx.behaviour.display), ctx.behaviour.fairplay_bit),
-            )
+            .with("value", info(Some(ctx.behaviour.display), &ctx.behaviour))
             .to_bytes();
         let req = Request::new("POST", "/command", crate::net::http::Version::Rtsp10)
             .header("CSeq", "1")

@@ -36,6 +36,7 @@ Phones stamp photos late. Photograph a millisecond clock on its own first and su
 | AirPlay | video 100 ms, audio 170 ms |
 | Cast | 300 ms |
 | AirPlay and Cast | 300 ms |
+| An LG TV, with sound | 300 ms, on every receiver of the session |
 | Browser only | 100 ms |
 
 Lower values drop frames on busy Wi-Fi.

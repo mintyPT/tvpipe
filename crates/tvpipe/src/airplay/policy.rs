@@ -227,10 +227,39 @@ impl Leads {
         }
     }
 
+    /// An LG TV carrying audio, without an explicit latency (§2.7).
+    pub const LG: Leads = Leads {
+        video_ms: 300,
+        audio_ms: 300,
+    };
+
+    /// [`Leads::new`], but [`Leads::LG`] for an LG TV with audio and no
+    /// explicit latency.
+    pub fn for_receiver(explicit_ms: Option<u32>, info: &Info, audio: bool) -> Leads {
+        match explicit_ms {
+            None if audio && lg(info) => Leads::LG,
+            e => Leads::new(e),
+        }
+    }
+
     /// `latencyMax`: the audio lead in 44.1 kHz samples, truncated.
     pub fn audio_samples(&self) -> u32 {
         ms_to_samples(self.audio_ms)
     }
+
+    /// `latencyMin`: 0, but the audio lead for an LG TV (§2.7, §4.6).
+    pub fn audio_min_samples(&self, info: &Info) -> u32 {
+        if lg(info) {
+            self.audio_samples()
+        } else {
+            0
+        }
+    }
+}
+
+/// An LG TV: `/info` `manufacturer` (§2.7).
+pub fn lg(info: &Info) -> bool {
+    crate::airplay::discovery::is_lg(info.raw.get("manufacturer").and_then(Plist::as_str))
 }
 
 pub fn ms_to_samples(ms: u32) -> u32 {
@@ -499,6 +528,33 @@ mod tests {
         assert_eq!(ms_to_samples(75), 3307);
         assert_eq!(Leads::new(Some(1)).video_ms, 5);
         assert_eq!(Leads::new(Some(5000)).audio_ms, 2000);
+
+        // LG: 300 ms with audio, latencyMin = latencyMax; else as before.
+        let tv_bits = 1 << bit::THIRD_PARTY_B | 1 << bit::THIRD_PARTY_TV;
+        let lg = info_with(
+            "OLED65C5ELB.DEUQDJP",
+            tv_bits,
+            &[("manufacturer", "LG".into())],
+        );
+        assert_eq!(Leads::for_receiver(None, &lg, true), Leads::LG);
+        assert_eq!(Leads::LG.audio_samples(), 13230);
+        assert_eq!(Leads::LG.audio_min_samples(&lg), 13230);
+        assert_eq!(Leads::for_receiver(None, &lg, false), Leads::WIRELESS);
+        assert_eq!(Leads::WIRELESS.audio_min_samples(&lg), 7497);
+        let given = Leads::for_receiver(Some(1000), &lg, true);
+        assert_eq!(
+            (given.video_ms, given.audio_min_samples(&lg)),
+            (1000, 44100)
+        );
+        let samsung = info_with("QE55LS03B", tv_bits, &[("manufacturer", "Samsung".into())]);
+        assert_eq!(Leads::for_receiver(None, &samsung, true), Leads::WIRELESS);
+        assert_eq!(Leads::WIRELESS.audio_min_samples(&samsung), 0);
+        let atv = info_with("AppleTV6,2", 0, &[]);
+        assert_eq!(Leads::for_receiver(None, &atv, true), Leads::WIRELESS);
+        assert_eq!(
+            Leads::for_receiver(Some(300), &atv, true).audio_min_samples(&atv),
+            0
+        );
     }
 
     fn info_with(model: &str, features: u64, extra: &[(&str, Plist)]) -> Info {

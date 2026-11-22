@@ -842,14 +842,19 @@ fn connect_all(
                     .unwrap_or_else(|_| Err(Error::process("connect thread panicked")));
                 let name = target_name(t).to_owned();
                 match &r {
-                    Ok(_) => events.emit(Event::Receiver(
+                    Ok(sink) => events.emit(Event::Receiver(
                         ReceiverEvent::new(
                             &name,
                             Some(target_protocol(t)),
                             ReceiverState::Connected,
                             None,
                         )
-                        .with_delay(target_delay_ms(t, opts, mirror)),
+                        .with_delay(connected_delay_ms(
+                            t,
+                            sink.as_ref(),
+                            opts,
+                            mirror,
+                        )),
                     )),
                     Err(e) => events.receiver(
                         &name,
@@ -867,6 +872,20 @@ fn connect_all(
         receivers: sinks.iter().map(|s| s.name().to_owned()).collect(),
     }));
     Ok(sinks)
+}
+
+/// [`target_delay_ms`], but an AirPlay session's own video lead (which
+/// `/info` may have chosen, an LG TV's, §2.7).
+fn connected_delay_ms(
+    t: &Target,
+    sink: &dyn Sink,
+    opts: &CastOptions,
+    mirror: &crate::airplay::MirrorOptions,
+) -> u32 {
+    match (t, sink.capabilities().preferred_latency_ms) {
+        (Target::AirPlay { .. }, Some(ms)) => ms,
+        _ => target_delay_ms(t, opts, mirror),
+    }
 }
 
 /// The playout delay a target shows video with (the `connected`
@@ -1172,7 +1191,7 @@ fn play_rejoin(
             cast_opts.audio_channels = f.channels;
         }
     }
-    let budget = shared_budget(opts.latency_ms, &targets);
+    let budget = shared_budget(opts.latency_ms, &targets, audio);
     cast_opts.latency_ms = budget.cast_ms;
     configure_browsers(
         &mut targets,
@@ -1702,7 +1721,7 @@ fn share_rejoin(
         }
         (_, l) => l,
     };
-    let budget = shared_budget(latency, &targets);
+    let budget = shared_budget(latency, &targets, audio);
     let d = Desired {
         size: opts.size.unwrap_or(Size {
             width: cap.width.max(2),
@@ -1982,9 +2001,12 @@ pub const BROWSER_LATENCY_MS: u32 = 100;
 /// keep the automatic profile; a session with both families gives
 /// AirPlay [`DEFAULT_LATENCY_MS`] as well, so the screens show a frame at
 /// the same time instead of 100 ms apart.
-fn shared_budget(user: Option<u32>, targets: &[Target]) -> Budget {
+fn shared_budget(user: Option<u32>, targets: &[Target], audio: bool) -> Budget {
     let cast = targets.iter().any(|t| matches!(t, Target::Cast { .. }));
     let airplay = targets.iter().any(|t| matches!(t, Target::AirPlay { .. }));
+    // An LG TV's sound needs 300 ms (docs/airplay-mirroring.md §2.7); the
+    // others take the same so that they stay in step with it.
+    let lg = audio && targets.iter().any(lg_target);
     let b = match user {
         Some(l) => {
             let c = l.clamp(MIN_LATENCY_MS, MAX_LATENCY_MS);
@@ -1998,7 +2020,7 @@ fn shared_budget(user: Option<u32>, targets: &[Target]) -> Budget {
                 session_ms: c,
             }
         }
-        None if cast && airplay => Budget {
+        None if (cast && airplay) || lg => Budget {
             cast_ms: DEFAULT_LATENCY_MS,
             airplay_ms: Some(DEFAULT_LATENCY_MS),
             browser_ms: DEFAULT_LATENCY_MS,
@@ -2039,6 +2061,19 @@ fn shared_budget(user: Option<u32>, targets: &[Target]) -> Budget {
         );
     }
     b
+}
+
+/// An AirPlay target that its advertisement calls an LG TV.
+fn lg_target(t: &Target) -> bool {
+    match t {
+        Target::AirPlay {
+            device: Some(d), ..
+        } => [&d.airplay, &d.raop]
+            .into_iter()
+            .flatten()
+            .any(|a| a.txt.lg()),
+        _ => false,
+    }
 }
 
 /// The playout delay shared by all sinks: `--latency` or the default,
@@ -2580,6 +2615,17 @@ mod tests {
         };
         assert_eq!(target_delay_ms(&airplay, &opts, &given), 250);
         assert_eq!(target_delay_ms(&browser, &opts, &auto), 140);
+        // Connected: an AirPlay session's own lead (an LG TV's 300 ms).
+        let lg = ArrivalSink {
+            caps: Capabilities {
+                preferred_latency_ms: Some(300),
+                ..caps(1920, 1080, 30, 8000)
+            },
+            arrivals: Default::default(),
+            left: 0,
+        };
+        assert_eq!(connected_delay_ms(&airplay, &lg, &opts, &auto), 300);
+        assert_eq!(connected_delay_ms(&browser, &lg, &opts, &auto), 140);
     }
 
     #[test]

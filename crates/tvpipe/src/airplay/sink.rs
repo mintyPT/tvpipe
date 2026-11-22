@@ -2373,6 +2373,56 @@ mod tests {
         assert!(fake.rec().teardown);
     }
 
+    /// An LG TV: 300 ms leads with audio, and `latencyMin` = `latencyMax`
+    /// (§2.7); `--latency` and `--no-audio` as for any receiver.
+    #[test]
+    fn lg_audio_lead() {
+        let audio_latency = |fake: &FakeMirror| -> Vec<(i128, i128)> {
+            fake.rec()
+                .setup_bodies
+                .iter()
+                .filter_map(|b| b.get("streams")?.as_array()?.first().cloned())
+                .filter(|s| s.get("type").and_then(Plist::as_i128) == Some(96))
+                .map(|s| {
+                    let n = |k| s.get(k).and_then(Plist::as_i128).unwrap();
+                    (n("latencyMin"), n("latencyMax"))
+                })
+                .collect()
+        };
+        let session = |manufacturer, opts: &MirrorOptions| {
+            let fake = FakeMirror::start(Behaviour {
+                manufacturer,
+                nack_after: None,
+                ..Behaviour::default()
+            });
+            let sink = connect(&fake, opts);
+            let leads = sink.session.leads;
+            let caps = sink.capabilities().preferred_latency_ms;
+            drop(sink);
+            (leads, caps, audio_latency(&fake))
+        };
+        let auto = MirrorOptions::default();
+        let (leads, caps, lat) = session(Some("LG"), &auto);
+        assert_eq!((leads, caps), (Leads::LG, Some(300)));
+        assert_eq!(lat, [(13230, 13230)]);
+        let given = MirrorOptions {
+            latency_ms: Some(500),
+            ..MirrorOptions::default()
+        };
+        let (leads, _, lat) = session(Some("LG"), &given);
+        assert_eq!((leads.video_ms, lat), (500, vec![(22050, 22050)]));
+        let quiet = MirrorOptions {
+            audio: false,
+            ..MirrorOptions::default()
+        };
+        assert_eq!(session(Some("LG"), &quiet).0, Leads::WIRELESS);
+        // Anyone else: the automatic profile and latencyMin 0, unchanged.
+        let (leads, caps, lat) = session(None, &auto);
+        assert_eq!((leads, caps), (Leads::WIRELESS, Some(100)));
+        assert_eq!(lat, [(0, 7497)]);
+        assert_eq!(session(Some("Samsung"), &auto).2, [(0, 7497)]);
+    }
+
     #[test]
     fn media_first_ordering() {
         let fake = FakeMirror::start(Behaviour {

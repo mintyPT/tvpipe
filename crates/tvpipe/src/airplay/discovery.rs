@@ -142,6 +142,18 @@ impl AirPlayTxt {
         self.flags
             .is_some_and(|f| f & (status::PIN_REQUIRED | status::LEGACY_PAIRING) != 0)
     }
+
+    /// An LG TV (`manufacturer`), whose audio needs a longer lead (§2.7).
+    pub fn lg(&self) -> bool {
+        is_lg(self.manufacturer.as_deref())
+    }
+}
+
+/// Whether a `manufacturer` (TXT or `/info`) is LG: "LG" or "LG …".
+pub fn is_lg(manufacturer: Option<&str>) -> bool {
+    manufacturer
+        .and_then(|m| m.split_whitespace().next())
+        .is_some_and(|w| w.eq_ignore_ascii_case("LG"))
 }
 
 /// Parses `0xLO` or `0xLO,0xHI` (each 1–8 hex digits) into one 64-bit
@@ -275,6 +287,29 @@ mod tests {
         assert_eq!(txt.pk, None);
         let bad = AirPlayTxt::parse(&pairs(&["features=garbage", "flags=0xq"]), Source::AirPlay);
         assert_eq!(bad, AirPlayTxt::default());
+    }
+
+    /// An LG OLED65C5 (webOS) as it advertises itself, identifiers scrubbed.
+    #[test]
+    fn lg_txt() {
+        let txt = AirPlayTxt::parse(
+            &pairs(&[
+                "deviceid=AA:BB:CC:00:00:0B",
+                "acl=0",
+                "features=0x7F8AD0,0xB8BCF46",
+                "rsf=0x3",
+                "flags=0x244",
+                "model=OLED65C5ELB.DEUQDJP",
+                "manufacturer=LG",
+                "srcvers=377.40.00",
+                "integrator=LG Electronics",
+            ]),
+            Source::AirPlay,
+        );
+        assert!(txt.lg() && txt.supports_mirroring() && txt.pin_required());
+        assert!(is_lg(Some("lg electronics")) && is_lg(Some(" LG")));
+        assert!(!is_lg(Some("LGE")) && !is_lg(Some("Apple Inc.")) && !is_lg(None));
+        assert!(!AirPlayTxt::default().lg());
     }
 
     #[test]
