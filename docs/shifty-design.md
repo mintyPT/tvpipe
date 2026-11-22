@@ -30,7 +30,7 @@ how everyone typed them is there too.
   while they hesitate. "Ben wrote nine letters, wiped them all, then
   wrote four." The needle's trace stays as evidence.
 - **The accusation is secret.** Everyone accuses on their phone at once;
-  the TV reveals the votes together as red strings, so nobody follows
+  the TV reveals the votes together as red lasers, so nobody follows
   the room.
 - **The phony's last chance.** Caught or not, the phony picks the word
   from the board on their phone while the TV's scanner sweeps the board.
@@ -80,15 +80,15 @@ deal ─▶ clues (one turn each, in turn) ─▶ accuse ─▶ verdict ─▶ l
   others; one tap picks, Accuse makes it final. The TV shows who has
   accused, never whom. It ends when everyone has, or at the deadline;
   no accusation is no vote.
-- **The verdict.** Red strings fly from each accuser's name plate to the
+- **The verdict.** Red lasers fire from each accuser's name plate to the
   accused, one by one. Whoever has the most, alone, steps forward and
-  the stamp comes down: PHONY (caught) or INNOCENT. A tie at the top, or
+  a neon sign buzzes on: PHONY (caught) or INNOCENT. A tie at the top, or
   no accusation at all, catches nobody ("No one is sure"). If the phony
   was not caught, the spotlight swings to them: "The phony was Mia".
 - **The last chance.** The phony picks the word on their phone from the
   board (20 s). The TV shows the board big with a scanner sweeping it;
   the pick lands, the secret word lights up.
-- **The reveal.** The word stamped, threads from every clue to it, the
+- **The reveal.** The word lit up, threads of light from every clue to it, the
   points of the round on the name plates.
 - **Scores**, then the next round. After the last, the final screen:
   the podium and the awards (§6).
@@ -145,7 +145,8 @@ it on the TV (`screen.turn.keys`). Never the letters.
 The TV draws from the log alone, so the trace is the same on every
 screen and after a reload:
 
-- the paper strip scrolls from right to left while the turn runs;
+- the oscilloscope's trace (in the player's colour) runs from left to
+  right while the turn runs;
 - each new key is a short spike up, a deletion a deep spike down (both
   bigger when several came in one sample), the pen's rest is a faint
   tremor; nothing typed for a while is a flat line, and the last five
@@ -155,7 +156,7 @@ screen and after a reload:
   and stays under the player's name plate as their record.
 
 The tiles under the spotlit player are the field's length (`n`): they
-pop in and out with the keys. The TV plays a typewriter's clack for
+pop in and out with the keys, and a deletion makes the suspect flinch. The TV plays a typewriter's clack for
 each key and a softer one for a deletion. With "show the typing" off the
 TV shows only that the player is typing (no tiles, a still needle).
 
@@ -184,30 +185,61 @@ The podium, then three awards when someone earned them:
 
 ## 7. The look and the sound
 
-A detective's office at night. A dark blue-black room, a cork board
-with index cards and red string, a police line-up with a height chart,
-name plates, rubber stamps, a typewriter, a lie detector's paper strip.
-Bebas Neue for the stamps, titles and plates; Special Elite (a
-typewriter) for the clues, the cards and the labels; the system's sans
-for small print. Drawbluff is purple, Garble a cutting mat, Jinx felt,
-Krakel a sunny desk: Shifty is the dark one.
+Neon noir: a black interrogation room lit by neon signs. Hot red, cyan
+and amber tubes on near-black glass, haze drifting through the light,
+suspects as fedora silhouettes with shifty eyes, a searchlight, an
+oscilloscope, red lasers. Monoton (neon tubes) for the logo; Bebas
+Neue for titles, names, the board's words, clues and the verdict's
+sign; Share Tech Mono for readouts (labels, the ticker, timecodes,
+small print); the system's sans for running text. Drawbluff is purple,
+Garble a cutting mat with paper, Jinx felt, Krakel a sunny desk: Shifty
+is the neon one, the only game without paper.
 
-- **The line-up** fills the top of the TV: every player in front of the
-  height chart in their colour, a name plate below, the needle's strip,
-  then their clue cards. The spotlight is a cone of light from above.
-- **The board** fills the bottom: sixteen index cards in four rows,
-  pinned to cork. The phony sees the same board.
+- **The lobby**: a ticker crawls along the top ("Suspects · Scan to
+  join · One of you is lying"), the logo buzzes on (its F flickers now
+  and then, cyan eyes peer over it), the join code sits in a camera's
+  viewfinder with a running REC timecode. Each suspect who joins gets a
+  mugshot: a camera's flash and shutter, their silhouette in front of
+  the height lines.
+- **The line-up** fills the top of the TV: every player as a fedora
+  silhouette outlined in their colour, the eyes under the brim glancing
+  about on their own beat, a name plate with a bar of their colour,
+  the oscilloscope, then their clue cards (glass, edged in their
+  colour; a new one flickers on like a neon tube). One searchlight
+  sweeps to whoever is on; red when it finds the phony.
+- **The board** fills the bottom: sixteen backlit glass tiles in four
+  rows, framed as "Evidence". They power on in a diagonal wave and a
+  scan line sweeps over them once. At the last chance a red scanner
+  line runs up and down while tiles light at random; at the reveal the
+  others dim and the secret word lights amber with turning rays.
+- **The verdict**: a laser per accusation, the accused flinching and
+  their count bumping; then the sign buzzes on (PHONY in red, INNOCENT
+  in cyan), the room flashes its colour and shakes once.
+- **Scores**: rows slide in, bars fill as neon tubes. **The end**:
+  searchlights cross behind a podium of glass blocks, the awards
+  flicker on.
+- **Scenes** switch like a monitor: the old one collapses to a line, the
+  new one opens from one.
+- **Motion and the video**: the TV page is captured to video, so glows
+  are static shadows (and a wide faint stroke under a sharp one in the
+  silhouettes and traces, no filters on what moves), and animations move
+  transform, opacity and clip-path.
 - **Sound** (the TV, synthesized): a typewriter's clack per key and its
-  bell for a clue, a low hum while the needle runs, a string's thwip and
-  a rubber stamp's thud for the verdict, a drum roll before it, a short
-  noir sting for the phony. One master gain and a compressor, as in the
-  other games; the host page's preview is muted.
-- **The phone**: dark too, the card to turn, the field big and in reach
-  of the thumb; it buzzes when it is your turn.
+  bell for a clue, a low hum while the needle runs, a camera's shutter
+  for each suspect who joins, tiles powering on, a laser's zap per
+  accusation, a neon sign's crackle and a thud for the verdict, a drum
+  roll before it, a short noir sting for the phony, the scanner's blips.
+  One master gain and a compressor, as in the other games; the host
+  page's preview is muted.
+- **The phone**: the same room: dark glass, neon edges; the card to turn
+  (a red-striped back with the eyes, the word in amber neon, "You are
+  the phony" in red), the field big and in reach of the thumb; it buzzes
+  when it is your turn.
 - **Words are read whole** (docs/games.md): board words, clues and names
   get a smaller font (`fit.js`) instead of an ellipsis or a break.
-- **Reduced motion** stops the needle's tremor, the sweeping scanner and
-  the spotlight's flicker.
+- **Reduced motion** stops the haze, the ticker, the glancing eyes, the
+  needle's tremor, the scanner, the searchlights, the flicker and the
+  shake.
 
 ## 8. Views and privacy
 

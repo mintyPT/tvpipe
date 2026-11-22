@@ -3,13 +3,14 @@
  * Shifty's TV page: tvpipe casts it with its own browser, or anyone opens
  * the watch link (the host page's preview, muted). It shows the screen
  * view (`{ roster, screen, join }`) in the room's language and animates
- * it: the lobby; a round as one scene (the line-up of suspects with their
- * name plates, the lie detector's strips and their clue cards on top, the
- * board of sixteen words below), through the deal, the clues (the
- * spotlight, the typing as tiles and a needle, never the letters), the
- * accusations, the verdict's red strings and stamp, the phony's last
- * chance and the reveal with its threads; the scores; the final screen.
- * Players' texts are always text.
+ * it, in neon noir (docs/shifty-design.md §7): the lobby; a round as one
+ * scene (the line-up of suspects with their name plates, the lie
+ * detector's oscilloscopes and their clue cards on top, the board of
+ * sixteen words below), through the deal, the clues (the searchlight, the
+ * typing as tiles and a needle, never the letters), the accusations, the
+ * verdict's lasers and neon sign, the phony's last chance and the reveal
+ * with its threads of light; the scores; the final screen. Players' texts
+ * are always text.
  */
 
 import { joinText, PartyClient, qrSvg } from "/_tvpipe/lib/client.js";
@@ -85,16 +86,34 @@ function avatar(who, size) {
   return h("span", { class: "avatar", style: { "--c": colorOf(who), ...(size ? { "--s": size } : {}) } }, initial(who?.name));
 }
 
-/** A suspect's figure: a head and shoulders in their colour, their initial on the head. */
+/** The outline of a suspect: a coat with its collar up, a head, a fedora. */
+const SILHOUETTE = [
+  "M43 56V72H57V56Z", // the neck
+  "M6 110C6 86 20 72 38 69L50 82L62 69C80 72 94 86 94 110Z", // the coat
+  "M36 46a14 16 0 1 0 28 0a14 16 0 1 0-28 0Z", // the head
+  "M33 33C33 18 39 11 50 11C61 11 67 18 67 33Z", // the hat's crown
+  "M20 34C20 30 34 29 50 29S80 30 80 34S68 38 50 38S20 38 20 34Z", // the brim
+];
+
+/**
+ * A suspect's figure: a fedora silhouette outlined in their colour (a
+ * wide faint stroke under a sharp one: a neon glow without filters), the
+ * eyes under the brim glancing about on their own beat, the initial on
+ * the coat.
+ */
 function figure(/** @type {{ id?: string, name?: string, color?: string }} */ who) {
   const el = /** @type {SVGSVGElement} */ (/** @type {unknown} */ (s("svg", { viewBox: "0 0 100 110", class: "fig", "aria-hidden": "true" })));
   el.style.setProperty("--c", colorOf(who));
-  el.append(
-    s("path", { class: "body", d: "M10 110c0-30 16-46 40-46s40 16 40 46z" }),
-    s("rect", { class: "collar", x: 42, y: 62, width: 16, height: 8, rx: 2 }),
-    s("circle", { class: "head", cx: 50, cy: 36, r: 25 }),
-  );
-  const letter = s("text", { x: 50, y: 46, "text-anchor": "middle", class: "init" });
+  const j = jitter(`eyes:${who.id ?? who.name ?? ""}`);
+  el.style.setProperty("--g", `${(4.2 + j * 1.6).toFixed(2)}s`);
+  el.style.setProperty("--gd", `${(-Math.abs(j) * 5).toFixed(2)}s`);
+  for (const d of SILHOUETTE) el.append(s("path", { class: "halo", d }));
+  for (const d of SILHOUETTE) el.append(s("path", { class: "sil", d }));
+  el.append(s("path", { class: "line", d: "M33.5 32.5H66.5" }), s("path", { class: "line", d: "M50 82V110" }));
+  const eyes = s("g", { class: "eyes" });
+  eyes.append(s("ellipse", { class: "eye", cx: 44, cy: 45, rx: 2.6, ry: 1.7 }), s("ellipse", { class: "eye", cx: 56, cy: 45, rx: 2.6, ry: 1.7 }));
+  el.append(eyes);
+  const letter = s("text", { x: 50, y: 102, "text-anchor": "middle", class: "init" });
   letter.textContent = initial(who.name);
   el.append(letter);
   return el;
@@ -106,7 +125,7 @@ function left(/** @type {number} */ deadline) {
 }
 
 // ---------------------------------------------------------------------------
-// Sound: a typewriter, a lie detector's hum, strings and rubber stamps, all
+// Sound: a typewriter, a lie detector's hum, lasers, neon and thuds, all
 // synthesized (the preview is muted: the TV plays them), mixed through one
 // master gain and a compressor so nothing clips when sounds overlap.
 
@@ -241,11 +260,6 @@ const sfx = {
   buzz: () => tone(140, 110, 0.32, "square", 0.08),
   /** A card dealt. */
   flick: () => burst(3800, 0.05, 0.22, 0, 0.8),
-  /** A red string pulled tight. */
-  thwip: () => {
-    tone(260, 1400, 0.16, "triangle", 0.09);
-    burst(5000, 0.08, 0.15);
-  },
   /** A rubber stamp. */
   thud: () => {
     burst(180, 0.25, 0.9);
@@ -285,8 +299,31 @@ const sfx = {
       tone(f, f, 0.32, "sawtooth", 0.05, d);
     tone(329.63, 300, 0.9, "sawtooth", 0.05, 0.9);
   },
-  /** A suspect joins. */
-  pop: () => tone(660, 990, 0.12, "triangle", 0.1),
+  /** A suspect joins: a camera's shutter and its flash charging. */
+  pop: () => {
+    burst(4200, 0.03, 0.5, 0, 3);
+    burst(1800, 0.05, 0.35, 0.06, 2);
+    tone(1800, 5200, 0.35, "sine", 0.03, 0.08);
+  },
+  /** A laser: a zap falling in pitch. */
+  zap: () => {
+    tone(2400, 300, 0.22, "sawtooth", 0.05);
+    tone(1200, 160, 0.26, "square", 0.03);
+    burst(6000, 0.05, 0.12);
+  },
+  /** A neon sign buzzing on: crackles over the mains hum. */
+  neon: () => {
+    for (const d of [0, 0.1, 0.16, 0.3]) burst(5200, 0.04, 0.3, d, 1.5);
+    tone(120, 120, 0.9, "sawtooth", 0.04, 0.3);
+    tone(240, 240, 0.9, "square", 0.015, 0.3);
+  },
+  /** The scanner's blip. */
+  blip: () => tone(1320, 1320, 0.06, "sine", 0.05),
+  /** Tiles powering on. */
+  power: () => {
+    tone(80, 420, 0.5, "sawtooth", 0.03);
+    burst(3000, 0.4, 0.05, 0.05, 0.6);
+  },
   /** The clock's last seconds. */
   tick: () => burst(2200, 0.03, 0.4, 0, 6),
   tock: () => burst(1500, 0.035, 0.4, 0, 6),
@@ -375,8 +412,9 @@ function build(view) {
   }
 }
 
+/** The neon sign: its F a tube that is going (it buzzes), a pair of eyes peering over it. */
 function logo(small = false) {
-  return h("div", { class: `logo${small ? " small" : ""}` }, h("span", { class: "wordmark" }, "Shifty"), h("span", { class: "eyes" }, h("i"), h("i")));
+  return h("div", { class: `logo${small ? " small" : ""}` }, h("span", { class: "wordmark" }, ...[..."SHIFTY"].map((c, i) => h("b", { class: i === 3 ? "bad" : "" }, c))), h("span", { class: "eyes" }, h("i"), h("i")));
 }
 
 /**
@@ -386,8 +424,10 @@ function logo(small = false) {
 function stopwatch() {
   const ring = s("circle", { class: "run", cx: 50, cy: 56, r: 36, pathLength: 100 });
   const el = /** @type {SVGSVGElement} */ (/** @type {unknown} */ (s("svg", { viewBox: "0 0 100 100", class: "watch", "aria-hidden": "true" })));
-  const secs = s("text", { x: 50, y: 68, "text-anchor": "middle", class: "secs" });
-  el.append(s("rect", { class: "crown", x: 42, y: 4, width: 16, height: 10, rx: 3 }), s("circle", { class: "face", cx: 50, cy: 56, r: 40 }), ring, secs);
+  const secs = s("text", { x: 50, y: 63, "text-anchor": "middle", class: "secs" });
+  ring.setAttribute("cy", "50");
+  ring.setAttribute("r", "42");
+  el.append(s("circle", { class: "face", cx: 50, cy: 50, r: 42 }), ring, secs);
   const box = h("div", { class: "clock" });
   box.append(el);
   let shown = -1;
@@ -424,13 +464,26 @@ function lobby() {
   const how = h(
     "div",
     { class: "how" },
-    ...t.how.map(([b, x], i) => h("div", { class: "index", style: { "--r": `${(jitter(`how${i}`) * 1.6).toFixed(1)}deg` } }, h("b", {}, h("i", {}, `${i + 1}`), h("em", { "data-fit": "1" }, b)), h("span", {}, x))),
+    ...t.how.map(([b, x], i) => h("div", { class: "index", style: { "--k": ["var(--cyan)", "var(--amber)", "var(--red)"][i % 3], "--d": `${(0.5 + i * 0.15).toFixed(2)}s` } }, h("b", {}, h("i", {}, `${i + 1}`), h("em", { "data-fit": "1" }, b)), h("span", {}, x))),
   );
+  // The ticker: twice the same run, scrolled by half, so it never ends.
+  const tick = () => Array.from({ length: 4 }, () => [h("span", {}, t.suspects), h("b", {}, "●"), h("span", {}, t.scanToJoin), h("b", {}, "●"), h("span", {}, t.tickerLine), h("b", {}, "●")]).flat();
+  // The viewfinder's timecode: the time the lobby has been up.
+  const code = h("span");
+  const born = performance.now();
+  // The tagline's last sentence ("Except one.") in red.
+  const [line1, ...rest] = t.tagline.split(/(?<=\.)\s+/);
   const el = h(
     "div",
     { class: "scene lobby" },
-    h("div", { class: "tape" }, ...Array.from({ length: 6 }, () => h("span", {}, `${t.suspects} · ${t.scanToJoin} ·`))),
-    h("div", { class: "left" }, logo(), h("p", { class: "tagline" }, t.tagline), h("div", { class: "joinbox" }, h("div", { class: "qrcard" }, qr), h("div", { class: "joininfo" }, h("div", { class: "big" }, t.scanToJoin), short))),
+    h("div", { class: "ticker" }, h("div", { class: "run" }, ...tick(), ...tick())),
+    h(
+      "div",
+      { class: "left" },
+      logo(),
+      h("p", { class: "tagline" }, line1 ?? "", rest.length ? h("br") : "", rest.length ? h("b", {}, rest.join(" ")) : ""),
+      h("div", { class: "joinbox" }, h("div", { class: "finder" }, h("i"), h("i"), h("i"), h("i"), h("span", { class: "rec" }, h("i"), "REC", code), h("div", { class: "qrcard" }, qr)), h("div", { class: "joininfo" }, h("div", { class: "big" }, t.scanToJoin), short)),
+    ),
     h("div", { class: "right" }, h("h2", {}, t.suspects, count), cards, hint, how, badges),
   );
   /** @type {Map<string, HTMLElement>} */
@@ -457,8 +510,11 @@ function lobby() {
       roster.forEach((r, i) => {
         let mug = shown.get(r.id);
         if (!mug) {
-          mug = h("div", { class: "mug", style: { "--r": `${(jitter(r.id) * 2.5).toFixed(1)}deg` } });
-          shown.set(r.id, mug);
+          // A mugshot: the camera's flash.
+          const m = h("div", { class: "mug new" });
+          mug = m;
+          shown.set(r.id, m);
+          later(900, () => m.classList.remove("new"));
           sfx.pop();
         }
         mug.replaceChildren(figure(r), h("div", { class: "plate" }, h("span", { "data-fit": "1" }, r.name), h("small", {}, `#${i + 1}`)), r.vip ? h("span", { class: "vip" }, "VIP") : "");
@@ -481,6 +537,11 @@ function lobby() {
         badges.dataset["k"] = key;
         badges.replaceChildren(...b.map((x) => h("span", { class: "badge" }, x)));
       }
+    },
+    frame() {
+      const sec = Math.floor((performance.now() - born) / 1000);
+      const txt = [Math.floor(sec / 3600), Math.floor(sec / 60) % 60, sec % 60].map((x) => String(x).padStart(2, "0")).join(":");
+      if (code.textContent !== txt) code.textContent = txt;
     },
   };
 }
@@ -537,8 +598,9 @@ function needleAt(keys, refused, ms, shake) {
  * @param {HTMLCanvasElement} canvas
  * @param {(Trace | null)[]} segs
  * @param {{ pass: number, keys: number[][], refused: number[], start: number, end: number, now: number } | null} live
+ * @param {string} color the suspect's colour (#rrggbb): the trace's phosphor
  */
-function drawStrip(canvas, segs, live) {
+function drawStrip(canvas, segs, live, color) {
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const w = Math.max(1, Math.round(canvas.clientWidth * dpr));
   const hgt = Math.max(1, Math.round(canvas.clientHeight * dpr));
@@ -557,7 +619,7 @@ function drawStrip(canvas, segs, live) {
   for (let i = 0; i < n; i++) {
     const x0 = i * segW;
     if (i > 0) {
-      ctx.strokeStyle = "rgba(120, 40, 40, .35)";
+      ctx.strokeStyle = "rgba(46, 230, 255, .3)";
       ctx.lineWidth = dpr;
       ctx.beginPath();
       ctx.moveTo(x0, 0);
@@ -581,21 +643,41 @@ function drawStrip(canvas, segs, live) {
     }
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
-    ctx.lineWidth = 1.6 * dpr;
-    for (let j = 1; j < pts.length; j++) {
-      const [ax, ay] = /** @type {[number, number, boolean]} */ (pts[j - 1]);
-      const [bx, by, red] = /** @type {[number, number, boolean]} */ (pts[j]);
-      ctx.strokeStyle = red ? "#d62828" : "#1d2333";
-      ctx.beginPath();
-      ctx.moveTo(ax, ay);
-      ctx.lineTo(bx, by);
-      ctx.stroke();
+    // Phosphor: a wide faint pass for the glow, a thin bright one on it;
+    // a refusal's stretch in red. One path per colour run.
+    for (const [width, alpha] of [
+      [5, 0.28],
+      [1.7, 1],
+    ]) {
+      ctx.lineWidth = /** @type {number} */ (width) * dpr;
+      ctx.globalAlpha = /** @type {number} */ (alpha);
+      let j = 1;
+      while (j < pts.length) {
+        const red = /** @type {[number, number, boolean]} */ (pts[j])[2];
+        ctx.strokeStyle = red ? "#ff2d55" : color;
+        ctx.beginPath();
+        const [ax, ay] = /** @type {[number, number, boolean]} */ (pts[j - 1]);
+        ctx.moveTo(ax, ay);
+        while (j < pts.length && /** @type {[number, number, boolean]} */ (pts[j])[2] === red) {
+          const [bx, by] = /** @type {[number, number, boolean]} */ (pts[j]);
+          ctx.lineTo(bx, by);
+          j++;
+        }
+        ctx.stroke();
+      }
     }
+    ctx.globalAlpha = 1;
     if (isLive && pts.length > 0) {
       const [px, py] = /** @type {[number, number, boolean]} */ (pts[pts.length - 1]);
-      ctx.fillStyle = "#d62828";
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.35;
       ctx.beginPath();
-      ctx.arc(px, py, 2.6 * dpr, 0, Math.PI * 2);
+      ctx.arc(px, py, 6 * dpr, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(px, py, 2.4 * dpr, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -606,7 +688,7 @@ function drawStrip(canvas, segs, live) {
 
 /**
  * @typedef {{ id: string, name: string, color: string, el: HTMLElement, fig: HTMLElement, plate: HTMLElement,
- *   canvas: HTMLCanvasElement, cards: HTMLElement, mark: HTMLElement, pts: HTMLElement, drawn: string }} Suspect
+ *   canvas: HTMLCanvasElement, cards: HTMLElement, mark: HTMLElement, pts: HTMLElement, drawn: string, slots: Map<string, HTMLElement> }} Suspect
  */
 
 /** @param {any} s0 @returns {Scene} */
@@ -628,7 +710,8 @@ function table(s0) {
   );
   const chart = h("div", { class: "chart" }, ...[190, 180, 170, 160, 150].map((cm) => h("i", {}, h("span", {}, String(cm)))));
   // No needle when nothing is typed (out loud) or the room hides the typing.
-  const lineup = h("div", { class: `lineup${s0.mode === "spoken" || s0.typing === false ? " nostrip" : ""}`, style: { "--n": String(suspects.length), "--passes": String(passes) } }, chart);
+  const beam = h("i", { class: "beam" });
+  const lineup = h("div", { class: `lineup${s0.mode === "spoken" || s0.typing === false ? " nostrip" : ""}`, style: { "--n": String(suspects.length), "--passes": String(passes) } }, chart, beam);
   /** @type {Map<string, Suspect>} */
   const byId = new Map();
   suspects.forEach((who, i) => {
@@ -638,19 +721,49 @@ function table(s0) {
     const pts = h("span", { class: "pts" });
     const plate = h("div", { class: "plate" }, h("span", { class: "nm", "data-fit": "1" }, who.name), h("small", {}, `#${i + 1}`));
     const cards = h("div", { class: "cards" });
-    const el = h("div", { class: "suspect", style: { "--c": colorOf(who) } }, h("i", { class: "cone" }), fig, mark, pts, plate, h("div", { class: "strip" }, canvas), cards);
+    const el = h("div", { class: "suspect", style: { "--c": colorOf(who) } }, fig, mark, pts, plate, h("div", { class: "strip" }, canvas), cards);
     lineup.append(el);
-    byId.set(who.id, { ...who, el, fig, plate, canvas, cards, mark, pts, drawn: "" });
+    byId.set(who.id, { ...who, el, fig, plate, canvas, cards, mark, pts, drawn: "", slots: new Map() });
   });
-  const words = board.map((w, i) => h("div", { class: "word", style: { "--i": String(i), "--r": `${(jitter(`${s0.round}:${w}`) * 1.4).toFixed(2)}deg` } }, h("span", { "data-fit": "1" }, w)));
-  const scan = h("i", { class: "scan" });
-  const boardEl = h("div", { class: "board" }, h("div", { class: "grid" }, ...words), scan);
+  // The tiles power on in a diagonal wave from the top left (--d: row + column).
+  const words = board.map((w, i) => h("div", { class: "word", style: { "--d": String((i % 4) + Math.floor(i / 4)) } }, h("span", { "data-fit": "1" }, w)));
+  const sweep = h("i", { class: "sweep" });
+  const boardEl = h("div", { class: "board", "data-label": t.boardLabel }, h("div", { class: "grid" }, ...words, sweep));
   const overlay = /** @type {SVGSVGElement} */ (/** @type {unknown} */ (s("svg", { class: "overlay" })));
   const stamp = h("div", { class: "stamp", hidden: true });
-  const el = h("div", { class: "scene table" }, top, lineup, boardEl, overlay, stamp);
-  later(0, () => {
-    for (let i = 0; i < words.length; i++) later(120 + i * 70, sfx.flick);
-  });
+  const flash = h("i", { class: "flash" });
+  // The rig holds everything that shakes with a verdict (the scene itself animates its entrance).
+  const rig = h("div", { class: "rig" }, top, lineup, boardEl, overlay, stamp);
+  const el = h("div", { class: "scene table" }, rig, flash);
+  later(200, sfx.power);
+  for (let d = 0; d < 7; d++) later(280 + d * 70, sfx.flick);
+  later(1500, sfx.blip);
+
+  /** The room's colour flashing from a point, and the rig shaking. @param {number[]} p @param {string} color @param {boolean} [quake] */
+  function bang(p, color, quake = false) {
+    const b = el.getBoundingClientRect();
+    flash.style.setProperty("--fx", `${(((p[0] ?? 0) / Math.max(1, b.width)) * 100).toFixed(1)}%`);
+    flash.style.setProperty("--fy", `${(((p[1] ?? 0) / Math.max(1, b.height)) * 100).toFixed(1)}%`);
+    flash.style.setProperty("--fc", color);
+    flash.classList.remove("go");
+    void flash.offsetWidth;
+    flash.classList.add("go");
+    if (quake && !reduced.matches) {
+      rig.classList.remove("quake");
+      void rig.offsetWidth;
+      rig.classList.add("quake");
+    }
+  }
+
+  /** The searchlight on a suspect (or off), red for a phony. @param {Suspect | undefined} who @param {boolean} [red] */
+  function spot(who, red = false) {
+    beam.classList.toggle("on", !!who);
+    beam.classList.toggle("red", red);
+    if (!who) return;
+    const a = who.el.getBoundingClientRect();
+    const b = lineup.getBoundingClientRect();
+    beam.style.setProperty("--x", `${(a.left - b.left + a.width / 2).toFixed(1)}px`);
+  }
 
   let stageNow = "";
   /** @type {any} */
@@ -663,7 +776,14 @@ function table(s0) {
   let scanAt = -1;
   let belled = "";
 
-  /** The clue cards of a suspect: what came, the one being typed (tiles), the ones to come. @param {any} sc @param {Suspect} who */
+  /**
+   * The clue cards of a suspect: what came, the one being typed (tiles),
+   * the ones to come. A card stays the same element while it shows the
+   * same thing (a sent clue is not built again with every key of the
+   * next one, so it keeps its fitted font and its animation runs once);
+   * the one being typed gains and loses tiles one by one.
+   * @param {any} sc @param {Suspect} who
+   */
   function cardsOf(sc, who) {
     const clues = /** @type {any[]} */ (sc.clues?.[who.id] ?? []);
     const turn = sc.turn && !sc.turn.done && sc.stage === "clue" && sc.turn.id === who.id && !sc.turn.skipped ? sc.turn : null;
@@ -672,6 +792,14 @@ function table(s0) {
     if (who.drawn === key) return;
     const fresh = who.drawn !== "" && clues.length > (JSON.parse(who.drawn)[0]?.length ?? 0);
     who.drawn = key;
+    /** @type {Map<string, HTMLElement>} */
+    const slots = new Map();
+    /** The card for a slot: the one shown before when it is the same, else a new one. @param {string} id @param {() => HTMLElement} make */
+    const slot = (id, make) => {
+      const el = who.slots.get(id) ?? make();
+      slots.set(id, el);
+      return el;
+    };
     /** @type {HTMLElement[]} */
     const kids = [];
     for (let p = 0; p < passes; p++) {
@@ -679,16 +807,26 @@ function table(s0) {
       if (c) {
         const text = c.away ? t.awayCard : c.text ? c.text : c.spoken ? "🗣" : t.silent;
         const cls = `clue${c.text ? "" : " none"}${fresh && p === clues.length - 1 ? " flip" : ""}`;
-        kids.push(h("div", { class: cls, style: { "--r": `${(jitter(`${who.id}:${p}`) * 2).toFixed(2)}deg` } }, h("span", { "data-fit": "1" }, text)));
+        kids.push(slot(`${p}|clue|${text}`, () => h("div", { class: cls }, h("span", { "data-fit": "1" }, text))));
       } else if (turn && p === clues.length) {
-        const tiles = h("div", { class: "tiles" });
-        if (sc.mode === "spoken") tiles.append(h("span", { class: "say" }, "🗣"));
-        else if (sc.typing === false) tiles.append(h("span", { class: "dots" }, h("i"), h("i"), h("i")));
-        else for (let k = 0; k < Math.min(n, 24); k++) tiles.append(h("i"));
-        kids.push(h("div", { class: "clue pending" }, tiles));
-      } else kids.push(h("div", { class: "clue empty" }));
+        const mode = sc.mode === "spoken" ? "say" : sc.typing === false ? "dots" : "tiles";
+        const card = slot(`${p}|${turn.key}|${mode}`, () => {
+          const tiles = h("div", { class: "tiles" });
+          if (mode === "say") tiles.append(h("span", { class: "say" }, "🗣"));
+          else if (mode === "dots") tiles.append(h("span", { class: "dots" }, h("i"), h("i"), h("i")));
+          return h("div", { class: "clue pending" }, tiles);
+        });
+        if (mode === "tiles") {
+          const tiles = /** @type {HTMLElement} */ (card.firstElementChild);
+          const want = Math.min(n, 24);
+          while (tiles.childElementCount > want) tiles.lastElementChild?.remove();
+          while (tiles.childElementCount < want) tiles.append(h("i"));
+        }
+        kids.push(card);
+      } else kids.push(slot(`${p}|empty`, () => h("div", { class: "clue empty" })));
     }
-    who.cards.replaceChildren(...kids);
+    who.slots = slots;
+    if (kids.length !== who.cards.childElementCount || kids.some((k, i) => who.cards.children[i] !== k)) who.cards.replaceChildren(...kids);
   }
 
   /** The strips' finished traces (the live one is drawn every frame). @param {any} sc */
@@ -697,12 +835,19 @@ function table(s0) {
       const tr = /** @type {Trace[]} */ (sc.traces?.[who.id] ?? []);
       const segs = Array.from({ length: passes }, (_, i) => tr[i] ?? null);
       const live = sc.stage === "clue" && sc.turn && !sc.turn.done && sc.turn.id === who.id && sc.mode !== "spoken" ? sc.turn : null;
-      if (!live) drawStrip(who.canvas, segs, null);
+      if (!live) drawStrip(who.canvas, segs, null, colorOf(who));
     }
   }
 
   /** The stage's headline and spotlights. @param {any} sc */
   function headline(sc) {
+    const before = title.textContent;
+    later(0, () => {
+      if (title.textContent === before) return;
+      title.classList.remove("swap");
+      void title.offsetWidth;
+      title.classList.add("swap");
+    });
     const turnWho = sc.turn ? byId.get(sc.turn.id) : undefined;
     const phony = sc.phony ? byId.get(sc.phony.id) : undefined;
     let lit = /** @type {string | null} */ (null);
@@ -749,7 +894,7 @@ function table(s0) {
       who.el.classList.toggle("dim", lit !== null && lit !== who.id);
     }
     el.classList.toggle("spot", lit !== null);
-    void phony;
+    spot(lit ? byId.get(lit) : undefined, (sc.stage === "last" || sc.stage === "reveal") && !!phony);
   }
 
   /** A point on the stage, from an element's box. @param {Element} e @param {number} fx @param {number} fy */
@@ -759,18 +904,27 @@ function table(s0) {
     return [a.left - b.left + a.width * fx, a.top - b.top + a.height * fy];
   }
 
-  /** A string from one point to another, sagging a little, drawn in. @param {number[]} a @param {number[]} b @param {string} cls */
+  /**
+   * A beam from one point to another, bowed a little, drawn in: a laser
+   * (`red`), a thread of light with pulses running along it (`gold`) or
+   * one that fizzles out (`loose`).
+   * @param {number[]} a @param {number[]} b @param {string} cls
+   */
   function string(a, b, cls) {
     const [ax = 0, ay = 0] = a;
     const [bx = 0, by = 0] = b;
     const mx = (ax + bx) / 2;
     const my = Math.max(ay, by) + Math.min(80, Math.abs(bx - ax) * 0.12) + 10;
-    const p = s("path", { d: `M${ax} ${ay}Q${mx} ${my} ${bx} ${by}`, class: cls, pathLength: 100 });
-    overlay.append(p, s("circle", { cx: ax, cy: ay, r: 5, class: `pin ${cls}` }), s("circle", { cx: bx, cy: by, r: 5, class: `pin ${cls}` }));
+    const d = `M${ax} ${ay}Q${mx} ${my} ${bx} ${by}`;
+    if (cls !== "loose") overlay.append(s("path", { d, class: `${cls}-glow`, pathLength: 100 }));
+    const p = s("path", { d, class: cls, pathLength: 100 });
+    overlay.append(p, s("circle", { cx: ax, cy: ay, r: 4, class: `pin ${cls}` }), s("circle", { cx: bx, cy: by, r: 4, class: `pin ${cls}` }));
+    if (cls === "gold") overlay.append(s("path", { d, class: "pulse", pathLength: 100 }));
+    if (cls === "red") later(300, () => overlay.append(s("circle", { cx: bx, cy: by, r: 14, class: "ring" })));
     return p;
   }
 
-  /** The verdict: red strings one by one, the counts, the stamp; the spotlight swinging to a phony who was not caught. @param {any} sc */
+  /** The verdict: red lasers one by one, the counts, the neon sign; the searchlight swinging to a phony who was not caught. @param {any} sc */
   function verdict(sc) {
     const votes = /** @type {[string, string][]} */ (sc.votes ?? []);
     overlay.replaceChildren();
@@ -782,10 +936,17 @@ function table(s0) {
         const b = byId.get(to);
         if (!a || !b) return;
         string(at(a.plate, 0.5, 1), at(b.fig, 0.5, 0.35), "red");
-        sfx.thwip();
+        sfx.zap();
+        later(300, () => {
+          b.fig.classList.remove("jolt");
+          void b.fig.offsetWidth;
+          b.fig.classList.add("jolt");
+        });
         const n = votes.slice(0, i + 1).filter(([, x]) => x === to).length;
         b.pts.textContent = `×${n}`;
         b.pts.className = "pts count show";
+        void b.pts.offsetWidth;
+        b.pts.classList.add("bump");
       });
     });
     const after = 900 + votes.length * step + 900;
@@ -796,17 +957,20 @@ function table(s0) {
         who.el.classList.toggle("dim", !!top && who !== top);
       }
       el.classList.toggle("spot", !!top);
+      spot(top, !!sc.caught);
       if (top) {
         const [x, y] = at(top.fig, 0.5, 0.45);
         stamp.textContent = sc.caught ? t.phonyStamp : t.innocentStamp;
         stamp.className = `stamp ${sc.caught ? "guilty" : "clear"}`;
         stamp.hidden = false;
-        // On the screen, also on the first or the last suspect (a tilted stamp is wider than it looks).
-        const half = (stamp.offsetWidth * Math.cos(0.25) + stamp.offsetHeight * Math.sin(0.25)) / 2 + 12;
+        // On the screen, also on the first or the last suspect (a tilted sign is wider than it looks).
+        const half = (stamp.offsetWidth * Math.cos(0.1) + stamp.offsetHeight * Math.sin(0.1)) / 2 + 12;
         const w = el.getBoundingClientRect().width;
         stamp.style.left = `${Math.max(half, Math.min(w - half, x))}px`;
         stamp.style.top = `${y}px`;
+        sfx.neon();
         sfx.thud();
+        bang([x, y], sc.caught ? "rgba(255, 45, 85, .6)" : "rgba(46, 230, 255, .45)", true);
         if (sc.caught) later(250, sfx.sting);
         title.textContent = sc.caught ? t.caught : t.innocentStamp;
       } else {
@@ -823,6 +987,9 @@ function table(s0) {
         }
         el.classList.add("spot");
         el.classList.add("swing");
+        // The searchlight swings over to the one who got away, red.
+        spot(p, true);
+        if (p) bang(at(p.fig, 0.5, 0.4), "rgba(255, 45, 85, .4)");
         title.textContent = t.phonyWas(sc.phony?.name ?? "");
         sfx.sting();
       });
@@ -839,6 +1006,7 @@ function table(s0) {
       if (next === scanAt) next = (next + 1) % words.length;
       scanAt = next;
       words.forEach((w, i) => w.classList.toggle("scanned", i === next));
+      sfx.blip();
     }, 420);
   }
 
@@ -859,7 +1027,12 @@ function table(s0) {
     }
     later(pick ? 1300 : 300, () => {
       secret?.classList.add("secret");
-      if (secret) secret.dataset["label"] = t.theWord;
+      if (secret) {
+        secret.dataset["label"] = t.theWord;
+        if (!secret.querySelector(".rays")) secret.prepend(h("i", { class: "rays" }));
+        for (const w of words) w.classList.toggle("dim", w !== secret && w !== pick);
+        bang(at(secret, 0.5, 0.5), "rgba(255, 194, 61, .45)");
+      }
       if (sc.stage === "reveal") (sc.named ? sfx.win : sfx.lose)();
       else sfx.sting();
     });
@@ -936,6 +1109,13 @@ function table(s0) {
           const deleted = (cur[3] ?? 0) - (prev[3] ?? 0);
           for (let i = 0; i < Math.min(4, typed); i++) later(i * 45, sfx.clack);
           for (let i = 0; i < Math.min(3, deleted); i++) later(i * 50, sfx.back);
+          // A deletion makes the suspect flinch.
+          const who = deleted > 0 ? byId.get(sc.turn.id) : undefined;
+          if (who && !reduced.matches) {
+            who.fig.classList.remove("jolt");
+            void who.fig.offsetWidth;
+            who.fig.classList.add("jolt");
+          }
         }
         lastKeys = keys.length;
         const refused = (sc.turn.refused ?? []).length;
@@ -961,7 +1141,7 @@ function table(s0) {
           const tr = /** @type {Trace[]} */ (sc.traces?.[who.id] ?? []);
           const segs = Array.from({ length: passes }, (_, i) => tr[i] ?? null);
           const now = client.now();
-          drawStrip(who.canvas, segs, { pass: sc.turn.pass ?? 1, keys: sc.turn.keys ?? [], refused: sc.turn.refused ?? [], start: sc.turn.start ?? now, end: sc.turn.end ?? now, now });
+          drawStrip(who.canvas, segs, { pass: sc.turn.pass ?? 1, keys: sc.turn.keys ?? [], refused: sc.turn.refused ?? [], start: sc.turn.start ?? now, end: sc.turn.end ?? now, now }, colorOf(who));
           if (sc.typing !== false) {
             const v = Math.abs(needleAt(sc.turn.keys ?? [], sc.turn.refused ?? [], now - (sc.turn.start ?? now), 0));
             hum.set(Math.min(1, v));
@@ -1015,6 +1195,7 @@ function scores(sc) {
     board.append(h("div", { class: "row", style: { "--d": `${(0.1 + i * 0.08).toFixed(2)}s` } }, h("span", { class: "rk" }, String(rank)), avatar(l, "4.6rem"), h("span", { class: "nm", "data-fit": "1" }, l.name), h("span", { class: "mid" }, bar, h("span", { class: "gains" }, ...gains)), h("span", { class: "pt" }, pts)));
     countUp(pts, l.score - (l.delta ?? 0), l.score, 700 + i * 80);
     later(700 + i * 80, () => bar.style.setProperty("--w", `${(l.score / top) * 100}%`));
+    if ((l.delta ?? 0) > 0) later(700 + i * 80, sfx.blip);
   });
   later(700, sfx.flick);
   const el = h("div", { class: "scene scores" }, h("div", { class: "topline" }, logo(true), h("span", { class: "chip" }, t.round(sc.round ?? 1, sc.rounds ?? 1))), h("h1", {}, t.scoresTitle, h("small", {}, t.scoresAfter(sc.round ?? 1, sc.rounds ?? 1))), board);
@@ -1040,12 +1221,13 @@ function final(sc) {
     .map((k, i) => {
       const a = awards[k];
       const [label, line] = t.awards[k];
-      return h("div", { class: "award", style: { "--r": `${(jitter(k) * 2.5).toFixed(1)}deg`, "--d": `${2.2 + i * 0.5}s` } }, h("small", {}, label), avatar(a.who, "4.4rem"), h("b", { "data-fit": "1" }, a.who?.name ?? ""), h("span", {}, line(a.n ?? 0)));
+      return h("div", { class: `award ${k}`, style: { "--d": `${2.2 + i * 0.5}s` } }, h("small", {}, label), avatar(a.who, "4.4rem"), h("b", { "data-fit": "1" }, a.who?.name ?? ""), h("span", {}, line(a.n ?? 0)));
     });
-  const el = h("div", { class: "scene final" }, h("div", { class: "main" }, h("h1", {}, t.gameOver), podium, rest, h("div", { class: "again" }, t.playAgain)), h("div", { class: "awards" }, ...cards));
+  const lights = h("div", { class: "lights" }, h("i"), h("i"), h("i"));
+  const el = h("div", { class: "scene final" }, lights, h("div", { class: "main" }, h("h1", {}, t.gameOver), podium, rest, h("div", { class: "again" }, t.playAgain)), h("div", { class: "awards" }, ...cards));
   later(300, () => sfx.roll(1400));
   later(1800, sfx.win);
-  for (let i = 0; i < cards.length; i++) later(2200 + i * 500, sfx.thud);
+  for (let i = 0; i < cards.length; i++) later(2200 + i * 500, sfx.neon);
   return { el };
 }
 

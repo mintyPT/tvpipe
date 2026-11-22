@@ -178,7 +178,7 @@ try {
     const badge = document.querySelector("tvpipe-rejoin")?.shadowRoot?.querySelector(".mini.shown")?.getBoundingClientRect();
     for (const el of document.querySelectorAll("#stage .scene:not(.leaving) *")) {
       if (!el.checkVisibility || !el.checkVisibility()) continue;
-      if (["svg", "path", "g", "circle", "rect", "text", "canvas", "i"].includes(el.localName) || el.closest(".logo, .tape, .overlay")) continue;
+      if (["svg", "path", "g", "circle", "rect", "text", "canvas", "i"].includes(el.localName) || el.closest(".logo, .ticker, .overlay, .lights")) continue;
       const cs = getComputedStyle(el);
       const r = el.getBoundingClientRect();
       if (r.width > 0 && still(el) && (r.right > innerWidth + 2 || r.left < -2 || r.bottom > innerHeight + 2 || r.top < -2)) out.push("off the screen: " + el.localName + "." + el.className + " " + JSON.stringify((el.innerText || "").slice(0, 30)));

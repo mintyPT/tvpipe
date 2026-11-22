@@ -20,10 +20,11 @@ one last chance: name the word.
   every deletion and runs flat while someone hesitates; the trace stays
   under their name. Or out loud (a setting): say it, tap Done.
 - **Accusing**: everyone picks a suspect on their phone, in secret; the
-  TV shows who has accused, then pulls red strings from each accuser to
-  the accused. The most accused, alone, is stamped PHONY or INNOCENT.
+  TV shows who has accused, then fires red lasers from each accuser to
+  the accused. The most accused, alone, gets a neon sign: PHONY or
+  INNOCENT.
 - **The last chance**: the phony picks the word from the board on their
-  phone; the TV reveals it and runs a thread from every clue to it.
+  phone; the TV reveals it and runs a thread of light from every clue to it.
 - **Points**: +1 for accusing the phony; +1 for every innocent when the
   phony is caught and misses the word; the phony +2 for getting away and
   +2 for naming the word.
@@ -99,5 +100,5 @@ endings in the clue check (`game/rules.ts`).
 
 ## The fonts
 
-Bebas Neue (SIL OFL 1.1) and Special Elite (Apache 2.0), in
+Monoton, Bebas Neue and Share Tech Mono (all SIL OFL 1.1), in
 `phone/fonts/` with their licenses.

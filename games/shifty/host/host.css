@@ -1,4 +1,4 @@
-/* Shifty's look on tvpipe's standard host page (@tvpipe/party's HostPage draws the rest). */
-@font-face { font-family: "Bebas Neue"; src: url("../phone/fonts/bebas-neue.woff2") format("woff2"); }
-:root { --bg: #0f1420; --card: #1a2131; --line: #2c3650; --text: #f3ead8; --muted: #9aa6bf; --accent: #e63946; --accent-text: #fff; --error: #ff7a8a; }
-.logo { font-family: "Bebas Neue", sans-serif; font-size: 34px; letter-spacing: .06em; line-height: 1; color: #10131c; background: #ffd23f; padding: 4px 12px 1px; border-radius: 4px; transform: rotate(-2deg); box-shadow: 3px 3px 0 #e63946; }
+/* Shifty's look on tvpipe's standard host page (@tvpipe/party's HostPage draws the rest): neon noir. */
+@font-face { font-family: "Monoton"; src: url("../phone/fonts/monoton.woff2") format("woff2"); }
+:root { --bg: #07060b; --card: #120e1a; --line: #2a2338; --text: #f6f2ff; --muted: #a49cc0; --accent: #ff2d55; --accent-text: #fff; --error: #ff8aa0; }
+.logo { font-family: "Monoton", sans-serif; font-size: 30px; letter-spacing: .02em; line-height: 1; text-transform: uppercase; color: #ffe9f0; text-shadow: 0 0 2px #fff, 0 0 6px #ff2d55, 0 0 16px #ff2d55; }

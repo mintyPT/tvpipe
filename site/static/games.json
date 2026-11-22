@@ -66,10 +66,10 @@
       "source": "gh:mitsuhiko/tvpipe/shifty@shifty-v*",
       "home": "https://github.com/mitsuhiko/tvpipe/tree/main/games/shifty",
       "screenshots": [
-        { "src": "static/games/shifty/tv-clue.png", "alt": "The TV's line-up of four suspects in front of a height chart: Phil in the spotlight typing his clue as three blank tiles, his lie detector's strip kicking where he deleted a false start; Mia's spots and Lena's savanna pinned below their strips; sixteen zoo animals on the cork board", "kind": "tv" },
-        { "src": "static/games/shifty/tv-verdict.png", "alt": "The verdict: red strings from every name plate to the accused, three on Lena and one on Mia, Lena stamped PHONY; the clues spots, savanna, neck and leaves under the strips", "kind": "tv" },
-        { "src": "static/games/shifty/phone-card.png", "alt": "A phone's card turned up: the word is giraffe, the category zoo animals, and the board below", "kind": "phone" },
-        { "src": "static/games/shifty/phone-clue.png", "alt": "Phil's turn on his phone: nec typed in the clue field, the time running out, his card face down above the board", "kind": "phone" }
+        { "src": "static/games/shifty/tv-clue.png", "alt": "The TV in neon: four fedora silhouettes outlined in their colours in front of glowing height lines, Phil red in the searchlight typing his clue as three lit tiles, his oscilloscope kicking where he deleted a false start; Mia's spots and Lena's savanna on glass cards below their traces; sixteen zoo animals on backlit tiles framed as evidence", "kind": "tv" },
+        { "src": "static/games/shifty/tv-verdict.png", "alt": "The verdict: red lasers from every name plate to the accused, three on Lena and one on Jonas, a red neon PHONY sign over Lena in the searchlight; the clues spots, savanna, neck and leaves under the traces", "kind": "tv" },
+        { "src": "static/games/shifty/phone-card.png", "alt": "A phone's card turned up: the word giraffe in amber neon, the category zoo animals, and the board's glowing tiles below", "kind": "phone" },
+        { "src": "static/games/shifty/phone-clue.png", "alt": "Phil's turn on his phone: nec typed in the glowing clue field, the time running out, his card face down (red stripes, cyan eyes) above the board", "kind": "phone" }
       ]
     },
     {
