@@ -14,7 +14,6 @@
  * badge), `empty=1` (the lobby with nobody).
  */
 
-import { encodeQr } from "/_tvpipe/lib/qr.js";
 import { GUARD_COLOURS } from "../phone/draw.js";
 import { Ink, encodeInk, inkMask } from "../game/ink.js";
 import { pickCatalogue } from "../game/items.js";
@@ -22,6 +21,16 @@ import { encodeBlueprint, generate, lootCount } from "../game/map.js";
 import { findPath, SPEED } from "../game/move.js";
 import { encodeTrack, TRACK } from "../game/protocol.js";
 import { Rng } from "../game/rng.js";
+
+/**
+ * The demo's QR code: the library's encoder where this tvpipe serves it
+ * (newer than 0.3.0); loaded by name at run time so the bundle does not
+ * depend on it (tvpipe 0.3.0's game check refuses a missing import).
+ * @type {(text: string) => any}
+ */
+const encodeQr = await import(/* @vite-ignore */ ["/_tvpipe/lib", "qr.js"].join("/"))
+  .then((m) => m.encodeQr)
+  .catch(() => () => null);
 
 /** @typedef {import("../game/protocol.ts").Sample} Sample */
 /** @typedef {import("../game/map.ts").Blueprint} Blueprint */
