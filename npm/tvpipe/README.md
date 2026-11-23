@@ -179,12 +179,15 @@ Party games are web apps for `tvpipe game play` ([`@tvpipe/party`](../party/READ
 
 ## Apple TV pairing
 
-Some AirPlay receivers show a PIN the first time:
+Some AirPlay receivers show a PIN the first time; a TV with an AirPlay
+password shows none and takes the password instead (`password` is true):
 
 ```js
 import { pair } from "@tvpipe/sdk";
 
-await pair("Living Room", { onPin: async ({ name }) => await ask(`PIN shown on ${name}?`) });
+await pair("Living Room", {
+  onPin: async ({ name, password }) => await ask(password ? `AirPlay password of ${name}?` : `PIN shown on ${name}?`),
+});
 // or let a session pair when it needs to:
 await play("movie.mp4", { to: "Living Room", onPin: ({ name }) => ask(name) });
 ```

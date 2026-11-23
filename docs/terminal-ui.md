@@ -69,7 +69,8 @@ tvpipe · Sharing your screen
   NAME`, …; usage errors → `tvpipe CMD --help`). Exit codes do not change.
 
 `discover` prints its list on stdout: the receivers tvpipe streams to
-(name, Google Cast/AirPlay, model, address, paired or needs pairing),
+(name, Google Cast/AirPlay, model, address, paired, needs pairing or
+needs pairing (password)),
 then the speakers it does not stream to, by name, and how to use one.
 `--json` is unchanged.
 

@@ -270,11 +270,11 @@ static DISCOVER: Cli<DiscoverArg> = Cli::new("discover")
     ]);
 
 static PAIR: Cli<PairArg> = Cli::new("pair")
-    .about("Pair with an AirPlay receiver (the TV shows a PIN)")
+    .about("Pair with an AirPlay receiver (its PIN or AirPlay password)")
     .opts(&[Opt::new(PairArg::Pin)
         .long("pin")
         .value("PIN")
-        .help("The PIN shown on the TV; asked interactively if omitted")])
+        .help("The PIN shown on the TV, or its AirPlay password; asked interactively if omitted")])
     .args(&[Pos::new(PairArg::Target, "NAME|ADDR").help("Receiver name or address")]);
 
 static UNPAIR: Cli<UnpairArg> = Cli::new("unpair")

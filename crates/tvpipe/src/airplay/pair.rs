@@ -10,8 +10,8 @@ use std::net::{IpAddr, SocketAddr, TcpStream};
 use std::time::Duration;
 
 use crate::airplay::credentials::{Identity, Query, Receiver, Store};
-use crate::airplay::info::get_info;
-use crate::airplay::pairing::{self, Shared};
+use crate::airplay::info::{get_info, Info};
+use crate::airplay::pairing::{self, PinKind, Shared};
 use crate::airplay::secure::SecureStream;
 use crate::ctx::Ctx;
 use crate::error::{Error, ErrorKind, Result};
@@ -261,26 +261,48 @@ pub fn connect_within(target: &Target, store: &Store, io: Duration) -> Result<Co
     }
 }
 
+/// What the PIN of pair-setup is (§2.1): judged from the plain `/info`'s
+/// status flags, else from the advertisement.
+fn pin_kind(target: &Target, plain_info: Option<&Info>) -> PinKind {
+    let txt = target
+        .device
+        .as_ref()
+        .and_then(|d| d.airplay.as_ref().or(d.raop.as_ref()))
+        .map(|a| &a.txt);
+    match plain_info.and_then(|i| Some((i.status_flags?, i.features))) {
+        Some((flags, features)) => PinKind::from_status(flags as u32, features),
+        None if txt.is_some_and(|t| t.password_is_pin()) => PinKind::Password,
+        None => PinKind::Shown,
+    }
+}
+
 /// Pairs with `target` and stores the credentials in `store`. With `pin`
-/// given, the receiver is assumed to have a fixed PIN and
-/// `/pair-pin-start` is skipped; without it, the TV shows a PIN and
-/// `get_pin` is asked for it.
+/// given, the receiver is assumed to have a fixed PIN (or it is its
+/// password) and `/pair-pin-start` is skipped; without it, the TV shows a
+/// PIN and `get_pin` is asked for it. A receiver whose password is the PIN
+/// shows none: `get_pin` is asked for the password (its [`PinKind`]).
 pub fn pair_with(
     target: &Target,
     store: &mut Store,
     pin: Option<&str>,
-    get_pin: impl FnOnce() -> Result<String>,
+    get_pin: impl FnOnce(PinKind) -> Result<String>,
 ) -> Result<Receiver> {
     let mut client = open(target.addr)?;
     let plain_info = get_info(&mut client)
         .map_err(|e| debug!("pair: plain /info failed: {e}"))
         .ok();
+    let kind = pin_kind(target, plain_info.as_ref());
+    if kind.is_password() {
+        debug!("pair: the receiver's password is the PIN");
+    }
     let receiver = match pin {
         Some(pin) => {
-            let pin = pin.to_owned();
+            let pin = kind.normalize(pin);
             pairing::pair_setup_pin(&mut client, &store.identity, false, move || Ok(pin))?
         }
-        None => pairing::pair_setup_pin(&mut client, &store.identity, true, get_pin)?,
+        None => pairing::pair_setup_pin(&mut client, &store.identity, !kind.is_password(), || {
+            Ok(kind.normalize(&get_pin(kind)?))
+        })?,
     };
     drop(client);
     if let Some(pk) = plain_info.as_ref().and_then(|i| i.pk.as_deref()) {
@@ -332,10 +354,11 @@ pub fn pair(
     let mut store = Store::open(&ctx.storage)?;
     let label = target.label();
     info!("pairing with {label} at {}", target.addr);
-    let record = pair_with(&target, &mut store, pin, || {
+    let record = pair_with(&target, &mut store, pin, |kind| {
         let req = PinRequest {
             name: label.clone(),
             address: target.addr.to_string(),
+            password: kind.is_password(),
         };
         ctx.events.emit(Event::PinRequired(req.clone()));
         get_pin(&req)
@@ -427,7 +450,7 @@ mod tests {
         });
         let path = Storage::dir(temp_dir("pair-pin"));
         let mut store = Store::open(&path).unwrap();
-        let record = pair_with(&target(&fake), &mut store, None, || Ok("1234".into())).unwrap();
+        let record = pair_with(&target(&fake), &mut store, None, |_| Ok("1234".into())).unwrap();
         assert_eq!(record.id, fake.config.id);
         assert_eq!(record.public_key, fake.public_key());
         assert_eq!(record.name, "Fake TV");
@@ -458,11 +481,52 @@ mod tests {
         let fake = FakeReceiver::start(Config::default());
         let path = Storage::dir(temp_dir("pair-fixed-pin"));
         let mut store = Store::open(&path).unwrap();
-        pair_with(&target(&fake), &mut store, Some("1234"), || {
+        pair_with(&target(&fake), &mut store, Some("1234"), |_| {
             panic!("not asked")
         })
         .unwrap();
         assert_eq!(fake.state.lock().unwrap().pin_starts, 0);
+    }
+
+    /// A receiver whose password is the PIN (flag 0x80, no 0x8): no
+    /// `/pair-pin-start`, the asker is told, and the password is taken as
+    /// typed but for a line ending; a shown PIN as before (§2.1).
+    #[test]
+    fn password_is_the_pin() {
+        let pair = |flags: u64, dir: &str, pin: Option<&str>, typed: &str| {
+            let fake = FakeReceiver::start(Config {
+                status_flags: flags,
+                ..Config::default()
+            });
+            let mut store = Store::open(&Storage::dir(temp_dir(dir))).unwrap();
+            let mut asked = None;
+            let typed = typed.to_owned();
+            let r = pair_with(&target(&fake), &mut store, pin, |kind| {
+                asked = Some(kind);
+                Ok(typed)
+            });
+            let starts = fake.state.lock().unwrap().pin_starts;
+            (r.map(|_| ()), asked, starts)
+        };
+        // LG with "Require Password" (0x4c4), a Mac with one (0x284).
+        for (flags, dir) in [(0x4c4, "pair-password-lg"), (0x284, "pair-password-mac")] {
+            let (r, asked, starts) = pair(flags, dir, None, "1234\n");
+            assert_eq!((asked, starts), (Some(PinKind::Password), 0));
+            r.unwrap();
+        }
+        // Spaces are part of a password.
+        let (r, _, _) = pair(0x4c4, "pair-password-spaces", None, " 1234");
+        assert_eq!(r.unwrap_err().kind(), ErrorKind::Auth);
+        pair(0x4c4, "pair-password-given", Some("1234\r\n"), "")
+            .0
+            .unwrap();
+        // The PIN flag 0x8 too: it shows its PIN, trimmed as before.
+        let (r, asked, starts) = pair(0x4cc, "pair-password-and-pin", None, " 1234 ");
+        assert_eq!((asked, starts), (Some(PinKind::Shown), 1));
+        r.unwrap();
+        let (r, asked, starts) = pair(0x644, "pair-shown-pin", None, " 1234\n");
+        assert_eq!((asked, starts), (Some(PinKind::Shown), 1));
+        r.unwrap();
     }
 
     #[test]
@@ -470,7 +534,7 @@ mod tests {
         let fake = FakeReceiver::start(Config::default());
         let path = Storage::dir(temp_dir("pair-wrong-pin"));
         let mut store = Store::open(&path).unwrap();
-        let err = pair_with(&target(&fake), &mut store, None, || Ok("9999".into())).unwrap_err();
+        let err = pair_with(&target(&fake), &mut store, None, |_| Ok("9999".into())).unwrap_err();
         assert_eq!(err.kind(), ErrorKind::Auth, "{err}");
         assert!(store.receivers.is_empty());
     }
@@ -593,13 +657,13 @@ mod tests {
         let fake = FakeReceiver::start(Config::default());
         let path = Storage::dir(temp_dir("pair-forget"));
         let mut store = Store::open(&path).unwrap();
-        pair_with(&target(&fake), &mut store, None, || Ok("1234".into())).unwrap();
+        pair_with(&target(&fake), &mut store, None, |_| Ok("1234".into())).unwrap();
         let no_browse = |_: &str| -> Result<Target> { panic!("should not browse") };
         let removed = forget(&mut store, "fake tv", no_browse).unwrap();
         assert_eq!(removed.len(), 1);
         assert!(Store::open(&path).unwrap().receivers.is_empty());
 
-        pair_with(&target(&fake), &mut store, None, || Ok("1234".into())).unwrap();
+        pair_with(&target(&fake), &mut store, None, |_| Ok("1234".into())).unwrap();
         let ip = fake.addr.ip().to_string();
         assert_eq!(forget(&mut store, &ip, no_browse).unwrap().len(), 1);
 
@@ -613,7 +677,7 @@ mod tests {
         let fake = FakeReceiver::start(Config::default());
         let path = Storage::dir(temp_dir("pair-repeat"));
         let mut store = Store::open(&path).unwrap();
-        pair_with(&target(&fake), &mut store, None, || Ok("1234".into())).unwrap();
+        pair_with(&target(&fake), &mut store, None, |_| Ok("1234".into())).unwrap();
         let mut secrets = Vec::new();
         for _ in 0..3 {
             let mut c = connect(&target(&fake), &store).unwrap();
@@ -624,7 +688,7 @@ mod tests {
         // Fresh ephemeral keys every time.
         assert_ne!(secrets[0], secrets[1]);
         // Pairing again replaces the record instead of adding one.
-        pair_with(&target(&fake), &mut store, None, || Ok("1234".into())).unwrap();
+        pair_with(&target(&fake), &mut store, None, |_| Ok("1234".into())).unwrap();
         assert_eq!(Store::open(&path).unwrap().receivers.len(), 1);
     }
 
@@ -633,7 +697,7 @@ mod tests {
         let fake = FakeReceiver::start(Config::default());
         let path = Storage::dir(temp_dir("pair-forgotten"));
         let mut store = Store::open(&path).unwrap();
-        pair_with(&target(&fake), &mut store, None, || Ok("1234".into())).unwrap();
+        pair_with(&target(&fake), &mut store, None, |_| Ok("1234".into())).unwrap();
         fake.state.lock().unwrap().pairings.clear();
         let err = connect(&target(&fake), &store).unwrap_err();
         assert_eq!(err.kind(), ErrorKind::Auth, "{err}");
@@ -681,7 +745,7 @@ mod hardware {
     fn hardware_pair() {
         let Some(t) = atv() else { return };
         let mut store = Store::open(&crate::storage::Storage::cli()).unwrap();
-        let r = pair_with(&t, &mut store, None, || {
+        let r = pair_with(&t, &mut store, None, |_| {
             eprint!("PIN: ");
             let mut line = String::new();
             std::io::stdin().read_line(&mut line).unwrap();

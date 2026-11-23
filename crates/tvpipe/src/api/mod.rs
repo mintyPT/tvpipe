@@ -136,7 +136,8 @@ impl Drop for Discovery {
 // ---------------------------------------------------------------------------
 // Pairing
 
-/// Pairs with an AirPlay receiver (`airplay`): the TV shows a PIN, which
+/// Pairs with an AirPlay receiver (`airplay`): the TV shows a PIN (or,
+/// with [`PinRequest::password`], it has an AirPlay password), which
 /// `on_pin` returns (`None`: give up). Blocks until done. The pairing is
 /// kept in the default storage; see [`pair_with`].
 #[cfg(feature = "airplay")]
@@ -170,7 +171,8 @@ pub fn unpair(target: &str, options: &Options) -> Result<Vec<Unpaired>> {
 pub enum PairingState {
     /// Finding the receiver, starting pair-setup.
     Connecting,
-    /// The TV shows a PIN: pass it to [`Pairing::submit_pin`].
+    /// The TV shows a PIN (or, with `password`, its AirPlay password is
+    /// asked for): pass it to [`Pairing::submit_pin`].
     NeedPin(PinRequest),
     /// Paired and verified.
     Done(Paired),
@@ -240,13 +242,15 @@ impl Pairing {
         }
     }
 
-    /// The PIN the TV shows.
+    /// The PIN the TV shows, or its AirPlay password when the request
+    /// says so ([`PinRequest::password`](crate::events::PinRequest)); a
+    /// PIN is trimmed, a password only loses a line ending.
     pub fn submit_pin(&self, pin: &str) -> Result<()> {
         if !matches!(*self.lock(), PairingState::NeedPin(_)) {
             return Err(Error::usage("the pairing does not wait for a PIN"));
         }
         self.pin
-            .send(Some(pin.trim().to_owned()))
+            .send(Some(pin.trim_end_matches(['\r', '\n']).to_owned()))
             .map_err(|_| Error::closed("the pairing ended"))
     }
 

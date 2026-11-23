@@ -82,6 +82,7 @@ fn examples() -> Vec<(&'static str, Event)> {
             pk: Some(s("00".repeat(32).as_str())),
             mirroring: true,
             password: false,
+            password_pin: false,
             pin: true,
             paired: Some(false),
         }),
@@ -333,6 +334,7 @@ fn examples() -> Vec<(&'static str, Event)> {
             Event::PinRequired(PinRequest {
                 name: s("Living Room"),
                 address: s("192.0.2.10:7000"),
+                password: false,
             }),
         ),
         (
@@ -528,4 +530,23 @@ fn readers_ignore_unknown_fields_and_refuse_unknown_types() {
     assert!(Event::from_json(r#"{"type":"teleport"}"#).is_err());
     assert!(Event::from_json(r#"{"type":"receiver","name":"x","state":"melted"}"#).is_err());
     assert!(Event::from_json("not json").is_err());
+}
+
+/// `pin-required` from a tvpipe without `password`: a shown PIN.
+#[test]
+fn pin_required_without_password() {
+    let e = Event::from_json(r#"{"type":"pin-required","name":"TV","address":"192.0.2.10:7000"}"#)
+        .unwrap();
+    let Event::PinRequired(p) = e else {
+        panic!("{e:?}")
+    };
+    assert!(!p.password);
+    let e = Event::from_json(
+        r#"{"type":"pin-required","name":"TV","address":"192.0.2.10:7000","password":true}"#,
+    )
+    .unwrap();
+    assert!(matches!(
+        e,
+        Event::PinRequired(PinRequest { password: true, .. })
+    ));
 }

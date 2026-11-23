@@ -137,6 +137,17 @@ impl AirPlayTxt {
                 .is_some_and(|f| f & status::PASSWORD_REQUIRED != 0)
     }
 
+    /// Its AirPlay password is the PIN of pair-setup, and it shows none
+    /// ([`password_is_pin`]; `pw` counts as the password flag).
+    pub fn password_is_pin(&self) -> bool {
+        let pw = if self.pw {
+            status::PASSWORD_REQUIRED
+        } else {
+            0
+        };
+        password_is_pin(self.flags.unwrap_or(0) | pw, self.features.unwrap_or(0))
+    }
+
     /// PIN pairing is mandatory (status bits 0x8 or 0x200).
     pub fn pin_required(&self) -> bool {
         self.flags
@@ -147,6 +158,23 @@ impl AirPlayTxt {
     pub fn lg(&self) -> bool {
         is_lg(self.manufacturer.as_deref())
     }
+}
+
+/// A HAP (TLV8) pairing feature: 38, 43, 46 or 48 (spec Appendix A).
+pub fn hap_capable(ft: u64) -> bool {
+    use features::*;
+    let hap = UNIFIED_MEDIA_CONTROL
+        | SYSTEM_PAIRING
+        | HK_PAIRING_AND_ACCESS_CONTROL
+        | COREUTILS_PAIRING_AND_ENCRYPTION;
+    ft & hap != 0
+}
+
+/// The receiver's password is the PIN of pair-setup and no PIN is shown:
+/// the password flag 0x80 without the PIN flag 0x8, and HAP pairing
+/// (spec §2.1). Without HAP pairing a password is HTTP Digest (§3).
+pub fn password_is_pin(flags: u32, ft: u64) -> bool {
+    flags & status::PASSWORD_REQUIRED != 0 && flags & status::PIN_REQUIRED == 0 && hap_capable(ft)
 }
 
 /// Whether a `manufacturer` (TXT or `/info`) is LG: "LG" or "LG …".
@@ -307,6 +335,21 @@ mod tests {
             Source::AirPlay,
         );
         assert!(txt.lg() && txt.supports_mirroring() && txt.pin_required());
+        assert!(!txt.password_is_pin());
+        // With "Require Password" on: 0x80 set, 0x200 clear [USER: PR #8].
+        let pw = |flags: &str| {
+            AirPlayTxt::parse(
+                &pairs(&["features=0x7F8AD0,0xB8BCF46", flags]),
+                Source::AirPlay,
+            )
+        };
+        assert!(pw("flags=0x4c4").password_is_pin() && pw("flags=0x6c4").password_is_pin());
+        assert!(!pw("flags=0x4cc").password_is_pin());
+        let digest = AirPlayTxt::parse(
+            &pairs(&["features=0x4000080", "flags=0x84"]),
+            Source::AirPlay,
+        );
+        assert!(digest.password_required() && !digest.password_is_pin());
         assert!(is_lg(Some("lg electronics")) && is_lg(Some(" LG")));
         assert!(!is_lg(Some("LGE")) && !is_lg(Some("Apple Inc.")) && !is_lg(None));
         assert!(!AirPlayTxt::default().lg());

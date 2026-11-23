@@ -112,6 +112,24 @@ TLV error value 7 in M4. A pairing made with type 3 and no extra
 access-control entry is sufficient for a mirroring session on the Apple TV
 [HW].
 
+**The PIN of pair-setup.** A receiver normally shows a PIN once
+`POST /pair-pin-start` asks it to (or has a fixed one). A receiver with an
+AirPlay password (status flag 0x80, or TXT `pw`) and HAP pairing (feature
+38, 43, 46 or 48), but without the PIN flag 0x8, shows none: its password
+is the PIN. Skip `/pair-pin-start` and use the password as the SRP
+password, as the user typed it but for a trailing line ending (a shown PIN
+is trimmed). Judge it from the status flags of the plain `/info` fetched
+for pairing, else from the advertisement. The one-time pairing flag 0x200
+does not change it [USER: PR #8: an LG 55UA84006LB with Require Password
+(flags 0x4c4) starts showing a PIN after `/pair-pin-start` and drops it,
+and pairs with the password; a Mac's AirPlay Receiver with a password
+(flags 0x284) does not answer `/pair-pin-start` and pairs with the password;
+a pairing made before the password was set keeps working]. With 0x8 as well
+the receiver shows its PIN as before [untested]. Without HAP pairing a
+password is HTTP Digest (§3), which tvpipe does not do. An Apple receiver
+with a password also wants it as HTTP Digest on the session after pairing
+[USER: PR #8, the Mac answers SETUP #1 401].
+
 ### 2.2 FairPlay SAP and what mirroring takes from it
 
 FairPlay is done by the `tvpipe-fairplay` crate (LGPL port); this
@@ -1297,6 +1315,7 @@ not the session.
 | Roku (Streaming Stick 4K 3820R2, sourceVersion 377.40.00) [MODEL; Roku/TCL Roku reported working] | legacy (HKP 3) | media-first | advertises PTP (feature 41, `PTPInfo`), uses NTP with receiver probes | layout P | omits `supportedFormats`; AAC-ELD |
 | LG (75UP75009LC, sourceVersion 377.25.06) [MODEL; LG not in the reference's tested list] | HKP 3 but TLV8/HAP, encrypted control | media-first (rejects control-only SETUP) | advertises PTP but sends no timing headers → NTP from the start (§2.5) | — | ALAC only (`screenStream` 0x40000); third-party TV family |
 | LG OLED65C5 (webOS, firmware 43.21.96, sourceVersion 377.40.00, AirPlay SDK 3.72.210.0) [HW] | HAP pair-verify with a stored PIN pairing (HKP 3); no FairPlay (feature 14 clear) | control-first, SETUP #1 accepted; the audio SETUP takes ~540 ms | advertises PTP, no timing headers on `/info` → NTP, which it queries | layout S (feature 59), no MediaDataControl (no feature 60), ALAC; `latencyMin` = `latencyMax`, 300 ms (§2.7) | `displays` (1920×1080, max 3840×2160 at 60 fps) in `/info` before SETUP; `GET_PARAMETER volume` always answers −144, and the −144 sent back does not mute it; `TEARDOWN`, with or without a body, is answered 200 in ~200 ms and its service stays up; third-party TV family (features 49 and 51) |
+| LG 55UA84006LB (webOS, sourceVersion 377.40.00, AirPlay SDK 3.6.0.72) [USER: PR #8] | HAP pairing (HKP 3), with Require Password its password as the PIN (§2.1); raw `/pair-setup` and transient pair-setup refused with 403 | control-first, SETUP #1 accepted | advertises PTP, no timing headers on `/info` → NTP | ALAC; with `latencyMin` 0 crackling or no sound below 600 ms (§2.7) | no FairPlay (feature 14 clear, `/fp-setup` 404); `displays` in `/info` before SETUP; a body-less `TEARDOWN` restarts its AirPlay service, the empty dict does not (§4.14) |
 | Samsung The Frame 43" (LS03B, sourceVersion 377.40.00) [USER: issue #5] | HAP pair-verify; no FairPlay (feature 14 clear) | control-first, SETUP #1 accepted | advertises PTP (feature 41), accepts the PTP SETUP #1 but its response has no timing headers (that `/info` lacks them too is assumed, not reported); after that abandoned session it answers neither TEARDOWN nor a new connection's pair-verify (15 s timeout); for how long is unknown → NTP from the start (no timing headers on `/info`, or remembered), else the §2.5 reconnect attempts | ALAC | 1080p60 canvas; third-party TV family |
 | Samsung TU8300, Hisense, TCL Google TV [REF: reported working] | — | — | — | — | no per-family facts recorded; third-party TVs need an explicit initial volume |
 | UxPlay (open-source receiver, advertises AppleTV3,2) [MODEL] | legacy raw pairing | control-first | NTP, receiver probes | ALAC, layout P | no `eventPort`; AES-CTR video keyed from `K = SHA-512(K_fp ‖ S)[0..16]`, because the legacy pair-verify sent `X-Apple-PD: 1` (§2.2, §5.2) |

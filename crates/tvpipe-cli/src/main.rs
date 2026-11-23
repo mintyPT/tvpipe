@@ -361,6 +361,7 @@ fn table(devices: &[Device]) -> String {
                 };
                 let note = match airplay {
                     Some(a) if a.paired == Some(true) => "paired",
+                    Some(a) if a.password_pin && cast.is_none() => "needs pairing (password)",
                     Some(a) if a.pin && cast.is_none() => "needs pairing",
                     _ => "",
                 };
@@ -427,18 +428,36 @@ fn prompt_pin(req: &events::PinRequest) -> error::Result<String> {
     if let Some(router) = machine::router() {
         return router.wait_pin();
     }
-    // Lines with echo while asking.
+    // Lines with echo while asking; a password without.
     let _cooked = tty::Cooked::new();
-    ui::prompt(&format!("Enter the PIN shown on {}:", req.name));
+    ui::prompt(&if req.password {
+        format!(
+            "Enter the AirPlay password of {} (it is not shown as you type):",
+            req.name
+        )
+    } else {
+        format!("Enter the PIN shown on {}:", req.name)
+    });
     let _ = std::io::stderr().flush();
     let mut line = String::new();
-    let read = std::io::stdin().lock().read_line(&mut line);
-    ui::answered(line.is_empty());
+    let (read, hidden) = {
+        let no_echo = req.password.then(tty::NoEcho::new);
+        let read = std::io::stdin().lock().read_line(&mut line);
+        (read, no_echo.is_some_and(|n| n.hidden))
+    };
+    // Without echo the Enter did not move to a new line either.
+    ui::answered(line.is_empty() || hidden);
     read.map_err(|e| error::Error::io("read PIN", e))?;
-    if line.is_empty() {
-        return Err(error::Error::usage("no PIN entered"));
+    // A password as typed but for the line ending (pairing trims a PIN).
+    let entered = line.trim_end_matches(['\r', '\n']);
+    if entered.trim().is_empty() {
+        return Err(error::Error::usage(if req.password {
+            "no password entered"
+        } else {
+            "no PIN entered"
+        }));
     }
-    Ok(line.trim().to_owned())
+    Ok(entered.to_owned())
 }
 
 /// Asks a yes/no question on the terminal (`y` + Enter); `None` without
@@ -465,5 +484,41 @@ fn approve_in_terminal(what: &str, cancel: &dyn Fn() -> bool) -> bool {
             }
             false
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn tv(name: &str, flags: &str) -> Device {
+        Device::from_json(&format!(
+            r#"{{"name":"{name}","addresses":["192.0.2.10"],"model":"55UA84006LB","airplay":{{"instance":"{name}","host":"tv.local","port":7000,"address":"192.0.2.10:7000","mirroring":true,{flags}}}}}"#
+        ))
+        .unwrap()
+    }
+
+    /// `discover` says which TVs pair with their password.
+    #[test]
+    fn discover_notes_password_pairing() {
+        let password = tv(
+            "Den TV",
+            r#""password":true,"password_pin":true,"pin":false,"paired":false"#,
+        );
+        let pin = tv("Living Room", r#""pin":true,"paired":false"#);
+        let paired = tv("Kitchen", r#""password_pin":true,"paired":true"#);
+        let text = table(&[password, pin, paired]);
+        assert!(
+            text.contains("192.0.2.10   needs pairing (password)\n"),
+            "{text}"
+        );
+        assert!(text.contains("192.0.2.10   needs pairing\n"), "{text}");
+        assert!(text.contains("192.0.2.10   paired\n"), "{text}");
+        // A password without HAP pairing (HTTP Digest) is not one to pair.
+        let digest = tv(
+            "Old TV",
+            r#""password":true,"password_pin":false,"pin":false,"paired":false"#,
+        );
+        assert!(!table(&[digest]).contains("needs pairing"));
     }
 }

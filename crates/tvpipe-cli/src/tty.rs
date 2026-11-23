@@ -121,3 +121,61 @@ impl Drop for Cooked {
         }
     }
 }
+
+/// Echo is off for a [`NoEcho`] prompt; what the terminal had before.
+static HIDDEN: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
+
+/// Gives the terminal its echo back after a [`NoEcho`], once; whether it
+/// was off.
+fn show() -> bool {
+    let saved = HIDDEN.lock().unwrap_or_else(|e| e.into_inner()).take();
+    match saved {
+        Some(saved) => {
+            let _ = stty(&[&saved]);
+            true
+        }
+        None => false,
+    }
+}
+
+/// No echo while this lives, for a password prompt that reads a line
+/// (inside a [`Cooked`]). Where stty cannot do it (Windows consoles) the
+/// typing stays visible. Ctrl-C while it is off gives the echo back
+/// before the usual: the process exits (130) unless a session catches
+/// Ctrl-C to stop.
+pub struct NoEcho {
+    /// The echo is off.
+    pub hidden: bool,
+}
+
+impl NoEcho {
+    pub fn new() -> NoEcho {
+        static WATCH: std::sync::Once = std::sync::Once::new();
+        WATCH.call_once(|| {
+            tvpipe::signals::on_signal(|| {
+                if show() {
+                    eprintln!();
+                }
+                // Without a session's handler Ctrl-C would have ended the
+                // process; installing ours must not change that.
+                if !crate::interrupt::linked() {
+                    std::process::exit(130);
+                }
+            });
+        });
+        let mut hidden = false;
+        if let Some(before) = stty(&["-g"]).filter(|s| !s.is_empty()) {
+            if stty(&["-echo"]).is_some() {
+                *HIDDEN.lock().unwrap_or_else(|e| e.into_inner()) = Some(before);
+                hidden = true;
+            }
+        }
+        NoEcho { hidden }
+    }
+}
+
+impl Drop for NoEcho {
+    fn drop(&mut self) {
+        show();
+    }
+}

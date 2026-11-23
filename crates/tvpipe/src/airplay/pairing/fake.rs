@@ -38,6 +38,8 @@ pub(crate) struct Config {
     pub transient_hkp: String,
     /// SRP password of transient pair-setup.
     pub transient_pin: String,
+    /// `statusFlags` of `/info` (default 0x644, the Apple TV's).
+    pub status_flags: u64,
 }
 
 impl Default for Config {
@@ -50,6 +52,7 @@ impl Default for Config {
             name: "Fake TV".into(),
             transient_hkp: "4".into(),
             transient_pin: TRANSIENT_PIN.into(),
+            status_flags: 0x644,
         }
     }
 }
@@ -234,7 +237,7 @@ fn info(cfg: &Config, verified: bool) -> Plist {
         .with("features", 0x3C177FDE_4A7FDFD5u64 as i64)
         .with("pk", Plist::data(key.public_key().to_vec()))
         .with("sourceVersion", "960.13.1")
-        .with("statusFlags", 0x644i64);
+        .with("statusFlags", cfg.status_flags as i64);
     if verified {
         p = p.with(
             "displays",

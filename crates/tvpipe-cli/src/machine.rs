@@ -447,7 +447,9 @@ fn command(s: &Shared, payload: &[u8], pins: &mpsc::Sender<String>) {
         }
         Some("pin") => match v["pin"].as_str() {
             Some(pin) => {
-                let _ = pins.send(pin.trim().to_owned());
+                // As given but for a line ending: it may be a password
+                // (pairing trims a PIN itself).
+                let _ = pins.send(pin.trim_end_matches(['\r', '\n']).to_owned());
             }
             None => warn!("stdin: pin command without a pin"),
         },

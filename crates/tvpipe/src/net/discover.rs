@@ -199,8 +199,10 @@ pub struct AirPlayService {
     pub pk: Option<String>,
     /// Supports screen mirroring (video).
     pub mirroring: bool,
-    /// Needs a password (not supported).
+    /// Has an AirPlay password (status flag 0x80 or `pw`).
     pub password: bool,
+    /// Its password is the PIN of `pair`, and it shows none.
+    pub password_pin: bool,
     /// Shows a PIN to pair.
     pub pin: bool,
     /// Whether the storage has a pairing for it (when known).
@@ -247,6 +249,7 @@ impl DeviceInfo {
                     pk: t.pk.as_deref().map(hex::encode),
                     mirroring: t.supports_mirroring(),
                     password: t.password_required(),
+                    password_pin: t.password_is_pin(),
                     pin: t.pin_required(),
                     paired: store.map(|s| is_paired(d, s)),
                 }
@@ -321,6 +324,7 @@ impl DeviceInfo {
                 .with_opt("pk", ap.pk.as_deref())
                 .with("mirroring", ap.mirroring)
                 .with("password", ap.password)
+                .with("password_pin", ap.password_pin)
                 .with("pin", ap.pin)
                 .with_opt("paired", ap.paired);
             v = v.with(key, o);
@@ -360,6 +364,7 @@ impl DeviceInfo {
                 pk: s(a, "pk"),
                 mirroring: flag(a, "mirroring"),
                 password: flag(a, "password"),
+                password_pin: flag(a, "password_pin"),
                 pin: flag(a, "pin"),
                 paired: a.get("paired").and_then(Value::as_bool),
             }))

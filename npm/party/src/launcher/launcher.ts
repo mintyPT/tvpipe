@@ -12,6 +12,7 @@
 import { displayLag, Flasher, MAX_LAG_MS } from "../flashsync.ts";
 import { APP_ROW, appScreenNote, appScreens, appWay, detectDevice, screenOptions, type ScreenOption } from "../launcher-options.ts";
 import { isWeb } from "../mode.ts";
+import { pairField, pairFieldValue } from "../pair-dialog.ts";
 import { LOCAL_PREFIX, SCREEN_WINDOW } from "../screens.ts";
 import { writeWebSession } from "../session.ts";
 import { GAMES_PAGE, loadWebGames } from "../webhub.ts";
@@ -102,7 +103,7 @@ function el(tag: string, cls: string, text?: string): HTMLElement {
 function pairingText(p: PairStatus): [string, string] {
   if (p.state === "done") return ["Paired", "done"];
   if (p.state === "failed") return [`Pairing failed${p.error ? `: ${p.error}` : ""}`, "bad"];
-  if (p.state === "pin") return ["Type the code the TV shows", ""];
+  if (p.state === "pin") return [p.password ? "Type the TV's password" : "Type the code the TV shows", ""];
   return ["Pairing…", ""];
 }
 
@@ -206,9 +207,17 @@ async function pairChosen(names: string[]): Promise<boolean> {
   return true;
 }
 
-function openPin(device: string, error?: string): void {
+/** The open dialog asks for the TV's password (it shows no code). */
+let pinPassword = false;
+
+function openPin(device: string, error?: string, password = pinPassword): void {
   pinFor = device;
+  pinPassword = password;
   $("pin-device").textContent = device;
+  $("pin-text").textContent = password
+    ? "This TV has an AirPlay password: the one set in the Home app under Speakers & TV, or in the TV's AirPlay settings. Type it here."
+    : "The TV shows a code. Type it here.";
+  pairField($("pin-input") as HTMLInputElement, password, password ? "The TV's password" : "The code on the TV");
   const e = $("pin-error");
   e.hidden = !error;
   e.textContent = error ?? "";
@@ -758,7 +767,7 @@ async function main(): Promise<void> {
   });
   tvpipe.on("pair", (p) => {
     pairing.set(p.device, p);
-    if (p.state === "pin") openPin(p.device);
+    if (p.state === "pin") openPin(p.device, undefined, p.password === true);
     else if (pinFor === p.device && p.state !== "connecting") closePin();
     if (p.state === "done") selected.add(p.device);
     if (p.state === "done" || p.state === "failed") pairEnded(p.device, p.state === "done");
@@ -793,11 +802,11 @@ async function main(): Promise<void> {
   }
   ($("pin-form") as HTMLFormElement).onsubmit = (ev) => {
     ev.preventDefault();
-    const pin = ($("pin-input") as HTMLInputElement).value.trim();
-    if (!pinFor || !/^\d{4,8}$/.test(pin)) {
+    const pin = pairFieldValue($("pin-input") as HTMLInputElement, pinPassword);
+    if (!pinFor || pin === undefined) {
       const e = $("pin-error");
       e.hidden = false;
-      e.textContent = "The code is the digits the TV shows.";
+      e.textContent = pinPassword ? "Type the TV's password." : "The code is the digits the TV shows.";
       return;
     }
     tvpipe.pairPin(pinFor, pin).catch((err) => openPin(pinFor ?? "", (err as Error).message));

@@ -53,7 +53,7 @@ broke), by an `error`.
 | `keyframe` | a receiver needs an IDR (encoded SLRW with keyframe requests on, see below) | |
 | `stats` | every second while frames flow | `elapsed_ms`, `video_frames`, `audio_frames`, `receivers` (`name`, `pushed`, `dropped`, `dropped_full`, `dropped_waiting`) |
 | `devices` | `discover` (instead of the table or `--json`) | `devices`: the `discover --json` objects |
-| `pin-required` | `pair` needs the PIN the TV shows | `name`, `address` |
+| `pin-required` | `pair` needs the PIN the TV shows, or its AirPlay password | `name`, `address`, `password` (true: it shows no PIN and the answer is its password, taken as given but for a line ending; a PIN is trimmed) |
 | `paired` | `pair` succeeded and the pairing verified | `name`, `model`, `file` (the credentials file) |
 | `unpaired` | `unpair` forgot a pairing | `name`, `id` |
 | `end` | the command is over | `reason` (`eof`, `stopped`, `receivers-gone`, `error`; `done` for commands without a stream); with a stream also `receivers` (`name`, `end`: `stopped`/`ended`/`failed`, `error`, the stats fields) |
@@ -95,7 +95,7 @@ JSON object of at most 64 KiB.
 | Command | |
 |---|---|
 | `{"type":"stop"}` | stop now, without playing out what is queued; receivers get their TEARDOWN/STOP; exit status 0 |
-| `{"type":"pin","pin":"1234"}` | the answer to `pin-required` |
+| `{"type":"pin","pin":"1234"}` | the answer to `pin-required` (the PIN or the password) |
 | `{"type":"navigate","url":"https://…"}` | `share URL`: show this page in the same tab (an `http(s)://` or `file://` URL, or a host name, as the `URL` argument); the receivers keep their sessions and the page shares again (`log` lines say so). Refused (another command, a scheme tvpipe does not open, Google Meet): a `warn` log line |
 
 Unknown commands are logged and ignored. Outside machine mode kind 6 is an

@@ -131,6 +131,8 @@ export interface PinRequiredEvent {
   type: "pin-required";
   name: string;
   address: string;
+  /** It shows no PIN: the answer is its AirPlay password (absent from older tvpipe). */
+  password?: boolean;
 }
 
 export interface PairedEvent {

@@ -28,6 +28,8 @@ export interface Device {
   paired: boolean | undefined;
   /** AirPlay: whether it asks for a PIN (pair it first). */
   pin: boolean | undefined;
+  /** AirPlay: it shows no PIN, its AirPlay password is what `onPin` returns. */
+  passwordPin: boolean | undefined;
   /** What `discover --json` says, camelCased. */
   airplay: Record<string, unknown> | undefined;
   raop: Record<string, unknown> | undefined;
@@ -57,6 +59,7 @@ function toDevice(d: RawDevice): Device {
     video: bool(d.cast, "video") === true || bool(d.airplay, "mirroring") === true,
     paired: ap ? (bool(d.airplay, "paired") ?? bool(d.raop, "paired") ?? false) : undefined,
     pin: ap ? (bool(d.airplay, "pin") ?? bool(d.raop, "pin")) : undefined,
+    passwordPin: ap ? (bool(d.airplay, "password_pin") ?? bool(d.raop, "password_pin") ?? false) : undefined,
     airplay: d.airplay,
     raop: d.raop,
     cast: d.cast,
@@ -91,6 +94,8 @@ export async function discover(options: DiscoverOptions = {}): Promise<Device[]>
 export interface PinRequest {
   name: string;
   address: string;
+  /** It shows no PIN and has an AirPlay password: return the password. */
+  password: boolean;
 }
 
 /** Asked for the PIN the TV shows; return it (or throw to cancel). */
@@ -129,15 +134,18 @@ export async function pair(target: string | Device, options: PairOptions = {}): 
     if (ev.type === "pin-required") {
       const onPin = options.onPin;
       if (!onPin) {
-        cancelled = new TvpipeError("pin-missing", `${ev.name} shows a PIN: pass onPin to pair()`, { device: ev.name });
+        const what = ev.password === true ? "asks for its AirPlay password" : "shows a PIN";
+        cancelled = new TvpipeError("pin-missing", `${ev.name} ${what}: pass onPin to pair()`, { device: ev.name });
         proc.endInput();
         return;
       }
       Promise.resolve()
-        .then(() => onPin({ name: ev.name, address: ev.address }))
+        .then(() => onPin({ name: ev.name, address: ev.address, password: ev.password === true }))
         .then(
           (pin) => {
-            proc.command({ type: "pin", pin: String(pin).trim() });
+            // As returned but for a line ending: tvpipe trims a PIN itself,
+            // a password may have spaces.
+            proc.command({ type: "pin", pin: String(pin).replace(/[\r\n]+$/, "") });
           },
           (err: unknown) => {
             cancelled = err;

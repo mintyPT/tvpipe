@@ -66,6 +66,40 @@ impl Hkp {
     }
 }
 
+/// What pair-setup's PIN is: one the receiver shows, or its password.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PinKind {
+    /// Shown on the TV after `/pair-pin-start` (or a fixed one).
+    Shown,
+    /// The receiver's AirPlay password; nothing is shown.
+    Password,
+}
+
+impl PinKind {
+    /// The password with the password flag 0x80, no PIN flag 0x8 and a
+    /// HAP pairing feature (§2.1); else a shown PIN.
+    pub fn from_status(flags: u32, features: u64) -> PinKind {
+        if crate::airplay::discovery::password_is_pin(flags, features) {
+            PinKind::Password
+        } else {
+            PinKind::Shown
+        }
+    }
+
+    pub fn is_password(self) -> bool {
+        self == PinKind::Password
+    }
+
+    /// A PIN without the spaces around it; a password as typed but for a
+    /// line ending.
+    pub fn normalize(self, text: &str) -> String {
+        match self {
+            PinKind::Shown => text.trim().to_owned(),
+            PinKind::Password => text.trim_end_matches(['\r', '\n']).to_owned(),
+        }
+    }
+}
+
 const SETUP_ENCRYPT_SALT: &[u8] = b"Pair-Setup-Encrypt-Salt";
 const SETUP_ENCRYPT_INFO: &[u8] = b"Pair-Setup-Encrypt-Info";
 const SETUP_CONTROLLER_SIGN_SALT: &[u8] = b"Pair-Setup-Controller-Sign-Salt";
@@ -373,7 +407,7 @@ pub fn pin_start<T: Transport>(t: &mut T) -> Result<()> {
 
 /// Pair-setup with a PIN. Sends `/pair-pin-start` (if `show_pin`) and
 /// M1, then calls `get_pin` (the TV shows it by now), then finishes
-/// M3–M6.
+/// M3–M6. The PIN is used as given ([`PinKind::normalize`]).
 pub fn pair_setup_pin<T: Transport>(
     t: &mut T,
     identity: &Identity,
@@ -392,7 +426,7 @@ pub fn pair_setup_pin<T: Transport>(
         m2.public_key.len()
     );
     let pin = get_pin()?;
-    let pin = pin.trim();
+    let pin = pin.as_str();
     if pin.is_empty() {
         return Err(Error::usage("pairing: empty PIN"));
     }
@@ -536,6 +570,23 @@ mod tests {
             id: String::from_utf8(b.hex(&format!("{who}_id"))).unwrap(),
             key: Ed25519KeyPair::from_seed_slice(&b.hex(&format!("{who}_seed"))).unwrap(),
         }
+    }
+
+    #[test]
+    fn pin_kinds() {
+        let hap = 1u64 << 48;
+        assert_eq!(PinKind::from_status(0x4c4, hap), PinKind::Password);
+        assert_eq!(PinKind::from_status(0x284, 1 << 38), PinKind::Password);
+        // The PIN flag, no password, or no HAP pairing (HTTP Digest, §3).
+        assert_eq!(PinKind::from_status(0x4cc, hap), PinKind::Shown);
+        assert_eq!(PinKind::from_status(0x644, hap), PinKind::Shown);
+        assert_eq!(PinKind::from_status(0x84, 1 << 7 | 1 << 26), PinKind::Shown);
+        assert_eq!(PinKind::Shown.normalize(" 1234\n"), "1234");
+        assert_eq!(
+            PinKind::Password.normalize(" pass word \r\n"),
+            " pass word "
+        );
+        assert_eq!(PinKind::Password.normalize("secret"), "secret");
     }
 
     #[test]
