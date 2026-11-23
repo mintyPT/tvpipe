@@ -1437,6 +1437,11 @@ Raw pair-verify requests carry `Content-Type: application/octet-stream`,
   `Content-Length` headers; body = the sender's 32-byte Ed25519 public key
   (the controller's long-term key, the same one sent in V1); response = the
   receiver's 32-byte Ed25519 public key. It is unauthenticated (no PIN).
+  A receiver that also has a HAP pairing feature (38, 43, 46 or 48) and
+  refuses it (401, 403 or 470) does not speak raw pairing: go on to TLV8
+  pairing [USER: PR #8, the LG 55UA84006LB of §10 answers 403]. From a
+  receiver without those features the refusal stands (an authentication
+  error).
   Do it once and store the receiver key with the controller identity, like
   a HAP pairing; later connections only run raw pair-verify against the
   stored key. If a later connection does run raw pair-setup again, the

@@ -180,7 +180,8 @@ pub fn connect(target: &Target, store: &mut Store) -> Result<Connected> {
     let candidate =
         !has_hap_pairing(target, store) && txt_features(target).is_some_and(is_candidate);
     if candidate {
-        match raw_setup_and_verify(target, store) {
+        let hap = txt_features(target).is_some_and(crate::airplay::discovery::hap_capable);
+        match raw_setup_and_verify(target, store, hap) {
             Ok(c) => return Ok(c),
             Err(e) if e.kind() == ErrorKind::Auth => return Err(e),
             Err(e) => debug!("airplay: legacy raw pairing failed ({e}); trying HAP"),
@@ -189,13 +190,19 @@ pub fn connect(target: &Target, store: &mut Store) -> Result<Connected> {
     pair::connect(target, store).map(|c| Connected::Hap(Box::new(c)))
 }
 
-fn raw_setup_and_verify(target: &Target, store: &mut Store) -> Result<Connected> {
+/// `hap`: the receiver advertises HAP pairing too, so a refused raw
+/// pair-setup only says it does not speak raw pairing (Appendix A): the
+/// error is no authentication failure and HAP pairing comes next.
+fn raw_setup_and_verify(target: &Target, store: &mut Store, hap: bool) -> Result<Connected> {
     info!(
         "airplay: trying legacy raw pair-setup with {} (untested on hardware)",
         target.label()
     );
     let mut client = pair::open(target.addr)?;
-    let key = pair_setup(&mut client, &store.identity)?;
+    let key = pair_setup(&mut client, &store.identity).map_err(|e| match e.kind() {
+        ErrorKind::Auth if hap => Error::protocol(format!("{} (it has HAP pairing)", e.message())),
+        _ => e,
+    })?;
     let device_id = target
         .device
         .as_ref()
@@ -300,6 +307,39 @@ mod tests {
     /// Unpaired legacy candidate → raw pair-setup (stored as `pairing =
     /// raw`) → raw verify → a legacy session; the next connect verifies
     /// with the stored key.
+    /// A refused raw pair-setup is an authentication failure, but not from
+    /// a receiver with HAP pairing: that one goes on to HAP pairing.
+    #[test]
+    fn refused_raw_setup_from_a_hap_receiver() {
+        use crate::airplay::credentials::tests::temp_dir;
+        let l = TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = l.local_addr().unwrap();
+        std::thread::spawn(move || {
+            for _ in 0..2 {
+                let (s, _) = l.accept().unwrap();
+                let mut conn = Conn::new(s);
+                let req = conn.read_request().unwrap();
+                let mut r = Response::new(req.version, 403, "Forbidden");
+                r.headers.set("CSeq", req.headers.get("cseq").unwrap());
+                conn.send_response(&r).unwrap();
+            }
+        });
+        for (hap, kind) in [(false, ErrorKind::Auth), (true, ErrorKind::Protocol)] {
+            let dir = format!("legacy-refused-{hap}");
+            let mut store = Store::open(&crate::storage::Storage::dir(temp_dir(&dir))).unwrap();
+            let target = Target { addr, device: None };
+            let Err(e) = raw_setup_and_verify(&target, &mut store, hap) else {
+                panic!("a refused pair-setup connected");
+            };
+            assert_eq!(e.kind(), kind, "{e}");
+            assert!(store.receivers.is_empty());
+        }
+        // The LG 55UA84006LB's features (PR #8): HAP pairing and bit 51.
+        let lg = 0x38b_cf46_007f_8ad0;
+        assert!(is_candidate(lg) && crate::airplay::discovery::hap_capable(lg));
+        assert!(!crate::airplay::discovery::hap_capable(1 << 26 | 1 << 7));
+    }
+
     #[test]
     fn connect_pairs_raw_then_verifies() {
         use crate::airplay::credentials::tests::temp_dir;
