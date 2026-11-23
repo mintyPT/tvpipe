@@ -2,6 +2,8 @@
 //! docs/airplay-mirroring.md).
 
 #[cfg(feature = "airplay")]
+pub mod access;
+#[cfg(feature = "airplay")]
 pub mod audio;
 pub mod credentials;
 pub mod discovery;

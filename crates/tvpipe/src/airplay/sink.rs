@@ -130,6 +130,7 @@ pub fn connect_mirror(
                     Ok((client, control.addr, secret, true))
                 },
             )
+            .map_err(|e| refusal(e, target))
             .map(AnyMirrorSink::Hap)
         }
         Connected::Legacy {
@@ -144,8 +145,19 @@ pub fn connect_mirror(
                 // The legacy profile never uses PTP, so there is no retry.
                 None => Err(Error::protocol("airplay: legacy session cannot be retried")),
             })
+            .map_err(|e| refusal(e, target))
             .map(AnyMirrorSink::Legacy)
         }
+    }
+}
+
+/// A session's 403 from a receiver whose advertisement says its Apple Home
+/// takes only its members: `home-only` (§2.1).
+fn refusal(e: Error, target: &pair::Target) -> Error {
+    if e.code() == Some("forbidden") && target.home_only() {
+        crate::airplay::access::home_only(&target.label())
+    } else {
+        e
     }
 }
 
@@ -2203,6 +2215,63 @@ mod tests {
             !crate::airplay::session::FAIRPLAY_BUILT,
             "{e}"
         );
+    }
+
+    /// After pairing, 403 to the session is `forbidden` (naming the Home
+    /// setting), 401 `password-unsupported` (HTTP Digest); `home-only` when
+    /// the advertisement says `acl=1` (§2.1).
+    #[test]
+    fn refused_session_after_pairing() {
+        let refused = |status| {
+            let fake = FakeMirror::start(Behaviour {
+                refuse_session_setup: Some(status),
+                nack_after: None,
+                ..Behaviour::default()
+            });
+            let tcp = TcpStream::connect(fake.addr).unwrap();
+            let e = Session::establish(
+                RtspClient::new(tcp),
+                fake.addr,
+                fake.secret.clone(),
+                true,
+                &MirrorOptions::default(),
+                &mut NoMemory,
+            )
+            .map_err(SetupError::into_error)
+            .err()
+            .unwrap();
+            assert_eq!(fake.rec().setup_bodies.len(), 1);
+            e
+        };
+        let e = refused(403);
+        assert_eq!((e.code(), e.device()), (Some("forbidden"), Some("Fake TV")));
+        assert_eq!(e.kind(), crate::error::ErrorKind::Auth);
+        assert!(e.to_string().contains("403 Forbidden"), "{e}");
+        assert!(e.to_string().contains("Allow Speaker & TV Access"), "{e}");
+        let e = refused(401);
+        assert_eq!(e.code(), Some("password-unsupported"), "{e}");
+        assert!(e.to_string().contains("turn Require Password off"), "{e}");
+        // Others as before.
+        assert_eq!(refused(500).code(), None);
+
+        let mut dev = crate::net::device::tests::lan_devices()
+            .into_iter()
+            .find(|d| d.airplay.is_some())
+            .unwrap();
+        let name = dev.name.clone();
+        let mut target = pair::Target {
+            addr: "192.0.2.7:7000".parse().unwrap(),
+            device: Some(dev.clone()),
+        };
+        assert_eq!(refusal(refused(403), &target).code(), Some("forbidden"));
+        dev.airplay.as_mut().unwrap().txt.acl = Some(1);
+        target.device = Some(dev);
+        let e = refusal(refused(403), &target);
+        assert_eq!(
+            (e.code(), e.device()),
+            (Some("home-only"), Some(name.as_str()))
+        );
+        assert_eq!(refusal(refused(500), &target).code(), None);
     }
 
     /// Regression (audio stopped on a QuickTime recording): when the

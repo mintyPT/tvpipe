@@ -19,6 +19,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 
+use crate::airplay::access;
 use crate::airplay::events::{Event, EventChannel};
 use crate::airplay::info::Info;
 use crate::airplay::keys;
@@ -656,6 +657,14 @@ impl<S: ControlStream> Session<S> {
                 resp
             };
             (check(resp, "SETUP (media-first)")?, Instant::now())
+        } else if resp.status == 403 || resp.status == 401 {
+            // After pairing: a home for its members only, or a password
+            // wanted as HTTP Digest (§2.1, §3).
+            let name = self.info.name.as_deref().unwrap_or("the receiver");
+            return Err(SetupError::Fatal(match resp.status {
+                403 => access::forbidden(name),
+                _ => access::password_unsupported(name),
+            }));
         } else {
             (check(resp, "SETUP (session)")?, t0)
         };

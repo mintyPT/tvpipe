@@ -84,6 +84,7 @@ fn examples() -> Vec<(&'static str, Event)> {
             password: false,
             password_pin: false,
             pin: true,
+            home_only: false,
             paired: Some(false),
         }),
         raop: None,

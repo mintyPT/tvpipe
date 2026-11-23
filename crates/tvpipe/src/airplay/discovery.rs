@@ -69,8 +69,11 @@ pub struct AirPlayTxt {
     pub pw: bool,
     /// `pi`: pairing identity (a UUID).
     pub pi: Option<String>,
-    /// `act`: access control type ("2" seems to mean "current user").
+    /// `act`: access control type ("2": a Mac's "Current User").
     pub act: Option<String>,
+    /// `acl`: its Apple Home's "Allow Speaker & TV Access" (0 everyone or
+    /// anyone on the network, 1 the home's members only).
+    pub acl: Option<u32>,
     pub osvers: Option<String>,
     pub manufacturer: Option<String>,
 }
@@ -94,6 +97,7 @@ impl AirPlayTxt {
             deviceid: get("deviceid").filter(|s| !s.is_empty()),
             pi: get("pi").filter(|s| !s.is_empty()),
             act: get("act"),
+            acl: get("acl").and_then(|v| v.parse().ok()),
             osvers: get("osvers").filter(|s| !s.is_empty()),
             manufacturer: get("manufacturer").filter(|s| !s.is_empty()),
             pw: get("pw").is_some_and(|v| parse_bool(&v)),
@@ -152,6 +156,18 @@ impl AirPlayTxt {
     pub fn pin_required(&self) -> bool {
         self.flags
             .is_some_and(|f| f & (status::PIN_REQUIRED | status::LEGACY_PAIRING) != 0)
+    }
+
+    /// Only the members of its Apple Home may use it (`acl=1`, §2.1): no
+    /// pairing of ours gets a session.
+    pub fn home_only(&self) -> bool {
+        self.acl == Some(1)
+    }
+
+    /// A Mac whose AirPlay Receiver allows only its own user (`act=2`,
+    /// §2.1): it refuses pair-setup.
+    pub fn owner_only(&self) -> bool {
+        self.act.as_deref() == Some("2")
     }
 
     /// An LG TV (`manufacturer`), whose audio needs a longer lead (§2.7).
@@ -336,6 +352,12 @@ mod tests {
         );
         assert!(txt.lg() && txt.supports_mirroring() && txt.pin_required());
         assert!(!txt.password_is_pin());
+        assert_eq!(txt.acl, Some(0));
+        assert!(!txt.home_only() && !txt.owner_only());
+        let txt = |kv: &str| AirPlayTxt::parse(&pairs(&[kv]), Source::AirPlay);
+        assert!(txt("acl=1").home_only() && !txt("acl=x").home_only());
+        assert!(!txt("acl=2").home_only());
+        assert!(txt("act=2").owner_only() && !txt("act=1").owner_only());
         // With "Require Password" on: 0x80 set, 0x200 clear [USER: PR #8].
         let pw = |flags: &str| {
             AirPlayTxt::parse(

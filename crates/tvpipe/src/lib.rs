@@ -93,6 +93,8 @@ pub mod slrw {
 #[allow(missing_docs)]
 pub mod __cli {
     #[cfg(feature = "airplay")]
+    pub use crate::airplay::access::HOME_ACCESS;
+    #[cfg(feature = "airplay")]
     pub use crate::airplay::pair::pair;
     pub use crate::api::__spawn_command as spawn;
     pub use crate::ctx::Ctx;

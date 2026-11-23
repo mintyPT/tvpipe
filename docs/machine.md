@@ -76,6 +76,9 @@ With several receivers one that fails does not end the session.
 | `code` | |
 |---|---|
 | `pairing-required` | an AirPlay receiver needs `pair` first; `device` is the name to pass to `pair` |
+| `home-only` | an AirPlay receiver whose advertisement says its Apple Home takes only the home's members (`acl=1`; `home_only` in `discover`): from `pair` and from a session without a stored pairing, before connecting, and from a session whose stored pairing got 403; the message names the Home app's setting; `device` is its name |
+| `forbidden` | an AirPlay receiver answered the session 403 after pairing (the message names the Home setting, the one known cause), or a Mac whose AirPlay Receiver allows only its current user (`act=2`), from `pair` and from a session without a stored pairing (the message names that setting); `device` is its name. In a build without FairPlay, from a receiver that offers it, the code is `fairplay-required` |
+| `password-unsupported` | an AirPlay receiver answered the session 401 after pairing: it wants its password as HTTP Digest, which tvpipe does not send; the message says to turn Require Password off; `device` is its name |
 | `no-receiver` | no receiver of that name was found; `device` is the name |
 | `input-not-found` | the input file does not exist |
 | `ffmpeg-missing` | the input needs ffmpeg and there is none |

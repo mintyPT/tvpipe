@@ -360,6 +360,7 @@ fn table(devices: &[Device]) -> String {
                     _ => "AirPlay",
                 };
                 let note = match airplay {
+                    Some(a) if home_only(a) && cast.is_none() => "home members only",
                     Some(a) if a.paired == Some(true) => "paired",
                     Some(a) if a.password_pin && cast.is_none() => "needs pairing (password)",
                     Some(a) if a.pin && cast.is_none() => "needs pairing",
@@ -396,6 +397,25 @@ fn table(devices: &[Device]) -> String {
             out.push('\n');
         }
     }
+    // TVs whose Apple Home takes only its members, and what to change.
+    let closed = |d: &Device| d.cast.is_none() && d.airplay.as_ref().is_some_and(home_only);
+    let names: Vec<String> = tvs
+        .iter()
+        .filter(|d| closed(d))
+        .map(|d| ui::render::quote(&d.name))
+        .collect();
+    if !names.is_empty() {
+        let (takes, homes, one) = match names.len() {
+            1 => ("takes", "its Apple Home", "it"),
+            _ => ("take", "their Apple Homes", "one"),
+        };
+        out.push_str(&format!(
+            "\n{} only {takes} AirPlay from members of {homes}. To stream to {one}:\n  {}, \
+             then pair: tvpipe pair NAME\n",
+            names.join(", "),
+            ui::render::home_access(),
+        ));
+    }
     if !speakers.is_empty() {
         let names: Vec<&str> = speakers.iter().map(|d| d.name.as_str()).collect();
         out.push_str(&format!(
@@ -409,16 +429,23 @@ fn table(devices: &[Device]) -> String {
             names.join(", ")
         ));
     }
-    match tvs.first() {
+    match tvs.iter().find(|d| !closed(d)) {
         Some(d) => out.push_str(&format!(
             "\nStream to one: tvpipe play FILE --to {}\n",
             ui::render::quote(&d.name)
         )),
+        // Only TVs for their homes' members: what to do is said above.
+        None if !tvs.is_empty() => {}
         None => {
             out.push_str("\nCheck that the TV is on and on the same network as this computer.\n")
         }
     }
     out
+}
+
+/// Its Apple Home takes only its members and there is no pairing to try.
+fn home_only(a: &tvpipe::AirPlayService) -> bool {
+    a.home_only && a.paired != Some(true)
 }
 
 /// Reads the PIN from stdin after prompting on stderr; with `--machine`,
@@ -520,5 +547,35 @@ mod tests {
             r#""password":true,"password_pin":false,"pin":false,"paired":false"#,
         );
         assert!(!table(&[digest]).contains("needs pairing"));
+    }
+
+    /// `discover` notes TVs whose Apple Home takes only its members, says
+    /// what to change, and suggests another TV to stream to.
+    #[test]
+    fn discover_notes_home_only() {
+        let home = tv("LG TV", r#""pin":true,"home_only":true,"paired":false"#);
+        let open = tv("Den TV", r#""pin":true,"home_only":false,"paired":false"#);
+        let text = table(&[home.clone(), open]);
+        assert!(text.contains("192.0.2.10   home members only\n"), "{text}");
+        assert!(
+            text.contains("\"LG TV\" only takes AirPlay from members of its Apple Home. To stream to it:\n  In the Home app, "),
+            "{text}"
+        );
+        assert!(text.contains("then pair: tvpipe pair NAME"), "{text}");
+        assert!(text.contains("--to \"Den TV\""), "{text}");
+        let alone = table(std::slice::from_ref(&home));
+        assert!(
+            !alone.contains("Stream to one") && !alone.contains("Check that"),
+            "{alone}"
+        );
+        let two = table(&[home, tv("Den TV", r#""home_only":true"#)]);
+        assert!(two.contains("\"LG TV\", \"Den TV\" only take AirPlay from members of their Apple Homes. To stream to one:"), "{two}");
+        // A pairing from before the setting changed is tried.
+        let paired = table(&[tv("LG TV", r#""home_only":true,"paired":true"#)]);
+        assert!(
+            paired.contains("192.0.2.10   paired\n") && !paired.contains("Apple Home"),
+            "{paired}"
+        );
+        assert!(paired.contains("--to \"LG TV\""), "{paired}");
     }
 }

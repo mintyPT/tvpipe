@@ -114,10 +114,14 @@ pub fn device_value(d: &crate::net::discover::DeviceInfo) -> Option<Value> {
         (false, false) => return None,
     };
     let paired = airplay.and_then(|a| a.paired);
+    // Its Apple Home takes only its members, and there is no pairing to try.
+    let home_only =
+        kind == "airplay" && airplay.is_some_and(|a| a.home_only) && paired != Some(true);
     // A receiver that shows a PIN (or takes its password) and has no
     // pairing here needs one
     // (cast picks Cast for "both", so only AirPlay-only ones).
     let needs_pin = kind == "airplay"
+        && !home_only
         && airplay.is_some_and(|a| a.pin || a.password_pin)
         && paired != Some(true);
     Some(
@@ -126,6 +130,7 @@ pub fn device_value(d: &crate::net::discover::DeviceInfo) -> Option<Value> {
             .with("kind", kind)
             .with_opt("model", d.model.as_deref())
             .with("needsPairing", needs_pin)
+            .with("homeOnly", home_only)
             .with_opt("paired", paired),
     )
 }

@@ -214,6 +214,9 @@ Every failure is a `TvpipeError` with a readable `message` and a stable
 | `no-receivers`, `ambiguous-receiver` | `to` was omitted and there is no single TV (`details.devices` lists them) |
 | `no-receiver` | no receiver with that name was found |
 | `pairing-required` | an Apple TV needs `pair()` (or `onPin`); `device` names it |
+| `home-only` | an AirPlay TV whose Apple Home takes only its members (`device.homeOnly`); the message says what to change in the Home app |
+| `forbidden` | an AirPlay receiver refused the session after pairing (403), or a Mac takes AirPlay only from its own user; the message says what to change |
+| `password-unsupported` | an AirPlay receiver wants its password as HTTP Digest (401), which tvpipe does not send; the message says to turn Require Password off |
 | `input-not-found`, `ffmpeg-missing` | the input |
 | `binary-missing`, `unsupported-platform` | the binary is not installed (see below) |
 | `aborted`, `usage`, `invalid-argument`, `exited`, … | |

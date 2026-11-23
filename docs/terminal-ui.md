@@ -66,11 +66,13 @@ tvpipe · Sharing your screen
   `✓ Done. Played 00:42:10 to Living Room TV.`; a failure is `✗ what:
   why` and, below, what to try (by the error's stable `code`:
   `no-receiver` → `tvpipe discover`, `pairing-required` → `tvpipe pair
-  NAME`, …; usage errors → `tvpipe CMD --help`). Exit codes do not change.
+  NAME`, `home-only` → the Home app's Allow Speaker & TV Access, …; usage errors → `tvpipe CMD --help`). Exit codes do not change.
 
 `discover` prints its list on stdout: the receivers tvpipe streams to
 (name, Google Cast/AirPlay, model, address, paired, needs pairing or
-needs pairing (password)),
+needs pairing (password) or, without a pairing, home members only), then,
+for TVs whose Apple Home takes only its members, the Home app's setting
+to change,
 then the speakers it does not stream to, by name, and how to use one.
 `--json` is unchanged.
 

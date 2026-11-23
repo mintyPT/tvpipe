@@ -108,6 +108,8 @@ function pairingText(p: PairStatus): [string, string] {
 }
 
 function render(): void {
+  // A TV for its home's members only cannot be chosen.
+  for (const d of devices) if (d.homeOnly) selected.delete(d.name);
   const list = $("devices");
   list.replaceChildren(
     ...devices.map((d) => {
@@ -122,7 +124,13 @@ function render(): void {
       const local = d.name.startsWith(LOCAL_PREFIX);
       // One line under the name: the model and the sync (rows stay low for many TVs).
       const synced = typeof d.displayMs === "number" ? `Synced with phones: ${d.displayMs} ms of its own` : "";
-      const meta = local ? appScreenNote(d.name) : browser ? "Try the game without a TV: the TV picture plays in a tab" : [d.model, synced].filter(Boolean).join(" · ");
+      const closed = d.homeOnly === true;
+      if (closed) box.disabled = true;
+      // The wording of tvpipe's `home-only` error (HOME_ACCESS in airplay/access.rs).
+      const home = closed
+        ? "Only for members of its Apple Home: in the Home app, open Home Settings > Speakers & TV and set Allow Speaker & TV Access to “Anyone On the Same Network” (or “Everyone”), then pair"
+        : "";
+      const meta = local ? appScreenNote(d.name) : browser ? "Try the game without a TV: the TV picture plays in a tab" : [d.model, synced, home].filter(Boolean).join(" · ");
       text.append(el("div", "name", browser ? (d.title ?? "A browser tab on this computer") : d.name), el("div", "meta", meta));
       const p = pairing.get(d.name);
       if (p) {
@@ -131,7 +139,7 @@ function render(): void {
       }
       const end = el("div", "end");
       end.append(el("span", "tag", KIND[d.kind] ?? d.kind));
-      if (!browser && !(d.needsPairing && pairing.get(d.name)?.state !== "done")) {
+      if (!browser && !closed && !(d.needsPairing && pairing.get(d.name)?.state !== "done")) {
         const sync = el("button", "btn small", typeof d.displayMs === "number" ? "Sync again" : "Sync") as HTMLButtonElement;
         sync.title = "Measure how far this TV is behind the phones";
         sync.onclick = (ev) => {
@@ -150,6 +158,7 @@ function render(): void {
       }
       li.append(box, text, end);
       li.onclick = () => {
+        if (closed) return;
         if (selected.has(d.name)) selected.delete(d.name);
         else {
           // One local screen at a time: this window or the one on the cable.

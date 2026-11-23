@@ -74,6 +74,17 @@ impl Target {
             .unwrap_or_else(|| self.addr.to_string())
     }
 
+    /// Its AirPlay (else RAOP) TXT record, if discovery found it.
+    pub fn txt(&self) -> Option<&crate::airplay::discovery::AirPlayTxt> {
+        let d = self.device.as_ref()?;
+        d.airplay.as_ref().or(d.raop.as_ref()).map(|a| &a.txt)
+    }
+
+    /// Its advertisement says only its Apple Home's members may use it.
+    pub fn home_only(&self) -> bool {
+        self.txt().is_some_and(|t| t.home_only())
+    }
+
     /// A credentials query from what discovery knows.
     pub fn query(&self) -> Query<'_> {
         let mut q = Query::default();
@@ -351,6 +362,8 @@ pub fn pair(
         Err(e) => Progress::Failed(Step::Find(target.to_owned()), e.to_string()),
     });
     let target = found?;
+    // It would refuse pair-setup, or take it and refuse every session.
+    crate::airplay::legacy_pair::refused_unpaired(&target)?;
     let mut store = Store::open(&ctx.storage)?;
     let label = target.label();
     info!("pairing with {label} at {}", target.addr);

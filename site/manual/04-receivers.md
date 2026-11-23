@@ -84,3 +84,9 @@ $ tvpipe unpair "Living Room"
 ```
 
 `unpair` forgets the pairing on this computer. Cast receivers need no pairing.
+
+## TVs in an Apple Home
+
+A TV in an Apple Home follows the Home's **Allow Speaker & TV Access**. With "Only People Sharing This Home" only the Home's members may stream to it: `discover` lists it as "home members only" and tvpipe stops with `home-only`. In the Home app, open Home Settings > Speakers & TV and choose "Anyone On the Same Network" (or "Everyone"), then pair.
+
+A Mac whose AirPlay Receiver allows only the current user refuses tvpipe the same way (`forbidden`). On that Mac, set System Settings > General > AirDrop & Handoff > AirPlay Receiver > Allow AirPlay for to "Anyone on the same network".

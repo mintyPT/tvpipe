@@ -205,6 +205,8 @@ pub struct AirPlayService {
     pub password_pin: bool,
     /// Shows a PIN to pair.
     pub pin: bool,
+    /// Only the members of its Apple Home may use it (`acl=1`).
+    pub home_only: bool,
     /// Whether the storage has a pairing for it (when known).
     pub paired: Option<bool>,
 }
@@ -251,6 +253,7 @@ impl DeviceInfo {
                     password: t.password_required(),
                     password_pin: t.password_is_pin(),
                     pin: t.pin_required(),
+                    home_only: t.home_only(),
                     paired: store.map(|s| is_paired(d, s)),
                 }
             })
@@ -326,6 +329,7 @@ impl DeviceInfo {
                 .with("password", ap.password)
                 .with("password_pin", ap.password_pin)
                 .with("pin", ap.pin)
+                .with("home_only", ap.home_only)
                 .with_opt("paired", ap.paired);
             v = v.with(key, o);
         }
@@ -366,6 +370,7 @@ impl DeviceInfo {
                 password: flag(a, "password"),
                 password_pin: flag(a, "password_pin"),
                 pin: flag(a, "pin"),
+                home_only: flag(a, "home_only"),
                 paired: a.get("paired").and_then(Value::as_bool),
             }))
         };

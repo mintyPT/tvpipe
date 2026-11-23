@@ -729,6 +729,9 @@ impl Renderer {
                 (Some("pairing-required"), Some(d)) => {
                     format!("{d} needs pairing before it shows anything")
                 }
+                (Some("home-only"), Some(d)) => {
+                    format!("{d} only takes AirPlay from members of its Apple Home")
+                }
                 _ => sentence(&e.message),
             };
             self.fail(&text);
@@ -740,6 +743,14 @@ impl Renderer {
             (Some("pairing-required"), Some(d)) => {
                 Some(format!("Pair it once with: tvpipe pair {}", quote(d)))
             }
+            (Some("home-only"), d) => Some(match d {
+                Some(d) => format!(
+                    "{}, then pair it if it is not yet: tvpipe pair {}",
+                    home_access(),
+                    quote(d)
+                ),
+                None => home_access(),
+            }),
             (Some("input-not-found"), _) => Some("Check the file's name, or give a URL".into()),
             (Some("ffmpeg-missing"), _) => Some(
                 "This input needs ffmpeg: install it (https://ffmpeg.org/download.html) \
@@ -1144,6 +1155,16 @@ fn sentence(s: &str) -> String {
             f.to_ascii_uppercase().to_string() + c.as_str()
         }
         _ => s.to_owned(),
+    }
+}
+
+/// The Home app's steps for a members-only receiver, as a sentence.
+pub fn home_access() -> String {
+    let steps = tvpipe::__cli::HOME_ACCESS;
+    let mut c = steps.chars();
+    match c.next() {
+        Some(first) => first.to_uppercase().chain(c).collect(),
+        None => String::new(),
     }
 }
 

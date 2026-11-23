@@ -157,6 +157,16 @@ fn has_hap_pairing(target: &Target, store: &Store) -> bool {
         .is_some_and(|r| !r.raw)
 }
 
+/// `home-only` (`acl=1`) or a Mac's `forbidden` (`act=2`) for a receiver
+/// that takes no pairing of ours (§2.1).
+pub fn refused_unpaired(target: &Target) -> Result<()> {
+    match target.txt() {
+        Some(t) if t.home_only() => Err(crate::airplay::access::home_only(&target.label())),
+        Some(t) if t.owner_only() => Err(crate::airplay::access::owner_only(&target.label())),
+        _ => Ok(()),
+    }
+}
+
 fn txt_features(target: &Target) -> Option<u64> {
     let d = target.device.as_ref()?;
     d.airplay.as_ref().or(d.raop.as_ref())?.txt.features
@@ -177,8 +187,13 @@ pub fn connect(target: &Target, store: &mut Store) -> Result<Connected> {
             secret,
         });
     }
-    let candidate =
-        !has_hap_pairing(target, store) && txt_features(target).is_some_and(is_candidate);
+    let paired = has_hap_pairing(target, store);
+    if !paired {
+        // Pairing would not help (§2.1); a stored pairing is tried, the
+        // advertisement may be older than a change of the setting.
+        refused_unpaired(target)?;
+    }
+    let candidate = !paired && txt_features(target).is_some_and(is_candidate);
     if candidate {
         let hap = txt_features(target).is_some_and(crate::airplay::discovery::hap_capable);
         match raw_setup_and_verify(target, store, hap) {
@@ -338,6 +353,64 @@ mod tests {
         let lg = 0x38b_cf46_007f_8ad0;
         assert!(is_candidate(lg) && crate::airplay::discovery::hap_capable(lg));
         assert!(!crate::airplay::discovery::hap_capable(1 << 26 | 1 << 7));
+    }
+
+    /// `acl=1` or `act=2` and no pairing: said before connecting; with a
+    /// stored pairing the session is tried.
+    #[test]
+    fn refused_unpaired_before_connecting() {
+        use crate::airplay::credentials::tests::temp_dir;
+        let dev = crate::net::device::tests::lan_devices()
+            .into_iter()
+            .find(|d| d.airplay.is_some())
+            .unwrap();
+        let name = dev.name.clone();
+        let target = |acl: Option<u32>, act: Option<&str>| {
+            let mut d = dev.clone();
+            let txt = &mut d.airplay.as_mut().unwrap().txt;
+            txt.acl = acl;
+            txt.act = act.map(str::to_owned);
+            Target {
+                addr: "127.0.0.1:9".parse().unwrap(),
+                device: Some(d),
+            }
+        };
+        let path = crate::storage::Storage::dir(temp_dir("legacy-refused-unpaired"));
+        let mut store = Store::open(&path).unwrap();
+        let code = |t: &Target, store: &mut Store| match connect(t, store) {
+            Ok(_) => panic!("connected to port 9"),
+            Err(e) => (e.code(), e.device().map(str::to_owned)),
+        };
+        let named = Some(name.clone());
+        assert_eq!(
+            code(&target(Some(1), None), &mut store),
+            (Some("home-only"), named.clone())
+        );
+        assert_eq!(
+            code(&target(None, Some("2")), &mut store),
+            (Some("forbidden"), named)
+        );
+        assert!(refused_unpaired(&target(Some(0), Some("1"))).is_ok());
+        assert!(refused_unpaired(&Target {
+            addr: "127.0.0.1:9".parse().unwrap(),
+            device: None
+        })
+        .is_ok());
+        // Paired: tried (and fails to connect to port 9, not home-only).
+        let t = target(Some(1), None);
+        store.upsert(Receiver {
+            id: b"AA:BB:CC:00:00:01".to_vec(),
+            public_key: [1; 32],
+            name: name.clone(),
+            device_id: t.txt().and_then(|t| t.deviceid.clone()),
+            addr: Some(t.addr.to_string()),
+            raw: false,
+        });
+        assert!(
+            has_hap_pairing(&t, &store),
+            "the test's pairing does not match"
+        );
+        assert_ne!(code(&t, &mut store).0, Some("home-only"));
     }
 
     #[test]

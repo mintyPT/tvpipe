@@ -106,6 +106,8 @@ export interface Device {
   title?: string;
   /** AirPlay: shows a PIN (or takes its password for one) and has no pairing here yet. */
   needsPairing?: boolean;
+  /** AirPlay: its Apple Home lets only its members use it; no pairing helps. */
+  homeOnly?: boolean;
   paired?: boolean;
   /** The TV's display lag as measured by the launcher's Sync (`setDisplayLag`), ms. */
   displayMs?: number;

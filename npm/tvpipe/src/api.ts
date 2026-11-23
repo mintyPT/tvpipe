@@ -30,6 +30,8 @@ export interface Device {
   pin: boolean | undefined;
   /** AirPlay: it shows no PIN, its AirPlay password is what `onPin` returns. */
   passwordPin: boolean | undefined;
+  /** AirPlay: only members of its Apple Home may use it (`home-only`). */
+  homeOnly: boolean | undefined;
   /** What `discover --json` says, camelCased. */
   airplay: Record<string, unknown> | undefined;
   raop: Record<string, unknown> | undefined;
@@ -60,6 +62,7 @@ function toDevice(d: RawDevice): Device {
     paired: ap ? (bool(d.airplay, "paired") ?? bool(d.raop, "paired") ?? false) : undefined,
     pin: ap ? (bool(d.airplay, "pin") ?? bool(d.raop, "pin")) : undefined,
     passwordPin: ap ? (bool(d.airplay, "password_pin") ?? bool(d.raop, "password_pin") ?? false) : undefined,
+    homeOnly: ap ? (bool(d.airplay, "home_only") ?? bool(d.raop, "home_only") ?? false) : undefined,
     airplay: d.airplay,
     raop: d.raop,
     cast: d.cast,

@@ -215,12 +215,12 @@ types and fields; new fields and types do not bump the protocol.
 | `pin-required` | `pair` needs the TV's PIN, or its AirPlay password | `name`, `address`, `password` |
 | `paired` | `pair` succeeded | `name`, `id`, `file` (the credentials path) |
 | `end` | the session is over | `reason` (`eof`, `stopped`, `receivers-gone`), `receivers` (`name`, `end`: `stopped`/`ended`/`failed`, `error`, the stats) |
-| `error` | the command fails | `kind` (`io`, `auth`, `not-found`, `unsupported`, `usage`, `process`, …), `code` (optional, stable: `pairing-required`, `ffmpeg-missing`, `no-receiver`), `message`, `device` (when about one receiver) |
+| `error` | the command fails | `kind` (`io`, `auth`, `not-found`, `unsupported`, `usage`, `process`, …), `code` (optional, stable: `pairing-required`, `home-only`, `forbidden`, `password-unsupported`, `ffmpeg-missing`, `no-receiver`), `message`, `device` (when about one receiver) |
 
 In machine mode the keyframe back channel (`keyframe\n` on stdout, see
 `docs/slrw.md`) becomes the `keyframe` event; nothing else is written to
 stdout. `discover --json` is unchanged (it already is machine output) apart
-from the new `paired` and `password_pin` fields.
+from the new `paired`, `password_pin` and `home_only` fields.
 
 ### Commands: stdin, SLRW framing
 

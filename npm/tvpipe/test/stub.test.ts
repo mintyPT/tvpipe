@@ -83,6 +83,7 @@ test("discover maps devices", { skip: !unix }, async () => {
       paired: false,
       pin: true,
       passwordPin: false,
+      homeOnly: false,
       airplay: undefined,
       raop: undefined,
       cast: undefined,
